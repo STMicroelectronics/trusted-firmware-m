@@ -76,10 +76,6 @@ static void do_boot(struct boot_rsp *rsp)
                                          rsp->br_hdr->ih_hdr_size);
     }
 
-#if MCUBOOT_LOG_LEVEL > MCUBOOT_LOG_LEVEL_OFF || TEST_BL2
-    stdio_uninit();
-#endif
-
     /* This function never returns, because it calls the secure application
      * Reset_Handler().
      */
@@ -97,10 +93,6 @@ int main(void)
      * memory from the provided static buffer instead of from the heap.
      */
     mbedtls_memory_buffer_alloc_init(mbedtls_mem_buf, BL2_MBEDTLS_MEM_BUF_LEN);
-
-#if MCUBOOT_LOG_LEVEL > MCUBOOT_LOG_LEVEL_OFF || TEST_BL2
-    stdio_init();
-#endif
 
     /* Perform platform specific initialization */
     if (boot_platform_init() != 0) {

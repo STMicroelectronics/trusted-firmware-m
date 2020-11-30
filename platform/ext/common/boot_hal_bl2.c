@@ -131,6 +131,10 @@ __WEAK int32_t boot_platform_init(void)
 #endif /* defined(__ARM_ARCH_8M_MAIN__) || defined(__ARM_ARCH_8M_BASE__) \
        || defined(__ARM_ARCH_8_1M_MAIN__) */
 
+#if MCUBOOT_LOG_LEVEL > MCUBOOT_LOG_LEVEL_OFF
+    stdio_init();
+#endif
+
 #ifdef FLASH_DEV_NAME
     result = FLASH_DEV_NAME.Initialize(NULL);
     if (result != ARM_DRIVER_OK) {
