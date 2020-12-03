@@ -12,6 +12,13 @@
 # Local dependency repo
 localrepos.cmake
 
+#vi
+*.orig
+*~
+*.swp
+*.swn
+*.swo
+
 # Garbage files
 /build*/
 /cmake_build*/
