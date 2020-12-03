@@ -9,6 +9,13 @@
 # Visual Studio Code
 .vscode/
 
+#vi
+*.orig
+*~
+*.swp
+*.swn
+*.swo
+
 # Garbage files
 /build*/
 /cmake_build*/
