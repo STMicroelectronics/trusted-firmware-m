@@ -1,0 +1,41 @@
+/*
+ * Copyright (C) 2020, STMicroelectronics
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ */
+#include <cmsis.h>
+#include <tfm_platform_system.h>
+#include <tfm_hal_platform.h>
+#include <plat_device.h>
+
+#include <uart_stdout.h>
+
+void tfm_platform_hal_system_reset(void)
+{
+	/* Reset the system */
+	NVIC_SystemReset();
+}
+
+enum tfm_platform_err_t tfm_platform_hal_ioctl(tfm_platform_ioctl_req_t request,
+		psa_invec  *in_vec,
+		psa_outvec *out_vec)
+{
+	(void)request;
+	(void)in_vec;
+	(void)out_vec;
+
+	/* Not needed for this platform */
+	return TFM_PLATFORM_ERR_NOT_SUPPORTED;
+}
+
+enum tfm_hal_status_t tfm_hal_platform_init(void)
+{
+	if (stm32_platform_s_init())
+		return TFM_HAL_ERROR_GENERIC;
+
+	__enable_irq();
+	stdio_init();
+
+	return TFM_HAL_SUCCESS;
+}
