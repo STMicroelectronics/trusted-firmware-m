@@ -9,6 +9,7 @@
 
 #include <stdbool.h>
 
+#ifdef LIBFDT
 #include <libfdt.h>
 
 #include <platform_def.h>
@@ -34,10 +35,11 @@ int fdt_get_clock_id_by_name(int node, const char *name);
 unsigned long fdt_get_uart_clock_freq(uintptr_t instance);
 
 bool fdt_is_pll1_predefined(void);
-
-void stm32mp_stgen_config(unsigned long rate);
-void stm32mp_stgen_restore_counter(unsigned long long value,
+#endif
+void __unused stm32mp_systick_config(unsigned long rate);
+void __unused stm32mp_stgen_config(unsigned long rate);
+void __unused stm32mp_stgen_restore_counter(unsigned long long value,
 				   unsigned long long offset_in_ms);
-unsigned long long stm32mp_stgen_get_counter(void);
+unsigned long long __unused stm32mp_stgen_get_counter(void);
 
 #endif /* STM32MP_CLKFUNC_H */

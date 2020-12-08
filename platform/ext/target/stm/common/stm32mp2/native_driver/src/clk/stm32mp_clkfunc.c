@@ -6,6 +6,7 @@
 
 #include <errno.h>
 
+#ifdef LIBFDT
 #include <libfdt.h>
 
 #include <platform_def.h>
@@ -395,7 +396,9 @@ bool fdt_is_pll1_predefined(void)
 {
 	return fdt_check_node(fdt_rcc_subnode_offset(DT_PLL1_NODE_NAME));
 }
+#endif /* LIBFDT */
 
+#ifdef M33_TDCID_REVIEW_NEEDED
 /*******************************************************************************
  * This function gets the STGEN counter value.
  ******************************************************************************/
@@ -475,3 +478,9 @@ void stm32mp_stgen_restore_counter(unsigned long long value,
 	stgen_set_counter(STGEN_BASE, cnt);
 	mmio_setbits_32(STGEN_BASE + CNTCR_OFF, CNTCR_EN);
 }
+#else
+void stm32mp_stgen_config(unsigned long rate) {}
+void stm32mp_stgen_restore_counter(unsigned long long value,
+				   unsigned long long offset_in_ms) {}
+unsigned long long stm32mp_stgen_get_counter(void) { return 0; }
+#endif /* M33_TDCID_REVIEW_NEEDED */

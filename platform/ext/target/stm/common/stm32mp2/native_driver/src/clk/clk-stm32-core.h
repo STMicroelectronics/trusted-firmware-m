@@ -342,6 +342,7 @@ extern const struct stm32_clk_ops clk_stm32_osc_ops;
 
 extern const struct stm32_clk_ops clk_stm32_osc_nogate_ops;
 
+void __unused clk_stm32_display_clock_tree(void);
 int clk_stm32_set_div(struct stm32_clk_priv *priv, int div_id, uint32_t value);
 
 #endif /* CLK_STM32_CORE_H */

@@ -5,20 +5,25 @@
  */
 
 #include <errno.h>
-
+#include <limits.h>
 #include <lib/mmio.h>
+
+#ifdef TFM_ENV
+#include <lib/timeout.h>
+#include <debug.h>
+#include <clk.h>
+#include <stm32mp_clkfunc.h>
+#else
 #include <drivers/clk.h>
 #include <drivers/delay_timer.h>
 #include <drivers/generic_delay_timer.h>
-
-#include <drivers/st/clk-stm32.h>
 #include <drivers/st/stm32mp_clkfunc.h>
-#include <lib/spinlock.h>
+#endif
 
 #include "clk-stm32-core.h"
 
-static struct spinlock reg_lock;
-static struct spinlock refcount_lock;
+/* Offset between RCC_MP_xxxENSETR and RCC_MP_xxxENCLRR registers */
+#define _RCC_MP_ENCLRR_OFFSET			U(4)
 
 #define MASK_WIDTH_SHIFT(_width, _shift)\
 	GENMASK(((_width) + (_shift) - 1U), _shift)
@@ -52,8 +57,17 @@ int stm32_init_clocks(struct stm32_clk_priv *priv)
 
 	return 0;
 }
+/* TODO: define the lock in stm32_clk_priv */
+#if defined(TFM_ENV) && !defined(TFM_MULTI_CORE_TOPOLOGY)
+int refcount_lock;
+static void stm32_clk_lock(int *fake) {}
+static void stm32_clk_unlock(int *fake) {}
+#else
+#include <lib/spinlock.h>
+static struct spinlock reg_lock;
+static struct spinlock refcount_lock;
 
-static void stm32mp1_clk_lock(struct spinlock *lock)
+static void stm32_clk_lock(struct spinlock *lock)
 {
 	if (stm32mp_lock_available()) {
 		/* Assume interrupts are masked */
@@ -61,22 +75,23 @@ static void stm32mp1_clk_lock(struct spinlock *lock)
 	}
 }
 
-static void stm32mp1_clk_unlock(struct spinlock *lock)
+static void stm32_clk_unlock(struct spinlock *lock)
 {
 	if (stm32mp_lock_available()) {
 		spin_unlock(lock);
 	}
 }
 
-void stm32mp1_clk_rcc_regs_lock(void)
+void stm32_clk_rcc_regs_lock(void)
 {
-	stm32mp1_clk_lock(&reg_lock);
+	stm32_clk_lock(&reg_lock);
 }
 
-void stm32mp1_clk_rcc_regs_unlock(void)
+void stm32_clk_rcc_regs_unlock(void)
 {
-	stm32mp1_clk_unlock(&reg_lock);
+	stm32_clk_unlock(&reg_lock);
 }
+#endif
 
 #define TIMEOUT_US_1S	U(1000000)
 #define OSCRDY_TIMEOUT	TIMEOUT_US_1S
@@ -187,7 +202,7 @@ int clk_gate_enable(struct stm32_clk_priv *priv, int id)
 	const struct clk_stm32 *clk = _clk_get(priv, id);
 	struct clk_gate_cfg *cfg = clk->clock_cfg;
 
-	stm32mp_mmio_setbits_32_shregs(priv->base + cfg->offset, BIT(cfg->bit_idx));
+	mmio_setbits_32(priv->base + cfg->offset, BIT(cfg->bit_idx));
 
 	return 0;
 }
@@ -197,7 +212,7 @@ void clk_gate_disable(struct stm32_clk_priv *priv, int id)
 	const struct clk_stm32 *clk = _clk_get(priv, id);
 	struct clk_gate_cfg *cfg = clk->clock_cfg;
 
-	stm32mp_mmio_clrbits_32_shregs(priv->base + cfg->offset, BIT(cfg->bit_idx));
+	mmio_clrbits_32(priv->base + cfg->offset, BIT(cfg->bit_idx));
 }
 
 bool clk_gate_is_enabled(struct stm32_clk_priv *priv, int id)
@@ -220,11 +235,10 @@ void _clk_stm32_gate_disable(struct stm32_clk_priv *priv, uint16_t gate_id)
 	uintptr_t addr = priv->base + gate->offset;
 
 	if (gate->set_clr != 0U) {
-		mmio_write_32(addr + RCC_MP_ENCLRR_OFFSET,
+		mmio_write_32(addr + _RCC_MP_ENCLRR_OFFSET,
 			      BIT(gate->bit_idx));
 	} else {
-		stm32mp_mmio_clrbits_32_shregs(addr,
-					       BIT(gate->bit_idx));
+		mmio_clrbits_32(addr, BIT(gate->bit_idx));
 	}
 }
 
@@ -237,7 +251,7 @@ int _clk_stm32_gate_enable(struct stm32_clk_priv *priv, uint16_t gate_id)
 		mmio_write_32(addr, BIT(gate->bit_idx));
 
 	} else {
-		stm32mp_mmio_setbits_32_shregs(addr, BIT(gate->bit_idx));
+		mmio_setbits_32(addr, BIT(gate->bit_idx));
 	}
 
 	return 0;
@@ -559,9 +573,9 @@ int _clk_stm32_enable(struct stm32_clk_priv *priv, int id)
 {
 	int ret;
 
-	stm32mp1_clk_lock(&refcount_lock);
+	stm32_clk_lock(&refcount_lock);
 	ret = _clk_stm32_enable_core(priv, id);
-	stm32mp1_clk_unlock(&refcount_lock);
+	stm32_clk_unlock(&refcount_lock);
 
 	return ret;
 }
@@ -606,11 +620,11 @@ void _clk_stm32_disable_core(struct stm32_clk_priv *priv, int id)
 
 void _clk_stm32_disable(struct stm32_clk_priv *priv, int id)
 {
-	stm32mp1_clk_lock(&refcount_lock);
+	stm32_clk_lock(&refcount_lock);
 
 	_clk_stm32_disable_core(priv, id);
 
-	stm32mp1_clk_unlock(&refcount_lock);
+	stm32_clk_unlock(&refcount_lock);
 }
 
 bool _clk_stm32_is_enable(struct stm32_clk_priv *priv, int id)
@@ -703,10 +717,10 @@ static void clk_stm32_enable_critical_clocks(void)
 	int i;
 
 	for (i = 1; i < priv->num; i++) {
-		const struct clk_stm32 *clk = _clk_get(priv, i);
+//		const struct clk_stm32 *clk = _clk_get(priv, i);
 
 		if (_stm32_clk_is_flags(priv, i, CLK_IS_CRITICAL)) {
-			printf("%s: %s is CRITICAL\n", __func__, clk->name);
+//			printf("%s: %s is CRITICAL\n", __func__, clk->name);
 			_clk_stm32_enable(priv, i);
 		}
 	}
@@ -833,7 +847,7 @@ int clk_stm32_gate_enable(struct stm32_clk_priv *priv, int id)
 		mmio_write_32(addr, BIT(gate->bit_idx));
 
 	} else {
-		stm32mp_mmio_setbits_32_shregs(addr, BIT(gate->bit_idx));
+		mmio_setbits_32(addr, BIT(gate->bit_idx));
 	}
 
 	return 0;
@@ -848,11 +862,10 @@ void clk_stm32_gate_disable(struct stm32_clk_priv *priv, int id)
 	uintptr_t addr = priv->base + gate->offset;
 
 	if (gate->set_clr != 0U) {
-		mmio_write_32(addr + RCC_MP_ENCLRR_OFFSET,
+		mmio_write_32(addr + _RCC_MP_ENCLRR_OFFSET,
 			      BIT(gate->bit_idx));
 	} else {
-		stm32mp_mmio_clrbits_32_shregs(addr,
-					       BIT(gate->bit_idx));
+		mmio_clrbits_32(addr, BIT(gate->bit_idx));
 	}
 }
 
@@ -1013,8 +1026,7 @@ void clk_stm32_clock_ignore_unused(void)
 	}
 }
 
-#ifdef DEBUG
-void clk_stm32_display_clock_ignore_unused(void)
+static void __unused clk_stm32_display_clock_ignore_unused(void)
 {
 	struct stm32_clk_priv *priv = clk_stm32_get_priv();
 	int i;
@@ -1056,7 +1068,7 @@ void clk_stm32_display_clock_ignore_unused(void)
 	printf("\n");
 }
 
-static void clk_stm32_display_tree(struct stm32_clk_priv *priv, int clk,
+static void __unused clk_stm32_display_tree(struct stm32_clk_priv *priv, int clk,
 				   int ident)
 {
 	unsigned long rate;
@@ -1086,7 +1098,7 @@ static void clk_stm32_display_tree(struct stm32_clk_priv *priv, int clk,
 	printf("%s (%ld)\n", name, rate);
 }
 
-static void clk_stm32_tree(struct stm32_clk_priv *priv, int clk, int ident)
+static void __unused clk_stm32_tree(struct stm32_clk_priv *priv, int clk, int ident)
 {
 	unsigned int i;
 
@@ -1101,9 +1113,7 @@ static void clk_stm32_tree(struct stm32_clk_priv *priv, int clk, int ident)
 	}
 }
 
-void clk_stm32mp2_debug_display_pdata(void);
-
-void clk_stm32_display_clock_tree(void)
+void __unused clk_stm32_display_clock_tree(void)
 {
 	struct stm32_clk_priv *priv = clk_stm32_get_priv();
 	unsigned int i;
@@ -1121,8 +1131,4 @@ void clk_stm32_display_clock_tree(void)
 			clk_stm32_tree(priv, i, 0);
 		}
 	}
-
-	clk_stm32mp2_debug_display_pdata();
-
 }
-#endif
