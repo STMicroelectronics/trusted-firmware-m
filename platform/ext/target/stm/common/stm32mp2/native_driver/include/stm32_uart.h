@@ -6,6 +6,16 @@
 #ifndef STM32_UART_H
 #define STM32_UART_H
 
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#ifdef TFM_ENV
+#include <stm32_gpio.h>
+#else
+#include <drivers/st/stm32_gpio.h>
+#endif
+
 /* Return status */
 #define UART_OK					0U
 #define UART_ERROR				0xFFFFFFFFU
@@ -260,9 +270,6 @@ struct stm32_uart_advanced_init_s {
 };
 
 struct stm32_uart_handle_s {
-	uint32_t base;
-	unsigned long clk;
-
 	struct stm32_uart_init_s init;
 	struct stm32_uart_advanced_init_s advanced_init;
 
@@ -275,51 +282,22 @@ struct stm32_uart_handle_s {
 	volatile uint16_t rx_xfer_count;
 };
 
-static const uint16_t presc_table[UART_PRESCALER_MAX + 1] = {
-	1U, 2U, 4U, 6U, 8U, 10U, 12U, 16U, 32U, 64U, 128U, 256U
+struct stm32_uart_platdata {
+	uintptr_t base;
+
+	unsigned long clk_id;
+	unsigned int rst_id;
+
+	struct pinctrl_cfg *pinctrl;
+
+	struct stm32_uart_handle_s *huart;
 };
 
-/* @brief  BRR division operation to set BRR register in 8-bit oversampling
- * mode.
- * @param  clockfreq: UART clock.
- * @param  baud_rate: Baud rate set by the user.
- * @param  prescaler: UART prescaler value.
- * @retval Division result.
- */
-static inline uint32_t uart_div_sampling8(unsigned long clockfreq,
-					  uint32_t baud_rate,
-					  uint32_t prescaler)
-{
-	uint32_t scaled_freq = clockfreq / presc_table[prescaler];
-
-	return ((scaled_freq * 2) + (baud_rate / 2)) / baud_rate;
-
-}
-
-/* @brief  BRR division operation to set BRR register in 16-bit oversampling
- * mode.
- * @param  clockfreq: UART clock.
- * @param  baud_rate: Baud rate set by the user.
- * @param  prescaler: UART prescaler value.
- * @retval Division result.
- */
-static inline uint32_t uart_div_sampling16(unsigned long clockfreq,
-					   uint32_t baud_rate,
-					   uint32_t prescaler)
-{
-	uint32_t scaled_freq = clockfreq / presc_table[prescaler];
-
-	return (scaled_freq + (baud_rate / 2)) / baud_rate;
-
-}
-
-uint32_t uart_init(struct stm32_uart_handle_s *huart);
-uint32_t uart_transmit(struct stm32_uart_handle_s *huart, uint8_t *pdata,
-		       uint16_t size, uint32_t timeout_ms);
-uint32_t uart_receive(struct stm32_uart_handle_s *huart, uint8_t *pdata,
-		      uint16_t size, uint32_t timeout_ms);
-bool uart_error_detected(struct stm32_uart_handle_s *huart);
-uint32_t uart_flush_rx_fifo(struct stm32_uart_handle_s *huart,
-			    uint32_t timeout_us);
+int stm32_uart_init(void);
+int stm32_uart_set_config(struct stm32_uart_handle_s *huart);
+int stm32_uart_transmit(uint8_t *buf, uint16_t size, uint32_t timeout_ms);
+int stm32_uart_receive(uint8_t *buf, uint16_t size, uint32_t timeout_ms);
+bool stm32_uart_error_detected(void);
+int stm32_uart_flush_rx_fifo(uint32_t timeout_us);
 #endif /* STM32_UART_H */
 
