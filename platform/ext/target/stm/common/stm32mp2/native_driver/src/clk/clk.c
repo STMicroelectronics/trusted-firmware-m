@@ -9,7 +9,11 @@
 #include <errno.h>
 #include <stdbool.h>
 
+#ifdef TFM_ENV
+#include <clk.h>
+#else
 #include <drivers/clk.h>
+#endif
 
 /*
  * The clk implementation
