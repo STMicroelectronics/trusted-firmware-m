@@ -6,10 +6,11 @@
  */
 #include <cmsis.h>
 #include <lib/utils_def.h>
-#include <mpu_armv8m_drv.h>
 #include <region.h>
 #include <target_cfg.h>
 #include <tfm_hal_isolation.h>
+
+#include <mpu_armv8m_drv.h>
 
 #define MPU_REGION_VENEERS           0
 #define MPU_REGION_TFM_UNPRIV_CODE   1
@@ -118,14 +119,13 @@ static const struct mpu_armv8m_region_cfg_t __maybe_unused mpu_regions[] = {
 enum tfm_hal_status_t __maybe_unused tfm_hal_mpu_init(void)
 {
 	struct mpu_armv8m_dev_t dev_mpu_s = { MPU_BASE };
+	struct mpu_armv8m_region_cfg_t *rg;
 	int32_t i;
 
 	mpu_armv8m_clean(&dev_mpu_s);
 
-	for (i = 0; i < ARRAY_SIZE(mpu_regions); i++) {
-		struct mpu_armv8m_region_cfg_t *region_cfg = (struct mpu_armv8m_region_cfg_t *)mpu_regions + i;
-
-		if (mpu_armv8m_region_enable(&dev_mpu_s, region_cfg) != MPU_ARMV8M_OK)
+	for_each_mpu_region(mpu_regions, rg, ARRAY_SIZE(mpu_regions), i) {
+		if (mpu_armv8m_region_enable(&dev_mpu_s, rg) != MPU_ARMV8M_OK)
 			return TFM_HAL_ERROR_GENERIC;
 	}
 

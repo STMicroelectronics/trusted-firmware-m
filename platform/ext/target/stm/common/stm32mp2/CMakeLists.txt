@@ -55,7 +55,7 @@ target_sources(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_hal_isolation.c
 		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_ddr_flash.c
 		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_usart.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/mpu_armv8m_drv.c
+		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/mpu_armv8m_drv.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/pwr/stm32_pwr.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk-stm32-core.c
@@ -138,7 +138,7 @@ if(BL2)
             ${CMAKE_CURRENT_SOURCE_DIR}/bl2/boot_hal.c
 		    ${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_ddr_flash.c
             ${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_usart.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/mpu_armv8m_drv.c
+			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/mpu_armv8m_drv.c
             ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/pwr/stm32_pwr.c
             ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk.c
             ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk-stm32-core.c
