@@ -155,7 +155,7 @@
 #define CK_BUS_LPSRAM3		136
 #define CK_BUS_GPIOZ		137
 #define CK_BUS_LPDMA		138
-#define CK_BUS_MDF2		139
+#define CK_BUS_ADF1		139
 #define CK_BUS_HSEM		140
 #define CK_BUS_IPCC2		141
 #define CK_BUS_C3H		142
@@ -336,7 +336,7 @@
 #define CK_KER_LPTIM3		321
 #define CK_KER_LPTIM4		322
 #define CK_KER_LPTIM5		323
-#define CK_KER_MDF2		324
+#define CK_KER_ADF1		324
 #define CK_KER_TSDBG		325
 #define CK_KER_TPIU		326
 #define CK_BUS_ETR		327

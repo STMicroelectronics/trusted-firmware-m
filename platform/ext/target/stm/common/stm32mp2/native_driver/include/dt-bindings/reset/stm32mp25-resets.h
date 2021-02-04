@@ -95,7 +95,7 @@
 #define SAI3_R		15968
 #define SAI4_R		16000
 #define MDF1_R		16064
-#define MDF2_R		16096
+#define ADF1_R		16096
 #define FDCAN_R		16128
 #define HDP_R		16160
 #define ADC12_R		16192
