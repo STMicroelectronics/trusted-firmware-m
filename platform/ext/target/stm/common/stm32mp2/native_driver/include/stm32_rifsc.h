@@ -5,8 +5,10 @@
 #ifndef __STM32_RIFSC_H
 #define __STM32_RIFSC_H
 
+#ifndef TFM_ENV
+/* optee */
 #include <types_ext.h>
-#include <util.h>
+#endif
 
 struct risup_cfg {
 	uint32_t id;

@@ -2,6 +2,16 @@
 /*
  * Copyright (c) 2020, STMicroelectronics
  */
+#ifdef TFM_ENV
+#include <stdint.h>
+#include <stdbool.h>
+#include <lib/utils_def.h>
+#include <stm32_rifsc.h>
+#include <lib/mmio.h>
+#include <inttypes.h>
+#include <debug.h>
+#else
+/* optee */
 #include <drivers/stm32_rifsc.h>
 #include <io.h>
 #include <kernel/dt.h>
@@ -12,6 +22,7 @@
 #include <tee_api_defines.h>
 #include <trace.h>
 #include <util.h>
+#endif
 
 /* RIFSC offset register */
 #define _RIFSC_RISC_SECCFGR0		U(0x10)
@@ -356,6 +367,7 @@ int stm32_rifsc_init(void)
 	return stm32_rimu_setup(&rifsc_pdata);
 }
 
+#ifndef TFM_ENV
 static TEE_Result rifsc_init(void)
 {
 	if (stm32_rifsc_init()) {
@@ -373,3 +385,4 @@ static TEE_Result rifsc_init(void)
 	return TEE_SUCCESS;
 }
 early_init(rifsc_init);
+#endif

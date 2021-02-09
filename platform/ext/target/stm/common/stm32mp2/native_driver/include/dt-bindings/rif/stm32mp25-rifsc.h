@@ -132,14 +132,29 @@
 #define RIFSC_RISC_PER_ID_SHIFT			24
 #define RIFSC_RISC_PERx_CID_SHIFT		0
 
-#define RIFPROT(rifid, sem_list, sec, priv, scid, sem_en, cfen) \
-	(((rifid) << RIFSC_RISC_PER_ID_SHIFT) | \
-	 ((sem_list) << RIFSC_RISC_SEML_SHIFT) | \
-	 ((priv) << RIFSC_RISC_PRIV_SHIFT) | \
-	 ((sec) << RIFSC_RISC_SEC_SHIFT) | \
-	 ((scid) << RIFSC_RISC_SCID_SHIFT) | \
-	 ((sem_en) << RIFSC_RISC_SEM_EN_SHIFT) | \
-	 ((cfen) << RIFSC_RISC_CFEN_SHIFT))
+#define RISC_CID_ATTR(_sem_list, _scid, _sem_en, _cfen)		\
+	(((_sem_list) << RIFSC_RISC_SEML_SHIFT) |				\
+	 ((_scid) << RIFSC_RISC_SCID_SHIFT) |					\
+	 ((_sem_en) << RIFSC_RISC_SEM_EN_SHIFT) |				\
+	 ((_cfen) << RIFSC_RISC_CFEN_SHIFT))
+
+#ifdef CFG_DT
+#define RIFPROT(_rifid, _sem_list, _sec, _priv, _scid, _sem_en, _cfen)	\
+	(((_rifid) << RIFSC_RISC_PER_ID_SHIFT) |							\
+	 ((_priv) << RIFSC_RISC_PRIV_SHIFT) |								\
+	 ((_sec) << RIFSC_RISC_SEC_SHIFT) |									\
+	 RISC_CID_ATTR(_sem_list, _scid, _sem_en, _cfen))					\
+
+#else
+#define RIFPROT(_rifid, _sem_list, _sec, _priv, _scid, _sem_en, _cfen)	\
+	{																	\
+		.id = _rifid,													\
+		.sec = _sec,													\
+		.priv = _priv,													\
+		.cid_attr = RISC_CID_ATTR(_sem_list, _scid, _sem_en, _cfen),	\
+	}
+
+#endif
 
 /* masters ID */
 #define RIMU_ID(idx)		(idx)
@@ -155,12 +170,26 @@
 #define RIFSC_RIMC_M_ID_SHIFT		16
 #define RIFSC_RIMC_ATTRx_SHIFT		0
 
-#define RIMUPROT(rimuid, mcid, msec, mpriv, mode) \
-	(((rimuid) << RIFSC_RIMC_M_ID_SHIFT) | \
-	 ((mpriv) << RIFSC_RIMC_MPRIV_SHIFT) | \
-	 ((msec) << RIFSC_RIMC_MSEC_SHIFT) | \
-	 ((mcid) << RIFSC_RIMC_MCID_SHIFT) | \
-	 ((mode) << RIFSC_RIMC_MODE_SHIFT))
+#define RIMC_ATTR(_mcid, _msec, _mpriv, _mode)	\
+	(((_mpriv) << RIFSC_RIMC_MPRIV_SHIFT) |		\
+	 ((_msec) << RIFSC_RIMC_MSEC_SHIFT) |		\
+	 ((_mcid) << RIFSC_RIMC_MCID_SHIFT) |		\
+	 ((_mode) << RIFSC_RIMC_MODE_SHIFT))
+
+#ifdef CFG_DT
+#define RIMUPROT(_rimuid, _mcid, _msec, _mpriv, _mode)	\
+	(((_rimuid) << RIFSC_RIMC_M_ID_SHIFT) |				\
+	 ((_mpriv) << RIFSC_RIMC_MPRIV_SHIFT) |				\
+	 ((_msec) << RIFSC_RIMC_MSEC_SHIFT) |				\
+	 ((_mcid) << RIFSC_RIMC_MCID_SHIFT) |				\
+	 ((_mode) << RIFSC_RIMC_MODE_SHIFT))
+#else
+#define RIMUPROT(_rimuid, _mcid, _msec, _mpriv, _mode)	\
+	{													\
+		.id = _rimuid,									\
+		.attr = RIMC_ATTR(_mcid, _msec, _mpriv, _mode), \
+	}
+#endif
 
 #endif /* _DT_BINDINGS_STM32_RIFSC_H */
 
