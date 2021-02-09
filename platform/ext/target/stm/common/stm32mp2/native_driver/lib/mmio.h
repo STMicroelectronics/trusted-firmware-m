@@ -9,6 +9,18 @@
 
 #include <stdint.h>
 
+/* for compatibilities with optee drivers */
+#define io_read8		mmio_read_8
+#define io_read16		mmio_read_16
+#define io_read32		mmio_read_32
+#define io_write8		mmio_write_8
+#define io_write16		mmio_write_16
+#define io_write32		mmio_write_32
+#define io_clrbits32	mmio_clrbits_32
+#define io_setbits32	mmio_setbits_32
+#define io_clrsetbits16 mmio_clrsetbits_16
+#define io_clrsetbits32 mmio_clrsetbits_32
+
 static inline void mmio_write_8(uintptr_t addr, uint8_t value)
 {
 	*(volatile uint8_t*)addr = value;

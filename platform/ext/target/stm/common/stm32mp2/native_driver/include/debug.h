@@ -9,6 +9,12 @@
 
 #include <lib/utils_def.h>
 
+/* for compatibilities with optee drivers */
+#define EMSG ERROR
+#define IMSG INFO
+#define DMSG VERBOSE
+#define FMSG VERBOSE
+
 /*
  * The log output macros print output to the console. These macros produce
  * compiled log output only if the LOG_LEVEL defined in the makefile (or the

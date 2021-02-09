@@ -149,5 +149,7 @@
 #endif
 
 #define __maybe_unused                  __attribute__((__unused__))
+#define __unused						__attribute__((__unused__))
+#define __weak							__attribute__((weak))
 
 #endif /* UTILS_DEF_H */
