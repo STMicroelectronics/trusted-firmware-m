@@ -66,6 +66,7 @@ target_sources(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/gpio/stm32_gpio.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/uart/stm32_uart.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rif.c
+		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rifsc.c
 		${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_isolation_mpu_v8m.c
 		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_platform_system.c>
 )
@@ -149,6 +150,7 @@ if(BL2)
             ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/gpio/stm32_gpio.c
             ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/uart/stm32_uart.c
             ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rif.c
+			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rifsc.c
     )
 
     target_compile_options(platform_bl2
