@@ -1,0 +1,45 @@
+{{platform_title}}
+
+Secure test
+```````````
+
+.. tabs::
+
+{% for suite in s_testsuites %}
+   .. group-tab:: {{suite.name}}
+
+      .. list-table::
+
+        * - **Name**
+          - **Descriptions**
+          - **Result**
+
+    {% for test in suite.test_suite %}
+        * - {{test.name}}
+          - {{test.desc}}
+          - {{test.res}}
+
+    {% endfor %}
+{% endfor %}
+
+Non-secure test
+```````````````
+
+.. tabs::
+
+{% for suite in ns_testsuites %}
+   .. group-tab:: {{suite.name}}
+
+      .. list-table::
+
+        * - **Name**
+          - **Descriptions**
+          - **Result**
+
+    {% for test in suite.test_suite %}
+        * - {{test.name}}
+          - {{test.desc}}
+          - {{test.res}}
+
+    {% endfor %}
+{% endfor %}

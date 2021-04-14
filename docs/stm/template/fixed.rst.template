@@ -1,0 +1,14 @@
+Issues fixed
+------------
+
+.. list-table::
+
+   * - **Descriptions**
+     - **links**
+
+{% for f in f_issues %}
+   * - {{f.summary}}
+     - `{{f.id}} <https://intbugzilla.st.com/show_bug.cgi?id={{f.id}}>`_
+
+{% endfor %}
+
