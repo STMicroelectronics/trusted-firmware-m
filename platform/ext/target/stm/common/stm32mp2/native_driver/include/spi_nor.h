@@ -11,6 +11,7 @@
 
 /* OPCODE */
 #define SPI_NOR_OP_WREN		0x06U	/* Write enable */
+#define SPI_NOR_OP_WRDI		0x04U	/* Write disable */
 #define SPI_NOR_OP_WRSR		0x01U	/* Write status register 1 byte */
 #define SPI_NOR_OP_READ_ID	0x9FU	/* Read JEDEC ID */
 #define SPI_NOR_OP_READ_CR	0x35U	/* Read configuration register */
@@ -30,13 +31,22 @@
 #define SPI_NOR_OP_READ_1_1_4	0x6BU	/* Read data bytes (Quad Output SPI) */
 #define SPI_NOR_OP_READ_1_4_4	0xEBU	/* Read data bytes (Quad I/O SPI) */
 
+#define SPI_NOR_OP_WRITE	0x02U	/* Write data bytes */
+
+#define SPI_NOR_OP_SE		0x20U	/* Erase a sector */
+#define SPI_NOR_OP_BE		0xD8U	/* Erase a block */
+
 /* Flags for NOR specific configuration */
 #define SPI_NOR_USE_FSR		BIT(0)
 #define SPI_NOR_USE_BANK	BIT(1)
 
 struct nor_device {
 	struct spi_mem_op read_op;
+	struct spi_mem_op write_op;
+	struct spi_mem_op erase_op;
 	uint32_t size;
+	uint32_t erase_size;
+	uint32_t write_size;
 	uint32_t flags;
 	uint8_t selected_bank;
 	uint8_t bank_write_cmd;
@@ -45,6 +55,9 @@ struct nor_device {
 
 int spi_nor_read(unsigned int offset, uintptr_t buffer, size_t length,
 		 size_t *length_read);
+int spi_nor_write(unsigned int offset, uintptr_t buffer, size_t length,
+		  size_t *length_write);
+int spi_nor_erase(unsigned int offset);
 int spi_nor_init(unsigned long long *device_size, unsigned int *erase_size);
 
 /*

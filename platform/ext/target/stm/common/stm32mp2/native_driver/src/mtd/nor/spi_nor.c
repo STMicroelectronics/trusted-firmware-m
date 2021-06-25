@@ -25,7 +25,11 @@
 
 #define BANK_SIZE		0x1000000U
 
-#define SPI_READY_TIMEOUT_US	40000U
+#define WRITE_STATUS_TIMEOUT_US	100000U
+#define PROGRAM_TIMEOUT_US	5000U
+#define ERASE_TIMEOUT_US	5000000U
+
+#define SZ_4K			0x1000U
 
 static struct nor_device nor_dev;
 
@@ -76,6 +80,11 @@ static inline int spi_nor_write_en(void)
 	return spi_nor_reg(SPI_NOR_OP_WREN, NULL, 0U, SPI_MEM_DATA_OUT);
 }
 
+static inline int spi_nor_write_dis(void)
+{
+	return spi_nor_reg(SPI_NOR_OP_WRDI, NULL, 0U, SPI_MEM_DATA_OUT);
+}
+
 /*
  * Check if device is ready.
  *
@@ -106,10 +115,10 @@ static int spi_nor_ready(void)
 	return (((sr & SR_WIP) == 0U) ? 0 : 1);
 }
 
-static int spi_nor_wait_ready(void)
+static int spi_nor_wait_ready(uint64_t timeout_us)
 {
 	int ret;
-	uint64_t timeout = timeout_init_us(SPI_READY_TIMEOUT_US);
+	uint64_t timeout = timeout_init_us(timeout_us);
 
 	while (!timeout_elapsed(timeout)) {
 		ret = spi_nor_ready();
@@ -146,7 +155,7 @@ static int spi_nor_macronix_quad_enable(void)
 		return ret;
 	}
 
-	ret = spi_nor_wait_ready();
+	ret = spi_nor_wait_ready(WRITE_STATUS_TIMEOUT_US);
 	if (ret != 0) {
 		return ret;
 	}
@@ -173,7 +182,7 @@ static int spi_nor_write_sr_cr(uint8_t *sr_cr)
 		return -EINVAL;
 	}
 
-	ret = spi_nor_wait_ready();
+	ret = spi_nor_wait_ready(WRITE_STATUS_TIMEOUT_US);
 	if (ret != 0) {
 		return ret;
 	}
@@ -319,9 +328,106 @@ read_err:
 	return ret;
 }
 
+int spi_nor_write(unsigned int offset, uintptr_t buffer, size_t length,
+		  size_t *length_write)
+{
+	size_t remain_len;
+	size_t page_offset;
+	int ret = 0;
+
+	*length_write = 0U;
+	nor_dev.write_op.addr.val = offset;
+	nor_dev.write_op.data.buf = (void *)buffer;
+
+	VERBOSE("%s offset %i length %u\n", __func__, offset, length);
+
+	while (length != 0U) {
+		page_offset = nor_dev.write_op.addr.val % nor_dev.write_size;
+		remain_len = (size_t)nor_dev.write_size - page_offset;
+		nor_dev.write_op.data.nbytes = MIN(length, remain_len);
+
+		if ((nor_dev.flags & SPI_NOR_USE_BANK) != 0U) {
+			ret = spi_nor_write_bar(nor_dev.write_op.addr.val);
+			if (ret != 0) {
+				return ret;
+			}
+		}
+
+		ret = spi_nor_write_en();
+		if (ret != 0) {
+			return ret;
+		}
+
+		ret = spi_mem_exec_op(&nor_dev.write_op);
+		if (ret != 0) {
+			goto write_err;
+		}
+
+		ret = spi_nor_wait_ready(PROGRAM_TIMEOUT_US);
+		if (ret != 0) {
+			goto write_err;
+		}
+
+		length -= nor_dev.write_op.data.nbytes;
+		nor_dev.write_op.addr.val += nor_dev.write_op.data.nbytes;
+		nor_dev.write_op.data.buf += nor_dev.write_op.data.nbytes;
+		*length_write += nor_dev.write_op.data.nbytes;
+	}
+
+write_err:
+	if ((nor_dev.flags & SPI_NOR_USE_BANK) != 0U) {
+		spi_nor_clean_bar();
+	}
+
+	spi_nor_write_dis();
+
+	return ret;
+}
+
+int spi_nor_erase(unsigned int offset)
+{
+	int ret;
+
+	VERBOSE("%s offset %i\n", __func__, offset);
+
+	if ((offset % nor_dev.erase_size) != 0U) {
+		return -EINVAL;
+	}
+
+	nor_dev.erase_op.addr.val = offset;
+
+	if ((nor_dev.flags & SPI_NOR_USE_BANK) != 0U) {
+		ret = spi_nor_write_bar(nor_dev.erase_op.addr.val);
+		if (ret != 0) {
+			return ret;
+		}
+	}
+
+	ret = spi_nor_write_en();
+	if (ret != 0) {
+		return ret;
+	}
+
+	ret = spi_mem_exec_op(&nor_dev.erase_op);
+	if (ret != 0) {
+		goto erase_err;
+	}
+
+	ret = spi_nor_wait_ready(ERASE_TIMEOUT_US);
+
+erase_err:
+	if ((nor_dev.flags & SPI_NOR_USE_BANK) != 0U) {
+		spi_nor_clean_bar();
+	}
+
+	spi_nor_write_dis();
+
+	return ret;
+}
+
 int spi_nor_init(unsigned long long *size, unsigned int *erase_size)
 {
-	int ret = 0;
+	int ret;
 	uint8_t id;
 
 	/* Default read command used */
@@ -332,18 +438,38 @@ int spi_nor_init(unsigned long long *size, unsigned int *erase_size)
 	nor_dev.read_op.data.buswidth = SPI_MEM_BUSWIDTH_1_LINE;
 	nor_dev.read_op.data.dir = SPI_MEM_DATA_IN;
 
+	/* Default write command used */
+	nor_dev.write_op.cmd.opcode = SPI_NOR_OP_WRITE;
+	nor_dev.write_op.cmd.buswidth = SPI_MEM_BUSWIDTH_1_LINE;
+	nor_dev.write_op.addr.nbytes = 3U;
+	nor_dev.write_op.addr.buswidth = SPI_MEM_BUSWIDTH_1_LINE;
+	nor_dev.write_op.data.buswidth = SPI_MEM_BUSWIDTH_1_LINE;
+	nor_dev.write_op.data.dir = SPI_MEM_DATA_OUT;
+
 	ret = spi_nor_get_config(&nor_dev);
 	if (ret != 0) {
 		return ret;
 	}
 
-	assert(nor_dev.size != 0U);
+	assert((nor_dev.erase_size != 0U) &&
+	       (nor_dev.write_size != 0U) &&
+	       (nor_dev.size != 0U));
+
+	/* Default erase command used (depends on erase size) */
+	if (nor_dev.erase_op.cmd.opcode == 0U) {
+		nor_dev.erase_op.cmd.opcode = nor_dev.erase_size == SZ_4K ?
+					      SPI_NOR_OP_SE : SPI_NOR_OP_BE;
+		nor_dev.erase_op.cmd.buswidth = SPI_MEM_BUSWIDTH_1_LINE;
+		nor_dev.erase_op.addr.nbytes = 3U;
+		nor_dev.erase_op.addr.buswidth = SPI_MEM_BUSWIDTH_1_LINE;
+	}
 
 	if (nor_dev.size > BANK_SIZE) {
 		nor_dev.flags |= SPI_NOR_USE_BANK;
 	}
 
 	*size = nor_dev.size;
+	*erase_size = nor_dev.erase_size;
 
 	ret = spi_nor_read_id(&id);
 	if (ret != 0) {
