@@ -73,7 +73,12 @@ target_sources(platform_s
 
 target_compile_options(platform_s
 	PUBLIC
-	${COMPILER_CMSE_FLAG}
+		${COMPILER_CMSE_FLAG}
+)
+
+target_compile_definitions(platform_s
+	PUBLIC
+		STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
 )
 
 # GNU ld has some strange behaviour to do with weak functions, and does not deal
@@ -107,6 +112,11 @@ if(NS)
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/systick/stm32_systick.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/gpio/stm32_gpio.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/uart/stm32_uart.c
+	)
+
+	target_compile_definitions(platform_ns
+		PUBLIC
+			STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
 	)
 
 # GNU ld has some strange behaviour to do with weak functions, and does not deal
@@ -157,6 +167,11 @@ if(BL2)
         PUBLIC
             ${COMPILER_CMSE_FLAG}
     )
+
+	target_compile_definitions(platform_bl2
+		PUBLIC
+		STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
+	)
 
     # GNU ld has some strange behaviour to do with weak functions, and does not deal
     # well with strong functions in static libraries overriding weak functions in
