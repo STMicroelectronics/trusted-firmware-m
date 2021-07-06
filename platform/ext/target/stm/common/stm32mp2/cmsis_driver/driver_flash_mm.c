@@ -310,3 +310,7 @@ ARM_DRIVER_FLASH Driver_FLASH_##devname = {							\
 #ifdef STM32_FLASH_DDR
 DRIVER_FLASH_X(DDR);
 #endif
+
+#ifdef STM32_FLASH_BKPSRAM
+DRIVER_FLASH_X(BKPSRAM);
+#endif
