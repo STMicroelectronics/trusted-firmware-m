@@ -208,7 +208,14 @@ static int stm32_ospi_tx(const struct spi_mem_op *op, uint8_t fmode)
 
 static unsigned int stm32_ospi_get_mode(uint8_t buswidth)
 {
-	return buswidth == 4U ? 3U : buswidth;
+	switch (buswidth) {
+	case SPI_MEM_BUSWIDTH_8_LINE:
+		return 4U;
+	case SPI_MEM_BUSWIDTH_4_LINE:
+		return 3U;
+	default:
+		return buswidth;
+	}
 }
 
 static int stm32_ospi_send(const struct spi_mem_op *op, uint8_t fmode)
@@ -409,7 +416,9 @@ static int stm32_ospi_set_mode(unsigned int mode)
 #if DEBUG
 	VERBOSE("%s: mode=0x%x\n", __func__, mode);
 
-	if ((mode & SPI_RX_QUAD) != 0U) {
+	if ((mode & SPI_RX_OCTAL) != 0U) {
+		VERBOSE("rx: octal\n");
+	} else if ((mode & SPI_RX_QUAD) != 0U) {
 		VERBOSE("rx: quad\n");
 	} else if ((mode & SPI_RX_DUAL) != 0U) {
 		VERBOSE("rx: dual\n");
@@ -417,7 +426,9 @@ static int stm32_ospi_set_mode(unsigned int mode)
 		VERBOSE("rx: single\n");
 	}
 
-	if ((mode & SPI_TX_QUAD) != 0U) {
+	if ((mode & SPI_TX_OCTAL) != 0U) {
+		VERBOSE("tx: octal\n");
+	} else if ((mode & SPI_TX_QUAD) != 0U) {
 		VERBOSE("tx: quad\n");
 	} else if ((mode & SPI_TX_DUAL) != 0U) {
 		VERBOSE("tx: dual\n");
