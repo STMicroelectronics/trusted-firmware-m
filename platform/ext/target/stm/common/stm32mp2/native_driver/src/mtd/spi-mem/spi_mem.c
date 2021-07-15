@@ -16,22 +16,31 @@ static struct spi_slave spi_slave;
 
 static bool spi_mem_check_buswidth_req(uint8_t buswidth, bool tx)
 {
+	unsigned int mode = spi_slave.mode;
+
 	switch (buswidth) {
 	case 1U:
 		return true;
 
 	case 2U:
-		if ((tx && (spi_slave.mode & (SPI_TX_DUAL | SPI_TX_QUAD)) !=
-		    0U) ||
-		    (!tx && (spi_slave.mode & (SPI_RX_DUAL | SPI_RX_QUAD)) !=
-		    0U)) {
+		if ((tx &&
+		     (mode & (SPI_TX_DUAL | SPI_TX_QUAD | SPI_TX_OCTAL)) != 0U) ||
+		    (!tx &&
+		     (mode & (SPI_RX_DUAL | SPI_RX_QUAD | SPI_RX_OCTAL)) != 0U)) {
 			return true;
 		}
 		break;
 
 	case 4U:
-		if ((tx && (spi_slave.mode & SPI_TX_QUAD) != 0U) ||
-		    (!tx && (spi_slave.mode & SPI_RX_QUAD) != 0U)) {
+		if ((tx && (mode & (SPI_TX_QUAD | SPI_TX_OCTAL)) != 0U) ||
+		    (!tx && (mode & (SPI_RX_QUAD | SPI_RX_OCTAL)) != 0U)) {
+			return true;
+		}
+		break;
+
+	case 8U:
+		if ((tx && (mode & SPI_TX_OCTAL) != 0U) ||
+		    (!tx && (mode & SPI_RX_OCTAL) != 0U)) {
 			return true;
 		}
 		break;
