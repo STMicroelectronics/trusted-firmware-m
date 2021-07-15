@@ -440,6 +440,7 @@ static const struct spi_bus_ops stm32_ospi_bus_ops = {
 
 int stm32_ospi_init(void)
 {
+	int i;
 	int ret;
 
 	ret = stm32_ospi_get_platdata(&stm32_ospi);
@@ -454,12 +455,16 @@ int stm32_ospi_init(void)
 
 	clk_enable(stm32_ospi.clock_id);
 
-	if (stm32_reset_assert_to(stm32_ospi.reset_id, _TIMEOUT_US_1_MS)) {
-		panic();
-	}
+	for (i = 0; i < _OSPI_MAX_RESET; i++) {
+		if (stm32_reset_assert_to(stm32_ospi.reset_id[i],
+					  _TIMEOUT_US_1_MS)) {
+			panic();
+		}
 
-	if (stm32_reset_deassert_to(stm32_ospi.reset_id, _TIMEOUT_US_1_MS)) {
-		panic();
+		if (stm32_reset_deassert_to(stm32_ospi.reset_id[i],
+					    _TIMEOUT_US_1_MS)) {
+			panic();
+		}
 	}
 
 	mmio_write_32(ospi_base() + _OSPI_DCR1, _OSPI_DCR1_DEVSIZE);
@@ -469,12 +474,18 @@ int stm32_ospi_init(void)
 
 int stm32_ospi_deinit(void)
 {
-	if (stm32_reset_assert_to(stm32_ospi.reset_id, _TIMEOUT_US_1_MS)) {
-		panic();
-	}
+	int i;
 
-	if (stm32_reset_deassert_to(stm32_ospi.reset_id, _TIMEOUT_US_1_MS)) {
-		panic();
+	for (i = 0; i < _OSPI_MAX_RESET; i++) {
+		if (stm32_reset_assert_to(stm32_ospi.reset_id[i],
+					  _TIMEOUT_US_1_MS)) {
+			panic();
+		}
+
+		if (stm32_reset_deassert_to(stm32_ospi.reset_id[i],
+					    _TIMEOUT_US_1_MS)) {
+			panic();
+		}
 	}
 
 	clk_disable(stm32_ospi.clock_id);

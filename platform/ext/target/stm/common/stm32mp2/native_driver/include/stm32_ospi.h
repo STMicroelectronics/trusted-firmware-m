@@ -10,13 +10,15 @@
 #include <stm32_gpio.h>
 #include <stddef.h>
 
+#define _OSPI_MAX_RESET		2U
+
 struct stm32_ospi_platdata {
 	uintptr_t reg_base;
 	uintptr_t mm_base;
 	size_t mm_size;
 
 	unsigned long clock_id;
-	unsigned int reset_id;
+	unsigned int reset_id[_OSPI_MAX_RESET];
 
 	struct pinctrl_cfg *pinctrl;
 
