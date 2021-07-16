@@ -30,8 +30,14 @@
 #define SPI_NOR_OP_READ_1_2_2	0xBBU	/* Read data bytes (Dual I/O SPI) */
 #define SPI_NOR_OP_READ_1_1_4	0x6BU	/* Read data bytes (Quad Output SPI) */
 #define SPI_NOR_OP_READ_1_4_4	0xEBU	/* Read data bytes (Quad I/O SPI) */
+#define SPI_NOR_OP_READ_1_1_8	0x8BU	/* Read data bytes (Octal Output SPI) */
+#define SPI_NOR_OP_READ_1_8_8	0xCBU	/* Read data bytes (Octal I/O SPI) */
 
 #define SPI_NOR_OP_WRITE	0x02U	/* Write data bytes */
+#define SPI_NOR_OP_WRITE_1_1_4	0x32U	/* Write data bytes (Quad page program) */
+#define SPI_NOR_OP_WRITE_1_4_4	0x38U	/* Write data bytes (Quad page program) */
+#define SPI_NOR_OP_WRITE_1_1_8	0x82U	/* Write data bytes (Octal page program) */
+#define SPI_NOR_OP_WRITE_1_8_8	0xC2U	/* Write data bytes (Octal page program) */
 
 #define SPI_NOR_OP_SE		0x20U	/* Erase a sector */
 #define SPI_NOR_OP_BE		0xD8U	/* Erase a block */
