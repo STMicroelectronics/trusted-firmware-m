@@ -11,6 +11,7 @@
 #include <lib/mmio.h>
 #include <lib/utils_def.h>
 #include <cmsis.h>
+#include <clk.h>
 
 #include <stm32_rif.h>
 
@@ -35,10 +36,10 @@
 #define _RISAF_REG_STARTR		0x44U
 #define _RISAF_REG_ENDR			0x48U
 #define _RISAF_REG_CIDCFGR		0x4CU
-#define _RISAF_REGX_OFFSET(x)	(0x40 * (x - 1))
+#define _RISAF_REGX_OFFSET(x)		(0x40 * (x - 1))
 
 #define _RISAF_HWCFGR			0xFF0U
-#define _RISAF_VERR				0xFF4U
+#define _RISAF_VERR			0xFF4U
 
 /* _RISAF_REGx_CFGR register fields */
 #define _RISAF_REGx_CFGR_BREN			BIT(0)
@@ -48,7 +49,7 @@
 #define _RISAF_REGx_CFGR_ENC			BIT(15)
 #define _RISAF_REGx_CFGR_ENC_SHIFT		15
 #define _RISAF_REGx_CFGR_PRIVC_MASK		GENMASK(23, 16)
-#define _RISAF_REGx_CFGR_PRIVC_SHIFT	16
+#define _RISAF_REGx_CFGR_PRIVC_SHIFT		16
 #define _RISAF_REGx_CFGR_PRIVC0			BIT(16)
 #define _RISAF_REGx_CFGR_PRIVC1			BIT(17)
 #define _RISAF_REGx_CFGR_PRIVC2			BIT(18)
@@ -69,28 +70,28 @@
 /* _RISAF_REGx_CIDCFGR register fields */
 #define _RISAF_REGx_CIDCFGR_RDENC_MASK		GENMASK(7, 0)
 #define _RISAF_REGx_CIDCFGR_RDENC_SHIFT		0
-#define _RISAF_REGx_CIDCFGR_RDENC0			BIT(0)
-#define _RISAF_REGx_CIDCFGR_RDENC1			BIT(1)
-#define _RISAF_REGx_CIDCFGR_RDENC2			BIT(2)
-#define _RISAF_REGx_CIDCFGR_RDENC3			BIT(3)
-#define _RISAF_REGx_CIDCFGR_RDENC4			BIT(4)
-#define _RISAF_REGx_CIDCFGR_RDENC5			BIT(5)
-#define _RISAF_REGx_CIDCFGR_RDENC6			BIT(6)
-#define _RISAF_REGx_CIDCFGR_RDENC7			BIT(7)
+#define _RISAF_REGx_CIDCFGR_RDENC0		BIT(0)
+#define _RISAF_REGx_CIDCFGR_RDENC1		BIT(1)
+#define _RISAF_REGx_CIDCFGR_RDENC2		BIT(2)
+#define _RISAF_REGx_CIDCFGR_RDENC3		BIT(3)
+#define _RISAF_REGx_CIDCFGR_RDENC4		BIT(4)
+#define _RISAF_REGx_CIDCFGR_RDENC5		BIT(5)
+#define _RISAF_REGx_CIDCFGR_RDENC6		BIT(6)
+#define _RISAF_REGx_CIDCFGR_RDENC7		BIT(7)
 #define _RISAF_REGx_CIDCFGR_WRENC_MASK		GENMASK(23, 16)
 #define _RISAF_REGx_CIDCFGR_WRENC_SHIFT		16
-#define _RISAF_REGx_CIDCFGR_WRENC0			BIT(16)
-#define _RISAF_REGx_CIDCFGR_WRENC1			BIT(17)
-#define _RISAF_REGx_CIDCFGR_WRENC2			BIT(18)
-#define _RISAF_REGx_CIDCFGR_WRENC3			BIT(19)
-#define _RISAF_REGx_CIDCFGR_WRENC4			BIT(20)
-#define _RISAF_REGx_CIDCFGR_WRENC5			BIT(21)
-#define _RISAF_REGx_CIDCFGR_WRENC6			BIT(22)
-#define _RISAF_REGx_CIDCFGR_WRENC7			BIT(23)
+#define _RISAF_REGx_CIDCFGR_WRENC0		BIT(16)
+#define _RISAF_REGx_CIDCFGR_WRENC1		BIT(17)
+#define _RISAF_REGx_CIDCFGR_WRENC2		BIT(18)
+#define _RISAF_REGx_CIDCFGR_WRENC3		BIT(19)
+#define _RISAF_REGx_CIDCFGR_WRENC4		BIT(20)
+#define _RISAF_REGx_CIDCFGR_WRENC5		BIT(21)
+#define _RISAF_REGx_CIDCFGR_WRENC6		BIT(22)
+#define _RISAF_REGx_CIDCFGR_WRENC7		BIT(23)
 
 #define _RIF_MAX_RISAF			5
 #define _RISAF_MAX_REGION		15
-#define _RISAF_MAX_REGION_PARAM	3
+#define _RISAF_MAX_REGION_PARAM		3
 
 static struct stm32_rif_platdata pdata;
 
@@ -140,7 +141,7 @@ static void stm32_risaf_tmp_copy(const struct risaf_cfg *risaf,
  * is reserved like temporary region.
  */
 static int stm32_risaf_reg_cfg(const struct risaf_cfg *risaf,
-		const struct risaf_region_cfg *region, bool update)
+			       const struct risaf_region_cfg *region, bool update)
 {
 	uintptr_t base;
 	uint32_t enabled;
@@ -169,20 +170,29 @@ static int stm32_risaf_reg_cfg(const struct risaf_cfg *risaf,
 
 static int stm32_rif_risafx_init(const struct risaf_cfg *risaf)
 {
-	int i, err;
+	int i, err = 0;
+	bool clk_disabled = false;
 
 	if (!risaf)
 		return -ENOTSUP;
+
+	if (risaf->clock_id != CLK_UNDEF && !clk_is_enabled(risaf->clock_id)) {
+		clk_disabled = true;
+		clk_enable(risaf->clock_id);
+	}
 
 	for(i = 0; i < risaf->nregions; i++) {
 		const struct risaf_region_cfg *region = risaf->regions + i;
 
 		err = stm32_risaf_reg_cfg(risaf, region, true);
 		if (err)
-			return err;
+			break;
 	}
 
-	return 0;
+	if (clk_disabled)
+		clk_disable(risaf->clock_id);
+
+	return err;
 }
 
 static int stm32_rif_risaf_init(struct stm32_rif_platdata *pdata)

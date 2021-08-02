@@ -8,6 +8,9 @@
 #define  __CLK_H__
 
 #include <stdbool.h>
+#include <limits.h>
+
+#define CLK_UNDEF	ULONG_MAX
 
 typedef struct clk_ops {
 	int (*enable)(unsigned long id);
