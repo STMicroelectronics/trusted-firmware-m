@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <lib/utils_def.h>
 #include <Driver_Flash.h>
+#include <clk.h>
 #include <flash_layout.h>
 #include <device_cfg.h>
 
@@ -39,6 +40,7 @@ enum {
  */
 typedef struct {
 	const uint32_t memory_base;   /*!< FLASH memory base address */
+	unsigned long clock_id;
 	ARM_FLASH_INFO *data;         /*!< FLASH data */
 	ARM_FLASH_STATUS status;
 } arm_flash_dev_t;
@@ -110,11 +112,28 @@ static __maybe_unused int32_t ARM_Flash_X_PowerControl(arm_flash_dev_t *flash_de
 	}
 }
 
+static bool mm_clk_enable(arm_flash_dev_t *flash_dev)
+{
+	if (flash_dev->clock_id != CLK_UNDEF && !clk_is_enabled(flash_dev->clock_id)) {
+		clk_enable(flash_dev->clock_id);
+		return true;
+	}
+
+	return false;
+}
+
+static void mm_clk_disable(arm_flash_dev_t *flash_dev, bool clk_enabled)
+{
+	if (clk_enabled)
+		clk_disable(flash_dev->clock_id);
+}
+
 static __maybe_unused int32_t ARM_Flash_X_ReadData(arm_flash_dev_t *flash_dev,
 						   uint32_t addr, void *data, uint32_t cnt)
 {
 	uint32_t start_addr = flash_dev->memory_base + addr;
 	uint32_t last_ofst = addr + cnt - 1;
+	bool clk_enabled;
 
 	flash_dev->status.error = DRIVER_STATUS_NO_ERROR;
 
@@ -125,10 +144,12 @@ static __maybe_unused int32_t ARM_Flash_X_ReadData(arm_flash_dev_t *flash_dev,
 	}
 
 	flash_dev->status.busy = DRIVER_STATUS_BUSY;
+	clk_enabled = mm_clk_enable(flash_dev);
 
 	/* Flash interface just emulated over ddr, use memcpy */
 	memcpy(data, (void *)start_addr, cnt);
 
+	mm_clk_disable(flash_dev, clk_enabled);
 	flash_dev->status.busy = DRIVER_STATUS_IDLE;
 
 	return ARM_DRIVER_OK;
@@ -139,6 +160,7 @@ static __maybe_unused int32_t ARM_Flash_X_ProgramData(arm_flash_dev_t *flash_dev
 {
 	uint32_t start_addr = flash_dev->memory_base + addr;
 	uint32_t last_ofst = addr + cnt - 1;
+	bool clk_enabled;
 
 	flash_dev->status.error = DRIVER_STATUS_NO_ERROR;
 
@@ -149,10 +171,11 @@ static __maybe_unused int32_t ARM_Flash_X_ProgramData(arm_flash_dev_t *flash_dev
 	}
 
 	flash_dev->status.busy = DRIVER_STATUS_BUSY;
+	clk_enabled = mm_clk_enable(flash_dev);
 
-	/* Flash interface just emulated over ddr, use memcpy */
 	memcpy((void *)start_addr, data, cnt);
 
+	mm_clk_disable(flash_dev, clk_enabled);
 	flash_dev->status.busy = DRIVER_STATUS_IDLE;
 
 	return ARM_DRIVER_OK;
@@ -163,6 +186,7 @@ static __maybe_unused int32_t ARM_Flash_X_EraseSector(arm_flash_dev_t *flash_dev
 {
 	uint32_t start_addr = flash_dev->memory_base + addr;
 	uint32_t last_ofst = addr + flash_dev->data->sector_size - 1;
+	bool clk_enabled;
 
 	flash_dev->status.error = DRIVER_STATUS_NO_ERROR;
 
@@ -172,12 +196,13 @@ static __maybe_unused int32_t ARM_Flash_X_EraseSector(arm_flash_dev_t *flash_dev
 	}
 
 	flash_dev->status.busy = DRIVER_STATUS_BUSY;
+	clk_enabled = mm_clk_enable(flash_dev);
 
-	/* Flash interface just emulated over ddr, use memset */
 	memset((void *)start_addr,
 	       flash_dev->data->erased_value,
 	       flash_dev->data->sector_size);
 
+	mm_clk_disable(flash_dev, clk_enabled);
 	flash_dev->status.busy = DRIVER_STATUS_IDLE;
 
 	return ARM_DRIVER_OK;
@@ -188,9 +213,11 @@ static __maybe_unused int32_t ARM_Flash_X_EraseChip(arm_flash_dev_t *flash_dev)
 	uint32_t i;
 	uint32_t addr = flash_dev->memory_base;
 	int32_t rc = ARM_DRIVER_ERROR_UNSUPPORTED;
+	bool clk_enabled;
 
 	flash_dev->status.busy = DRIVER_STATUS_BUSY;
 	flash_dev->status.error = DRIVER_STATUS_NO_ERROR;
+	clk_enabled = mm_clk_enable(flash_dev);
 
 	/* Check driver capability erase_chip bit */
 	if (DriverCapabilities.erase_chip == 1) {
@@ -205,6 +232,7 @@ static __maybe_unused int32_t ARM_Flash_X_EraseChip(arm_flash_dev_t *flash_dev)
 		}
 	}
 
+	mm_clk_disable(flash_dev, clk_enabled);
 	flash_dev->status.busy = DRIVER_STATUS_IDLE;
 
 	return rc;
@@ -223,6 +251,7 @@ static __maybe_unused ARM_FLASH_INFO * ARM_Flash_X_GetInfo(arm_flash_dev_t *flas
 /* Per-FLASH macros */
 /* Each instance must define:
  * - Driver_FLASH_XX
+ * - FLASH_XX_CLK
  * - FLASH_XX_SIZE
  * - FLASH_XX_SECTOR_SIZE
  * - FLASH_XX_PROGRAM_UNIT
@@ -238,6 +267,7 @@ static ARM_FLASH_INFO FLASH_##devname##_DATA = {						\
 												\
 static arm_flash_dev_t FLASH_##devname##_DEV = {						\
 	.memory_base = FLASH_##devname##_BASE,							\
+	.clock_id = FLASH_##devname##_CLK,							\
 	.data = &(FLASH_##devname##_DATA),							\
 	.status = {										\
 		.busy = DRIVER_STATUS_IDLE,							\

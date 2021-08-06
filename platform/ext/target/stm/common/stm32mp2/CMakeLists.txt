@@ -13,6 +13,7 @@ target_include_directories(platform_region_defs
 	INTERFACE
 		include
 		${CMAKE_CURRENT_SOURCE_DIR}/boards
+		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/include
 )
 
 #========================= Platform common defs ===============================#
