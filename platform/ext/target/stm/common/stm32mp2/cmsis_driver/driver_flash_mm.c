@@ -6,7 +6,7 @@
  */
 /*
  * This driver allows to read/write/erase on devices which are directly
- * memory mapped like ddr/backupram/sram ...
+ * memory mapped like ddr/backupram/bkpregister/sram ...
  */
 #include <string.h>
 #include <stdint.h>
@@ -23,6 +23,9 @@
 /* Driver version */
 #define ARM_FLASH_DRV_VERSION      ARM_DRIVER_VERSION_MAJOR_MINOR(1, 1)
 
+#define GET_MEM_ADDR_BIT0(x)        ((x) & 0x1)
+#define GET_MEM_ADDR_BIT1(x)        ((x) & 0x2)
+
 /* Flash busy values flash status  \ref ARM_FLASH_STATUS */
 enum {
 	DRIVER_STATUS_IDLE = 0u,
@@ -33,6 +36,13 @@ enum {
 enum {
 	DRIVER_STATUS_NO_ERROR = 0u,
 	DRIVER_STATUS_ERROR
+};
+
+union mem_addr_t {
+    uintptr_t uint_addr;        /* Address          */
+    uint8_t *p_byte;            /* Byte copy        */
+    uint16_t *p_dbyte;          /* Double byte copy */
+    uint32_t *p_qbyte;          /* Quad byte copy   */
 };
 
 /*
@@ -64,6 +74,77 @@ static __maybe_unused bool is_range_valid(arm_flash_dev_t *flash_dev,
 	uint32_t flash_sz = (flash_dev->data->sector_count * flash_dev->data->sector_size);
 
 	return offset < flash_sz ? true : false;
+}
+
+/*
+ * mcuboot uses nano libc, its memcpy copies byte by byte.
+ * For program unit > 1, the data sizeof must be respected.
+ * example: bkreg must be written word by word (programme unit = 4),
+ * its dest address and cnt is aligned on word -> copy by uint.
+ * Caller check: modulo write (programm unit)
+ */
+static void *mm_memcpy(void *dest, const void *src, size_t n)
+{
+    union mem_addr_t p_dest, p_src;
+
+    p_dest.uint_addr = (uintptr_t)dest;
+    p_src.uint_addr = (uintptr_t)src;
+
+    /* Byte copy check the last bit of address. */
+    while (n && (GET_MEM_ADDR_BIT0(p_dest.uint_addr) ||
+           GET_MEM_ADDR_BIT0(p_src.uint_addr))) {
+        *p_dest.p_byte++ = *p_src.p_byte++;
+        n--;
+    }
+
+    /*
+     * Double byte copy for aligned address.
+     * Check the 2nd last bit of address.
+     */
+    while (n >= sizeof(uint16_t) && (GET_MEM_ADDR_BIT1(p_dest.uint_addr) ||
+           GET_MEM_ADDR_BIT1(p_src.uint_addr))) {
+        *(p_dest.p_dbyte)++ = *(p_src.p_dbyte)++;
+        n -= sizeof(uint16_t);
+    }
+
+    /* Quad byte copy for aligned address. */
+    while (n >= sizeof(uint32_t)) {
+        *(p_dest.p_qbyte)++ = *(p_src.p_qbyte)++;
+        n -= sizeof(uint32_t);
+    }
+
+    /* Byte copy for the remaining bytes. */
+    while (n--) {
+        *p_dest.p_byte++ = *p_src.p_byte++;
+    }
+
+    return dest;
+}
+
+void *mm_memset(void *s, int c, size_t n)
+{
+    union mem_addr_t p_mem;
+    uint32_t quad_pattern;
+
+    p_mem.p_byte = (uint8_t *)s;
+    quad_pattern = (((uint8_t)c) << 24) | (((uint8_t)c) << 16) |
+                   (((uint8_t)c) << 8) | ((uint8_t)c);
+
+    while (n && (p_mem.uint_addr & (sizeof(uint32_t) - 1))) {
+        *p_mem.p_byte++ = (uint8_t)c;
+        n--;
+    }
+
+    while (n >= sizeof(uint32_t)) {
+        *p_mem.p_qbyte++ = quad_pattern;
+        n -= sizeof(uint32_t);
+    }
+
+    while (n--) {
+        *p_mem.p_byte++ = (uint8_t)c;
+    }
+
+    return s;
 }
 
 static __maybe_unused ARM_DRIVER_VERSION ARM_Flash_GetVersion(void)
@@ -146,8 +227,7 @@ static __maybe_unused int32_t ARM_Flash_X_ReadData(arm_flash_dev_t *flash_dev,
 	flash_dev->status.busy = DRIVER_STATUS_BUSY;
 	clk_enabled = mm_clk_enable(flash_dev);
 
-	/* Flash interface just emulated over ddr, use memcpy */
-	memcpy(data, (void *)start_addr, cnt);
+	mm_memcpy(data, (void *)start_addr, cnt);
 
 	mm_clk_disable(flash_dev, clk_enabled);
 	flash_dev->status.busy = DRIVER_STATUS_IDLE;
@@ -158,11 +238,16 @@ static __maybe_unused int32_t ARM_Flash_X_ReadData(arm_flash_dev_t *flash_dev,
 static __maybe_unused int32_t ARM_Flash_X_ProgramData(arm_flash_dev_t *flash_dev,
 						      uint32_t addr, const void *data, uint32_t cnt)
 {
+	uint32_t prog_unit = flash_dev->data->program_unit;
 	uint32_t start_addr = flash_dev->memory_base + addr;
 	uint32_t last_ofst = addr + cnt - 1;
 	bool clk_enabled;
 
 	flash_dev->status.error = DRIVER_STATUS_NO_ERROR;
+
+	/* checks write alignment on program_unit. */
+	if ((addr % prog_unit) || (cnt % prog_unit))
+		return ARM_DRIVER_ERROR_PARAMETER;
 
 	/* Check flash memory boundaries */
 	if (!is_range_valid(flash_dev, last_ofst)) {
@@ -173,7 +258,7 @@ static __maybe_unused int32_t ARM_Flash_X_ProgramData(arm_flash_dev_t *flash_dev
 	flash_dev->status.busy = DRIVER_STATUS_BUSY;
 	clk_enabled = mm_clk_enable(flash_dev);
 
-	memcpy((void *)start_addr, data, cnt);
+	mm_memcpy((void *)start_addr, data, cnt);
 
 	mm_clk_disable(flash_dev, clk_enabled);
 	flash_dev->status.busy = DRIVER_STATUS_IDLE;
@@ -190,6 +275,10 @@ static __maybe_unused int32_t ARM_Flash_X_EraseSector(arm_flash_dev_t *flash_dev
 
 	flash_dev->status.error = DRIVER_STATUS_NO_ERROR;
 
+	/* checks alignment on sector size. */
+	if (addr % flash_dev->data->sector_size)
+		return ARM_DRIVER_ERROR_PARAMETER;
+
 	if (!is_range_valid(flash_dev, last_ofst)) {
 		flash_dev->status.error = DRIVER_STATUS_ERROR;
 		return ARM_DRIVER_ERROR_PARAMETER;
@@ -198,9 +287,9 @@ static __maybe_unused int32_t ARM_Flash_X_EraseSector(arm_flash_dev_t *flash_dev
 	flash_dev->status.busy = DRIVER_STATUS_BUSY;
 	clk_enabled = mm_clk_enable(flash_dev);
 
-	memset((void *)start_addr,
-	       flash_dev->data->erased_value,
-	       flash_dev->data->sector_size);
+	mm_memset((void *)start_addr,
+		  flash_dev->data->erased_value,
+		  flash_dev->data->sector_size);
 
 	mm_clk_disable(flash_dev, clk_enabled);
 	flash_dev->status.busy = DRIVER_STATUS_IDLE;
@@ -222,10 +311,9 @@ static __maybe_unused int32_t ARM_Flash_X_EraseChip(arm_flash_dev_t *flash_dev)
 	/* Check driver capability erase_chip bit */
 	if (DriverCapabilities.erase_chip == 1) {
 		for (i = 0; i < flash_dev->data->sector_count; i++) {
-			/* Flash interface just emulated over MRAM, use memset */
-			memset((void *)addr,
-			       flash_dev->data->erased_value,
-			       flash_dev->data->sector_size);
+			mm_memset((void *)addr,
+				  flash_dev->data->erased_value,
+				  flash_dev->data->sector_size);
 
 			addr += flash_dev->data->sector_size;
 			rc = ARM_DRIVER_OK;
@@ -343,4 +431,8 @@ DRIVER_FLASH_X(DDR);
 
 #ifdef STM32_FLASH_BKPSRAM
 DRIVER_FLASH_X(BKPSRAM);
+#endif
+
+#ifdef STM32_FLASH_BKPREG
+DRIVER_FLASH_X(BKPREG);
 #endif
