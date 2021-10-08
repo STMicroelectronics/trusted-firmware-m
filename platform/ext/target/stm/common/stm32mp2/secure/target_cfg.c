@@ -21,6 +21,9 @@
 #include <tfm_secure_api.h>
 #include <tfm_plat_defs.h>
 
+#include <stm32_iac.h>
+#include <stm32_serc.h>
+
 /* The section names come from the scatter file */
 REGION_DECLARE(Load$$LR$$, LR_NS_PARTITION, $$Base);
 REGION_DECLARE(Load$$LR$$, LR_VENEER, $$Base);
@@ -58,6 +61,9 @@ enum tfm_plat_err_t enable_fault_handlers(void)
 {
 	/* Explicitly set secure fault priority to the highest */
 	NVIC_SetPriority(SecureFault_IRQn, 0);
+
+	/* lower priority than SERC */
+	NVIC_SetPriority(BusFault_IRQn, 2);
 
 	/* Enables BUS, MEM, USG and Secure faults */
 	SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk
@@ -104,13 +110,19 @@ enum tfm_plat_err_t nvic_interrupt_target_state_cfg(void)
 		NVIC->ITNS[i] = 0xFFFFFFFF;
 	}
 
+	/* Make sure that IAC/SERF are targeted to S state */
+	NVIC_ClearTargetState(IAC_IRQn);
+	NVIC_ClearTargetState(SERF_IRQn);
+
 	return TFM_PLAT_ERR_SUCCESS;
 }
 
 /*----------------- NVIC interrupt enabling for S peripherals ----------------*/
 enum tfm_plat_err_t nvic_interrupt_enable()
 {
-	/*  interrupt in s not supported at this stage */
+	stm32_iac_enable_irq();
+	stm32_serc_enable_irq();
+
 	return TFM_PLAT_ERR_SUCCESS;
 }
 
