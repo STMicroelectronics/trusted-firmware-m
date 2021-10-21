@@ -7,8 +7,10 @@
 #ifndef  __MMIOPOLL_H__
 #define  __MMIOPOLL_H__
 
+#include <errno.h>
 #include <lib/mmio.h>
 #include <lib/timeout.h>
+
 /**
  * readx_poll_timeout - Periodically poll an address until a condition is met or a timeout occurs
  * @op: accessor function (takes @addr as its only argument)
