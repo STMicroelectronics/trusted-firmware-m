@@ -86,6 +86,7 @@ target_compile_options(platform_s
 
 target_compile_definitions(platform_s
 	PUBLIC
+		STM32_SEC
 		STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
 )
 
@@ -124,6 +125,7 @@ if(NS)
 
 	target_compile_definitions(platform_ns
 		PUBLIC
+			STM32_NSEC
 			STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
 	)
 
@@ -184,6 +186,7 @@ if(BL2)
 
 	target_compile_definitions(platform_bl2
 		PUBLIC
+			STM32_BL2
 			STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
 	)
 
