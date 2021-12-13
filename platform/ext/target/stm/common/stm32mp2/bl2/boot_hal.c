@@ -19,6 +19,7 @@
 #include <bootutil/bootutil_log.h>
 
 #include <plat_device.h>
+#include <stm32_icache.h>
 
 extern ARM_DRIVER_FLASH FLASH_DEV_NAME;
 
@@ -43,6 +44,24 @@ __attribute__((naked)) void boot_clear_bl2_ram_area(void)
     );
 }
 
+int stm32_icache_remap(void)
+{
+	struct stm32_icache_region icache_reg;
+	int err;
+
+	icache_reg.n_region = 0;
+	icache_reg.icache_addr = DDR_CAHB_ALIAS(DDR_CAHB_OFFSET);
+	icache_reg.device_addr = DDR_CAHB2PHY_ALIAS(DDR_CAHB_OFFSET);
+	icache_reg.size = 0x200000;
+	icache_reg.slow_c_bus = true;
+
+	err = stm32_icache_region_enable(&icache_reg);
+	if (err)
+		return err;
+
+	return 0;
+}
+
 /**
   * @brief  Platform init
   * @param  None
@@ -63,6 +82,12 @@ int32_t boot_platform_init(void)
 
 	BOOT_LOG_INF("welcome");
 	BOOT_LOG_INF("mcu sysclk: %d", SystemCoreClock);
+
+#if defined(STM32_DDR_CACHED)
+	err = stm32_icache_remap();
+	if (err)
+		return err;
+#endif
 
 	err = FLASH_DEV_NAME.Initialize(NULL);
 	if (err != ARM_DRIVER_OK)

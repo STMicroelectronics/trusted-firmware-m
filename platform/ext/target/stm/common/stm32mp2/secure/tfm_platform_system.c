@@ -10,6 +10,8 @@
 #include <plat_device.h>
 
 #include <uart_stdout.h>
+#include <stm32_icache.h>
+#include <stm32_dcache.h>
 
 void tfm_platform_hal_system_reset(void)
 {
@@ -33,6 +35,14 @@ enum tfm_hal_status_t tfm_hal_platform_init(void)
 {
 	if (stm32_platform_s_init())
 		return TFM_HAL_ERROR_GENERIC;
+
+#if defined(STM32_DDR_CACHED)
+	if (stm32_icache_enable(true, true))
+		return TFM_HAL_ERROR_GENERIC;
+
+	if (stm32_dcache_enable(true, true))
+		return TFM_HAL_ERROR_GENERIC;
+#endif
 
 	__enable_irq();
 	stdio_init();
