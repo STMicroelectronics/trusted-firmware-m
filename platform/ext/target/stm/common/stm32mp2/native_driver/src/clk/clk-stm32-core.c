@@ -203,6 +203,7 @@ int clk_gate_enable(struct stm32_clk_priv *priv, int id)
 	struct clk_gate_cfg *cfg = clk->clock_cfg;
 
 	mmio_setbits_32(priv->base + cfg->offset, BIT(cfg->bit_idx));
+	__ISB();
 
 	return 0;
 }
@@ -213,6 +214,7 @@ void clk_gate_disable(struct stm32_clk_priv *priv, int id)
 	struct clk_gate_cfg *cfg = clk->clock_cfg;
 
 	mmio_clrbits_32(priv->base + cfg->offset, BIT(cfg->bit_idx));
+	__ISB();
 }
 
 bool clk_gate_is_enabled(struct stm32_clk_priv *priv, int id)
