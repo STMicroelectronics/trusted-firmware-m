@@ -8,9 +8,11 @@
 #include <lib/utils_def.h>
 #include <region.h>
 #include <target_cfg.h>
+#include <device_cfg.h>
 #include <tfm_hal_isolation.h>
 
 #include <mpu_armv8m_drv.h>
+#include <stm32_icache.h>
 
 #define MPU_REGION_VENEERS           0
 #define MPU_REGION_TFM_UNPRIV_CODE   1
@@ -114,6 +116,21 @@ static const struct mpu_armv8m_region_cfg_t __maybe_unused mpu_regions[] = {
         MPU_ARMV8M_SH_NONE
     },
 #endif
+#if defined(STM32_PS_OSPI)
+    /*
+     * used by ospi and fmc
+     * for memory mapping to generate external memory command
+     */
+    {
+        PARTITION_REGION_PERIPH,
+        QSPI_MEM_BASE,
+        DRAM_MEM_BASE - 1,
+        MPU_ARMV8M_MAIR_ATTR_DEVICE_IDX,
+        MPU_ARMV8M_XN_EXEC_NEVER,
+        MPU_ARMV8M_AP_RW_PRIV_UNPRIV,
+        MPU_ARMV8M_SH_NONE
+    },
+#endif
 };
 
 enum tfm_hal_status_t __maybe_unused tfm_hal_mpu_init(void)
@@ -137,13 +154,13 @@ enum tfm_hal_status_t __maybe_unused tfm_hal_mpu_init(void)
 
 enum tfm_hal_status_t tfm_hal_set_up_static_boundaries(void)
 {
-    /* Set up isolation boundaries between SPE and NSPE */
+	/* Set up isolation boundaries between SPE and NSPE */
 	sau_and_idau_cfg();
 
-    /* Set up static isolation boundaries inside SPE */
+	/* Set up static isolation boundaries inside SPE */
 #ifdef CONFIG_TFM_ENABLE_MEMORY_PROTECT
-    if (tfm_hal_mpu_init())
-        return TFM_HAL_ERROR_GENERIC;
+	if (tfm_hal_mpu_init())
+		return TFM_HAL_ERROR_GENERIC;
 #endif
 
 	return TFM_HAL_SUCCESS;
