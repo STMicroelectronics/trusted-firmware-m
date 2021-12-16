@@ -17,11 +17,13 @@
 #include <Driver_Flash.h>
 #include <uart_stdout.h>
 #include <bootutil/bootutil_log.h>
+#include <template/flash_otp_nv_counters_backend.h>
 
 #include <plat_device.h>
 #include <stm32_icache.h>
 
 extern ARM_DRIVER_FLASH FLASH_DEV_NAME;
+extern  struct flash_otp_nv_counters_region_t otp_stm_provision;
 
 REGION_DECLARE(Image$$, ER_DATA, $$Base)[];
 REGION_DECLARE(Image$$, ARM_LIB_HEAP, $$ZI$$Limit)[];
@@ -70,6 +72,10 @@ int stm32_icache_remap(void)
 int32_t boot_platform_init(void)
 {
 	int err;
+	__IO uint32_t otp;
+
+	/*  Place here to force linker to keep provision and init const */
+	otp = otp_stm_provision.init_value;
 
 	err = stm32_platform_bl2_init();
 	if (err)

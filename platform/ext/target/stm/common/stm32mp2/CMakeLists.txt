@@ -79,6 +79,8 @@ target_sources(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/stm32_dcache.c
 		${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_isolation_mpu_v8m.c
 		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_platform_system.c>
+		${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_nvic.c
+		${CMAKE_CURRENT_SOURCE_DIR}/secure/nv_counters.c
 )
 
 target_compile_options(platform_s
@@ -180,6 +182,8 @@ if(BL2)
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_iac.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_serc.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/stm32_icache.c
+			${CMAKE_CURRENT_SOURCE_DIR}/secure/nv_counters.c
+			${CMAKE_CURRENT_SOURCE_DIR}/secure/otp_provision.c
 	)
 
 	target_compile_options(platform_bl2

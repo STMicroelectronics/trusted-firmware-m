@@ -24,8 +24,9 @@
 
 MEMORY
 {
-    RETRAM (rx)  : ORIGIN = BL2_CODE_START, LENGTH = BL2_CODE_SIZE
-    RAM    (rwx) : ORIGIN = BL2_DATA_START, LENGTH = BL2_DATA_SIZE
+    RETRAM     (rx)  : ORIGIN = BL2_CODE_START,    LENGTH = BL2_CODE_SIZE
+    RETRAM_OTP (rx)  : ORIGIN = BL2_OTP_AREA_BASE, LENGTH = BL2_OTP_AREA_SIZE
+    RAM        (rwx) : ORIGIN = BL2_DATA_START,    LENGTH = BL2_DATA_SIZE
 }
 
 __heap_size__  = BL2_HEAP_SIZE;
@@ -38,6 +39,11 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
+    .BL2_OTP :
+    {
+       KEEP(*(.BL2_OTP_Const))
+    } > RETRAM_OTP
+
     .text :
     {
         KEEP(*(.vectors))

@@ -32,8 +32,8 @@ typedef void( *pFunc )( void );
 /*----------------------------------------------------------------------------
   External References
  *----------------------------------------------------------------------------*/
-#define __MSP_INITIAL_SP              REGION_NAME(Image$$, ARM_LIB_STACK_MSP, $$ZI$$Limit)
-#define __MSP_STACK_LIMIT             REGION_NAME(Image$$, ARM_LIB_STACK_MSP, $$ZI$$Base)
+#define __MSP_INITIAL_SP              REGION_NAME(Image$$, ARM_LIB_STACK, $$ZI$$Limit)
+#define __MSP_STACK_LIMIT             REGION_NAME(Image$$, ARM_LIB_STACK, $$ZI$$Base)
 
 extern uint32_t __MSP_INITIAL_SP;
 extern uint32_t __MSP_STACK_LIMIT;
@@ -834,18 +834,8 @@ void Reset_Handler(void)
 {
   __disable_irq();
   __set_MSPLIM((uint32_t)(&__MSP_STACK_LIMIT));
-  __set_MSP((uint32_t)(&__MSP_INITIAL_SP));
 
   SystemInit();                             /* CMSIS System Initialization */
-
-  __set_PSP((uint32_t)(&__INITIAL_SP));
-  __set_PSPLIM((uint32_t)(&__STACK_LIMIT));
-  __ASM volatile("MRS     R0, control\n"    /* Get control value */
-                 "ORR     R0, R0, #2\n"     /* Select switch to PSP */
-                 "MSR     control, R0\n"    /* Load control register */
-                 :
-                 :
-                 : "r0");
 
   __PROGRAM_START();                        /* Enter PreMain (C library entry point) */
 }
