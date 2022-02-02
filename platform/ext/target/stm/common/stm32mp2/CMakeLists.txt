@@ -46,6 +46,7 @@ target_include_directories(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/include
 		${CMAKE_CURRENT_SOURCE_DIR}/device/include
+		${CMAKE_CURRENT_SOURCE_DIR}/secure/services/include
 )
 
 target_sources(platform_s
@@ -53,8 +54,8 @@ target_sources(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/device/source/system_stm32mp2xx_m33.c
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/spm_hal.c
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/target_cfg.c
-		${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_platform_system.c
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_hal_isolation.c
+		${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_hal_platform.c
 		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_spi_flash.c
 		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_flash_mm.c
 		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_usart.c
@@ -78,7 +79,7 @@ target_sources(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/stm32_icache.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/stm32_dcache.c
 		${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_isolation_mpu_v8m.c
-		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_platform_system.c>
+		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/services/src/tfm_platform_system.c>
 		${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_nvic.c
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/nv_counters.c
 )
