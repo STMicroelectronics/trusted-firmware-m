@@ -93,6 +93,7 @@ target_compile_definitions(platform_s
 	PUBLIC
 		STM32_SEC
 		STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
+		$<$<BOOL:${STM32_M33TDCID}>:STM32_M33TDCID>
 )
 
 # GNU ld has some strange behaviour to do with weak functions, and does not deal
@@ -132,6 +133,7 @@ if(NS)
 		PUBLIC
 			STM32_NSEC
 			STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
+			$<$<BOOL:${STM32_M33TDCID}>:STM32_M33TDCID>
 	)
 
 	# GNU ld has some strange behaviour to do with weak functions, and does not deal
@@ -196,6 +198,7 @@ if(BL2)
 		PUBLIC
 			STM32_BL2
 			STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
+			$<$<BOOL:${STM32_M33TDCID}>:STM32_M33TDCID>
 	)
 
 	# GNU ld has some strange behaviour to do with weak functions, and does not deal
