@@ -8,44 +8,32 @@
 #define __STM32_RESET_H__
 
 #include <stdint.h>
+#include <rstctrl.h>
 
-/*
- * Assert target reset, if @to_us non null, wait until reset is asserted
- *
- * @reset_id: Reset controller ID
- * @to_us: Timeout in microsecond, or 0 if not waiting
- * Return 0 on success and -ETIMEDOUT if waiting and timeout expired
- */
-int stm32_reset_assert_to(uint32_t reset_id, unsigned int to_us);
+struct stm32_reset_platdata {
+	uintptr_t base;
+};
 
-/*
- * Enable reset control for target resource
- *
- * @reset_id: Reset controller ID
- */
-static inline void stm32_reset_set(uint32_t reset_id)
-{
-	(void)stm32_reset_assert_to(reset_id, 0);
-}
+/* Exposed rstctrl instance */
+struct stm32_rstline {
+	unsigned int id;
+	struct rstctrl rstctrl;
+};
 
-/*
- * Deassert target reset, if @to_us non null, wait until reset is deasserted
- *
- * @reset_id: Reset controller ID
- * @to_us: Timeout in microsecond, or 0 if not waiting
- * Return 0 on success and -ETIMEDOUT if waiting and timeout expired
- */
-int stm32_reset_deassert_to(uint32_t reset_id, unsigned int to_us);
+int stm32_reset_init(void);
+int stm32_reset_get_platdata(struct stm32_reset_platdata *pdata);
 
-/*
- * Release reset control for target resource
- *
- * @reset_id: Reset controller ID
- */
-static inline void stm32_reset_release(uint32_t reset_id)
-{
-	(void)stm32_reset_deassert_to(reset_id, 0);
-}
+#define STM32_RSTCTRL_REF(__id) (struct rstctrl *) &(stm32_rstline_##__id.rstctrl)
+
+#define DECLARE_STM32_RSTLINE(__id)					\
+	extern const struct stm32_rstline stm32_rstline_##__id
+
+#define DEFINE_STM32_RSTLINE(__id, __ops)				\
+	const struct stm32_rstline stm32_rstline_##__id = {		\
+		.id = __id,						\
+		.rstctrl = {						\
+			.ops = __ops					\
+		},							\
+	}
 
 #endif /* __STM32_RESET_H__ */
-
