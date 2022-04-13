@@ -13,9 +13,9 @@
 
 #include <debug.h>
 #include <spi_mem.h>
+#include <rstctrl.h>
 #include <stm32_ospi.h>
 #include <stm32_gpio.h>
-#include <stm32_reset.h>
 #include <clk.h>
 
 /* Timeout for device interface reset */
@@ -467,13 +467,13 @@ int stm32_ospi_init(void)
 	clk_enable(stm32_ospi.clock_id);
 
 	for (i = 0; i < _OSPI_MAX_RESET; i++) {
-		if (stm32_reset_assert_to(stm32_ospi.reset_id[i],
-					  _TIMEOUT_US_1_MS)) {
+		if (rstctrl_assert_to(stm32_ospi.reset_id[i],
+				      _TIMEOUT_US_1_MS)) {
 			panic();
 		}
 
-		if (stm32_reset_deassert_to(stm32_ospi.reset_id[i],
-					    _TIMEOUT_US_1_MS)) {
+		if (rstctrl_deassert_to(stm32_ospi.reset_id[i],
+					_TIMEOUT_US_1_MS)) {
 			panic();
 		}
 	}
@@ -488,13 +488,13 @@ int stm32_ospi_deinit(void)
 	int i;
 
 	for (i = 0; i < _OSPI_MAX_RESET; i++) {
-		if (stm32_reset_assert_to(stm32_ospi.reset_id[i],
-					  _TIMEOUT_US_1_MS)) {
+		if (rstctrl_assert_to(stm32_ospi.reset_id[i],
+				      _TIMEOUT_US_1_MS)) {
 			panic();
 		}
 
-		if (stm32_reset_deassert_to(stm32_ospi.reset_id[i],
-					    _TIMEOUT_US_1_MS)) {
+		if (rstctrl_deassert_to(stm32_ospi.reset_id[i],
+					_TIMEOUT_US_1_MS)) {
 			panic();
 		}
 	}

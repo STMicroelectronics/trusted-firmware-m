@@ -7,6 +7,7 @@
 #ifndef STM32_OSPI_H
 #define STM32_OSPI_H
 
+#include <rstctrl.h>
 #include <stm32_gpio.h>
 #include <stddef.h>
 
@@ -18,7 +19,7 @@ struct stm32_ospi_platdata {
 	size_t mm_size;
 
 	unsigned long clock_id;
-	unsigned int reset_id[_OSPI_MAX_RESET];
+	struct rstctrl *reset_id[_OSPI_MAX_RESET];
 
 	struct pinctrl_cfg *pinctrl;
 
