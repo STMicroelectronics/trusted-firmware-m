@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <debug.h>
 #include <lib/mmio.h>
 #include <lib/utils_def.h>
 
@@ -426,27 +427,13 @@
 #define _PWR_WIO6SEMCR_SEMCID_MASK	GENMASK(6, 4)
 #define _PWR_WIO6SEMCR_SEMCID_SHIFT	4
 
-/* PWR_CPU1D1SR register fields */
-#define _PWR_CPU1D1SR_HOLD_BOOT		BIT(0)
-#define _PWR_CPU1D1SR_WFBEN			BIT(1)
-#define _PWR_CPU1D1SR_CSTATE_MASK	GENMASK(3, 2)
-#define _PWR_CPU1D1SR_CSTATE_SHIFT	2
-#define _PWR_CPU1D1SR_DSTATE_MASK	GENMASK(10, 8)
-#define _PWR_CPU1D1SR_DSTATE_SHIFT	8
-
-/* PWR_CPU2D2SR register fields */
-#define _PWR_CPU2D2SR_HOLD_BOOT		BIT(0)
-#define _PWR_CPU2D2SR_WFBEN			BIT(1)
-#define _PWR_CPU2D2SR_CSTATE_MASK	GENMASK(3, 2)
-#define _PWR_CPU2D2SR_CSTATE_SHIFT	2
-#define _PWR_CPU2D2SR_DSTATE_MASK	GENMASK(10, 8)
-#define _PWR_CPU2D2SR_DSTATE_SHIFT	8
-
-/* PWR_CPU3D3SR register fields */
-#define _PWR_CPU3D3SR_CSTATE_MASK	GENMASK(3, 2)
-#define _PWR_CPU3D3SR_CSTATE_SHIFT	2
-#define _PWR_CPU3D3SR_DSTATE_MASK	GENMASK(10, 8)
-#define _PWR_CPU3D3SR_DSTATE_SHIFT	8
+/* PWR_CPUXDXSR register fields */
+#define _PWR_CPUXDXSR_HOLD_BOOT		BIT(0)
+#define _PWR_CPUXDXSR_WFBEN		BIT(1)
+#define _PWR_CPUXDXSR_CSTATE_MASK	GENMASK(3, 2)
+#define _PWR_CPUXDXSR_CSTATE_SHIFT	2
+#define _PWR_CPUXDXSR_DSTATE_MASK	GENMASK(10, 8)
+#define _PWR_CPUXDXSR_DSTATE_SHIFT	8
 
 /* PWR_VERR register fields */
 #define _PWR_VERR_MINREV_MASK		GENMASK(3, 0)
@@ -454,12 +441,65 @@
 #define _PWR_VERR_MAJREV_MASK		GENMASK(7, 4)
 #define _PWR_VERR_MAJREV_SHIFT		4
 
+
+#define _PWR_FLD_PREP(field, value)	(((uint32_t)(value) << (field ## _SHIFT)) & (field ## _MASK))
+#define _PWR_FLD_GET(field, value)	(((uint32_t)(value) & (field ## _MASK)) >> (field ## _SHIFT))
+
+
+#define _PWR_CPU_MIN 1
+#define _PWR_CPU_MAX 2
+
 static struct stm32_pwr_platdata pdata;
 
 __attribute__((weak))
 int stm32_pwr_get_platdata(struct stm32_pwr_platdata *pdata)
 {
-	return -ENODEV;
+	return 0;
+}
+
+static uint32_t _cpux_base(uint32_t cpu)
+{
+	uint32_t offset = _PWR_CPU1D1SR;
+
+	if (cpu < _PWR_CPU_MIN || cpu > _PWR_CPU_MAX)
+		return 0;
+
+	offset += sizeof(uint32_t) * (cpu - _PWR_CPU_MIN);
+	return pdata.base + offset;
+}
+
+static int _cpu_state(uint32_t cpu, uint32_t *state)
+{
+	uint32_t cpux_base;
+
+	cpux_base = _cpux_base(cpu);
+	if (!cpux_base) {
+		IMSG("cpu:%d not valid");
+		return -1;
+	}
+
+	*state = mmio_read_32(cpux_base);
+	return 0;
+}
+
+enum c_state stm32_pwr_cpu_get_cstate(uint32_t cpu)
+{
+	uint32_t state;
+
+	if (_cpu_state(cpu, &state))
+		return CERR;
+
+	return _PWR_FLD_GET(_PWR_CPUXDXSR_CSTATE, state);
+}
+
+enum d_state stm32_pwr_cpu_get_dstate(uint32_t cpu)
+{
+	uint32_t state;
+
+	if (_cpu_state(cpu, &state))
+		return DERR;
+
+	return _PWR_FLD_GET(_PWR_CPUXDXSR_DSTATE, state);
 }
 
 void stm32_pwr_backupd_wp(bool enable)
