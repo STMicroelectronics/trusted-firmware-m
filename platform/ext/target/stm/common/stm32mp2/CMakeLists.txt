@@ -38,6 +38,12 @@ if(BL2)
 	)
 endif()
 
+#========================= Platform psa interface =============================#
+target_include_directories(psa_interface
+	INTERFACE
+		${CMAKE_CURRENT_SOURCE_DIR}/secure/services/include
+)
+
 #========================= Platform Secure ====================================#
 
 target_include_directories(platform_s
@@ -80,6 +86,7 @@ target_sources(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/stm32_dcache.c
 		${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_isolation_mpu_v8m.c
 		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/services/src/tfm_platform_system.c>
+		$<$<BOOL:${STM32_M33TDCID}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/services/src/stm32_copro.c>
 		${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_nvic.c
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/nv_counters.c
 )
@@ -112,6 +119,7 @@ if(NS)
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/include
 			${CMAKE_CURRENT_SOURCE_DIR}/device/include
+			${CMAKE_CURRENT_SOURCE_DIR}/secure/services/include
 	)
 
 	target_sources(platform_ns
