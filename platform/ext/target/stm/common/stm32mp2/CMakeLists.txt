@@ -216,4 +216,21 @@ if(BL2)
 		PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/device/source/startup_stm32mp2_bl2.c
 	)
+
+	add_custom_target(bl2_stm32
+		ALL
+		SOURCES bl2.stm32
+	)
+
+	add_custom_command(OUTPUT bl2.stm32
+		DEPENDS $<TARGET_FILE_DIR:bl2>/bl2.bin
+		DEPENDS $<TARGET_FILE_DIR:bl2>/bl2.elf
+		COMMENT "STM32 image tool for bl2"
+		COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/imageheader/stm32_imgtool.py
+		-e $<TARGET_FILE_DIR:bl2>/bl2.elf
+		-b $<TARGET_FILE_DIR:bl2>/bl2.bin
+		-o $<TARGET_FILE_DIR:bl2>/bl2.stm32
+		-bt 0x30
+	)
+
 endif()
