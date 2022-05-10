@@ -26,8 +26,12 @@
 				 * sizeof(uint32_t))
 #define RESET_BIT(__id)		BIT((__id & RESET_BIT_POS_MASK))
 
+/* registers offset */
+#define _RCC_BDCR		U(0X400)
 #define _RCC_C1RSTCSETR		U(0x404)
 #define _RCC_CPUBOOTCR		U(0x434)
+
+#define _RCC_BDCR_RTCSRC_MASK	GENMASK(17, 16)
 
 #define CPUX(__offset)		__offset - _RCC_C1RSTCSETR
 
@@ -131,6 +135,17 @@ static int stm32_reset_cpu_deassert(struct rstctrl *rstctrl, unsigned int to_us)
 					(~cfgr & rst_mask), to_us);
 }
 
+static int stm32_reset_vsw_assert(struct rstctrl *rstctrl, unsigned int to_us)
+{
+	uintptr_t base = rst_pdata.base;
+
+	if ((mmio_read_32(base + _RCC_BDCR) & _RCC_BDCR_RTCSRC_MASK))
+		return 0;
+
+	/* Reset backup domain on cold boot cases */
+	return stm32_reset_assert(rstctrl, to_us);
+}
+
 static struct rstctrl_ops stm32_rstctrl_ops = {
 	.assert_level = stm32_reset_assert,
 	.deassert_level = stm32_reset_deassert,
@@ -139,6 +154,11 @@ static struct rstctrl_ops stm32_rstctrl_ops = {
 static struct rstctrl_ops stm32_rstctrl_cpu_ops = {
 	.assert_level = stm32_reset_cpu_assert,
 	.deassert_level = stm32_reset_cpu_deassert,
+};
+
+static struct rstctrl_ops stm32_rstctrl_vsw_ops = {
+	.assert_level = stm32_reset_vsw_assert,
+	.deassert_level = stm32_reset_deassert,
 };
 
 /*
@@ -158,3 +178,4 @@ int stm32_reset_init(void)
 DEFINE_STM32_RSTLINE(OSPI1DLL_R, &stm32_rstctrl_ops);
 DEFINE_STM32_RSTLINE(OSPI1_R, &stm32_rstctrl_ops);
 DEFINE_STM32_RSTLINE(CPU1_R, &stm32_rstctrl_cpu_ops);
+DEFINE_STM32_RSTLINE(VSW_R, &stm32_rstctrl_vsw_ops);

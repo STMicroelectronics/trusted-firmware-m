@@ -9,6 +9,7 @@
 #define _DT_BINDINGS_STM32MP25_RESET_H_
 
 #define CPU1_R		8224
+#define VSW_R		8735
 #define DDRPHYCAPB_R	9952
 #define DDRCFG_R	10016
 #define DDRPHYC_R	10048
