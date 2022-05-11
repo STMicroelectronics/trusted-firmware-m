@@ -88,20 +88,6 @@ enum tfm_plat_err_t system_reset_cfg(void)
 	return TFM_PLAT_ERR_SUCCESS;
 }
 
-enum tfm_plat_err_t init_debug(void)
-{
-	/* FIXME: LBA: OPEN debug follow DAUTH flag*/
-#if defined(DAUTH_NONE)
-#elif defined(DAUTH_NS_ONLY)
-#elif defined(DAUTH_FULL)
-#else
-#if !defined(DAUTH_CHIP_DEFAULT)
-#error "No debug authentication setting is provided."
-#endif
-#endif
-	return TFM_PLAT_ERR_SUCCESS;
-}
-
 /*----------------- NVIC interrupt target state to NS configuration ----------*/
 enum tfm_plat_err_t nvic_interrupt_target_state_cfg(void)
 {

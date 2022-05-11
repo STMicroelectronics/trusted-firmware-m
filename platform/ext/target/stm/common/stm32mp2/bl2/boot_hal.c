@@ -21,6 +21,7 @@
 
 #include <plat_device.h>
 #include <stm32_icache.h>
+#include <stm32_bsec3.h>
 #include <stm32_pwr.h>
 #include <stm32_ddr.h>
 
@@ -66,6 +67,23 @@ int stm32_icache_remap(void)
 	return 0;
 }
 
+int init_debug(void)
+{
+#if defined(DAUTH_NONE)
+#elif defined(DAUTH_NS_ONLY)
+#elif defined(DAUTH_FULL)
+	BOOT_LOG_WRN("\033[1;31m*******************************\033[0m");
+	BOOT_LOG_WRN("\033[1;31m* The debug port is full open *\033[0m");
+	BOOT_LOG_WRN("\033[1;31m*******************************\033[0m");
+	stm32_bsec_write_debug_conf(DBG_FULL);
+#else
+#if !defined(DAUTH_CHIP_DEFAULT)
+#error "No debug authentication setting is provided."
+#endif
+#endif
+	return 0;
+}
+
 int backup_domain_init(void)
 {
 	int err;
@@ -104,6 +122,8 @@ int32_t boot_platform_init(void)
 #if MCUBOOT_LOG_LEVEL > MCUBOOT_LOG_LEVEL_OFF
 	stdio_init();
 #endif
+
+	init_debug();
 
 	BOOT_LOG_INF("welcome");
 	BOOT_LOG_INF("mcu sysclk: %d", SystemCoreClock);
