@@ -21,6 +21,7 @@
 
 #include <plat_device.h>
 #include <stm32_icache.h>
+#include <stm32_ddr.h>
 
 extern ARM_DRIVER_FLASH FLASH_DEV_NAME;
 extern  struct flash_otp_nv_counters_region_t otp_stm_provision;
@@ -88,6 +89,10 @@ int32_t boot_platform_init(void)
 
 	BOOT_LOG_INF("welcome");
 	BOOT_LOG_INF("mcu sysclk: %d", SystemCoreClock);
+
+	err = stm32_ddr_init();
+	if (err)
+		return err;
 
 #if defined(STM32_DDR_CACHED)
 	err = stm32_icache_remap();
