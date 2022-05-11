@@ -21,6 +21,7 @@
 
 #include <plat_device.h>
 #include <stm32_icache.h>
+#include <stm32_pwr.h>
 #include <stm32_ddr.h>
 
 extern ARM_DRIVER_FLASH FLASH_DEV_NAME;
@@ -65,6 +66,23 @@ int stm32_icache_remap(void)
 	return 0;
 }
 
+int backup_domain_init(void)
+{
+	int err;
+
+	stm32_pwr_backupd_wp(false);
+
+	err = rstctrl_assert_to(STM32_RSTCTRL_REF(VSW_R), 1000);
+	if (err)
+		return err;
+
+	err = rstctrl_deassert_to(STM32_RSTCTRL_REF(VSW_R), 1000);
+	if (err)
+		return err;
+
+	return 0;
+}
+
 /**
   * @brief  Platform init
   * @param  None
@@ -99,6 +117,10 @@ int32_t boot_platform_init(void)
 	if (err)
 		return err;
 #endif
+
+	err = backup_domain_init();
+	if (err)
+		return err;
 
 	err = FLASH_DEV_NAME.Initialize(NULL);
 	if (err != ARM_DRIVER_OK)
