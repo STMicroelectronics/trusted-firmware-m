@@ -22,6 +22,7 @@
 #include <plat_device.h>
 #include <stm32_icache.h>
 #include <stm32_bsec3.h>
+#include <stm32_syscfg.h>
 #include <stm32_pwr.h>
 #include <stm32_ddr.h>
 
@@ -119,6 +120,9 @@ int32_t boot_platform_init(void)
 	err = stm32_platform_bl2_init();
 	if (err)
 		return err;
+
+	/* safe reset connector enabled */
+	stm32_syscfg_safe_rst(true);
 
 	/* Init for log */
 #if MCUBOOT_LOG_LEVEL > MCUBOOT_LOG_LEVEL_OFF
