@@ -68,6 +68,7 @@ target_sources(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/mpu_armv8m_drv.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/pwr/stm32_pwr.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/bsec/stm32_bsec3.c
+		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/syscfg/stm32_syscfg.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk-stm32-core.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
@@ -179,6 +180,7 @@ if(BL2)
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/mpu_armv8m_drv.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/pwr/stm32_pwr.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/bsec/stm32_bsec3.c
+			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/syscfg/stm32_syscfg.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk-stm32-core.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
