@@ -19,6 +19,8 @@ enum tfm_platform_ioctl_id_t {
 
 /*
  * Copro service
+ *  - get state: running, reset, off
+ *  - set state: running, reset
  */
 enum tfm_copro_service_type_t {
     TFM_COPRO_SERVICE_TYPE_GET = 0,
@@ -29,6 +31,7 @@ enum stm32_copro_state_t {
     COPRO_ERR = INT_MIN,
     COPRO_RUNNING = 0,
     COPRO_RESET = 1,
+    COPRO_OFF = 2,
 };
 
 struct tfm_copro_service_args_t {

@@ -21,14 +21,24 @@
 
 #define COPRO_TIMEOUT_US 1000
 
-static bool stm32_copro_is_enabled()
+static int _copro_power_up(void)
 {
-	return stm32_pwr_cpu_is_enabled(COPRO_ID);
+	return 0;
 }
 
 enum stm32_copro_state_t stm32_copro_get_state(void)
 {
-	return stm32_copro_is_enabled() ? COPRO_RUNNING : COPRO_RESET;
+	if (stm32_pwr_cpu_get_dstate(COPRO_ID) == DSTANDBY)
+		return COPRO_OFF;
+
+	if (stm32_pwr_cpu_get_cstate(COPRO_ID) == CRESET)
+		return COPRO_RESET;
+
+	/*
+	 * running: the cpu power is up, the copro is running
+	 * or could be trig on event
+	 */
+	return COPRO_RUNNING;
 }
 
 enum stm32_copro_state_t
@@ -36,6 +46,10 @@ stm32_copro_set_state(enum stm32_copro_state_t state)
 {
 	if (state != COPRO_RUNNING && state != COPRO_RESET)
 		return COPRO_ERR;
+
+	if (stm32_copro_get_state() == COPRO_OFF)
+		if (_copro_power_up())
+			return COPRO_ERR;
 
 	if (state == COPRO_RESET)
 		rstctrl_assert_to(COPRO_RSTCTRL, COPRO_TIMEOUT_US);
