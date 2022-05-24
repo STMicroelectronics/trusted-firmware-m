@@ -74,8 +74,10 @@ int init_debug(void)
 #elif defined(DAUTH_FULL)
 	BOOT_LOG_WRN("\033[1;31m*******************************\033[0m");
 	BOOT_LOG_WRN("\033[1;31m* The debug port is full open *\033[0m");
+	BOOT_LOG_WRN("\033[1;31m* wait debugger interrupt     *\033[0m");
 	BOOT_LOG_WRN("\033[1;31m*******************************\033[0m");
 	stm32_bsec_write_debug_conf(DBG_FULL);
+        __WFI();
 #else
 #if !defined(DAUTH_CHIP_DEFAULT)
 #error "No debug authentication setting is provided."
