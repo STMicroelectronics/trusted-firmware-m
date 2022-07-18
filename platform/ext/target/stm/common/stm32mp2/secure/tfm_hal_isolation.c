@@ -33,7 +33,6 @@ REGION_DECLARE(Image$$, TFM_APP_RW_STACK_END, $$Base);
 REGION_DECLARE(Image$$, TFM_SP_META_PTR, $$RW$$Base);
 REGION_DECLARE(Image$$, TFM_SP_META_PTR, $$RW$$Limit);
 #endif
-#endif /* CONFIG_TFM_ENABLE_MEMORY_PROTECT */
 
 static const struct mpu_armv8m_region_cfg_t __maybe_unused mpu_regions[] = {
 	/* Veneer region */
@@ -128,6 +127,7 @@ enum tfm_hal_status_t __maybe_unused tfm_hal_mpu_init(void)
 
 	return 0;
 }
+#endif /* CONFIG_TFM_ENABLE_MEMORY_PROTECT */
 
 enum tfm_hal_status_t tfm_hal_set_up_static_boundaries(void)
 {
