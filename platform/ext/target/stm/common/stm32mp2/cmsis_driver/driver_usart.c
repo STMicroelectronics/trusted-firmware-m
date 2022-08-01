@@ -418,6 +418,9 @@ DEFINE_UARTX(3)
 #endif
 
 #if (STM_USART4)
-	extern struct stm32_uart_platdata stm32_uart4_pdata;
 DEFINE_UARTX(4)
+#endif
+
+#if (STM_USART5)
+DEFINE_UARTX(5)
 #endif
