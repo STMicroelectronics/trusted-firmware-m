@@ -2028,6 +2028,7 @@ int stm32mp2_clk_probe(struct stm32_clk_priv *priv)
 	}
 #endif
 
+#ifdef STM32_M33TDCID
 	ret = stm32mp2_clk_oscillators_enable(priv);
 	if (ret != 0) {
 		panic();
@@ -2076,6 +2077,7 @@ int stm32mp2_clk_probe(struct stm32_clk_priv *priv)
 	if (ret != 0) {
 		panic();
 	}
+#endif	/* endif STM32_M33TDCID */
 
 	return 0;
 }
