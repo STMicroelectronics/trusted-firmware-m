@@ -34,6 +34,8 @@ enum tfm_plat_err_t read_otp_nv_counters_flash(uint32_t offset, void *data, uint
 
 enum tfm_plat_err_t init_otp_nv_counters_flash(void)
 {
+    enum tfm_plat_err_t err = TFM_PLAT_ERR_SUCCESS;
+
     if (otp_nv_ram_buf.init_value != OTP_NV_COUNTERS_INITIALIZED) {
 #if defined(OTP_WRITEABLE)
         err = create_or_restore_layout();
@@ -45,7 +47,7 @@ enum tfm_plat_err_t init_otp_nv_counters_flash(void)
 }
 
 #if defined(OTP_WRITEABLE)
-static enum tfm_plat_err_t create_or_restore_layout(void);
+static enum tfm_plat_err_t create_or_restore_layout(void)
 {
     memset(&otp_nv_ram_buf, 0, sizeof(otp_nv_ram_buf));
     otp_nv_ram_buf.init_value = OTP_NV_COUNTERS_INITIALIZED;
