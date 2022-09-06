@@ -12,6 +12,8 @@
 #include <uart_stdout.h>
 #include <stm32_icache.h>
 #include <stm32_dcache.h>
+#include <debug.h>
+#include <board_model.h>
 
 extern const struct memory_region_limits memory_regions;
 
@@ -30,6 +32,8 @@ enum tfm_hal_status_t tfm_hal_platform_init(void)
 
 	__enable_irq();
 	stdio_init();
+
+	IMSG("welcome to "MODEL_FULLSTR);
 
 	return TFM_HAL_SUCCESS;
 }

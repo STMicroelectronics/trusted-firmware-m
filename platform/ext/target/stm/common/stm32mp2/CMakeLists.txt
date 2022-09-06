@@ -7,6 +7,10 @@
 cmake_policy(SET CMP0076 NEW)
 set(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
+# Generate board model
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/boards/board_model.h.in
+               ${CMAKE_BINARY_DIR}/generated/board_model.h)
+
 #========================= Platform region defs ===============================#
 
 target_include_directories(platform_region_defs
@@ -49,6 +53,7 @@ target_include_directories(psa_interface
 target_include_directories(platform_s
 	PUBLIC
 		${PLATFORM_DIR}/include
+	        ${CMAKE_BINARY_DIR}/generated
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/include
 		${CMAKE_CURRENT_SOURCE_DIR}/device/include
