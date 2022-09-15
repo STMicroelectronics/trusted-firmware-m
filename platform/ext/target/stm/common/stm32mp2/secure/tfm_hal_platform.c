@@ -6,6 +6,7 @@
  */
 #include <cmsis.h>
 #include <tfm_hal_platform.h>
+#include <tfm_plat_defs.h>
 #include <plat_device.h>
 #include <target_cfg.h>
 
@@ -19,6 +20,18 @@ extern const struct memory_region_limits memory_regions;
 
 enum tfm_hal_status_t tfm_hal_platform_init(void)
 {
+	enum tfm_plat_err_t plat_err = TFM_PLAT_ERR_SYSTEM_ERR;
+
+	plat_err = enable_fault_handlers();
+	if (plat_err != TFM_PLAT_ERR_SUCCESS) {
+		return TFM_HAL_ERROR_GENERIC;
+	}
+
+	plat_err = system_reset_cfg();
+	if (plat_err != TFM_PLAT_ERR_SUCCESS) {
+		return TFM_HAL_ERROR_GENERIC;
+	}
+
 	if (stm32_platform_s_init())
 		return TFM_HAL_ERROR_GENERIC;
 
@@ -34,6 +47,16 @@ enum tfm_hal_status_t tfm_hal_platform_init(void)
 	stdio_init();
 
 	IMSG("welcome to "MODEL_FULLSTR);
+
+	plat_err = nvic_interrupt_target_state_cfg();
+	if (plat_err != TFM_PLAT_ERR_SUCCESS) {
+		return TFM_HAL_ERROR_GENERIC;
+	}
+
+	plat_err = nvic_interrupt_enable();
+	if (plat_err != TFM_PLAT_ERR_SUCCESS) {
+		return TFM_HAL_ERROR_GENERIC;
+	}
 
 	return TFM_HAL_SUCCESS;
 }
