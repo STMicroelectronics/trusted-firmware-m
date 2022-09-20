@@ -71,6 +71,7 @@ target_sources(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_flash_mm.c
 		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_usart.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/mpu_armv8m_drv.c
+		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/sau_armv8m_drv.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/pwr/stm32_pwr.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/bsec/stm32_bsec3.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/syscfg/stm32_syscfg.c
