@@ -12,6 +12,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/boards/board_model.h.in
                ${CMAKE_BINARY_DIR}/generated/board_model.h)
 
 #========================= Platform region defs ===============================#
+target_compile_definitions(platform_region_defs
+	INTERFACE
+		$<$<BOOL:${STM32_IPC}>:STM32_IPC>
+)
 
 target_include_directories(platform_region_defs
 	INTERFACE
