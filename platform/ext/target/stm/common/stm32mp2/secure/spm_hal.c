@@ -17,11 +17,9 @@
 
 #include <stm32_rif.h>
 
-/* Get address of memory regions to configure MPU */
-extern const struct memory_region_limits memory_regions;
-
-struct mpu_armv8m_dev_t dev_mpu_s = { MPU_BASE };
-struct mpu_armv8m_dev_t dev_mpu_ns = { MPU_BASE_NS};
+/* Get address of non secure code start */
+REGION_DECLARE(Load$$LR$$, LR_NS_PARTITION, $$Base);
+const uint32_t ns_code_start = (uint32_t)&REGION_NAME(Load$$LR$$, LR_NS_PARTITION, $$Base);
 
 enum tfm_plat_err_t tfm_spm_hal_configure_default_isolation(
                   bool privileged,
@@ -33,17 +31,17 @@ enum tfm_plat_err_t tfm_spm_hal_configure_default_isolation(
 
 uint32_t tfm_spm_hal_get_ns_VTOR(void)
 {
-    return memory_regions.non_secure_code_start;
+    return ns_code_start;
 }
 
 uint32_t tfm_spm_hal_get_ns_MSP(void)
 {
-    return *((uint32_t *)memory_regions.non_secure_code_start);
+	return *((uint32_t *)ns_code_start);
 }
 
 uint32_t tfm_spm_hal_get_ns_entry_point(void)
 {
-    return *((uint32_t *)(memory_regions.non_secure_code_start+ 4));
+    return *((uint32_t *)(ns_code_start + 4));
 }
 
 enum tfm_plat_err_t tfm_spm_hal_set_secure_irq_priority(IRQn_Type irq_line)

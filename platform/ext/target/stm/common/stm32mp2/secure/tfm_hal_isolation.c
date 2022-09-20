@@ -14,6 +14,7 @@
 #include <load/spm_load_api.h>
 
 #include <mpu_armv8m_drv.h>
+#include <sau_armv8m_drv.h>
 #include <stm32_icache.h>
 
 /* It can be retrieved from the MPU_TYPE register. */
@@ -132,7 +133,7 @@ enum tfm_hal_status_t __maybe_unused tfm_hal_mpu_init(void)
 enum tfm_hal_status_t tfm_hal_set_up_static_boundaries(void)
 {
 	/* Set up isolation boundaries between SPE and NSPE */
-	sau_and_idau_cfg();
+	sau_init();
 
 	/* Set up static isolation boundaries inside SPE */
 #ifdef CONFIG_TFM_ENABLE_MEMORY_PROTECT

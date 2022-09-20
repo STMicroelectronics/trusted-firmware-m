@@ -20,37 +20,10 @@
 #include <region_defs.h>
 #include <tfm_secure_api.h>
 #include <tfm_plat_defs.h>
+#include <lib/utils_def.h>
 
 #include <stm32_iac.h>
 #include <stm32_serc.h>
-
-/* The section names come from the scatter file */
-REGION_DECLARE(Load$$LR$$, LR_NS_PARTITION, $$Base);
-REGION_DECLARE(Load$$LR$$, LR_VENEER, $$Base);
-REGION_DECLARE(Load$$LR$$, LR_VENEER, $$Limit);
-REGION_DECLARE(Load$$LR$$, LR_SECONDARY_PARTITION, $$Base);
-
-const struct memory_region_limits memory_regions = {
-	.non_secure_code_start =
-		(uint32_t)&REGION_NAME(Load$$LR$$, LR_NS_PARTITION, $$Base),
-
-	.non_secure_partition_base =
-		(uint32_t)&REGION_NAME(Load$$LR$$, LR_NS_PARTITION, $$Base),
-
-	.non_secure_partition_limit =
-		(uint32_t)&REGION_NAME(Load$$LR$$, LR_NS_PARTITION, $$Base) +
-		NS_PARTITION_SIZE - 1,
-
-	.veneer_base =
-		(uint32_t)&REGION_NAME(Load$$LR$$, LR_VENEER, $$Base),
-
-	.veneer_limit =
-		(uint32_t)&REGION_NAME(Load$$LR$$, LR_VENEER, $$Limit),
-};
-
-/* Define Peripherals NS address range for the platform */
-#define PERIPHERALS_BASE_NS_START (0x40000000)
-#define PERIPHERALS_BASE_NS_END   (0x4FFFFFFF)
 
 /* To write into AIRCR register, 0x5FA value must be write to the VECTKEY field,
  * otherwise the processor ignores the write.
@@ -110,43 +83,4 @@ enum tfm_plat_err_t nvic_interrupt_enable()
 	stm32_serc_enable_irq();
 
 	return TFM_PLAT_ERR_SUCCESS;
-}
-
-/*------------------- SAU/IDAU configuration functions -----------------------*/
-
-void sau_and_idau_cfg(void)
-{
-	/* Disable SAU */
-	TZ_SAU_Disable();
-
-	/* Configures SAU regions to be non-secure */
-	SAU->RNR  = 0U;
-	SAU->RBAR = (memory_regions.non_secure_partition_base
-		     & SAU_RBAR_BADDR_Msk);
-	SAU->RLAR = (memory_regions.non_secure_partition_limit
-		     & SAU_RLAR_LADDR_Msk) | SAU_RLAR_ENABLE_Msk;
-
-	SAU->RNR  = 1U;
-	SAU->RBAR = (NS_DATA_START & SAU_RBAR_BADDR_Msk);
-	SAU->RLAR = (NS_DATA_LIMIT & SAU_RLAR_LADDR_Msk) | SAU_RLAR_ENABLE_Msk;
-
-	/* Configures veneers region to be non-secure callable */
-	SAU->RNR  = 2U;
-	SAU->RBAR = (memory_regions.veneer_base  & SAU_RBAR_BADDR_Msk);
-	SAU->RLAR = (memory_regions.veneer_limit & SAU_RLAR_LADDR_Msk)
-		| SAU_RLAR_ENABLE_Msk | SAU_RLAR_NSC_Msk;
-
-	/* Configure the peripherals space */
-	SAU->RNR  = 3U;
-	SAU->RBAR = (PERIPHERALS_BASE_NS_START & SAU_RBAR_BADDR_Msk);
-	SAU->RLAR = (PERIPHERALS_BASE_NS_END & SAU_RLAR_LADDR_Msk)
-		| SAU_RLAR_ENABLE_Msk;
-
-	/* Force memory writes before continuing */
-	__DSB();
-	/* Flush and refill pipeline with updated permissions */
-	__ISB();
-
-	/* Enable SAU */
-	TZ_SAU_Enable();
 }
