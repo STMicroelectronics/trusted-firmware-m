@@ -126,6 +126,9 @@ typedef struct gic_interrupt_config
   */
 
 /**
+  \brief Exception / Interrupt Handler Function Prototype
+*/
+typedef void(*VECTOR_TABLE_Type)(void);
   * @}
   */
 

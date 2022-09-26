@@ -30,19 +30,32 @@ static const ARM_DRIVER_VERSION DriverVersion = {
 /* Flash Ready event generation capability values */
 #define EVENT_READY_NOT_AVAILABLE	(0u)
 #define EVENT_READY_AVAILABLE		(1u)
-/* Data access size values */
-#define DATA_WIDTH_8BIT			(0u)
-#define DATA_WIDTH_16BIT		(1u)
-#define DATA_WIDTH_32BIT		(2u)
 /* Chip erase capability values */
 #define CHIP_ERASE_NOT_SUPPORTED	(0u)
 #define CHIP_ERASE_SUPPORTED		(1u)
 
+/**
+ * Data width values for ARM_FLASH_CAPABILITIES::data_width
+ * \ref ARM_FLASH_CAPABILITIES
+ */
+enum {
+	DATA_WIDTH_8BIT   = 0u,
+	DATA_WIDTH_16BIT,
+	DATA_WIDTH_32BIT,
+	DATA_WIDTH_ENUM_SIZE
+};
+
+static const uint32_t data_width_byte[DATA_WIDTH_ENUM_SIZE] = {
+	sizeof(uint8_t),
+	sizeof(uint16_t),
+	sizeof(uint32_t),
+};
+
 /* Driver Capabilities */
 static const ARM_FLASH_CAPABILITIES DriverCapabilities = {
 	EVENT_READY_NOT_AVAILABLE,
-	DATA_WIDTH_32BIT,
-	CHIP_ERASE_NOT_SUPPORTED,
+	DATA_WIDTH_8BIT,
+	CHIP_ERASE_SUPPORTED
 };
 
 /**
@@ -124,59 +137,61 @@ static int32_t ARM_Flash_PowerControl(ARM_POWER_STATE state)
 
 static int32_t ARM_Flash_ReadData(uint32_t addr, void *data, uint32_t cnt)
 {
+	uint32_t bytes = cnt * data_width_byte[DriverCapabilities.data_width];
 	size_t length_read;
 	int ret;
 
 	FlashStatus.error = DRIVER_STATUS_NO_ERROR;
 
 	/* Check Flash memory boundaries */
-	if (!is_range_valid(addr + cnt - 1)) {
+	if (!is_range_valid(addr + bytes - 1)) {
 		FlashStatus.error = DRIVER_STATUS_ERROR;
 		return ARM_DRIVER_ERROR_PARAMETER;
 	}
 
 	FlashStatus.busy = DRIVER_STATUS_BUSY;
 
-	ret = spi_nor_read(addr, (uintptr_t)data, cnt, &length_read);
+	ret = spi_nor_read(addr, (uintptr_t)data, bytes, &length_read);
 
 	FlashStatus.busy = DRIVER_STATUS_IDLE;
 
-	if (ret || (length_read != cnt)) {
+	if (ret || (length_read != bytes)) {
 		FlashStatus.error = DRIVER_STATUS_ERROR;
 		return ARM_DRIVER_ERROR;
 	}
 
-	return ARM_DRIVER_OK;
+	return cnt;
 }
 
 static int32_t ARM_Flash_ProgramData(uint32_t addr, const void *data,
 				     uint32_t cnt)
 {
+	uint32_t bytes = cnt * data_width_byte[DriverCapabilities.data_width];
 	size_t length_write;
 	int ret;
 
 	FlashStatus.error = DRIVER_STATUS_NO_ERROR;
 
 	/* Check Flash memory boundaries */
-	if (!(is_range_valid(addr + cnt - 1) &&
+	if (!(is_range_valid(addr + bytes - 1) &&
 	    is_write_aligned(addr) &&
-	    is_write_aligned(cnt))) {
+	    is_write_aligned(bytes))) {
 		FlashStatus.error = DRIVER_STATUS_ERROR;
 		return ARM_DRIVER_ERROR_PARAMETER;
 	}
 
 	FlashStatus.busy = DRIVER_STATUS_BUSY;
 
-	ret = spi_nor_write(addr, (uintptr_t)data, cnt, &length_write);
+	ret = spi_nor_write(addr, (uintptr_t)data, bytes, &length_write);
 
 	FlashStatus.busy = DRIVER_STATUS_IDLE;
 
-	if (ret || (length_write != cnt)) {
+	if (ret || (length_write != bytes)) {
 		FlashStatus.error = DRIVER_STATUS_ERROR;
 		return ARM_DRIVER_ERROR;
 	}
 
-	return ARM_DRIVER_OK;
+	return cnt;
 }
 
 static int32_t ARM_Flash_EraseSector(uint32_t addr)

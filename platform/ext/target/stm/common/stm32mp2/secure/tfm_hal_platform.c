@@ -9,6 +9,7 @@
 #include <tfm_plat_defs.h>
 #include <plat_device.h>
 #include <target_cfg.h>
+#include <region.h>
 
 #include <uart_stdout.h>
 #include <stm32_icache.h>
@@ -57,4 +58,23 @@ enum tfm_hal_status_t tfm_hal_platform_init(void)
 	}
 
 	return TFM_HAL_SUCCESS;
+}
+
+/* Get address of non secure code start */
+REGION_DECLARE(Load$$LR$$, LR_NS_PARTITION, $$Base);
+#define NS_SECURE_BASE (uint32_t)&REGION_NAME(Load$$LR$$, LR_NS_PARTITION, $$Base)
+
+uint32_t tfm_hal_get_ns_VTOR(void)
+{
+    return NS_SECURE_BASE;
+}
+
+uint32_t tfm_hal_get_ns_MSP(void)
+{
+    return *((uint32_t *)NS_SECURE_BASE);
+}
+
+uint32_t tfm_hal_get_ns_entry_point(void)
+{
+    return *((uint32_t *)(NS_SECURE_BASE + 4));
 }

@@ -44,6 +44,13 @@
 /* Import the CMSIS flash device driver */
 extern ARM_DRIVER_FLASH NV_COUNTERS_FLASH_DRIVER;
 
+/* Valid entries for data item width */
+static const uint32_t data_width_byte[] = {
+    sizeof(uint8_t),
+    sizeof(uint16_t),
+    sizeof(uint32_t),
+};
+
 static uint32_t calc_checksum(const uint32_t *data, size_t len)
 {
 	uint32_t sum = 0;
@@ -72,19 +79,25 @@ static void set_checksum(struct nv_counters_t *nv_counters)
 volatile int once=0;
 enum tfm_plat_err_t tfm_plat_init_nv_counter(void)
 {
-	int32_t  err;
+	int32_t  ret;
 	struct nv_counters_t nv_counters;
+	ARM_FLASH_CAPABILITIES DriverCapabilities;
+	uint8_t data_width;
+	uint32_t cnt;
 
-	err = NV_COUNTERS_FLASH_DRIVER.Initialize(NULL);
-	if (err != ARM_DRIVER_OK) {
+	ret = NV_COUNTERS_FLASH_DRIVER.Initialize(NULL);
+	if (ret != ARM_DRIVER_OK) {
 		return TFM_PLAT_ERR_SYSTEM_ERR;
 	}
 
+	DriverCapabilities = NV_COUNTERS_FLASH_DRIVER.GetCapabilities();
+	data_width = data_width_byte[DriverCapabilities.data_width];
+	cnt = sizeof(struct nv_counters_t) / data_width;
+
 	/* Read the whole sector so we can write it back to flash later */
-	err = NV_COUNTERS_FLASH_DRIVER.ReadData(VALID_ADDRESS,
-						&nv_counters,
-						sizeof(struct nv_counters_t));
-	if (err != ARM_DRIVER_OK) {
+	ret = NV_COUNTERS_FLASH_DRIVER.ReadData(VALID_ADDRESS,
+						&nv_counters, cnt);
+	if (ret != cnt) {
 		return TFM_PLAT_ERR_SYSTEM_ERR;
 	}
 
@@ -93,16 +106,15 @@ enum tfm_plat_err_t tfm_plat_init_nv_counter(void)
 	}
 
 	/* Check the backup watermark */
-	err = NV_COUNTERS_FLASH_DRIVER.ReadData(BACKUP_ADDRESS,
-						&nv_counters,
-						sizeof(struct nv_counters_t));
-	if (err != ARM_DRIVER_OK) {
+	ret = NV_COUNTERS_FLASH_DRIVER.ReadData(BACKUP_ADDRESS,
+						&nv_counters, cnt);
+	if (ret != cnt) {
 		return TFM_PLAT_ERR_SYSTEM_ERR;
 	}
 
 	/* Erase sector before writing to it */
-	err = NV_COUNTERS_FLASH_DRIVER.EraseSector(VALID_ADDRESS);
-	if (err != ARM_DRIVER_OK) {
+	ret = NV_COUNTERS_FLASH_DRIVER.EraseSector(VALID_ADDRESS);
+	if (ret != ARM_DRIVER_OK) {
 		return TFM_PLAT_ERR_SYSTEM_ERR;
 	}
 
@@ -120,11 +132,10 @@ enum tfm_plat_err_t tfm_plat_init_nv_counter(void)
 	}
 
 	/* Write the in-memory block content after modification to flash */
-	err = NV_COUNTERS_FLASH_DRIVER.ProgramData(VALID_ADDRESS,
-						   &nv_counters,
-						   sizeof(struct nv_counters_t));
+	ret = NV_COUNTERS_FLASH_DRIVER.ProgramData(VALID_ADDRESS,
+						   &nv_counters, cnt);
 
-	if (err != ARM_DRIVER_OK) {
+	if (ret != cnt) {
 		return TFM_PLAT_ERR_SYSTEM_ERR;
 	}
 
@@ -134,17 +145,24 @@ enum tfm_plat_err_t tfm_plat_init_nv_counter(void)
 enum tfm_plat_err_t tfm_plat_read_nv_counter(enum tfm_nv_counter_t counter_id,
 					     uint32_t size, uint8_t *val)
 {
-	int32_t  err;
+	int32_t  ret;
 	uint32_t flash_addr = VALID_ADDRESS
 		+ offsetof(struct nv_counters_t, counters)
 		+ (counter_id * NV_COUNTER_SIZE);
+	ARM_FLASH_CAPABILITIES DriverCapabilities;
+	uint8_t data_width;
+	uint32_t cnt;
 
 	if (size != NV_COUNTER_SIZE) {
 		return TFM_PLAT_ERR_SYSTEM_ERR;
 	}
 
-	err = NV_COUNTERS_FLASH_DRIVER.ReadData(flash_addr, val, NV_COUNTER_SIZE);
-	if (err != ARM_DRIVER_OK) {
+	DriverCapabilities = NV_COUNTERS_FLASH_DRIVER.GetCapabilities();
+	data_width = data_width_byte[DriverCapabilities.data_width];
+	cnt = NV_COUNTER_SIZE / data_width;
+
+	ret = NV_COUNTERS_FLASH_DRIVER.ReadData(flash_addr, val, cnt);
+	if (ret != cnt) {
 		return TFM_PLAT_ERR_SYSTEM_ERR;
 	}
 
@@ -154,14 +172,20 @@ enum tfm_plat_err_t tfm_plat_read_nv_counter(enum tfm_nv_counter_t counter_id,
 enum tfm_plat_err_t tfm_plat_set_nv_counter(enum tfm_nv_counter_t counter_id,
 					    uint32_t value)
 {
-	int32_t  err;
+	int32_t  ret;
 	struct nv_counters_t nv_counters;
+	ARM_FLASH_CAPABILITIES DriverCapabilities;
+	uint8_t data_width;
+	uint32_t nv_counters_cnt;
+
+	DriverCapabilities = NV_COUNTERS_FLASH_DRIVER.GetCapabilities();
+	data_width = data_width_byte[DriverCapabilities.data_width];
+	nv_counters_cnt = sizeof(struct nv_counters_t) / data_width;
 
 	/* Read the whole sector so we can write it back to flash later */
-	err = NV_COUNTERS_FLASH_DRIVER.ReadData(VALID_ADDRESS,
-						&nv_counters,
-						sizeof(struct nv_counters_t));
-	if (err != ARM_DRIVER_OK) {
+	ret = NV_COUNTERS_FLASH_DRIVER.ReadData(VALID_ADDRESS,
+						&nv_counters, nv_counters_cnt);
+	if (ret != nv_counters_cnt) {
 		return TFM_PLAT_ERR_SYSTEM_ERR;
 	}
 
@@ -172,8 +196,8 @@ enum tfm_plat_err_t tfm_plat_set_nv_counter(enum tfm_nv_counter_t counter_id,
 		}
 
 		/* Erase backup sector */
-		err = NV_COUNTERS_FLASH_DRIVER.EraseSector(BACKUP_ADDRESS);
-		if (err != ARM_DRIVER_OK) {
+		ret = NV_COUNTERS_FLASH_DRIVER.EraseSector(BACKUP_ADDRESS);
+		if (ret != ARM_DRIVER_OK) {
 			return TFM_PLAT_ERR_SYSTEM_ERR;
 		}
 
@@ -182,24 +206,24 @@ enum tfm_plat_err_t tfm_plat_set_nv_counter(enum tfm_nv_counter_t counter_id,
 		set_checksum(&nv_counters);
 
 		/* write sector data to backup sector */
-		err = NV_COUNTERS_FLASH_DRIVER.ProgramData(BACKUP_ADDRESS,
+		ret = NV_COUNTERS_FLASH_DRIVER.ProgramData(BACKUP_ADDRESS,
 							   &nv_counters,
-							   sizeof(struct nv_counters_t));
-		if (err != ARM_DRIVER_OK) {
+							   nv_counters_cnt);
+		if (ret != nv_counters_cnt) {
 			return TFM_PLAT_ERR_SYSTEM_ERR;
 		}
 
 		/* Erase sector before writing to it */
-		err = NV_COUNTERS_FLASH_DRIVER.EraseSector(VALID_ADDRESS);
-		if (err != ARM_DRIVER_OK) {
+		ret = NV_COUNTERS_FLASH_DRIVER.EraseSector(VALID_ADDRESS);
+		if (ret != ARM_DRIVER_OK) {
 			return TFM_PLAT_ERR_SYSTEM_ERR;
 		}
 
 		/* Write the in-memory block content after modification to flash */
-		err = NV_COUNTERS_FLASH_DRIVER.ProgramData(VALID_ADDRESS,
+		ret = NV_COUNTERS_FLASH_DRIVER.ProgramData(VALID_ADDRESS,
 							   &nv_counters,
-							   sizeof(struct nv_counters_t));
-		if (err != ARM_DRIVER_OK) {
+							   nv_counters_cnt);
+		if (ret != nv_counters_cnt) {
 			return TFM_PLAT_ERR_SYSTEM_ERR;
 		}
 	}

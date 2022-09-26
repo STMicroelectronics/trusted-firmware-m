@@ -18,7 +18,6 @@
 #include <target_cfg.h>
 #include <region.h>
 #include <region_defs.h>
-#include <tfm_secure_api.h>
 #include <tfm_plat_defs.h>
 #include <lib/utils_def.h>
 

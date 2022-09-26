@@ -28,8 +28,7 @@ MEMORY
 }
 
 __heap_size__  = NS_HEAP_SIZE;
-__psp_stack_size__ = NS_PSP_STACK_SIZE;
-__msp_stack_size__ = NS_MSP_STACK_SIZE;
+__stack_size__ = NS_STACK_SIZE;
 
 /* Library configurations */
 GROUP(libgcc.a libc.a libm.a libnosys.a)
@@ -84,35 +83,35 @@ SECTIONS
 
     /* To copy multiple ROM to RAM sections,
      * define etext2/data2_start/data2_end and
-     * define __STARTUP_COPY_MULTIPLE in startup_cmsdk_mps2_an519_ns.S */
+     * define __STARTUP_COPY_MULTIPLE in startup file */
     .copy.table :
     {
         . = ALIGN(4);
         __copy_table_start__ = .;
         LONG (__etext)
         LONG (__data_start__)
-        LONG (__data_end__ - __data_start__)
+        LONG ((__data_end__ - __data_start__) / 4)
         LONG (DEFINED(__etext2) ? __etext2 : 0)
         LONG (DEFINED(__data2_start__) ? __data2_start__ : 0)
-        LONG (DEFINED(__data2_start__) ? __data2_end__ - __data2_start__ : 0)
+        LONG (DEFINED(__data2_start__) ? ((__data2_end__ - __data2_start__) / 4) : 0)
         __copy_table_end__ = .;
     } > FLASH
 
     /* To clear multiple BSS sections,
      * uncomment .zero.table section and,
-     * define __STARTUP_CLEAR_BSS_MULTIPLE in startup_cmsdk_mps2_an519_ns.S */
+     * define __STARTUP_CLEAR_BSS_MULTIPLE in startup file */
     .zero.table :
     {
         . = ALIGN(4);
         __zero_table_start__ = .;
         LONG (__bss_start__)
-        LONG (__bss_end__ - __bss_start__)
+        LONG ((__bss_end__ - __bss_start__) / 4)
         LONG (DEFINED(__bss2_start__) ? __bss2_start__ : 0)
-        LONG (DEFINED(__bss2_start__) ? __bss2_end__ - __bss2_start__ : 0)
+        LONG (DEFINED(__bss2_start__) ? ((__bss2_end__ - __bss2_start__) / 4) : 0)
         __zero_table_end__ = .;
     } > FLASH
 
-    __etext = .;
+    __etext = ALIGN(4);
 
     .testprotection NS_DATA_START :
     {
@@ -165,19 +164,12 @@ SECTIONS
 
     bss_size = __bss_end__ - __bss_start__;
 
-    .msp_stack : ALIGN(32)
+    .stack : ALIGN(32)
     {
-        . += __msp_stack_size__;
+	. += __stack_size__;
     } > RAM
-    Image$$ARM_LIB_STACK_MSP$$ZI$$Base = ADDR(.msp_stack);
-    Image$$ARM_LIB_STACK_MSP$$ZI$$Limit = ADDR(.msp_stack) + SIZEOF(.msp_stack);
-
-    .psp_stack : ALIGN(32)
-    {
-        . += __psp_stack_size__;
-    } > RAM
-    Image$$ARM_LIB_STACK$$ZI$$Base = ADDR(.psp_stack);
-    Image$$ARM_LIB_STACK$$ZI$$Limit = ADDR(.psp_stack) + SIZEOF(.psp_stack);
+    __StackLimit = ADDR(.stack);
+    __StackTop = ADDR(.stack) + SIZEOF(.stack);
 
     .heap : ALIGN(8)
     {
@@ -189,5 +181,5 @@ SECTIONS
         __heap_limit = .; /* Add for _sbrk */
     } > RAM
 
-    PROVIDE(__stack = Image$$ARM_LIB_STACK$$ZI$$Limit);
+    PROVIDE(__stack = __StackTop);
 }

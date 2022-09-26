@@ -67,7 +67,6 @@ target_include_directories(platform_s
 target_sources(platform_s
 	PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}/device/source/system_stm32mp2xx_m33.c
-		${CMAKE_CURRENT_SOURCE_DIR}/secure/spm_hal.c
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/target_cfg.c
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_hal_isolation.c
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_hal_platform.c
@@ -96,7 +95,6 @@ target_sources(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_serc.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/stm32_icache.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/stm32_dcache.c
-		${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_isolation_mpu_v8m.c
 		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/services/src/tfm_platform_system.c>
 		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/nv_counters.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/services/src/stm32_copro.c>

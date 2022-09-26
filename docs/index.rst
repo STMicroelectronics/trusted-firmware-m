@@ -115,7 +115,7 @@ Trusted Firmware-M Documentation
     :maxdepth: 1
     :hidden:
 
-    docs/stm/index
+    stm/index
 
 --------------
 

@@ -5,7 +5,7 @@ Getting started
 Prerequisites
 -------------
 
-- Follow the :doc:`SW requirements guide </docs/getting_started/tfm_getting_started>` to set up your environment.
+- Follow the :doc:`SW requirements guide </getting_started/tfm_getting_started>` to set up your environment.
 
 Software
 --------
@@ -67,8 +67,9 @@ Instructions for your board:
     :maxdepth: 1
     :glob:
 
-    ../../../../platform/ext/target/stm/stm32*/**
-    ../../../../platform/ext/target/stm/nucleo*/**
+    ../platform/stm/stm32*/**
+    ../platform/stm/nucleo*/**
+    ../platform/stm/b_*/**
 
 --------------
 
