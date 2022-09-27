@@ -176,6 +176,7 @@ if(BL2)
 			${MCUBOOT_PATH}/boot/bootutil/include
 			$<TARGET_PROPERTY:bl2,BINARY_DIR>/ext/mcuboot
 			${CMAKE_SOURCE_DIR}/bl2/ext/mcuboot/include
+			${CMAKE_SOURCE_DIR}/interface/include
 	)
 
 	target_sources(platform_bl2
@@ -206,7 +207,7 @@ if(BL2)
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_serc.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/stm32_icache.c
 			$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/nv_counters.c>
-			${CMAKE_CURRENT_SOURCE_DIR}/secure/otp_provision.c
+			${STM_COMMON_DIR}/hal/provision/otp_provision.c
 	)
 
 	target_compile_options(platform_bl2
