@@ -1,7 +1,7 @@
 v1.5.0-stm32mp25-r2
 ===================
 
-based on :doc:`tfm 1.5.0 </docs/releases/1.5.0>`
+based on :doc:`tfm 1.5.0 </releases/1.5.0>`
 
 New major features
 ------------------
@@ -15,7 +15,7 @@ New major features
 - add uboot script to flash bl2, tfm binaries on nor
 - add stm32 image tool
 - bl2: open debug on DEBUG_AUTHENTICATION=FULL
-- fixup ospi boot on fpga
+- fixup ospi boot
 - move backup domain init in bl2
 
 Tested platforms

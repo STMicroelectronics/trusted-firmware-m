@@ -1,7 +1,7 @@
 v1.5.0-stm32mp25-r1
 ===================
 
-based on :doc:`tfm 1.5.0 </docs/releases/1.5.0>`
+based on :doc:`tfm 1.5.0 </releases/1.5.0>`
 
 New major features
 ------------------

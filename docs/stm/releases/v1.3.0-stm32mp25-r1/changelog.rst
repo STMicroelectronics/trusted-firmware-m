@@ -1,15 +1,18 @@
-v1.5.0-stm32mp25-r3
+===================
+v1.3.0-stm32mp25-r1
 ===================
 
-based on :doc:`tfm 1.5.0 </releases/1.5.0>`
+based on :doc:`tfm 1.3.0 </releases/1.3.0>`
 
 New major features
 ------------------
 
-- for rpmsg non secure application (example):
+first team delivery with features:
 
-    - add ipc share memory with non secure access right (sau region)
-    - fix interrupt configuration
+    - mcuboot load S & NS images from slot 1 or 2 to ddr (ramloading)
+    - risaf defined in 2 step (bl2 and tfm)
+    - support of drivers systick, pwr, rcc, risaf, risup/rimu, gpio
+    - support of flash driver simulate in ddr
 
 Tested platforms
 ----------------
