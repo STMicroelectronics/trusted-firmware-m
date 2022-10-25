@@ -2,10 +2,14 @@
 STM32MP2
 --------
 
-TF-M is supported on STM32MP2 family
+The STM32MP2 devices embed: Arm cortex A35, M33 cores.
 
-`Reference manuals <https://www.st.com/en/microcontrollers-microprocessors.html>`__.
+`Reference manuals <https://www.st.com/en/microcontrollers-microprocessors.html>`__
 
+TF-M is available on cortex M33 and could be view:
+
+- like simple coprocessor launched by cortex A35 (default)
+- owner of Trusted Domain (TDCID) and launched by bootrom (``STM32_M33TDCID=ON``)
 
 Directory content
 ^^^^^^^^^^^^^^^^^
