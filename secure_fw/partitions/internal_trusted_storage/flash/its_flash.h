@@ -12,7 +12,6 @@
 #include "config_its.h"
 #include "its_utils.h"
 #include "tfm_hal_its.h"
-#include "tfm_hal_ps.h"
 
 /* Include the correct flash interface implementation for ITS */
 #if ITS_RAM_FS
@@ -45,6 +44,7 @@ extern struct its_flash_nand_dev_t its_flash_nand_dev;
 
 /* Include the correct flash interface implementation for PS */
 #ifdef TFM_PARTITION_PROTECTED_STORAGE
+#include "tfm_hal_ps.h"
 #if PS_RAM_FS
 /* RAM FS: use a buffer to emulate storage in RAM */
 #include "its_flash_ram.h"

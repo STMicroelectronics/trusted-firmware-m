@@ -9,7 +9,6 @@
 #include "tfm_internal_trusted_storage.h"
 
 #include "tfm_hal_its.h"
-#include "tfm_hal_ps.h"
 #include "flash_fs/its_flash_fs.h"
 #include "psa_manifest/pid.h"
 #include "tfm_its_defs.h"
@@ -17,6 +16,7 @@
 #include "tfm_sp_log.h"
 
 #ifdef TFM_PARTITION_PROTECTED_STORAGE
+#include "tfm_hal_ps.h"
 #include "ps_object_defs.h"
 #endif
 
