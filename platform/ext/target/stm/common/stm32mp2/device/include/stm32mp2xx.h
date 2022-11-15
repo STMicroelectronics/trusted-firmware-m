@@ -129,6 +129,8 @@
  #error "Please select first the target core (CORE_CA35, CORE_CM33 CORE_CM0PLUS) used in your application (in preprocessor defines)"
 #endif
 
+#include "system_stm32mp2xx.h"
+
 /**
   * @}
   */

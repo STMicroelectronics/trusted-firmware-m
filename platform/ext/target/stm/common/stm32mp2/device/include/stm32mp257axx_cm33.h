@@ -508,7 +508,6 @@
   * @}
   */
 
-#include "system_stm32mp2xx.h"
 #include <stdint.h>
 
 /** @addtogroup Peripheral_registers_structures
