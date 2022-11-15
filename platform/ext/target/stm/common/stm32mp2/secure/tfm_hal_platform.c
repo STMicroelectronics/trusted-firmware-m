@@ -31,6 +31,8 @@ enum tfm_hal_status_t tfm_hal_platform_init(void)
 		return TFM_HAL_ERROR_GENERIC;
 	}
 
+	__enable_irq();
+
 	if (stm32_platform_s_init())
 		return TFM_HAL_ERROR_GENERIC;
 
@@ -42,7 +44,6 @@ enum tfm_hal_status_t tfm_hal_platform_init(void)
 		return TFM_HAL_ERROR_GENERIC;
 #endif
 
-	__enable_irq();
 	stdio_init();
 
 	IMSG("welcome to "MODEL_FULLSTR);
