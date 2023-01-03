@@ -24,6 +24,7 @@ if(NS)
 	target_add_scatter_file(tfm_ns
 		$<$<C_COMPILER_ID:GNU>:${STM_COMMON_DIR}/stm32mp2/device/source/gcc/stm32mp2_ns.ld>
 	)
+
 	target_link_libraries(CMSIS_5_tfm_ns
 		INTERFACE
 			CMSIS_5_RTX_V8MMN
@@ -86,7 +87,7 @@ target_compile_definitions(platform_s
 # object files.
 target_sources(tfm_s
 	PRIVATE
-	${CMAKE_CURRENT_SOURCE_DIR}/device/source/startup_stm32mp2_s.c
+		${CMAKE_CURRENT_SOURCE_DIR}/device/source/startup_stm32mp2_s.c
 )
 
 #========================= Platform Non-Secure ================================#
@@ -119,12 +120,12 @@ if(NS)
 			STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
 	)
 
-# GNU ld has some strange behaviour to do with weak functions, and does not deal
-# well with strong functions in static libraries overriding weak functions in
-# object files. For this reason, the file tfm_ns_plat_init is on tfm_ns target
+	# GNU ld has some strange behaviour to do with weak functions, and does not deal
+	# well with strong functions in static libraries overriding weak functions in
+	# object files. For this reason, the file tfm_ns_plat_init is on tfm_ns target
 	target_sources(tfm_ns
 		PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/device/source/startup_stm32mp2_ns.c
+			${CMAKE_CURRENT_SOURCE_DIR}/device/source/startup_stm32mp2_ns.c
 			${CMAKE_CURRENT_SOURCE_DIR}/tfm_ns_plat_init.c
 	)
 endif()
@@ -132,52 +133,52 @@ endif()
 #========================= Platform BL2 =======================================#
 
 if(BL2)
-    target_include_directories(platform_bl2
-        PUBLIC
+	target_include_directories(platform_bl2
+		PUBLIC
 			${PLATFORM_DIR}/include
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver
-	        ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/include
+			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/include
 			${CMAKE_CURRENT_SOURCE_DIR}/device/include
-            ${MCUBOOT_PATH}/boot/bootutil/include
-            $<TARGET_PROPERTY:bl2,BINARY_DIR>/ext/mcuboot
-            ${CMAKE_SOURCE_DIR}/bl2/ext/mcuboot/include
-    )
+			${MCUBOOT_PATH}/boot/bootutil/include
+			$<TARGET_PROPERTY:bl2,BINARY_DIR>/ext/mcuboot
+			${CMAKE_SOURCE_DIR}/bl2/ext/mcuboot/include
+	)
 
-    target_sources(platform_bl2
-        PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/device/source/system_stm32mp2xx_m33.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/bl2/boot_hal.c
-		    ${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_ddr_flash.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_usart.c
+	target_sources(platform_bl2
+		PRIVATE
+			${CMAKE_CURRENT_SOURCE_DIR}/device/source/system_stm32mp2xx_m33.c
+			${CMAKE_CURRENT_SOURCE_DIR}/bl2/boot_hal.c
+			${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_ddr_flash.c
+			${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_usart.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/mpu_armv8m_drv.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/pwr/stm32_pwr.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk-stm32-core.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/stm32mp2_clk.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/reset/stm32_reset.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/systick/stm32_systick.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/gpio/stm32_gpio.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/uart/stm32_uart.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rif.c
+			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/pwr/stm32_pwr.c
+			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk.c
+			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk-stm32-core.c
+			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
+			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/stm32mp2_clk.c
+			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/reset/stm32_reset.c
+			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/systick/stm32_systick.c
+			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/gpio/stm32_gpio.c
+			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/uart/stm32_uart.c
+			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rif.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rifsc.c
-    )
+	)
 
-    target_compile_options(platform_bl2
-        PUBLIC
-            ${COMPILER_CMSE_FLAG}
-    )
+	target_compile_options(platform_bl2
+		PUBLIC
+			${COMPILER_CMSE_FLAG}
+	)
 
 	target_compile_definitions(platform_bl2
 		PUBLIC
-		STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
+			STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
 	)
 
-    # GNU ld has some strange behaviour to do with weak functions, and does not deal
-    # well with strong functions in static libraries overriding weak functions in
-    # object files.
+	# GNU ld has some strange behaviour to do with weak functions, and does not deal
+	# well with strong functions in static libraries overriding weak functions in
+	# object files.
 	target_sources(bl2
-        PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/device/source/startup_stm32mp2_bl2.c
-    )
+		PRIVATE
+			${CMAKE_CURRENT_SOURCE_DIR}/device/source/startup_stm32mp2_bl2.c
+	)
 endif()
