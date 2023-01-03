@@ -54,7 +54,7 @@ target_sources(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/target_cfg.c
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_platform_system.c
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_hal_isolation.c
-		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_ddr_flash.c
+		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_flash_mm.c
 		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_usart.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/mpu_armv8m_drv.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/pwr/stm32_pwr.c
@@ -148,7 +148,7 @@ if(BL2)
 		PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/device/source/system_stm32mp2xx_m33.c
 			${CMAKE_CURRENT_SOURCE_DIR}/bl2/boot_hal.c
-			${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_ddr_flash.c
+			${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_flash_mm.c
 			${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_usart.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/mpu_armv8m_drv.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/pwr/stm32_pwr.c
