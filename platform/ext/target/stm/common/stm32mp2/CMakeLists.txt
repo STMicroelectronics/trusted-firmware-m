@@ -67,6 +67,7 @@ target_sources(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/systick/stm32_systick.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/gpio/stm32_gpio.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/uart/stm32_uart.c
+		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rif.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rifsc.c
 		${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_isolation_mpu_v8m.c
@@ -161,6 +162,7 @@ if(BL2)
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/systick/stm32_systick.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/gpio/stm32_gpio.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/uart/stm32_uart.c
+			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rif.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rifsc.c
 	)
