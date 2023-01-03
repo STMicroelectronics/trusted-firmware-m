@@ -55,6 +55,7 @@ target_sources(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/target_cfg.c
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_platform_system.c
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_hal_isolation.c
+		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_spi_flash.c
 		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_flash_mm.c
 		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_usart.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/mpu_armv8m_drv.c
@@ -67,6 +68,7 @@ target_sources(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/systick/stm32_systick.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/gpio/stm32_gpio.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/uart/stm32_uart.c
+		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/spi/stm32_ospi.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/mtd/nor/spi_nor.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rif.c
@@ -151,6 +153,7 @@ if(BL2)
 		PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/device/source/system_stm32mp2xx_m33.c
 			${CMAKE_CURRENT_SOURCE_DIR}/bl2/boot_hal.c
+			${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_spi_flash.c
 			${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_flash_mm.c
 			${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_usart.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/mpu_armv8m_drv.c
@@ -163,6 +166,7 @@ if(BL2)
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/systick/stm32_systick.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/gpio/stm32_gpio.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/uart/stm32_uart.c
+			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/spi/stm32_ospi.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/mtd/nor/spi_nor.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rif.c
