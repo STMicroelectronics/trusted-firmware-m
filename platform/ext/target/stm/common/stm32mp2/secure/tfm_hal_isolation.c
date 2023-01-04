@@ -93,13 +93,13 @@ static const struct mpu_armv8m_region_cfg_t __maybe_unused mpu_regions[] = {
 #endif
 #if defined(STM32_PS_OSPI)
 	/*
-	 * used by ospi and fmc
+	 * used by ospi
 	 * for memory mapping to generate external memory command
 	 */
 	{
 		0, /* will be updated before using */
-		QSPI_MEM_BASE,
-		DRAM_MEM_BASE - 1,
+		OSPI1_MEM_BASE,
+		OSPI1_MEM_BASE + SPI_NOR_FLASH_SIZE - 1,
 		MPU_ARMV8M_MAIR_ATTR_DEVICE_IDX,
 		MPU_ARMV8M_XN_EXEC_NEVER,
 		MPU_ARMV8M_AP_RW_PRIV_ONLY,
