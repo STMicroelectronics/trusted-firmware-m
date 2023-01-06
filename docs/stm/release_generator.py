@@ -77,16 +77,23 @@ class RstHelper(object):
 def create_release_test(logfile, release_path):
     rst_tests_var = {}
 
-    model_pattern ="welcome to (?P<MODEL>.+?)  "
-    s_testsuites_pattern = "(?:Execute test suites for the Secure area.*?End of Secure test suites)"
-    ns_testsuites_pattern = "(?:Execute test suites for the Non-secure area.*?End of Non-secure test suites)"
+    if logfile:
+        model_pattern ="welcome to (?P<MODEL>.+?)  "
+        s_testsuites_pattern = "(?:Execute test suites for the Secure area.*?End of Secure test suites)"
+        ns_testsuites_pattern = "(?:Execute test suites for the Non-secure area.*?End of Non-secure test suites)"
 
-    with open(logfile) as fp:
-        log = fp.read()
+        with open(logfile) as fp:
+            log = fp.read()
 
-    platform = re.search(model_pattern, log,re.DOTALL).group('MODEL').replace(" ","_")
-    log_s = re.findall(s_testsuites_pattern, log, re.DOTALL)
-    log_ns = re.findall(ns_testsuites_pattern, log, re.DOTALL)
+        platform = re.search(model_pattern, log,re.DOTALL).group('MODEL').replace(" ","_")
+        log_s = re.findall(s_testsuites_pattern, log, re.DOTALL)
+        log_ns = re.findall(ns_testsuites_pattern, log, re.DOTALL)
+
+        rst_tests_var['s_testsuites'] = tfm_log2testsuite(log_s)
+        rst_tests_var['ns_testsuites'] = tfm_log2testsuite(log_ns)
+
+    else:
+        platform = "no_board"
 
     print("logfile:{} release path:{} platform:{}".format(logfile, release_path, platform))
 
@@ -94,9 +101,6 @@ def create_release_test(logfile, release_path):
     test_rst = RstHelper(release_path + "/" + platform + "_test.rst")
 
     rst_tests_var['platform_title'] = test_rst.to_title(platform, '"')
-    rst_tests_var['s_testsuites'] = tfm_log2testsuite(log_s)
-    rst_tests_var['ns_testsuites'] = tfm_log2testsuite(log_ns)
-
     test_rst.write(test_template.render(rst_tests_var))
 
 def create_changelog(release_name, release_path):
@@ -170,6 +174,8 @@ def create_release(args, outputdir):
     if args.logfile:
         for logfile in args.logfile:
             create_release_test(logfile, release_path)
+    else:
+        create_release_test("", release_path)
 
     create_issue(args, release_path)
     create_issue_fixed(args, release_path)

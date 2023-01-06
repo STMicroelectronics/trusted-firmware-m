@@ -1,4 +1,6 @@
 {{platform_title}}
+{% if s_testsuites is defined %}
+
 
 Secure test
 ```````````
@@ -21,6 +23,9 @@ Secure test
 
     {% endfor %}
 {% endfor %}
+{% endif %}
+{% if ns_testsuites is defined %}
+
 
 Non-secure test
 ```````````````
@@ -43,3 +48,4 @@ Non-secure test
 
     {% endfor %}
 {% endfor %}
+{% endif %}
