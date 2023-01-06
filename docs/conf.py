@@ -27,7 +27,7 @@ title = 'User Guide'
 # -- Extract current version -------------------------------------------------
 
 try:
-    vrex = re.compile(r'TF-M(?P<GIT_VERSION>v.+?)'
+    vrex = re.compile(r'(TF-M|)(?P<GIT_VERSION>v.+?)'
                       r'(-[0-9]+-g)?(?P<GIT_SHA>[a-f0-9]{7,})?$')
 
     version = check_output("git describe --tags --always",
