@@ -9,7 +9,7 @@ The tag naming is defined by:
 
 .. code::
 
-    <communauty version>-<platform>-<release version>
+    <community version>-<platform>-<release version>
 
 .. toctree::
     :maxdepth: 1
