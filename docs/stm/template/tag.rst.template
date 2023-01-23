@@ -1,0 +1,54 @@
+{{tag_tittle}}
+
+-  `TF-M gitweb <https://gerrit.st.com/gitweb?p=mpu/oe/st/TF-M/trusted-firmware-m.git;a=summary>`_
+-  branch: `{{branch}} <https://gerrit.st.com/gitweb?p=mpu/oe/st/TF-M/trusted-firmware-m.git;a=shortlog;h=refs/heads/{{branch}}>`_
+-  tag: `{{tag}} <https://gerrit.st.com/gitweb?p=mpu/oe/st/TF-M/trusted-firmware-m.git;a=tag;h=refs/tags/{{tag}}>`_
+-  sha1: `{{sha1}} <https://gerrit.st.com/gitweb?p=mpu/oe/st/TF-M/trusted-firmware-m.git;a=commit;h={{sha1}}>`_
+
+Documentation
+-------------
+
+-  Prerequisites and software build: `Getting started <https://stmicroelectronics-my.sharepoint.com/personal/ludovic_barre_st_com/Documents/tfm/user_guide/html/{{doc_release}}/stm/getting_started.html.aspx>`_
+-  `Trusted Firmware-M Documentation <https://stmicroelectronics-my.sharepoint.com/personal/ludovic_barre_st_com/Documents/tfm/user_guide/html/{{doc_release}}/index.html.aspx>`_
+
+{{features_log}}
+
+Tested platforms
+----------------
+
+{% for plat_test in tests_platform %}
+{{plat_test}}
+{% endfor %}
+
+Known issues
+------------
+
+.. list-table::
+
+   * - **Descriptions**
+     - **links**
+
+{% for k in k_issues %}
+   * - {{k.summary}}
+     - `{{k.id}} <https://intbugzilla.st.com/show_bug.cgi?id={{k.id}}>`_
+
+{% endfor %}
+
+Issues fixed
+------------
+
+.. list-table::
+
+   * - **Descriptions**
+     - **links**
+
+{% for f in f_issues %}
+   * - {{f.summary}}
+     - `{{f.id}} <https://intbugzilla.st.com/show_bug.cgi?id={{f.id}}>`_
+
+{% endfor %}
+
+--------------
+
+*Copyright (c) 2021 STMicroelectronics. All rights reserved.*
+*SPDX-License-Identifier: BSD-3-Clause*
