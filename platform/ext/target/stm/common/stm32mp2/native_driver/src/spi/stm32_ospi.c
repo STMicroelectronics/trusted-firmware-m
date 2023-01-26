@@ -120,22 +120,19 @@ static int stm32_ospi_wait_cmd(const struct spi_mem_op *op)
 	uint32_t sr;
 	int ret = 0;
 
-	if (op->data.nbytes != 0U) {
-		ret = mmio_read32_poll_timeout(ospi_base() + _OSPI_SR, sr,
-					       (sr & _OSPI_SR_TCF) != 0U,
-					       _OSPI_CMD_TIMEOUT_US);
-		if (ret != 0) {
-			ERROR("%s: cmd timeout\n", __func__);
-		} else if ((mmio_read_32(ospi_base() + _OSPI_SR) &
-			   _OSPI_SR_TEF) != 0U) {
-			ERROR("%s: transfer error\n", __func__);
-			ret = -EIO;
-		}
 
-		/* Clear flags */
-		mmio_write_32(ospi_base() + _OSPI_FCR,
-			      _OSPI_FCR_CTCF | _OSPI_FCR_CTEF);
+	ret = mmio_read32_poll_timeout(ospi_base() + _OSPI_SR, sr,
+				       (sr & _OSPI_SR_TCF) != 0U,
+				       _OSPI_CMD_TIMEOUT_US);
+	if (ret != 0) {
+		ERROR("%s: cmd timeout\n", __func__);
+	} else if ((mmio_read_32(ospi_base() + _OSPI_SR) & _OSPI_SR_TEF) != 0U) {
+		ERROR("%s: transfer error\n", __func__);
+		ret = -EIO;
 	}
+
+	/* Clear flags */
+	mmio_write_32(ospi_base() + _OSPI_FCR, _OSPI_FCR_CTCF | _OSPI_FCR_CTEF);
 
 	if (ret == 0) {
 		ret = stm32_ospi_wait_for_not_busy();
