@@ -175,7 +175,7 @@ int stm32_reset_init(void)
 	return stm32_reset_get_platdata(&rst_pdata);
 }
 
-DEFINE_STM32_RSTLINE(OSPI1DLL_R, &stm32_rstctrl_ops);
-DEFINE_STM32_RSTLINE(OSPI1_R, &stm32_rstctrl_ops);
+DEFINE_STM32_RSTLINE(OSPI2DLL_R, &stm32_rstctrl_ops);
+DEFINE_STM32_RSTLINE(OSPI2_R, &stm32_rstctrl_ops);
 DEFINE_STM32_RSTLINE(CPU1_R, &stm32_rstctrl_cpu_ops);
 DEFINE_STM32_RSTLINE(VSW_R, &stm32_rstctrl_vsw_ops);
