@@ -587,14 +587,14 @@ static unsigned long clk_get_pll_fvco(struct stm32_clk_priv *priv,
 	refdiv = mmio_read_32(pllxcfgr2) & _RCC_PLLxCFGR2_FREFDIV_MASK;
 
 	if (fracin != 0U) {
-		unsigned long long numerator, denominator;
+		uint64_t numerator, denominator;
 
-		numerator = ((unsigned long long)fbdiv << 24) + fracin;
+		numerator = ((uint64_t)fbdiv << 24) + fracin;
 		numerator = refclk * numerator;
-		denominator = (unsigned long long)refdiv << 24;
+		denominator = (uint64_t)refdiv << 24;
 		fvco = (unsigned long)(numerator / denominator);
 	} else {
-		fvco = (unsigned long)(refclk * fbdiv / refdiv);
+		fvco = (uint64_t) refclk * fbdiv / refdiv;
 	}
 
 	return fvco;
