@@ -1759,7 +1759,7 @@ int stm32mp2_clk_flexgen_configure(struct stm32_clk_priv *priv)
 	return 0;
 }
 
-static int stm32mp2_clk_rtc_configure_src(struct stm32_clk_priv *priv)
+static int __unused stm32mp2_clk_rtc_configure_src(struct stm32_clk_priv *priv)
 {
 	struct stm32mp2_clk_platdata *pdata=priv->pdata;
 	uintptr_t address = priv->base + _RCC_BDCR;
