@@ -96,7 +96,7 @@ target_sources(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/stm32_icache.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/stm32_dcache.c
 		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/services/src/tfm_platform_system.c>
-		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/nv_counters.c>
+		$<$<AND:$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>,$<BOOL:${TFM_PARTITION_PLATFORM}>>:${CMAKE_CURRENT_SOURCE_DIR}/secure/nv_counters.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/services/src/stm32_copro.c>
 		${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_nvic.c
 )
