@@ -735,19 +735,6 @@ static int clk_flexgen_get_parent(struct stm32_clk_priv *priv, int idx)
 	return sel;
 }
 
-static int clk_flexgen_gate_enable(struct stm32_clk_priv *priv, int idx)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, idx);
-	struct stm32_clk_flexgen_cfg *cfg = clk->clock_cfg;
-	uintptr_t rcc_base = priv->base;
-	uint8_t channel = cfg->id;
-
-	mmio_setbits_32(rcc_base + _RCC_FINDIV0CFGR + (0x4 * channel),
-			_RCC_FINDIVxCFGR_FINDIVxEN);
-
-	return 0;
-}
-
 static void clk_flexgen_gate_disable(struct stm32_clk_priv *priv, int id)
 {
 	const struct clk_stm32 *clk = _clk_get(priv, id);
@@ -769,6 +756,24 @@ static bool clk_flexgen_gate_is_enabled(struct stm32_clk_priv *priv, int id)
 
 	return !!(mmio_read_32(rcc_base + _RCC_FINDIV0CFGR + (0x4 * channel)) &
 		_RCC_FINDIVxCFGR_FINDIVxEN);
+}
+
+static int clk_flexgen_gate_enable(struct stm32_clk_priv *priv, int idx)
+{
+	const struct clk_stm32 *clk = _clk_get(priv, idx);
+	struct stm32_clk_flexgen_cfg *cfg = clk->clock_cfg;
+	uintptr_t __unused rcc_base = priv->base;
+	uint8_t __unused channel = cfg->id;
+
+	if (!clk_flexgen_gate_is_enabled(priv, idx))
+#ifdef STM32_M33TDCID
+		mmio_setbits_32(rcc_base + _RCC_FINDIV0CFGR + (0x4 * channel),
+				_RCC_FINDIVxCFGR_FINDIVxEN);
+#else
+		return -ENOTSUP;
+#endif
+
+	return 0;
 }
 
 const struct stm32_clk_ops clk_stm32_flexgen_ops = {
