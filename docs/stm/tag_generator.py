@@ -47,10 +47,11 @@ def issue_known():
 def issue_fixed():
 
     print("Found issue fixed in bugzilla between 2 commits:")
+    g_brch = input('\tEnter gerrit branch: ')
     s_sha1 = input('\tEnter start sha1,branch or tag: ')
     e_sha1 = input('\tEnter end sha1,branch or tag: ')
 
-    bz_list = stm32_bzlist.main(["-s", s_sha1, "-e", e_sha1, "-c"])
+    bz_list = stm32_bzlist.main(["-b", g_brch, "-s", s_sha1, "-e", e_sha1, "-c"])
 
     return  bz_list.bugs
 
