@@ -162,8 +162,7 @@ class Gerrit(object):
             return None
 
         if res.status_code != requests.codes.ok:
-            #self._debug("cannot GET '%s': reason = %s, status_code = %d",
-            #           url, res.reason, res.status_code)
+            #self._debug("cannot GET '%s': reason = %s, status_code = %d", url, res.reason, res.status_code)
             return None
 
         return res
@@ -194,6 +193,7 @@ class Gerrit(object):
         gerrit_id = []
         for ch_id in change_list:
             change_info = self.get_change(ch_id)
+
             if change_info is None:
                 continue
 
@@ -223,6 +223,7 @@ def main(args):
 
     # Add the arguments
     parser.add_argument('-p', '--prj_path', metavar='PPATH', help='project path')
+    parser.add_argument('-b', '--gerrit_branch', metavar='BRANCH', help='gerrit branch name')
     parser.add_argument('-s', '--start', metavar='START', help='start sha1,tag')
     parser.add_argument('-e', '--end', metavar='END', help='stop sha1,tag')
     parser.add_argument('--ex_start', metavar='EX_START', help='exclude start sha1,tag')
@@ -234,6 +235,9 @@ def main(args):
     if args.prj_path is None:
         args.prj_path = cwd_path
 
+    if args.gerrit_branch is None:
+        args.gerrit_branch = GERRIT_BRANCH
+
     logging.debug("use {} git repositorie".format(args.prj_path))
 
     git_log="git log " + args.start + ".." + args.end
@@ -241,7 +245,9 @@ def main(args):
     ch_ids = parse_ch_id(log)
 
     logging.info("waiting gerrit id request...")
-    gerrit = Gerrit(GERRIT_HOST, GERRIT_PROJECT, GERRIT_BRANCH)
+    logging.info("gerrit project:{} branch:{}".format(GERRIT_PROJECT, args.gerrit_branch))
+
+    gerrit = Gerrit(GERRIT_HOST, GERRIT_PROJECT, args.gerrit_branch)
     gerrit_id = gerrit.get_gerrit_id(ch_ids)
     logging.debug("gerrit_id:{}".format(gerrit_id))
 
