@@ -78,14 +78,14 @@ def create_release_test(logfile, release_path):
     rst_tests_var = {}
 
     if logfile:
-        model_pattern ="welcome to (?P<MODEL>.+?)  "
+        model_pattern ="welcome to (?P<MODEL>.*)"
         s_testsuites_pattern = "(?:Execute test suites for the Secure area.*?End of Secure test suites)"
         ns_testsuites_pattern = "(?:Execute test suites for the Non-secure area.*?End of Non-secure test suites)"
 
         with open(logfile) as fp:
             log = fp.read()
 
-        platform = re.search(model_pattern, log,re.DOTALL).group('MODEL').replace(" ","_")
+        platform = re.search(model_pattern, log).group('MODEL').replace(" ","_")
         log_s = re.findall(s_testsuites_pattern, log, re.DOTALL)
         log_ns = re.findall(ns_testsuites_pattern, log, re.DOTALL)
 
