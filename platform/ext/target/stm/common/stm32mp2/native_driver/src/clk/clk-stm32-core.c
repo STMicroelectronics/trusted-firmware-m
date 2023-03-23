@@ -547,10 +547,12 @@ static int __clk_stm32_enable_core(struct stm32_clk_priv *priv, uint16_t id)
 
 static int _clk_stm32_enable_core(struct stm32_clk_priv *priv, int id)
 {
-	int parent;
-	int ret = 0;
 
 	if (priv->gate_refcounts[id] == 0U) {
+#ifdef STM32_M33TDCID
+		int parent;
+		int ret = 0;
+
 		parent = _clk_stm32_get_parent(priv, id);
 		if (parent != CLK_IS_ROOT) {
 			ret = _clk_stm32_enable_core(priv, parent);
@@ -558,6 +560,7 @@ static int _clk_stm32_enable_core(struct stm32_clk_priv *priv, int id)
 				return ret;
 			}
 		}
+#endif
 		__clk_stm32_enable_core(priv, id);
 	}
 
@@ -713,7 +716,7 @@ static const clk_ops_t stm32mp_clk_ops = {
 };
 
 
-static void clk_stm32_enable_critical_clocks(void)
+static void __unused clk_stm32_enable_critical_clocks(void)
 {
 	struct stm32_clk_priv *priv = clk_stm32_get_priv();
 	int i;
@@ -732,7 +735,9 @@ void stm32_clk_register(void)
 {
 	clk_register(&stm32mp_clk_ops);
 
+#ifdef STM32_M33TDCID
 	clk_stm32_enable_critical_clocks();
+#endif
 }
 
 static int _clk_stm32_get_counter(struct stm32_clk_priv *priv, uint16_t idx)
