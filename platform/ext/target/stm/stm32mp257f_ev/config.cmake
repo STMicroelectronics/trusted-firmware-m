@@ -23,8 +23,6 @@ set(STM32_BOARD_MODEL			"stm32mp257f eval"	CACHE STRING	"Define board model name
 
 set(STM32_IPC				ON         CACHE BOOL     "Use IPC (rpmsg) to communicate with main processor" FORCE)
 set(BL2                                 OFF        CACHE BOOL     "Whether to build BL2" FORCE)
-set(PLATFORM_DEFAULT_NV_COUNTERS        ON         CACHE BOOL     "Use default nv counter implementation." FORCE)
-set(OTP_NV_COUNTERS_RAM_EMULATION       ON         CACHE BOOL     "Enable OTP/NV_COUNTERS emulation in RAM. Has no effect on non-default implementations of the OTP and NV_COUNTERS" FORCE)
 set(TFM_DUMMY_PROVISIONING              ON         CACHE BOOL     "Provision with dummy values. NOT to be used in production" FORCE)
-set(PLATFORM_DEFAULT_OTP_WRITEABLE      ON         CACHE BOOL     "Use on chip flash with write support" FORCE)
 set(STM32_DDR_CACHED			OFF        CACHE BOOL     "Enable cache for ddr" FORCE)
+set(STM32_PROV_FAKE			ON         CACHE BOOL     "Provisioning with dummy values. NOT to be used in production" FORCE)

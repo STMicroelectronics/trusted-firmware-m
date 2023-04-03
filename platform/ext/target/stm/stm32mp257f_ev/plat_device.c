@@ -22,6 +22,7 @@
 #include <stm32_dcache.h>
 #include <stm32_reset.h>
 #include <stm32_ddr.h>
+#include <stm32_bsec3.h>
 #include <spi_mem.h>
 #include <spi_nor.h>
 
@@ -331,6 +332,14 @@ int __maybe_unused stm32_dcache_get_platdata(struct stm32_dcache_platdata *pdata
 	return 0;
 }
 
+int __maybe_unused stm32_otp_shadow_get_platdata(struct stm32_otp_shadow_platdata *pdata)
+{
+	pdata->base = OTP_SHADOW_START;
+	pdata->size = OTP_SHADOW_SIZE;
+
+	return 0;
+}
+
 /*
  * TODO: setup risab5 (retram), to use otp (via PLATFORM_DEFAULT_OTP)
  * stored in BL2_OTP_Const section.
@@ -364,6 +373,10 @@ int __maybe_unused stm32_platform_s_init(void)
 #endif
 
 	err = stm32_gpio_init();
+	if (err)
+		return err;
+
+	err = stm32_otp_shadow_init();
 	if (err)
 		return err;
 

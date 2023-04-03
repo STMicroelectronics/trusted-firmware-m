@@ -110,11 +110,15 @@
 #define NS_PARTITION_SIZE		(NS_CODE_SIZE)
 
 /* Shared data area between bootloader and runtime firmware.
- * Shared data area is allocated at the end of the SRAM2, it is overlapping
- * with TF-M Secure code's MSP stack
+ * M33 copro: not used
  */
 #define BOOT_TFM_SHARED_DATA_BASE	(NS_DATA_START + NS_DATA_SIZE)
 #define BOOT_TFM_SHARED_DATA_SIZE	(0x0)
 #define BOOT_TFM_SHARED_DATA_LIMIT	(BOOT_TFM_SHARED_DATA_BASE)
+
+/* OTP shadow regionBOOT_TFM_SHARED_DATA_SIZE
+ * In Copro Mode, the TDCID loader copies bsec otp on shadow memory */
+#define OTP_SHADOW_START		S_SRAM1_ALIAS(0x0)
+#define OTP_SHADOW_SIZE			(0x1000)
 
 #endif /* __REGION_DEFS_H__ */

@@ -126,9 +126,8 @@
 #ifndef OTP_NV_COUNTERS_RAM_EMULATION
 /* NV Counters: valide & backup (Backup register) */
 #define NV_COUNTERS_FLASH_DRIVER	Driver_FLASH_BKPREG
-#define NV_COUNTERS_AREA_SIZE		(0x18) /* 24 Bytes */
-#define NV_COUNTERS_AREA_ADDR		0x0
-#define NV_COUNTERS_BACKUP_AREA_ADDR	(NV_COUNTERS_AREA_ADDR + NV_COUNTERS_AREA_SIZE)
+#define NV_COUNTERS_AREA_SIZE		(0x1C) /* 28 Bytes */
+#define NV_COUNTERS_AREA_ADDR		0x60
 #endif
 
 /* Protected Storage (PS) Service definitions
