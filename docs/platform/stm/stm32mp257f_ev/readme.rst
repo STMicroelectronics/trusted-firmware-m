@@ -50,53 +50,77 @@ The M33 copro firmware can be loaded by cortex A35 with these commands
 
 In developpment (debug open), the gdb/openocd can load and debug M33 firmware
 
+To set and get register, gdb requires `svd-tools <https://github.com/1udo6arre/svd-tools>`_
+
 * Run openocd with this script::
 
-     set GDB_PORT 50000
-     set AP_NUM 8
      #compatible dk/eval
      source [find board/stm32mp25x_dk.cfg]
      gdb_breakpoint_override hard
 
 * Run gdb of your arm toolchain, then execute theses commands::
 
-     target remote :50000
+     target remote :3334
      set pagination off
      set print pretty
 
+     source <PATH_TO_SVDTOOLS>/gdb-svd.py
+     svd <PATH_TO_SVD>/STM32MP25_CM33.svd
+
+     print "load boot address"
+     monitor targets stm32mp25x.axi
+     #set boot address (vtor)
+     svd set CA35SS CA35SS_SYSCFG_M33_INITSVTOR_CR 0x80000000
+     svd set CA35SS CA35SS_SYSCFG_M33_TZEN_CR CFG_SECEXT 0x1
+
+     #open the door: ddr memory protection (tfm code/data; ns code/data)
+     svd set RISAF4_S RISAF_REG1_CFGR BREN 0x0
+     svd set RISAF4_S RISAF_REG2_CFGR BREN 0x0
+     svd set RISAF4_S RISAF_REG3_CFGR BREN 0x0
+     svd set RISAF4_S RISAF_REG4_CFGR BREN 0x0
+
+     #load binary with openocd (don't work with gdb load or restore)
+     print "load binaries"
+     monitor load_image <BUILD_DIRECTORY>/bin/tfm_s.bin 0x80000000 bin
+     monitor load_image <BUILD_DIRECTORY>/bin/tfm_ns.bin 0x80100000 bin
+
+     #close the door (tfm code/data; ns code/data)
+     svd set RISAF4_S RISAF_REG1_CFGR BREN 0x1
+     svd set RISAF4_S RISAF_REG2_CFGR BREN 0x1
+     svd set RISAF4_S RISAF_REG3_CFGR BREN 0x1
+     svd set RISAF4_S RISAF_REG4_CFGR BREN 0x1
+
+     print "load symbole"
+     monitor targets stm32mp25x.m33
+     add-symbol-file <BUILD_DIRECTORY>/bin/tfm_s.elf
+
      print "remove hold pen m33"
-     # set RCC_S RCC_CPUBOOTCR BOOT_CPU2 1
+     #svd set RCC_S RCC_CPUBOOTCR BOOT_CPU2 1
      monitor stm32mp25x.axi mww 0x54200434 0x1
-     # set RCC_S RCC_C2RSTCSETR C2RST 0x1
+     #svd set RCC_S RCC_C2RSTCSETR C2RST 0x1
      monitor stm32mp25x.axi mww 0x5420040c 0x1
 
-     # set SCB VTOR 0x80000000
-     monitor stm32mp25x.m33 mww 0xe000ed08 0x80000000
-     monitor stm32mp25x.m33 invoke-event examine-end
+     monitor halt
 
-     load <BUILD_DIRECTORY>/bin/tfm_s.elf
-     add-symbol-file <BUILD_DIRECTORY>/bin/tfm_s.elf
-     set $sp=0x80900800
+     set $pc=Reset_Handler
+     set $sp=*0x80000000
 
-     thbreak Reset_Handler
+     hb HardFault_Handler
+     hb SecureFault_Handler
+
+     print "ready to exec"
+     print "Secure Reset_Handler"
+
+     thb main
      commands
-            print "Secure Reset_Handler"
-            thbreak main
-            commands
-                   thb ns_agent_tz_init_c
-	           commands
-		          #sau is configured
-                          #so access in Secure on ns memory => generate an ns request on rif
-                          restore <BUILD_DIRECTORY>/bin/tfm_ns.bin binary 0x80100000
-                          add-symbol-file <BUILD_DIRECTORY>/bin/tfm_ns.elf
-	           end
+          print "Secure Main"
 
-                   thbreak Reset_Handler
-	           commands
-		          print "Non Secure Reset_Handler"
-                          #add your ns breakpoints
-                   end
-            end
+          thb ns_agent_tz_init_c
+          commands
+               #sau is configured
+               #so access in Secure on ns memory => generate an ns request on rif
+               add-symbol-file <BUILD_DIRECTORY>/bin/tfm_ns.elf
+	  end
      end
 
 Console
