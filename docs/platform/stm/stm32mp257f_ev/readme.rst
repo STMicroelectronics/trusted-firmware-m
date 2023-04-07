@@ -11,15 +11,30 @@ on :doc:`STM32MP2 SoC of stmicroelectronics </platform/stm/common/stm32mp2/readm
 
 Build
 *****
+.. tabs::
 
-.. code:: bash
+   .. group-tab:: Linux
 
-   $ cmake -S <SRC_DIRECTORY> -B <BUILD_DIRECTORY> \
-           -DTFM_PLATFORM=stm/stm32mp257f_ev \
-           -DTFM_TOOLCHAIN_FILE=toolchain_GNUARM.cmake \
-           -DTFM_PROFILE=profile_small \
-           -DCMAKE_BUILD_TYPE=debug
-   $ make  -C <BUILD_DIRECTORY> install
+      .. code:: bash
+
+         $ cmake -S <SRC_DIRECTORY> -B <BUILD_DIRECTORY> \
+                 -DTFM_PLATFORM=stm/stm32mp257f_ev \
+                 -DTFM_TOOLCHAIN_FILE=toolchain_GNUARM.cmake \
+                 -DTFM_PROFILE=profile_small \
+                 -DCMAKE_BUILD_TYPE=debug
+         $ make  -C <BUILD_DIRECTORY> install
+
+   .. group-tab:: Windows
+
+      .. code:: bash
+
+         $ cmake -S <SRC_DIRECTORY> -B <BUILD_DIRECTORY> \
+                 -DTFM_PLATFORM=stm/stm32mp257f_ev \
+                 -DTFM_TOOLCHAIN_FILE=toolchain_GNUARM.cmake \
+                 -DTFM_PROFILE=profile_small \
+                 -DCMAKE_BUILD_TYPE=debug -G "Unix Makefiles"
+         $ make  -C <BUILD_DIRECTORY> install
+
 
 .. Note::
     Currently, applications can only be built using GCC (GNU ARM Embedded toolchain).
