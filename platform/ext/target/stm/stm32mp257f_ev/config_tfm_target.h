@@ -7,8 +7,4 @@
 #ifndef __CONFIG_TFM_TARGET_H__
 #define __CONFIG_TFM_TARGET_H__
 
-/* Enable emulated ITS in ram fs */
-#undef ITS_RAM_FS
-#define ITS_RAM_FS			1
-
 #endif /* __CONFIG_TFM_TARGET_H__ */

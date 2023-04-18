@@ -97,8 +97,13 @@
  * TF-M ITS Integration Guide. The ITS should be in the internal flash, but is
  * allocated in the external flash just for development platforms that don't
  * have internal flash available.
+ *
+ * constraints:
+ * - nb blocks (minimal): 2
+ * - block size >= (file size + metadata) aligned on power of 2
+ * - file size = config ITS_MAX_ASSET_SIZE
  */
-#ifdef ITS_RAM_FS
+#if ITS_RAM_FS
 /* Internal Trusted Storage emulated on RAM FS (ITS_RAM_FS)
  * which use an internal variable (its_block_data in TFM_DATA),
  * Driver_Flash_DDR is not used.
@@ -108,6 +113,13 @@
 #define TFM_HAL_ITS_FLASH_AREA_SIZE	4 * FLASH_DDR_SECTOR_SIZE
 #define TFM_HAL_ITS_SECTORS_PER_BLOCK	(0x1)
 #define TFM_HAL_ITS_PROGRAM_UNIT	FLASH_DDR_PROGRAM_UNIT
+#define ITS_RAM_FS_SIZE			TFM_HAL_ITS_FLASH_AREA_SIZE
+#else
+#define TFM_HAL_ITS_FLASH_DRIVER	Driver_FLASH_BKPSRAM
+#define TFM_HAL_ITS_FLASH_AREA_ADDR	0x1000
+#define TFM_HAL_ITS_FLASH_AREA_SIZE	0x1000
+#define TFM_HAL_ITS_SECTORS_PER_BLOCK	(0x2)
+#define TFM_HAL_ITS_PROGRAM_UNIT	FLASH_BKPSRAM_PROGRAM_UNIT
 #define ITS_RAM_FS_SIZE			TFM_HAL_ITS_FLASH_AREA_SIZE
 #endif
 
