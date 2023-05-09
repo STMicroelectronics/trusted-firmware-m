@@ -26,12 +26,12 @@ target_include_directories(platform_region_defs
 
 #========================= Platform common defs ===============================#
 target_add_scatter_file(tfm_s
-	$<$<C_COMPILER_ID:GNU>:${CMAKE_SOURCE_DIR}/platform/ext/common/gcc/tfm_common_s.ld>
+	$<$<C_COMPILER_ID:GNU>:${PLATFORM_DIR}/ext/common/gcc/tfm_common_s.ld>
 )
 
 if(NS)
 	target_add_scatter_file(tfm_ns
-		$<$<C_COMPILER_ID:GNU>:${STM_COMMON_DIR}/stm32mp2/device/source/gcc/stm32mp2_ns.ld>
+		$<$<C_COMPILER_ID:GNU>:${PLATFORM_DIR}/ext/common/gcc/tfm_common_ns.ld>
 	)
 
 	target_link_libraries(CMSIS_5_tfm_ns
