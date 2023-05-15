@@ -61,6 +61,7 @@ target_include_directories(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/include
 		${CMAKE_CURRENT_SOURCE_DIR}/device/include
+		${CMAKE_CURRENT_SOURCE_DIR}/secure
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/services/include
 )
 
@@ -69,6 +70,7 @@ target_sources(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/device/source/system_stm32mp2xx_m33.c
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/target_cfg.c
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_hal_isolation.c
+		${CMAKE_CURRENT_SOURCE_DIR}/secure/provisioning.c
 		${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_hal_platform.c
 		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_spi_flash.c
 		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_flash_mm.c
@@ -96,7 +98,8 @@ target_sources(platform_s
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/stm32_icache.c
 		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/stm32_dcache.c
 		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/services/src/tfm_platform_system.c>
-		$<$<AND:$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>,$<BOOL:${TFM_PARTITION_PLATFORM}>>:${CMAKE_CURRENT_SOURCE_DIR}/secure/nv_counters.c>
+		$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${CMAKE_CURRENT_SOURCE_DIR}/secure/nv_counters.c>
+		$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_OTP}>>:${CMAKE_CURRENT_SOURCE_DIR}/secure/otp_shadow.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/services/src/stm32_copro.c>
 		${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_nvic.c
 )
@@ -111,7 +114,19 @@ target_compile_definitions(platform_s
 		STM32_SEC
 		STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
 		$<$<BOOL:${STM32_M33TDCID}>:STM32_M33TDCID>
+		STM32_PROV_FAKE=${STM32_PROV_FAKE}
 )
+
+if(TFM_PARTITION_CRYPTO)
+        target_include_directories(platform_crypto_keys
+                PUBLIC
+                        ${PLATFORM_DIR}/include
+                        ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/include
+                        ${CMAKE_CURRENT_SOURCE_DIR}/device/include
+                        ${CMAKE_CURRENT_SOURCE_DIR}/secure
+                        ${CMAKE_CURRENT_SOURCE_DIR}/secure/services/include
+        )
+endif()
 
 # GNU ld has some strange behaviour to do with weak functions, and does not deal
 # well with strong functions in static libraries overriding weak functions in
@@ -206,7 +221,7 @@ if(BL2)
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_iac.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_serc.c
 			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/stm32_icache.c
-			$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/nv_counters.c>
+			$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${CMAKE_CURRENT_SOURCE_DIR}/secure/nv_counters.c>
 			${STM_COMMON_DIR}/hal/provision/otp_provision.c
 	)
 
@@ -220,6 +235,7 @@ if(BL2)
 			STM32_BL2
 			STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
 			$<$<BOOL:${STM32_M33TDCID}>:STM32_M33TDCID>
+			STM32_PROV_FAKE=${STM32_PROV_FAKE}
 	)
 
 	# GNU ld has some strange behaviour to do with weak functions, and does not deal

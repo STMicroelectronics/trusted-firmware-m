@@ -55,7 +55,7 @@ static struct stm32_bsec_platdata pdata;
 __attribute__((weak))
 int stm32_bsec_get_platdata(struct stm32_bsec_platdata *pdata)
 {
-	return 0;
+	return -ENODEV;
 }
 
 static void bsec_lock(void)
