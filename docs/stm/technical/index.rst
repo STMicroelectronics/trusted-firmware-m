@@ -1,13 +1,12 @@
-Releases
-========
+Technical references
+====================
 
 .. toctree::
     :maxdepth: 1
     :glob:
 
-    getting_started
-    platforms.rst
-    changelog.rst
+    copro/index
+    *
 
 --------------
 

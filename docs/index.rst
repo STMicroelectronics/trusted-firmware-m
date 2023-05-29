@@ -117,6 +117,7 @@ Trusted Firmware-M Documentation
     :hidden:
 
     stm/releases/index
+    stm/technical/index
 
 --------------
 
