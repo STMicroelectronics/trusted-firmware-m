@@ -9,15 +9,15 @@ This document contains SOC and boards supported by stm32.
     :caption: SOC
     :glob:
 
-    ../platform/stm/common/stm*/**
+    ../../platform/stm/common/stm*/**
 
 .. toctree::
     :maxdepth: 1
     :caption: Boards
     :glob:
 
-    ../platform/stm/nucleo*/**
-    ../platform/stm/stm32*/**
+    ../../platform/stm/nucleo*/**
+    ../../platform/stm/stm32*/**
 
 --------------
 

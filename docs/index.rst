@@ -113,9 +113,10 @@ Trusted Firmware-M Documentation
 .. toctree::
     :caption: STMICROELECTRONICS
     :maxdepth: 1
+    :titlesonly:
     :hidden:
 
-    stm/index
+    stm/releases/index
 
 --------------
 

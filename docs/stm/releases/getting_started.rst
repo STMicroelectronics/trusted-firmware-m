@@ -67,9 +67,9 @@ Instructions for your board:
     :maxdepth: 1
     :glob:
 
-    ../platform/stm/stm32*/**
-    ../platform/stm/nucleo*/**
-    ../platform/stm/b_*/**
+    ../../platform/stm/stm32*/**
+    ../../platform/stm/nucleo*/**
+    ../../platform/stm/b_*/**
 
 --------------
 

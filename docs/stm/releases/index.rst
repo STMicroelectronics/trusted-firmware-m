@@ -1,23 +1,14 @@
-==================
-Change Log & Notes
-==================
-
-This document contains a summary of the new features, changes, fixes and known
-issues in each release of Trusted Firmware-M of stmicroelectronics.
-
-The tag naming is defined by:
-
-.. code::
-
-    <community version>-<platform>-<release version>
+Releases
+========
 
 .. toctree::
     :maxdepth: 1
     :glob:
 
-    */changelog
+    getting_started
+    platforms.rst
+    changelog.rst
 
 --------------
 
-*Copyright (c) 2021 STMicroelectronics. All rights reserved.*
-*SPDX-License-Identifier: BSD-3-Clause*
+*Copyright (c) 2021, Arm Limited. All rights reserved.*
