@@ -20,35 +20,11 @@ Tested platforms
 {{plat_test}}
 {% endfor %}
 
-Known issues
-------------
+{{issues_log}}
 
-.. list-table::
-
-   * - **Descriptions**
-     - **links**
-
-{% for k in k_issues %}
-   * - {{k.summary}}
-     - `{{k.id}} <https://intbugzilla.st.com/show_bug.cgi?id={{k.id}}>`_
-
-{% endfor %}
-
-Issues fixed
-------------
-
-.. list-table::
-
-   * - **Descriptions**
-     - **links**
-
-{% for f in f_issues %}
-   * - {{f.summary}}
-     - `{{f.id}} <https://intbugzilla.st.com/show_bug.cgi?id={{f.id}}>`_
-
-{% endfor %}
+{{fixed_log}}
 
 --------------
 
-*Copyright (c) 2021 STMicroelectronics. All rights reserved.*
+*Copyright (c) 2023 STMicroelectronics. All rights reserved.*
 *SPDX-License-Identifier: BSD-3-Clause*

@@ -40,20 +40,34 @@ class RstHelper(object):
         self.f_rst.seek(0)
         return self.f_rst.read()
 
-def issue_known():
+def issue_known(args):
 
-    return []
+    issue_rst = args.release + "/issues.rst"
 
-def issue_fixed():
+    with open(issue_rst) as fp:
+        issue_file = fp.read()
 
-    print("Found issue fixed in bugzilla between 2 commits:")
-    g_brch = input('\tEnter gerrit branch: ')
-    s_sha1 = input('\tEnter start sha1,branch or tag: ')
-    e_sha1 = input('\tEnter end sha1,branch or tag: ')
+    return issue_file
 
-    bz_list = stm32_bzlist.main(["-b", g_brch, "-s", s_sha1, "-e", e_sha1, "-c"])
+def issue_fixed(args):
 
-    return  bz_list.bugs
+    fixed_rst = args.release + "/fixed.rst"
+
+    with open(fixed_rst) as fp:
+        fixed_file = fp.read()
+
+    return fixed_file
+
+# def issue_fixed():
+
+#     print("Found issue fixed in bugzilla between 2 commits:")
+#     g_brch = input('\tEnter gerrit branch: ')
+#     s_sha1 = input('\tEnter start sha1,branch or tag: ')
+#     e_sha1 = input('\tEnter end sha1,branch or tag: ')
+
+#     bz_list = stm32_bzlist.main(["-b", g_brch, "-s", s_sha1, "-e", e_sha1, "-c"])
+
+#     return  bz_list.bugs
 
 def create_tag(args):
 
@@ -85,8 +99,8 @@ def create_tag(args):
     tag_var['doc_release'] = os.path.basename(args.release)
     tag_var['features_log'] = feature_log
     tag_var['tests_platform'] = tests_platform
-    tag_var['k_issues'] = issue_known()
-    tag_var['f_issues'] = issue_fixed()
+    tag_var['issues_log'] = issue_known(args)
+    tag_var['fixed_log'] = issue_fixed(args)
 
     tag_template = ENV.get_template('tag.rst.template')
     tag_rst.write(tag_template.render(tag_var))
