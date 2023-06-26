@@ -19,7 +19,7 @@ if (STM32_M33TDCID)
 	message(FATAL_ERROR "INVALID CONFIG: STM32_M33TDCID NOT SUPPORTED ON ${TFM_PLATFORM}")
 endif()
 
-set(STM32_BOARD_MODEL			"stm32mp257f eval"	CACHE STRING	"Define board model name" FORCE)
+set(STM32_BOARD_MODEL			"stm32mp257f eval1"	CACHE STRING	"Define board model name" FORCE)
 
 set(STM32_IPC				ON         CACHE BOOL     "Use IPC (rpmsg) to communicate with main processor" FORCE)
 set(BL2                                 OFF        CACHE BOOL     "Whether to build BL2" FORCE)

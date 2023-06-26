@@ -1,7 +1,7 @@
-stm32mp257f_ev
-##############
+stm32mp257f_ev1
+###############
 
-The stm32mp257f_ev board is dedicated to evaluate and experimentation
+The stm32mp257f_ev1 board is dedicated to evaluate and experimentation
 on :doc:`STM32MP2 SoC of stmicroelectronics </platform/stm/common/stm32mp2/readme>`
 
 .. Note::
@@ -18,7 +18,7 @@ Build
       .. code:: bash
 
          $ cmake -S <SRC_DIRECTORY> -B <BUILD_DIRECTORY> \
-                 -DTFM_PLATFORM=stm/stm32mp257f_ev \
+                 -DTFM_PLATFORM=stm/stm32mp257f_ev1 \
                  -DTFM_TOOLCHAIN_FILE=toolchain_GNUARM.cmake \
                  -DTFM_PROFILE=profile_small \
                  -DCMAKE_BUILD_TYPE=debug
@@ -29,7 +29,7 @@ Build
       .. code:: bash
 
          $ cmake -S <SRC_DIRECTORY> -B <BUILD_DIRECTORY> \
-                 -DTFM_PLATFORM=stm/stm32mp257f_ev \
+                 -DTFM_PLATFORM=stm/stm32mp257f_ev1 \
                  -DTFM_TOOLCHAIN_FILE=toolchain_GNUARM.cmake \
                  -DTFM_PROFILE=profile_small \
                  -DCMAKE_BUILD_TYPE=debug -G "Unix Makefiles"
@@ -61,7 +61,8 @@ The M33 copro firmware can be loaded by cortex A35 with these commands
    $ echo start > state
 
 .. Note::
-   The firmware file must be in /lib/firmware
+   - The firmware must be **signed**, refer to OPTEE documentation.
+   - The firmware file must be in /lib/firmware
 
 In developpment (debug open), the gdb/openocd can load and debug M33 firmware
 
