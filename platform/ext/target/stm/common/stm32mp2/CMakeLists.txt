@@ -5,10 +5,9 @@
 #
 #-------------------------------------------------------------------------------
 cmake_policy(SET CMP0076 NEW)
-set(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 # Generate board model
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/boards/board_model.h.in
+configure_file(${STM_SOC_DIR}/boards/board_model.h.in
                ${CMAKE_BINARY_DIR}/generated/board_model.h)
 
 #========================= Platform region defs ===============================#
@@ -20,8 +19,8 @@ target_compile_definitions(platform_region_defs
 target_include_directories(platform_region_defs
 	INTERFACE
 		include
-		${CMAKE_CURRENT_SOURCE_DIR}/boards
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/include
+		${STM_SOC_DIR}/boards
+		${STM_SOC_DIR}/native_driver/include
 )
 
 #========================= Platform common defs ===============================#
@@ -42,14 +41,14 @@ endif()
 
 if(BL2)
 	target_add_scatter_file(bl2
-		$<$<C_COMPILER_ID:GNU>:${STM_COMMON_DIR}/stm32mp2/device/source/gcc/stm32mp2_bl2.ld>
+		$<$<C_COMPILER_ID:GNU>:${STM_SOC_DIR}/device/source/gcc/stm32mp2_bl2.ld>
 	)
 endif()
 
 #========================= Platform psa interface =============================#
 target_include_directories(psa_interface
 	INTERFACE
-		${CMAKE_CURRENT_SOURCE_DIR}/secure/services/include
+		${STM_SOC_DIR}/secure/services/include
 )
 
 #========================= Platform Secure ====================================#
@@ -58,49 +57,49 @@ target_include_directories(platform_s
 	PUBLIC
 		${PLATFORM_DIR}/include
 	        ${CMAKE_BINARY_DIR}/generated
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/include
-		${CMAKE_CURRENT_SOURCE_DIR}/device/include
-		${CMAKE_CURRENT_SOURCE_DIR}/secure
-		${CMAKE_CURRENT_SOURCE_DIR}/secure/services/include
+		${STM_SOC_DIR}/native_driver
+		${STM_SOC_DIR}/native_driver/include
+		${STM_SOC_DIR}/device/include
+		${STM_SOC_DIR}/secure
+		${STM_SOC_DIR}/secure/services/include
 )
 
 target_sources(platform_s
 	PRIVATE
-		${CMAKE_CURRENT_SOURCE_DIR}/device/source/system_stm32mp2xx_m33.c
-		${CMAKE_CURRENT_SOURCE_DIR}/secure/target_cfg.c
-		${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_hal_isolation.c
-		${CMAKE_CURRENT_SOURCE_DIR}/secure/provisioning.c
-		${CMAKE_CURRENT_SOURCE_DIR}/secure/tfm_hal_platform.c
-		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_spi_flash.c
-		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_flash_mm.c
-		${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_usart.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/mpu_armv8m_drv.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/sau_armv8m_drv.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/pwr/stm32_pwr.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/bsec/stm32_bsec3.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/syscfg/stm32_syscfg.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk-stm32-core.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/stm32mp2_clk.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/reset/stm32_reset.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/systick/stm32_systick.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/gpio/stm32_gpio.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/uart/stm32_uart.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/spi/stm32_ospi.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/mtd/nor/spi_nor.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rif.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rifsc.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_iac.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_serc.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/stm32_icache.c
-		${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/stm32_dcache.c
-		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/services/src/tfm_platform_system.c>
-		$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${CMAKE_CURRENT_SOURCE_DIR}/secure/nv_counters.c>
-		$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_OTP}>>:${CMAKE_CURRENT_SOURCE_DIR}/secure/otp_shadow.c>
-		$<$<BOOL:${STM32_M33TDCID}>:${CMAKE_CURRENT_SOURCE_DIR}/secure/services/src/stm32_copro.c>
+		${STM_SOC_DIR}/device/source/system_stm32mp2xx_m33.c
+		${STM_SOC_DIR}/secure/target_cfg.c
+		${STM_SOC_DIR}/secure/tfm_hal_isolation.c
+		${STM_SOC_DIR}/secure/provisioning.c
+		${STM_SOC_DIR}/secure/tfm_hal_platform.c
+		${STM_SOC_DIR}/cmsis_driver/driver_spi_flash.c
+		${STM_SOC_DIR}/cmsis_driver/driver_flash_mm.c
+		${STM_SOC_DIR}/cmsis_driver/driver_usart.c
+		${STM_SOC_DIR}/native_driver/src/core/mpu_armv8m_drv.c
+		${STM_SOC_DIR}/native_driver/src/core/sau_armv8m_drv.c
+		${STM_SOC_DIR}/native_driver/src/pwr/stm32_pwr.c
+		${STM_SOC_DIR}/native_driver/src/bsec/stm32_bsec3.c
+		${STM_SOC_DIR}/native_driver/src/syscfg/stm32_syscfg.c
+		${STM_SOC_DIR}/native_driver/src/clk/clk.c
+		${STM_SOC_DIR}/native_driver/src/clk/clk-stm32-core.c
+		${STM_SOC_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
+		${STM_SOC_DIR}/native_driver/src/clk/stm32mp2_clk.c
+		${STM_SOC_DIR}/native_driver/src/reset/stm32_reset.c
+		${STM_SOC_DIR}/native_driver/src/systick/stm32_systick.c
+		${STM_SOC_DIR}/native_driver/src/gpio/stm32_gpio.c
+		${STM_SOC_DIR}/native_driver/src/uart/stm32_uart.c
+		${STM_SOC_DIR}/native_driver/src/spi/stm32_ospi.c
+		${STM_SOC_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c
+		${STM_SOC_DIR}/native_driver/src/mtd/nor/spi_nor.c
+		${STM_SOC_DIR}/native_driver/src/rif/stm32_rif.c
+		${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c
+		${STM_SOC_DIR}/native_driver/src/rif/stm32_iac.c
+		${STM_SOC_DIR}/native_driver/src/rif/stm32_serc.c
+		${STM_SOC_DIR}/native_driver/src/core/stm32_icache.c
+		${STM_SOC_DIR}/native_driver/src/core/stm32_dcache.c
+		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${STM_SOC_DIR}/secure/services/src/tfm_platform_system.c>
+		$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${STM_SOC_DIR}/secure/nv_counters.c>
+		$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_OTP}>>:${STM_SOC_DIR}/secure/otp_shadow.c>
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/secure/services/src/stm32_copro.c>
 		${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_nvic.c
 )
 
@@ -121,10 +120,10 @@ if(TFM_PARTITION_CRYPTO)
         target_include_directories(platform_crypto_keys
                 PUBLIC
                         ${PLATFORM_DIR}/include
-                        ${CMAKE_CURRENT_SOURCE_DIR}/native_driver/include
-                        ${CMAKE_CURRENT_SOURCE_DIR}/device/include
-                        ${CMAKE_CURRENT_SOURCE_DIR}/secure
-                        ${CMAKE_CURRENT_SOURCE_DIR}/secure/services/include
+                        ${STM_SOC_DIR}/native_driver/include
+                        ${STM_SOC_DIR}/device/include
+                        ${STM_SOC_DIR}/secure
+                        ${STM_SOC_DIR}/secure/services/include
         )
 endif()
 
@@ -133,7 +132,7 @@ endif()
 # object files.
 target_sources(tfm_s
 	PRIVATE
-		${CMAKE_CURRENT_SOURCE_DIR}/device/source/startup_stm32mp2_s.c
+		${STM_SOC_DIR}/device/source/startup_stm32mp2_s.c
 )
 
 #========================= Platform Non-Secure ================================#
@@ -141,25 +140,25 @@ if(NS)
 	target_include_directories(platform_ns
 		PUBLIC
 			${PLATFORM_DIR}/include
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/include
-			${CMAKE_CURRENT_SOURCE_DIR}/device/include
-			${CMAKE_CURRENT_SOURCE_DIR}/secure/services/include
+			${STM_SOC_DIR}/native_driver
+			${STM_SOC_DIR}/native_driver/include
+			${STM_SOC_DIR}/device/include
+			${STM_SOC_DIR}/secure/services/include
 	)
 
 	target_sources(platform_ns
 		PRIVATE
-			${CMAKE_CURRENT_SOURCE_DIR}/device/source/system_stm32mp2xx_m33.c
-			${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_usart.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/pwr/stm32_pwr.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk-stm32-core.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/stm32mp2_clk.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/reset/stm32_reset.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/systick/stm32_systick.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/gpio/stm32_gpio.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/uart/stm32_uart.c
+			${STM_SOC_DIR}/device/source/system_stm32mp2xx_m33.c
+			${STM_SOC_DIR}/cmsis_driver/driver_usart.c
+			${STM_SOC_DIR}/native_driver/src/pwr/stm32_pwr.c
+			${STM_SOC_DIR}/native_driver/src/clk/clk.c
+			${STM_SOC_DIR}/native_driver/src/clk/clk-stm32-core.c
+			${STM_SOC_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
+			${STM_SOC_DIR}/native_driver/src/clk/stm32mp2_clk.c
+			${STM_SOC_DIR}/native_driver/src/reset/stm32_reset.c
+			${STM_SOC_DIR}/native_driver/src/systick/stm32_systick.c
+			${STM_SOC_DIR}/native_driver/src/gpio/stm32_gpio.c
+			${STM_SOC_DIR}/native_driver/src/uart/stm32_uart.c
 	)
 
 	target_compile_definitions(platform_ns
@@ -174,8 +173,8 @@ if(NS)
 	# object files. For this reason, the file tfm_ns_plat_init is on tfm_ns target
 	target_sources(tfm_ns
 		PRIVATE
-			${CMAKE_CURRENT_SOURCE_DIR}/device/source/startup_stm32mp2_ns.c
-			${CMAKE_CURRENT_SOURCE_DIR}/tfm_ns_plat_init.c
+			${STM_SOC_DIR}/device/source/startup_stm32mp2_ns.c
+			${STM_SOC_DIR}/tfm_ns_plat_init.c
 	)
 endif()
 
@@ -185,9 +184,9 @@ if(BL2)
 	target_include_directories(platform_bl2
 		PUBLIC
 			${PLATFORM_DIR}/include
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/include
-			${CMAKE_CURRENT_SOURCE_DIR}/device/include
+			${STM_SOC_DIR}/native_driver
+			${STM_SOC_DIR}/native_driver/include
+			${STM_SOC_DIR}/device/include
 			${MCUBOOT_PATH}/boot/bootutil/include
 			$<TARGET_PROPERTY:bl2,BINARY_DIR>/ext/mcuboot
 			${CMAKE_SOURCE_DIR}/bl2/ext/mcuboot/include
@@ -196,32 +195,32 @@ if(BL2)
 
 	target_sources(platform_bl2
 		PRIVATE
-			${CMAKE_CURRENT_SOURCE_DIR}/device/source/system_stm32mp2xx_m33.c
-			${CMAKE_CURRENT_SOURCE_DIR}/bl2/boot_hal.c
-			${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_spi_flash.c
-			${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_flash_mm.c
-			${CMAKE_CURRENT_SOURCE_DIR}/cmsis_driver/driver_usart.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/mpu_armv8m_drv.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/pwr/stm32_pwr.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/bsec/stm32_bsec3.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/syscfg/stm32_syscfg.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/clk-stm32-core.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/clk/stm32mp2_clk.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/reset/stm32_reset.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/systick/stm32_systick.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/gpio/stm32_gpio.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/uart/stm32_uart.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/spi/stm32_ospi.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/mtd/nor/spi_nor.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rif.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_rifsc.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_iac.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/rif/stm32_serc.c
-			${CMAKE_CURRENT_SOURCE_DIR}/native_driver/src/core/stm32_icache.c
-			$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${CMAKE_CURRENT_SOURCE_DIR}/secure/nv_counters.c>
+			${STM_SOC_DIR}/device/source/system_stm32mp2xx_m33.c
+			${STM_SOC_DIR}/bl2/boot_hal.c
+			${STM_SOC_DIR}/cmsis_driver/driver_spi_flash.c
+			${STM_SOC_DIR}/cmsis_driver/driver_flash_mm.c
+			${STM_SOC_DIR}/cmsis_driver/driver_usart.c
+			${STM_SOC_DIR}/native_driver/src/core/mpu_armv8m_drv.c
+			${STM_SOC_DIR}/native_driver/src/pwr/stm32_pwr.c
+			${STM_SOC_DIR}/native_driver/src/bsec/stm32_bsec3.c
+			${STM_SOC_DIR}/native_driver/src/syscfg/stm32_syscfg.c
+			${STM_SOC_DIR}/native_driver/src/clk/clk.c
+			${STM_SOC_DIR}/native_driver/src/clk/clk-stm32-core.c
+			${STM_SOC_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
+			${STM_SOC_DIR}/native_driver/src/clk/stm32mp2_clk.c
+			${STM_SOC_DIR}/native_driver/src/reset/stm32_reset.c
+			${STM_SOC_DIR}/native_driver/src/systick/stm32_systick.c
+			${STM_SOC_DIR}/native_driver/src/gpio/stm32_gpio.c
+			${STM_SOC_DIR}/native_driver/src/uart/stm32_uart.c
+			${STM_SOC_DIR}/native_driver/src/spi/stm32_ospi.c
+			${STM_SOC_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c
+			${STM_SOC_DIR}/native_driver/src/mtd/nor/spi_nor.c
+			${STM_SOC_DIR}/native_driver/src/rif/stm32_rif.c
+			${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c
+			${STM_SOC_DIR}/native_driver/src/rif/stm32_iac.c
+			${STM_SOC_DIR}/native_driver/src/rif/stm32_serc.c
+			${STM_SOC_DIR}/native_driver/src/core/stm32_icache.c
+			$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${STM_SOC_DIR}/secure/nv_counters.c>
 			${STM_COMMON_DIR}/hal/provision/otp_provision.c
 	)
 
@@ -243,7 +242,7 @@ if(BL2)
 	# object files.
 	target_sources(bl2
 		PRIVATE
-			${CMAKE_CURRENT_SOURCE_DIR}/device/source/startup_stm32mp2_bl2.c
+			${STM_SOC_DIR}/device/source/startup_stm32mp2_bl2.c
 	)
 
 	add_custom_target(bl2_stm32
@@ -255,7 +254,7 @@ if(BL2)
 		DEPENDS $<TARGET_FILE_DIR:bl2>/bl2.bin
 		DEPENDS $<TARGET_FILE_DIR:bl2>/bl2.elf
 		COMMENT "STM32 image tool for bl2"
-		COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/imageheader/stm32_imgtool.py
+		COMMAND ${PYTHON_EXECUTABLE} ${STM_SOC_DIR}/tools/imageheader/stm32_imgtool.py
 		-e $<TARGET_FILE_DIR:bl2>/bl2.elf
 		-b $<TARGET_FILE_DIR:bl2>/bl2.bin
 		-o $<TARGET_FILE_DIR:bl2>/bl2.stm32
