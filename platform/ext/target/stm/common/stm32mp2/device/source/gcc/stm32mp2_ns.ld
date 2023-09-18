@@ -1,21 +1,21 @@
-/*
- * Copyright (C) 2020 STMicroelectronics.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- *
- * This file is derivative of CMSIS V5.00 gcc_arm.ld
- */
+;/*
+; * Copyright (c) 2021-2022 Arm Limited. All rights reserved.
+; *
+; * Licensed under the Apache License, Version 2.0 (the "License");
+; * you may not use this file except in compliance with the License.
+; * You may obtain a copy of the License at
+; *
+; *     http://www.apache.org/licenses/LICENSE-2.0
+; *
+; * Unless required by applicable law or agreed to in writing, software
+; * distributed under the License is distributed on an "AS IS" BASIS,
+; * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+; * See the License for the specific language governing permissions and
+; * limitations under the License.
+; *
+; *
+; * This file is derivative of CMSIS V5.00 gcc_arm.ld
+; */
 
 /* Linker script to configure memory regions. */
 /* This file will be run trough the pre-processor. */
@@ -24,13 +24,12 @@
 
 MEMORY
 {
-    RETRAM     (rx)  : ORIGIN = BL2_CODE_START,    LENGTH = BL2_CODE_SIZE
-    RETRAM_OTP (rx)  : ORIGIN = BL2_OTP_AREA_BASE, LENGTH = BL2_OTP_AREA_SIZE
-    RAM        (rwx) : ORIGIN = BL2_DATA_START,    LENGTH = BL2_DATA_SIZE
+  FLASH (rx)  : ORIGIN = NS_CODE_START, LENGTH = NS_CODE_SIZE
+  RAM   (rwx) : ORIGIN = NS_DATA_START, LENGTH = NS_DATA_SIZE
 }
 
-__heap_size__  = BL2_HEAP_SIZE;
-__msp_stack_size__ = BL2_MSP_STACK_SIZE;
+__heap_size__  = NS_HEAP_SIZE;
+__stack_size__ = NS_STACK_SIZE;
 
 /* Library configurations */
 GROUP(libgcc.a libc.a libm.a libnosys.a)
@@ -39,11 +38,6 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
-    .BL2_OTP :
-    {
-       KEEP(*(.BL2_OTP_Const))
-    } > RETRAM_OTP
-
     .text :
     {
         KEEP(*(.vectors))
@@ -74,25 +68,25 @@ SECTIONS
         *(.rodata*)
 
         KEEP(*(.eh_frame*))
-    } > RETRAM
+    } > FLASH
 
     .ARM.extab :
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
-    } > RETRAM
+    } > FLASH
 
     __exidx_start = .;
     .ARM.exidx :
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-    } > RETRAM
+    } > FLASH
     __exidx_end = .;
 
 #include <linker/devices.ld>
 
     /* To copy multiple ROM to RAM sections,
      * define etext2/data2_start/data2_end and
-     * define __STARTUP_COPY_MULTIPLE in startup file */
+     * define __STARTUP_COPY_MULTIPLE in startup_cmsdk_mps3_an524_ns.S */
     .copy.table :
     {
         . = ALIGN(4);
@@ -104,11 +98,11 @@ SECTIONS
         LONG (DEFINED(__data2_start__) ? __data2_start__ : 0)
         LONG (DEFINED(__data2_start__) ? ((__data2_end__ - __data2_start__) / 4) : 0)
         __copy_table_end__ = .;
-    } > RETRAM
+    } > FLASH
 
     /* To clear multiple BSS sections,
      * uncomment .zero.table section and,
-     * define __STARTUP_CLEAR_BSS_MULTIPLE in startup file */
+     * define __STARTUP_CLEAR_BSS_MULTIPLE in startup_cmsdk_mps3_an524_ns.S */
     .zero.table :
     {
         . = ALIGN(4);
@@ -118,16 +112,9 @@ SECTIONS
         LONG (DEFINED(__bss2_start__) ? __bss2_start__ : 0)
         LONG (DEFINED(__bss2_start__) ? ((__bss2_end__ - __bss2_start__) / 4) : 0)
         __zero_table_end__ = .;
-    } > RETRAM
+    } > FLASH
 
     __etext = ALIGN(4);
-
-    .tfm_bl2_shared_data : ALIGN(32)
-    {
-        . += BOOT_TFM_SHARED_DATA_SIZE;
-    } > RAM
-    Image$$SHARED_DATA$$RW$$Base = ADDR(.tfm_bl2_shared_data);
-    Image$$SHARED_DATA$$RW$$Limit = ADDR(.tfm_bl2_shared_data) + SIZEOF(.tfm_bl2_shared_data);
 
     .data : AT (__etext)
     {
@@ -162,7 +149,6 @@ SECTIONS
         __data_end__ = .;
 
     } > RAM
-    Image$$ER_DATA$$Base = ADDR(.data);
 
     .bss :
     {
@@ -176,12 +162,12 @@ SECTIONS
 
     bss_size = __bss_end__ - __bss_start__;
 
-    .msp_stack : ALIGN(32)
+    .stack : ALIGN(32)
     {
-        . += __msp_stack_size__;
+        . += __stack_size__;
     } > RAM
-    Image$$ARM_LIB_STACK$$ZI$$Base = ADDR(.msp_stack);
-    Image$$ARM_LIB_STACK$$ZI$$Limit = ADDR(.msp_stack) + SIZEOF(.msp_stack);
+    __StackLimit = ADDR(.stack);
+    __StackTop = ADDR(.stack) + SIZEOF(.stack);
 
     .heap : ALIGN(8)
     {
@@ -193,7 +179,6 @@ SECTIONS
         __HeapLimit = .;
         __heap_limit = .; /* Add for _sbrk */
     } > RAM
-    Image$$ARM_LIB_HEAP$$ZI$$Limit = ADDR(.heap) + SIZEOF(.heap);
 
-    PROVIDE(__stack = Image$$ARM_LIB_STACK$$ZI$$Limit);
+    PROVIDE(__stack = __StackTop);
 }

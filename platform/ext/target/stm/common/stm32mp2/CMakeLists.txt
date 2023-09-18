@@ -9,6 +9,9 @@ cmake_policy(SET CMP0076 NEW)
 # Generate board model
 configure_file(${STM_SOC_DIR}/boards/board_model.h.in
                ${CMAKE_BINARY_DIR}/generated/board_model.h)
+#========================= Device tree ========================================#
+include(${STM_DEVICETREE_DIR}/gen_dt.cmake)
+set(GENERATED_DT_DIR ${CMAKE_BINARY_DIR}/generated/devicetree)
 
 #========================= Platform region defs ===============================#
 target_compile_definitions(platform_region_defs
@@ -21,16 +24,17 @@ target_include_directories(platform_region_defs
 		include
 		${STM_SOC_DIR}/boards
 		${STM_SOC_DIR}/native_driver/include
+		${DT_INCLUDE_DIR}
 )
 
 #========================= Platform common defs ===============================#
 target_add_scatter_file(tfm_s
-	$<$<C_COMPILER_ID:GNU>:${PLATFORM_DIR}/ext/common/gcc/tfm_common_s.ld>
+	$<$<C_COMPILER_ID:GNU>:${STM_SOC_DIR}/device/source/gcc/stm32mp2_s.ld>
 )
 
 if(NS)
 	target_add_scatter_file(tfm_ns
-		$<$<C_COMPILER_ID:GNU>:${PLATFORM_DIR}/ext/common/gcc/tfm_common_ns.ld>
+		$<$<C_COMPILER_ID:GNU>:${STM_SOC_DIR}/device/source/gcc/stm32mp2_ns.ld>
 	)
 
 	target_link_libraries(CMSIS_5_tfm_ns
@@ -52,6 +56,16 @@ target_include_directories(psa_interface
 )
 
 #========================= Platform Secure ====================================#
+set(GEN_DT_OUT_DIR_S ${GENERATED_DT_DIR}/tfm_s)
+set(GEN_DT_OPT -DDTS_DIR=${DTS_EXT_DIR} -DDTS_BOARD=${DTS_BOARD_S} -DOUT_DIR=${GEN_DT_OUT_DIR_S})
+
+add_custom_command(
+	OUTPUT "${GEN_DT_OUT_DIR_S}/devicetree_generated.h"
+	COMMENT "DEVICETREE: s: preprocess and header generation"
+	COMMAND ${CMAKE_COMMAND} ${GEN_DT_OPT} -P ${DEVICETREE_DIR}/gen_dt.cmake
+)
+add_custom_target(dt_s_gen_h DEPENDS "${GEN_DT_OUT_DIR_S}/devicetree_generated.h")
+add_dependencies(tfm_s dt_s_gen_h)
 
 target_include_directories(platform_s
 	PUBLIC
@@ -62,10 +76,13 @@ target_include_directories(platform_s
 		${STM_SOC_DIR}/device/include
 		${STM_SOC_DIR}/secure
 		${STM_SOC_DIR}/secure/services/include
+		${DT_INCLUDE_DIR}
+		${GEN_DT_OUT_DIR_S}
 )
 
 target_sources(platform_s
 	PRIVATE
+		${DEVICETREE_DIR}/initlevel.c
 		${STM_SOC_DIR}/device/source/system_stm32mp2xx_m33.c
 		${STM_SOC_DIR}/secure/target_cfg.c
 		${STM_SOC_DIR}/secure/tfm_hal_isolation.c
@@ -137,6 +154,21 @@ target_sources(tfm_s
 
 #========================= Platform Non-Secure ================================#
 if(NS)
+	set(GEN_DT_OUT_DIR_NS ${GENERATED_DT_DIR}/tfm_ns)
+	set(GEN_DT_OPT
+		-DDTS_DIR=${DTS_EXT_DIR}
+		-DDTS_BOARD=${DTS_BOARD_NS}
+		-DOUT_DIR=${GEN_DT_OUT_DIR_NS}
+		-DDTC_FLAGS=-Wno-simple_bus_reg)
+
+	add_custom_command(
+		OUTPUT "${GEN_DT_OUT_DIR_NS}/devicetree_generated.h"
+		COMMENT "DEVICETREE: ns: preprocess and header generation"
+		COMMAND ${CMAKE_COMMAND} ${GEN_DT_OPT} -P ${DEVICETREE_DIR}/gen_dt.cmake
+	)
+	add_custom_target(dt_ns_gen_h DEPENDS "${GEN_DT_OUT_DIR_NS}/devicetree_generated.h")
+	add_dependencies(platform_ns dt_ns_gen_h)
+
 	target_include_directories(platform_ns
 		PUBLIC
 			${PLATFORM_DIR}/include
@@ -144,10 +176,13 @@ if(NS)
 			${STM_SOC_DIR}/native_driver/include
 			${STM_SOC_DIR}/device/include
 			${STM_SOC_DIR}/secure/services/include
+			${DT_INCLUDE_DIR}
+			${GEN_DT_OUT_DIR_NS}
 	)
 
 	target_sources(platform_ns
 		PRIVATE
+			${DEVICETREE_DIR}/initlevel.c
 			${STM_SOC_DIR}/device/source/system_stm32mp2xx_m33.c
 			${STM_SOC_DIR}/cmsis_driver/driver_usart.c
 			${STM_SOC_DIR}/native_driver/src/pwr/stm32_pwr.c
@@ -179,8 +214,18 @@ if(NS)
 endif()
 
 #========================= Platform BL2 =======================================#
-
 if(BL2)
+	set(GEN_DT_OUT_DIR_BL2 ${GENERATED_DT_DIR}/bl2)
+	set(GEN_DT_OPT -DDTS_DIR=${DTS_EXT_DIR} -DDTS_BOARD=${DTS_BOARD_BL2} -DOUT_DIR=${GEN_DT_OUT_DIR_BL2})
+
+	add_custom_command(
+		OUTPUT "${GEN_DT_OUT_DIR_BL2}/devicetree_generated.h"
+		COMMENT "DEVICETREE: bl2: preprocess and header generation"
+		COMMAND ${CMAKE_COMMAND} ${GEN_DT_OPT} -P ${DEVICETREE_DIR}/gen_dt.cmake
+	)
+	add_custom_target(dt_bl2_gen_h DEPENDS "${GEN_DT_OUT_DIR_BL2}/devicetree_generated.h")
+	add_dependencies(bl2 dt_bl2_gen_h)
+
 	target_include_directories(platform_bl2
 		PUBLIC
 			${PLATFORM_DIR}/include
@@ -191,10 +236,13 @@ if(BL2)
 			$<TARGET_PROPERTY:bl2,BINARY_DIR>/ext/mcuboot
 			${CMAKE_SOURCE_DIR}/bl2/ext/mcuboot/include
 			${CMAKE_SOURCE_DIR}/interface/include
+			${DT_INCLUDE_DIR}
+			${GEN_DT_OUT_DIR_BL2}
 	)
 
 	target_sources(platform_bl2
 		PRIVATE
+			${DEVICETREE_DIR}/initlevel.c
 			${STM_SOC_DIR}/device/source/system_stm32mp2xx_m33.c
 			${STM_SOC_DIR}/bl2/boot_hal.c
 			${STM_SOC_DIR}/cmsis_driver/driver_spi_flash.c
