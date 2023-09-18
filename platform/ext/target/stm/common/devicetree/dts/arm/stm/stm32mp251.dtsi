@@ -1,0 +1,36 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR BSD-3-Clause)
+/*
+ * Copyright (C) STMicroelectronics 2023 - All Rights Reserved
+ */
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cpu0: cpu@0 {
+			compatible = "arm,cortex-m33";
+			device_type = "cpu";
+			reg = <0>;
+		};
+	};
+
+	nvic: interrupt-controller@e000e100  {
+		compatible = "arm,v8m-nvic";
+		#address-cells = <1>;
+		reg = <0xe000e100 0xc00>;
+		interrupt-controller;
+		#interrupt-cells = <2>;
+		arm,num-irq-priority-bits = <4>;
+	};
+
+	soc {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		interrupt-parent = <&nvic>;
+		ranges;
+	};
+};
