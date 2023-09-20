@@ -4178,5 +4178,9 @@
 
 /* have these last so they have access to all previously defined macros */
 #include <devicetree/ordinals.h>
+#include <devicetree/clocks.h>
+#include <devicetree/pinctrl.h>
+#include <devicetree/gpio.h>
+#include <devicetree/reset.h>
 
 #endif /* DEVICETREE_H */
