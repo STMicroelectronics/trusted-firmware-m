@@ -14,8 +14,7 @@
 #define ARRAY_SIZE(a)				\
 	(sizeof(a) / sizeof((a)[0]))
 
-#define IS_POWER_OF_TWO(x)			\
-	(((x) & ((x) - 1)) == 0)
+#define IS_POWER_OF_TWO(x) (((x) != 0U) && (((x) & ((x) - 1U)) == 0U))
 
 #define SIZE_FROM_LOG2_WORDS(n)		(4 << (n))
 
@@ -149,9 +148,16 @@
 # define SPECULATION_SAFE_VALUE(var) var
 #endif
 
+#ifndef __maybe_unused
 #define __maybe_unused                  __attribute__((__unused__))
+#endif
+
 #define __unused			__attribute__((__unused__))
 #define __weak				__attribute__((weak))
+
+#ifndef ARG_UNUSED
+#define ARG_UNUSED(arg)  ((void)arg)
+#endif
 
 #define static_assert(expr, ...) __static_assert(expr, ##__VA_ARGS__, #expr)
 #define __static_assert(expr, msg, ...) _Static_assert(expr, msg)
@@ -172,5 +178,8 @@
 		      __same_type(*(ptr), void),			\
 		      "pointer type mismatch in container_of()");	\
 	((type *)(__mptr - offsetof(type, member))); })
+
+#define _FLD_PREP(field, value) (((uint32_t)(value) << (field ## _SHIFT)) & (field ## _MASK))
+#define _FLD_GET(field, value)  (((uint32_t)(value) & (field ## _MASK)) >> (field ## _SHIFT))
 
 #endif /* UTILS_DEF_H */

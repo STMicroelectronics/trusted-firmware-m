@@ -10,6 +10,7 @@
 #include <cmsis.h>
 #include <stdbool.h>
 
+#define USEC_PER_MSEC	1000L
 #define MSEC_PER_SEC	1000L
 #define USEC_PER_SEC	1000000L
 
