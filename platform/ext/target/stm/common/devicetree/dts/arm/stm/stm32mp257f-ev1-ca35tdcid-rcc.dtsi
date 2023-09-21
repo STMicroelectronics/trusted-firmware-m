@@ -1,0 +1,117 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR BSD-3-Clause)
+/*
+ * Copyright (C) STMicroelectronics 2023 - All Rights Reserved
+ */
+
+&clk_hse {
+	clock-frequency = <40000000>;
+	status = "disabled";
+};
+
+&clk_hsi {
+	clock-frequency = <64000000>;
+	status = "disabled";
+};
+
+&clk_lse {
+	clock-frequency = <32768>;
+	status = "disabled";
+};
+
+&clk_lsi {
+	clock-frequency = <32000>;
+	status = "disabled";
+};
+
+&clk_msi {
+	clock-frequency = <16000000>;
+	status = "disabled";
+};
+
+&rcc {
+	pll1: st,pll@0 {
+		st,pll = <&pll1_cfg_1200Mhz>;
+
+		pll1_cfg_1200Mhz: pll1-cfg-1200Mhz {
+			cfg = <30 1 1 1>;
+			src = <MUX_CFG(MUX_MUXSEL5, MUXSEL_HSE)>;
+		};
+
+		pll1_cfg_1500Mhz: pll1-cfg-1500Mhz {
+			cfg = <75 2 1 1>;
+			src = <MUX_CFG(MUX_MUXSEL5, MUXSEL_HSE)>;
+		};
+	};
+
+	/* DRAM clock = 2 * PLL2 clock */
+	pll2: st,pll@1 {
+		st,pll = <&pll2_cfg_600Mhz>;
+
+		pll2_cfg_600Mhz: pll2-cfg-600Mhz {
+			cfg = < 59 1 4 1 >;
+			src = < MUX_CFG(MUX_MUXSEL6, MUXSEL_HSE) >;
+			frac = < 0xF3B8CA >;
+		};
+	};
+
+	pll3: st,pll@2 {
+		st,pll = <&pll3_cfg_800Mhz>;
+
+		pll3_cfg_800Mhz: pll3-cfg-800Mhz {
+			cfg = <20 1 1 1>;
+			src = <MUX_CFG(MUX_MUXSEL7, MUXSEL_HSE)>;
+		};
+
+		pll3_cfg_900Mhz: pll3-cfg-900Mhz {
+			cfg = <45 2 1 1>;
+			src = <MUX_CFG(MUX_MUXSEL7, MUXSEL_HSE)>;
+		};
+	};
+
+	pll4: st,pll@3 {
+		st,pll = <&pll4_cfg_1200Mhz>;
+
+		pll4_cfg_1200Mhz: pll4-cfg-1200Mhz {
+			cfg = <30 1 1 1>;
+			src = <MUX_CFG(MUX_MUXSEL0, MUXSEL_HSE)>;
+		};
+	};
+
+	pll5: st,pll@4 {
+		st,pll = <&pll5_cfg_532Mhz>;
+
+		pll5_cfg_532Mhz: pll5-cfg-532Mhz {
+			cfg = <133 5 1 2>;
+			src = <MUX_CFG(MUX_MUXSEL1, MUXSEL_HSE)>;
+		};
+	};
+
+	pll6: st,pll@5 {
+		st,pll = <&pll6_cfg_500Mhz>;
+
+		pll6_cfg_500Mhz: pll6-cfg-500Mhz {
+			cfg = <25 1 1 2>;
+			src = <MUX_CFG(MUX_MUXSEL2, MUXSEL_HSE)>;
+		};
+	};
+
+	pll7: st,pll@6 {
+		st,pll = <&pll7_cfg_835_51172Mhz>;
+
+		pll7_cfg_835_51172Mhz: pll7-cfg-835-51172Mhz {
+			cfg = <167 4 1 2>;
+			src = <MUX_CFG(MUX_MUXSEL3, MUXSEL_HSE)>;
+			frac = < 0x1A3337 >;
+		};
+	};
+
+	pll8: st,pll@7 {
+		st,pll = <&pll8_cfg_594Mhz>;
+
+		pll8_cfg_594Mhz: pll8-cfg-594Mhz {
+			cfg = <297 5 1 4>;
+			src = <MUX_CFG(MUX_MUXSEL4, MUXSEL_HSE)>;
+		};
+	};
+};
+
