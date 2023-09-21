@@ -19,7 +19,7 @@
 
 #include <flash_layout.h>
 
-#include <dt-bindings/clock/stm32mp2-clks.h>
+#include <dt-bindings/clock/stm32mp25-clks.h>
 
 /**
  * \file device_cfg.h

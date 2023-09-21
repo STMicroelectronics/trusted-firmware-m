@@ -27,6 +27,9 @@ extern "C" {
 #define TFM_DRIVER_STDIO    Driver_USART5
 #define NS_DRIVER_STDIO     Driver_USART5
 
+/* temporaire */
+#define STM32_DEV_RCC DEVICE_GET(DEVICE_DT_DEV_ID(DT_NODELABEL(rcc)))
+
 /**
  * \brief Enables the fault handlers and sets priorities.
  *

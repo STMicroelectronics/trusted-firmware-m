@@ -15,9 +15,6 @@ set(MBEDCRYPTO_BUILD_TYPE               minsizerel		CACHE STRING    "Build type 
 
 # set board specific config
 ########################## STM32 #######################################
-if (STM32_M33TDCID)
-	message(FATAL_ERROR "INVALID CONFIG: STM32_M33TDCID NOT SUPPORTED ON ${TFM_PLATFORM}")
-endif()
 
 set(STM32_BOARD_MODEL	"stm32mp257f eval1"			CACHE STRING	  "Define board model name" FORCE)
 set(DTS_EXT_DIR		""					CACHE STRING	  "If not empty, set external dts directory")
