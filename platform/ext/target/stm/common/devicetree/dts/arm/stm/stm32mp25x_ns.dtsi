@@ -5,3 +5,47 @@
  * This file allows to overwrite stm32mp25X.dtsi to change secure reg
  * properties by non secure value (for soc devices)
  */
+
+&ommanager {
+	reg = <0x40500000 0x400>, <0x60000000 0x10000000>;
+	ranges = <0 0 0x40430000 0x400>,
+		 <1 0 0x40440000 0x400>,
+		 <2 0 0x60000000 0x80000000>,
+		 <3 0 0x68000000 0x80000000>;
+};
+
+&rifsc {
+	reg = <0x42080000 0x1000>;
+};
+
+&uart5 {
+	reg = <0x40110000 0x400>;
+};
+
+&iac {
+	reg = <0x42090000 0x400>;
+};
+
+&risaf4 {
+	reg = <0x420d0000 0x1000>;
+};
+
+&bsec {
+	reg = <0x44000000 0x1000>;
+};
+
+&serc {
+	reg = <0x44080000 0x1000>;
+};
+
+&rcc {
+	reg = <0x44200000 0x10000>;
+};
+
+&pinctrl {
+	ranges = <0 0x44240000 0xa0400>;
+};
+
+&pinctrl_z {
+	ranges = <0 0x46200000 0x400>;
+};
