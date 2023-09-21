@@ -1,0 +1,40 @@
+# Copyright (c) 2019 Derek Hageman <hageman@inthat.cloud>
+# SPDX-License-Identifier: Apache-2.0
+
+description: Generic fixed-rate clock provider
+
+compatible: "fixed-clock"
+
+include: clock-controller.yaml
+
+properties:
+  clock-frequency:
+    type: int
+    description: output clock frequency (Hz)
+    required: true
+
+  clocks:
+    type: array
+    description: input clock source
+
+  "#clock-cells":
+    const: 0
+
+  st,bypass:
+    description: configures the oscillator bypass mode (HSEBYP, LSEBYP)
+    type: boolean
+  
+  st,digbypass:
+    description: configures the bypass mode as full-swing digital signal (DIGBYP)
+    type: boolean
+  
+  st,css:
+    description: activates the clock security system (HSECSSON, LSECSSON)
+    type: boolean
+  
+  st,drive:
+    description: |
+      only for LSE, contains the value of the drive for the oscillator
+      (see LSEDRV_ defined in the file dt-bindings/clock/stm32mp13-clksrc.h)
+    type: int
+
