@@ -100,7 +100,7 @@ target_sources(platform_s
 		${STM_SOC_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
 		${STM_SOC_DIR}/native_driver/src/clk/stm32mp2_clk.c
 		${STM_SOC_DIR}/native_driver/src/reset/stm32_reset.c
-		${STM_SOC_DIR}/native_driver/src/systick/stm32_systick.c
+		${STM_SOC_DIR}/native_driver/src/timer/systick.c
 		${STM_SOC_DIR}/native_driver/src/gpio/stm32_gpio.c
 		${STM_SOC_DIR}/native_driver/src/uart/console.c
 		${STM_SOC_DIR}/native_driver/src/uart/stm32_uart.c
@@ -150,6 +150,7 @@ endif()
 target_sources(tfm_s
 	PRIVATE
 		${STM_SOC_DIR}/device/source/startup_stm32mp2_s.c
+		${STM_SOC_DIR}/native_driver/src/timer/systick.c
 )
 
 #========================= Platform Non-Secure ================================#
@@ -190,7 +191,7 @@ if(NS)
 			${STM_SOC_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
 			${STM_SOC_DIR}/native_driver/src/clk/stm32mp2_clk.c
 			${STM_SOC_DIR}/native_driver/src/reset/stm32_reset.c
-			${STM_SOC_DIR}/native_driver/src/systick/stm32_systick.c
+			${STM_SOC_DIR}/native_driver/src/timer/systick.c
 			${STM_SOC_DIR}/native_driver/src/gpio/stm32_gpio.c
 			${STM_SOC_DIR}/native_driver/src/uart/console.c
 			${STM_SOC_DIR}/native_driver/src/uart/stm32_uart.c
@@ -210,6 +211,7 @@ if(NS)
 		PRIVATE
 			${STM_SOC_DIR}/device/source/startup_stm32mp2_ns.c
 			${STM_SOC_DIR}/tfm_ns_plat_init.c
+			${STM_SOC_DIR}/native_driver/src/timer/systick.c
 	)
 endif()
 
@@ -256,7 +258,7 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
 			${STM_SOC_DIR}/native_driver/src/clk/stm32mp2_clk.c
 			${STM_SOC_DIR}/native_driver/src/reset/stm32_reset.c
-			${STM_SOC_DIR}/native_driver/src/systick/stm32_systick.c
+			${STM_SOC_DIR}/native_driver/src/timer/systick.c
 			${STM_SOC_DIR}/native_driver/src/gpio/stm32_gpio.c
 			${STM_SOC_DIR}/native_driver/src/uart/console.c
 			${STM_SOC_DIR}/native_driver/src/uart/stm32_uart.c
@@ -291,6 +293,7 @@ if(BL2)
 	target_sources(bl2
 		PRIVATE
 			${STM_SOC_DIR}/device/source/startup_stm32mp2_bl2.c
+			${STM_SOC_DIR}/native_driver/src/timer/systick.c
 	)
 
 	add_custom_target(bl2_stm32

@@ -3,8 +3,8 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#ifndef  __STM32_SYSTICK_H__
-#define  __STM32_SYSTICK_H__
+#ifndef  __SYSTICK_H__
+#define  __SYSTICK_H__
 
 #include <stdint.h>
 #include <cmsis.h>
@@ -23,15 +23,6 @@
 #define systick_NS SysTick_NS
 #endif
 
-struct stm32_systick_platdata {
-	SysTick_Type *systick;
-	unsigned long clk_id;
-	uint32_t tick_hz;
-};
 
-int stm32_systick_init(void);
-void stm32_systick_config(unsigned long rate);
-void stm32_systick_enable(void);
-void stm32_systick_disable(void);
-uint64_t stm32_systick_get_tick(void);
-#endif   /* ----- #ifndef __STM32_SYSTICK_H__  ----- */
+
+#endif   /* ----- #ifndef __SYSTICK_H__  ----- */
