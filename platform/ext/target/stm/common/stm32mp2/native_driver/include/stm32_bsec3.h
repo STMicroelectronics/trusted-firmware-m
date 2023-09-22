@@ -10,16 +10,9 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <lib/utils_def.h>
+#include <tfm_plat_otp.h>
 
 #define DBG_FULL 0xFFF
-
-struct stm32_bsec_platdata {
-	uintptr_t base;
-};
-
-void stm32_bsec_write_debug_conf(uint32_t val);
-int stm32_bsec_init(void);
-
 /*
  * otp shadow depend of TDCID loader
  * which copies bsec otp to shadow memory.
@@ -47,20 +40,13 @@ int stm32_bsec_init(void);
 #define STATUS_PROVISIONING		BIT(1)
 #define STATUS_SECURE			BIT(0)
 
-struct bsec_shadow {
-	uint32_t magic;
-	uint32_t state;
-	uint32_t value[OTP_MAX_SIZE];
-	uint32_t status[OTP_MAX_SIZE];
-};
+void stm32_bsec_write_debug_conf(uint32_t val);
 
-struct stm32_otp_shadow_platdata {
-	uintptr_t base;
-	size_t size;
-	bool hw_key_valid;
-};
-
-int stm32_otp_shadow_init(void);
-enum tfm_plat_err_t stm32_otp_dummy_prep(void);
-
+int stm32_bsec_otp_size(enum tfm_otp_element_id_t id, size_t *size);
+int stm32_bsec_otp_read(enum tfm_otp_element_id_t id,
+			size_t out_len, uint8_t *out);
+int stm32_bsec_otp_write(enum tfm_otp_element_id_t id,
+			 size_t in_len, const uint8_t *in);
+int stm32_bsec_dummy_switch(void);
+bool stm32_bsec_is_valid(void);
 #endif /* STM32_BSEC3_H */

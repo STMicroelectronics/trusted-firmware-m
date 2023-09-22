@@ -57,6 +57,8 @@ enum tfm_otp_element_id_t {
     PLAT_OTP_ID_MAX = UINT32_MAX,
 };
 
+enum tfm_plat_err_t stm32_otp_dummy_prep(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -14,8 +14,6 @@
 #include <psa/crypto.h>
 #include <tfm_spm_log.h>
 
-#include <stm32_bsec3.h>
-
 #ifdef TFM_DUMMY_PROVISIONING
 #define PSA_ROT_PROV_DATA_MAGIC           0xBEEFFEED
 
