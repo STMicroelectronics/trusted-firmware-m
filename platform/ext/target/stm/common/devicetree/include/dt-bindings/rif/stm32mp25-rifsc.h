@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause) */
 /*
- * Copyright (c) 2020, STMicroelectronics
+ * Copyright (c) 2020-2023, STMicroelectronics
  */
 #ifndef _DT_BINDINGS_STM32MP25_RIFSC_H
 #define _DT_BINDINGS_STM32MP25_RIFSC_H
@@ -72,9 +72,9 @@
 #define STM32MP25_RIFSC_COMBOPHY_ID		67
 #define STM32MP25_RIFSC_PCIE_ID			68
 #define STM32MP25_RIFSC_UCPD1_ID		69
-#define STM32MP25_RIFSC_ETHSW_CFG_ID		70
-#define STM32MP25_RIFSC_ACM_CFG_ID		71
-#define STM32MP25_RIFSC_ACM_MSGBUF_ID		72
+#define STM32MP25_RIFSC_ETHSW_DEIP_ID		70
+#define STM32MP25_RIFSC_ETHSW_ACM_CFG_ID	71
+#define STM32MP25_RIFSC_ETHSW_ACM_MSGBUF_ID	72
 #define STM32MP25_RIFSC_STGEN_ID		73
 #define STM32MP25_RIFSC_OCTOSPI1_ID		74
 #define STM32MP25_RIFSC_OCTOSPI2_ID		75
@@ -84,10 +84,10 @@
 #define STM32MP25_RIFSC_GPU_ID			79
 #define STM32MP25_RIFSC_LTDC_CMN_ID		80
 #define STM32MP25_RIFSC_DSI_CMN_ID		81
-#define STM32MP25_RIFSC_LDITX_ID		84
-#define STM32MP25_RIFSC_CSI2HOST_ID		86
+#define STM32MP25_RIFSC_LVDS_ID			84
+#define STM32MP25_RIFSC_CSI_ID			86
 #define STM32MP25_RIFSC_DCMIPP_ID		87
-#define STM32MP25_RIFSC_CCI_ID			88
+#define STM32MP25_RIFSC_DCMI_PSSI_ID		88
 #define STM32MP25_RIFSC_VDEC_ID			89
 #define STM32MP25_RIFSC_VENC_ID			90
 #define STM32MP25_RIFSC_RNG_ID			92
@@ -105,6 +105,7 @@
 #define STM32MP25_RIFSC_WWDG2_ID		104
 #define STM32MP25_RIFSC_VREFBUF_ID		106
 #define STM32MP25_RIFSC_DTS_ID			107
+#define STM32MP25_RIFSC_RAMCFG_ID		108
 #define STM32MP25_RIFSC_CRC_ID			109
 #define STM32MP25_RIFSC_SERC_ID			110
 #define STM32MP25_RIFSC_OCTOSPIM_ID		111
@@ -128,33 +129,24 @@
 #define RIFSC_RISC_SCID_SHIFT			4
 #define RIFSC_RISC_SEC_SHIFT			8
 #define RIFSC_RISC_PRIV_SHIFT			9
+#define RIFSC_RISC_LOCK_SHIFT			10
 #define RIFSC_RISC_SEML_SHIFT			16
 #define RIFSC_RISC_PER_ID_SHIFT			24
 #define RIFSC_RISC_PERx_CID_SHIFT		0
 
-#define RISC_CID_ATTR(_sem_list, _scid, _sem_en, _cfen)		\
-	(((_sem_list) << RIFSC_RISC_SEML_SHIFT) |				\
-	 ((_scid) << RIFSC_RISC_SCID_SHIFT) |					\
-	 ((_sem_en) << RIFSC_RISC_SEM_EN_SHIFT) |				\
-	 ((_cfen) << RIFSC_RISC_CFEN_SHIFT))
+/* Global lock bindings */
+#define RIFSC_RIMU_GLOCK			1
+#define RIFSC_RISUP_GLOCK			2
 
-#ifdef CFG_DT
-#define RIFPROT(_rifid, _sem_list, _sec, _priv, _scid, _sem_en, _cfen)	\
-	(((_rifid) << RIFSC_RISC_PER_ID_SHIFT) |							\
-	 ((_priv) << RIFSC_RISC_PRIV_SHIFT) |								\
-	 ((_sec) << RIFSC_RISC_SEC_SHIFT) |									\
-	 RISC_CID_ATTR(_sem_list, _scid, _sem_en, _cfen))					\
-
-#else
-#define RIFPROT(_rifid, _sem_list, _sec, _priv, _scid, _sem_en, _cfen)	\
-	{																	\
-		.id = _rifid,													\
-		.sec = _sec,													\
-		.priv = _priv,													\
-		.cid_attr = RISC_CID_ATTR(_sem_list, _scid, _sem_en, _cfen),	\
-	}
-
-#endif
+#define RIFPROT(rifid, sem_list, lock, sec, priv, scid, sem_en, cfen) \
+	(((rifid) << RIFSC_RISC_PER_ID_SHIFT) | \
+	 ((sem_list) << RIFSC_RISC_SEML_SHIFT) | \
+	 ((lock) << RIFSC_RISC_LOCK_SHIFT) | \
+	 ((priv) << RIFSC_RISC_PRIV_SHIFT) | \
+	 ((sec) << RIFSC_RISC_SEC_SHIFT) | \
+	 ((scid) << RIFSC_RISC_SCID_SHIFT) | \
+	 ((sem_en) << RIFSC_RISC_SEM_EN_SHIFT) | \
+	 ((cfen) << RIFSC_RISC_CFEN_SHIFT))
 
 /* masters ID */
 #define RIMU_ID(idx)		(idx)
@@ -170,26 +162,12 @@
 #define RIFSC_RIMC_M_ID_SHIFT		16
 #define RIFSC_RIMC_ATTRx_SHIFT		0
 
-#define RIMC_ATTR(_mcid, _msec, _mpriv, _mode)	\
-	(((_mpriv) << RIFSC_RIMC_MPRIV_SHIFT) |		\
-	 ((_msec) << RIFSC_RIMC_MSEC_SHIFT) |		\
-	 ((_mcid) << RIFSC_RIMC_MCID_SHIFT) |		\
-	 ((_mode) << RIFSC_RIMC_MODE_SHIFT))
-
-#ifdef CFG_DT
-#define RIMUPROT(_rimuid, _mcid, _msec, _mpriv, _mode)	\
-	(((_rimuid) << RIFSC_RIMC_M_ID_SHIFT) |				\
-	 ((_mpriv) << RIFSC_RIMC_MPRIV_SHIFT) |				\
-	 ((_msec) << RIFSC_RIMC_MSEC_SHIFT) |				\
-	 ((_mcid) << RIFSC_RIMC_MCID_SHIFT) |				\
-	 ((_mode) << RIFSC_RIMC_MODE_SHIFT))
-#else
-#define RIMUPROT(_rimuid, _mcid, _msec, _mpriv, _mode)	\
-	{													\
-		.id = _rimuid,									\
-		.attr = RIMC_ATTR(_mcid, _msec, _mpriv, _mode), \
-	}
-#endif
+#define RIMUPROT(rimuid, mcid, msec, mpriv, mode) \
+	(((rimuid) << RIFSC_RIMC_M_ID_SHIFT) | \
+	 ((mpriv) << RIFSC_RIMC_MPRIV_SHIFT) | \
+	 ((msec) << RIFSC_RIMC_MSEC_SHIFT) | \
+	 ((mcid) << RIFSC_RIMC_MCID_SHIFT) | \
+	 ((mode) << RIFSC_RIMC_MODE_SHIFT))
 
 #endif /* _DT_BINDINGS_STM32_RIFSC_H */
 
