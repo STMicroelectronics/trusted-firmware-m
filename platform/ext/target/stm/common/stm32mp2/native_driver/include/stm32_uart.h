@@ -10,12 +10,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#ifdef TFM_ENV
-#include <stm32_gpio.h>
-#else
-#include <drivers/st/stm32_gpio.h>
-#endif
-
 /* Return status */
 #define UART_OK					0U
 #define UART_ERROR				0xFFFFFFFFU
@@ -195,109 +189,5 @@ struct stm32_uart_init_s {
 					 */
 };
 
-struct stm32_uart_advanced_init_s {
-	uint32_t adv_feature_init;	/*
-					 * Specifies which advanced UART
-					 * features are initialized.
-					 * This parameter can be a value of
-					 * @ref UART_ADVFEATURE_*_INIT.
-					 */
-
-	uint32_t tx_pin_level_invert;	/*
-					 * Specifies whether the TX pin active
-					 * level is inverted.
-					 * This parameter can be 0 or
-					 * USART_CR2_TXINV.
-					 */
-
-	uint32_t rx_pin_level_invert;	/*
-					 * Specifies whether the RX pin active
-					 * level is inverted.
-					 * This parameter can be 0 or
-					 * USART_CR2_RXINV.
-					 */
-
-	uint32_t data_invert;		/*
-					 * Specifies whether data are inverted
-					 * (positive/direct logic vs
-					 * negative/inverted logic).
-					 * This parameter can be 0 or
-					 * USART_CR2_DATAINV.
-					 */
-
-	uint32_t swap;			/*
-					 * Specifies whether TX and RX pins
-					 * are swapped. This parameter can be
-					 * 0 or USART_CR2_SWAP.
-					 */
-
-	uint32_t overrun_disable;	/*
-					 * Specifies whether the reception
-					 * overrun detection is disabled.
-					 * This parameter can be 0 or
-					 * USART_CR3_OVRDIS.
-					 */
-
-	uint32_t dma_disable_on_rx_error;
-					/*
-					 * Specifies whether the DMA is
-					 * disabled in case of reception
-					 * error. This parameter can be 0 or
-					 * USART_CR3_DDRE.
-					 */
-
-	uint32_t auto_baud_rate_enable;	/*
-					 * Specifies whether auto baud rate
-					 * detection is enabled. This
-					 * parameter can be 0 or
-					 * USART_CR2_ABREN.
-					 */
-
-	uint32_t auto_baud_rate_mode;	/*
-					 * If auto baud rate detection is
-					 * enabled, specifies how the rate
-					 * detection is carried out. This
-					 * parameter can be a value of @ref
-					 * UART_ADVFEATURE_AUTOBAUDRATE_ON*.
-					 */
-
-	uint32_t msb_first;		/*
-					 * Specifies whether MSB is sent first
-					 * on UART line.
-					 * This parameter can be 0 or
-					 * USART_CR2_MSBFIRST.
-					 */
-};
-
-struct stm32_uart_handle_s {
-	struct stm32_uart_init_s init;
-	struct stm32_uart_advanced_init_s advanced_init;
-
-	uint8_t *tx_buffer_ptr;
-	uint16_t tx_xfer_size;
-	volatile uint16_t tx_xfer_count;
-
-	uint8_t *rx_buffer_ptr;
-	uint16_t rx_xfer_size;
-	volatile uint16_t rx_xfer_count;
-};
-
-struct stm32_uart_platdata {
-	uintptr_t base;
-
-	unsigned long clk_id;
-	unsigned int rst_id;
-
-	struct pinctrl_cfg *pinctrl;
-
-	struct stm32_uart_handle_s *huart;
-};
-
-int stm32_uart_init(void);
-int stm32_uart_set_config(struct stm32_uart_handle_s *huart);
-int stm32_uart_transmit(uint8_t *buf, uint16_t size, uint32_t timeout_ms);
-int stm32_uart_receive(uint8_t *buf, uint16_t size, uint32_t timeout_ms);
-bool stm32_uart_error_detected(void);
-int stm32_uart_flush_rx_fifo(uint32_t timeout_us);
 #endif /* STM32_UART_H */
 
