@@ -102,7 +102,7 @@ target_sources(platform_s
 		${STM_SOC_DIR}/native_driver/src/reset/stm32_reset.c
 		${STM_SOC_DIR}/native_driver/src/timer/systick.c
 		${STM_SOC_DIR}/native_driver/src/pinctrl/common.c
-		${STM_SOC_DIR}/native_driver/src/gpio/stm32_gpio.c
+		${STM_SOC_DIR}/native_driver/src/pinctrl/stm32_pinctrl.c
 		${STM_SOC_DIR}/native_driver/src/uart/console.c
 		${STM_SOC_DIR}/native_driver/src/uart/stm32_uart.c
 		${STM_SOC_DIR}/native_driver/src/spi/stm32_ospi.c
@@ -194,7 +194,7 @@ if(NS)
 			${STM_SOC_DIR}/native_driver/src/reset/stm32_reset.c
 			${STM_SOC_DIR}/native_driver/src/timer/systick.c
 			${STM_SOC_DIR}/native_driver/src/pinctrl/common.c
-			${STM_SOC_DIR}/native_driver/src/gpio/stm32_gpio.c
+			${STM_SOC_DIR}/native_driver/src/pinctrl/stm32_pinctrl.c
 			${STM_SOC_DIR}/native_driver/src/uart/console.c
 			${STM_SOC_DIR}/native_driver/src/uart/stm32_uart.c
 	)
@@ -262,7 +262,7 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/reset/stm32_reset.c
 			${STM_SOC_DIR}/native_driver/src/timer/systick.c
 			${STM_SOC_DIR}/native_driver/src/pinctrl/common.c
-			${STM_SOC_DIR}/native_driver/src/gpio/stm32_gpio.c
+			${STM_SOC_DIR}/native_driver/src/pinctrl/stm32_pinctrl.c
 			${STM_SOC_DIR}/native_driver/src/uart/console.c
 			${STM_SOC_DIR}/native_driver/src/uart/stm32_uart.c
 			${STM_SOC_DIR}/native_driver/src/spi/stm32_ospi.c
