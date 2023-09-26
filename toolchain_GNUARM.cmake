@@ -62,6 +62,10 @@ endif()
 macro(tfm_toolchain_reset_linker_flags)
     set_property(DIRECTORY PROPERTY LINK_OPTIONS "")
 
+    if(CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 12.0.0)
+        add_link_options(LINKER:--no-warn-rwx-segment)
+    endif()
+
     add_link_options(
         --entry=Reset_Handler
         --specs=nano.specs
