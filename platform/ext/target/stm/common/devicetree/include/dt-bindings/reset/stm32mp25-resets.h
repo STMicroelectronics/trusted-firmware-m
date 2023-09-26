@@ -1,22 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 or BSD-3-Clause */
+/* SPDX-License-Identifier: GPL-2.0-or-later or BSD-3-Clause */
 /*
- * Copyright (C) STMicroelectronics 2019 - All Rights Reserved
- * Author(s): Gabriel Fernandez <gabriel.fernandez@st.com> for STMicroelectronics.
- *	      Yann Gautier <yann.gautier@st.com> for STMicroelectronics.
- */
+ * Copyright (C) STMicroelectronics 2023 - All Rights Reserved
+ * Author(s): Gabriel Fernandez <gabriel.fernandez@foss.st.com> for STMicroelectronics.
+  *	      Yann Gautier <yann.gautier@st.com> for STMicroelectronics.
+*/
 
 #ifndef _DT_BINDINGS_STM32MP25_RESET_H_
 #define _DT_BINDINGS_STM32MP25_RESET_H_
 
-#define CPU1_R		8224
+#define SYS_R		8192
+#define C1_R		8224
+#define C1P1POR_R	8256
+#define C1P1_R		8257
+#define C2_R		8288
+#define C2_HOLDBOOT_R	8608
+#define C1_HOLDBOOT_R	8609
 #define VSW_R		8735
+#define C1MS_R		8840
+#define IWDG2_KER_R	9106
+#define IWDG4_KER_R	9234
+#define C3_R		9344
+#define DDRCP_R		9888
+#define DDRCAPB_R	9920
 #define DDRPHYCAPB_R	9952
 #define DDRCFG_R	10016
-#define DDRPHYC_R	10048
-#define DDRC_R		10049
-#define DDRCP1_R	10050
-#define DDRCP2_R	10051
-#define C3_R		10080
+#define DDR_R		10048
 #define OSPI1_R		10400
 #define OSPI1DLL_R	10416
 #define OSPI2_R		10432
@@ -43,6 +51,7 @@
 #define IPCC1_R		11136
 #define IPCC2_R		11168
 #define IS2M_R		11360
+#define SSMOD_R		11392
 #define TIM1_R		14336
 #define TIM2_R		14368
 #define TIM3_R		14400
@@ -97,14 +106,13 @@
 #define SAI3_R		15968
 #define SAI4_R		16000
 #define MDF1_R		16064
-#define ADF1_R		16096
+#define MDF2_R		16096
 #define FDCAN_R		16128
 #define HDP_R		16160
 #define ADC12_R		16192
 #define ADC3_R		16224
 #define ETH1_R		16256
 #define ETH2_R		16288
-#define ETHSW_R		16320
 #define USB2_R		16352
 #define USB2PHY1_R	16384
 #define USB2PHY2_R	16416
@@ -112,6 +120,7 @@
 #define USB3PCIEPHY_R	16480
 #define PCIE_R		16512
 #define USBTC_R		16544
+#define ETHSW_R		16576
 #define SDMMC1_R	16768
 #define SDMMC1DLL_R	16784
 #define SDMMC2_R	16800
@@ -121,8 +130,8 @@
 #define GPU_R		16864
 #define LTDC_R		16896
 #define DSI_R		16928
-#define LDIT_R		17024
-#define CSI2_R		17088
+#define LVDS_R		17024
+#define CSI_R		17088
 #define DCMIPP_R	17120
 #define CCI_R		17152
 #define VDEC_R		17184
@@ -137,7 +146,7 @@
 #define WWDG2_R		17664
 #define BUSPERFM_R	17696
 #define VREF_R		17728
-#define TMPSENS_R	17760
+#define DTS_R		17760
 #define CRC_R		17824
 #define SERC_R		17856
 #define OSPIIOM_R	17888
@@ -145,5 +154,16 @@
 #define I3C2_R		18016
 #define I3C3_R		18048
 #define I3C4_R		18080
+
+#define RST_SCMI_C1_R		0
+#define RST_SCMI_C2_R		1
+#define RST_SCMI_C1_HOLDBOOT_R	2
+#define RST_SCMI_C2_HOLDBOOT_R	3
+#define RST_SCMI_FMC		4
+#define RST_SCMI_PCIE		5
+#define RST_SCMI_OSPI1		6
+#define RST_SCMI_OSPI1DLL	7
+#define RST_SCMI_OSPI2		8
+#define RST_SCMI_OSPI2DLL	9
 
 #endif /* _DT_BINDINGS_STM32MP25_RESET_H_ */

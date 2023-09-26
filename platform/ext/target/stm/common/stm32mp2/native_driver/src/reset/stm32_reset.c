@@ -3,7 +3,8 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <assert.h>
+#define DT_DRV_COMPAT st_stm32mp25_rcc_rctl
+
 #include <errno.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -12,8 +13,8 @@
 #include <lib/utils_def.h>
 #include <debug.h>
 
-#include <rstctrl.h>
-#include <stm32_reset.h>
+#include <device.h>
+#include <reset.h>
 
 #include <dt-bindings/reset/stm32mp25-resets.h>
 
@@ -33,30 +34,18 @@
 
 #define _RCC_BDCR_RTCSRC_MASK	GENMASK(17, 16)
 
-#define CPUX(__offset)		__offset - _RCC_C1RSTCSETR
+#define CPUBOOT_BIT(__offset)	__offset == _RCC_C1RSTCSETR ? BIT(1) : BIT(0)
 
-/*
- * no common errno between component
- * define iac internal errno
- */
-#define	RESET_ERR_NOMEM		12	/* Out of memory */
-#define RESET_ERR_NODEV		19	/* No such device */
-#define RESET_ERR_INVAL		22	/* Invalid argument */
-#define RESET_ERR_NOTSUP	45	/* Operation not supported */
+#define TIMEOUT_RESET_US	USEC_PER_MSEC
 
-static struct stm32_reset_platdata rst_pdata;
+struct stm32_reset_config {
+	uintptr_t base;
+};
 
-static struct stm32_rstline *to_rstline(struct rstctrl *rstctrl)
+static int _assert(const struct device *dev, uint32_t id, unsigned int to_us)
 {
-	assert(rstctrl);
-
-	return container_of(rstctrl, struct stm32_rstline, rstctrl);
-}
-
-static int stm32_reset_assert(struct rstctrl *rstctrl, unsigned int to_us)
-{
-	unsigned int id = to_rstline(rstctrl)->id;
-	uintptr_t addr = rst_pdata.base + RESET_OFFSET(id);
+	const struct stm32_reset_config *drv_cfg = dev_get_config(dev);
+	uintptr_t addr = drv_cfg->base + RESET_OFFSET(id);
 	uint32_t rst_mask = RESET_BIT(id);
 	uint32_t cfgr;
 
@@ -68,10 +57,10 @@ static int stm32_reset_assert(struct rstctrl *rstctrl, unsigned int to_us)
 	return  mmio_read32_poll_timeout(addr, cfgr, (cfgr & rst_mask), to_us);
 }
 
-static int stm32_reset_deassert(struct rstctrl *rstctrl, unsigned int to_us)
+static int _deassert(const struct device *dev, uint32_t id, unsigned int to_us)
 {
-	unsigned int id = to_rstline(rstctrl)->id;
-	uintptr_t addr = rst_pdata.base + RESET_OFFSET(id);
+	const struct stm32_reset_config *drv_cfg = dev_get_config(dev);
+	uintptr_t addr = drv_cfg->base + RESET_OFFSET(id);
 	uint32_t rst_mask = RESET_BIT(id);
 	uint32_t cfgr;
 
@@ -83,12 +72,50 @@ static int stm32_reset_deassert(struct rstctrl *rstctrl, unsigned int to_us)
 	return mmio_read32_poll_timeout(addr, cfgr, (~cfgr & rst_mask), to_us);
 }
 
-#define CPUBOOT_BIT(__offset)	__offset == _RCC_C1RSTCSETR ? BIT(1) : BIT(0)
-
-static int stm32_reset_cpu_assert(struct rstctrl *rstctrl, unsigned int to_us)
+int _stm32_reset_status(const struct device *dev, uint32_t id)
 {
-	unsigned int id = to_rstline(rstctrl)->id;
-	uintptr_t base = rst_pdata.base;
+	const struct stm32_reset_config *drv_cfg = dev_get_config(dev);
+	uintptr_t addr = drv_cfg->base + RESET_OFFSET(id);
+	uint32_t reg;
+
+	reg = io_read32(addr);
+
+	return !!(reg & RESET_BIT(id));
+}
+
+int _stm32_reset_assert(const struct device *dev, uint32_t id)
+{
+	return _assert(dev, id, 0);
+}
+
+int _stm32_reset_deassert(const struct device *dev, uint32_t id)
+{
+	return _deassert(dev, id, 0);
+}
+
+int _stm32_reset_reset(const struct device *dev, uint32_t id)
+{
+	int err;
+
+	err = _assert(dev, id, TIMEOUT_RESET_US);
+	if (err)
+		return err;
+
+	return _deassert(dev, id, TIMEOUT_RESET_US);
+}
+
+static const struct reset_driver_api stm32_reset_ops = {
+	.status = _stm32_reset_status,
+	.assert_level = _stm32_reset_assert,
+	.deassert_level = _stm32_reset_deassert,
+	.reset = _stm32_reset_reset,
+};
+
+static int _cpu_assert(const struct device *dev, uint32_t id,
+		       unsigned int to_us)
+{
+	const struct stm32_reset_config *drv_cfg = dev_get_config(dev);
+	uintptr_t base = drv_cfg->base;
 	uint32_t rst_offset = RESET_OFFSET(id);
 	uint32_t rst_mask = RESET_BIT(id);
 	uint32_t cpu_mask = CPUBOOT_BIT(rst_offset);
@@ -110,10 +137,11 @@ static int stm32_reset_cpu_assert(struct rstctrl *rstctrl, unsigned int to_us)
 					(~cfgr & rst_mask), to_us);
 }
 
-static int stm32_reset_cpu_deassert(struct rstctrl *rstctrl, unsigned int to_us)
+static int _cpu_deassert(const struct device *dev, uint32_t id,
+		       unsigned int to_us)
 {
-	unsigned int id = to_rstline(rstctrl)->id;
-	uintptr_t base = rst_pdata.base;
+	const struct stm32_reset_config *drv_cfg = dev_get_config(dev);
+	uintptr_t base = drv_cfg->base;
 	uint32_t rst_offset = RESET_OFFSET(id);
 	uint32_t rst_mask = RESET_BIT(id);
 	uint32_t cpu_mask = CPUBOOT_BIT(rst_offset);
@@ -135,47 +163,97 @@ static int stm32_reset_cpu_deassert(struct rstctrl *rstctrl, unsigned int to_us)
 					(~cfgr & rst_mask), to_us);
 }
 
-static int stm32_reset_vsw_assert(struct rstctrl *rstctrl, unsigned int to_us)
+int _stm32_reset_cpu_assert(const struct device *dev, uint32_t id)
 {
-	uintptr_t base = rst_pdata.base;
+	return _cpu_assert(dev, id, 0);
+}
 
-	if ((mmio_read_32(base + _RCC_BDCR) & _RCC_BDCR_RTCSRC_MASK))
+int _stm32_reset_cpu_deassert(const struct device *dev, uint32_t id)
+{
+	return _cpu_deassert(dev, id, 0);
+}
+
+int _stm32_reset_cpu_reset(const struct device *dev, uint32_t id)
+{
+	int err;
+
+	err = _cpu_assert(dev, id, TIMEOUT_RESET_US);
+	if (err)
+		return err;
+
+	return _cpu_deassert(dev, id, TIMEOUT_RESET_US);
+}
+
+static const struct reset_driver_api stm32_reset_cpu_ops = {
+	.assert_level = _stm32_reset_cpu_assert,
+	.deassert_level = _stm32_reset_cpu_deassert,
+	.reset = _stm32_reset_cpu_reset
+};
+
+int _stm32_reset_vsw_assert(const struct device *dev, uint32_t id)
+{
+	const struct stm32_reset_config *drv_cfg = dev_get_config(dev);
+	uintptr_t base = drv_cfg->base;
+
+	if ((io_read32(base + _RCC_BDCR) & _RCC_BDCR_RTCSRC_MASK))
 		return 0;
 
 	/* Reset backup domain on cold boot cases */
-	return stm32_reset_assert(rstctrl, to_us);
+	return _assert(dev, id, 0);
 }
 
-static struct rstctrl_ops stm32_rstctrl_ops = {
-	.assert_level = stm32_reset_assert,
-	.deassert_level = stm32_reset_deassert,
+static const struct reset_driver_api stm32_reset_vsw_ops = {
+	.assert_level = _stm32_reset_vsw_assert,
+	.deassert_level = _stm32_reset_deassert,
 };
 
-static struct rstctrl_ops stm32_rstctrl_cpu_ops = {
-	.assert_level = stm32_reset_cpu_assert,
-	.deassert_level = stm32_reset_cpu_deassert,
-};
+#define stm32_reset_op(_op, _dev, _id)			\
+({							\
+	const struct reset_driver_api *ops;		\
+							\
+	if (id == C1_R)					\
+		ops = &stm32_reset_cpu_ops;		\
+	else if (id == VSW_R)				\
+		ops = &stm32_reset_vsw_ops;		\
+	else						\
+		ops = &stm32_reset_ops;			\
+							\
+	(!ops->_op) ? -ENOSYS : ops->_op(_dev, _id);	\
+ })
 
-static struct rstctrl_ops stm32_rstctrl_vsw_ops = {
-	.assert_level = stm32_reset_vsw_assert,
-	.deassert_level = stm32_reset_deassert,
-};
-
-/*
- * This function could be overridden by platform to define
- * pdata of iac driver
- */
-__weak int stm32_reset_get_platdata(struct stm32_reset_platdata *pdata)
+int stm32_reset_com_status(const struct device *dev, uint32_t id)
 {
-	return -RESET_ERR_NODEV;
+	return stm32_reset_op(status, dev, id);
 }
 
-int stm32_reset_init(void)
+int stm32_reset_com_assert(const struct device *dev, uint32_t id)
 {
-	return stm32_reset_get_platdata(&rst_pdata);
+	return stm32_reset_op(assert_level, dev, id);
 }
 
-DEFINE_STM32_RSTLINE(OSPI2DLL_R, &stm32_rstctrl_ops);
-DEFINE_STM32_RSTLINE(OSPI2_R, &stm32_rstctrl_ops);
-DEFINE_STM32_RSTLINE(CPU1_R, &stm32_rstctrl_cpu_ops);
-DEFINE_STM32_RSTLINE(VSW_R, &stm32_rstctrl_vsw_ops);
+int stm32_reset_com_deassert(const struct device *dev, uint32_t id)
+{
+	return stm32_reset_op(deassert_level, dev, id);
+}
+
+int stm32_reset_com_reset(const struct device *dev, uint32_t id)
+{
+	return stm32_reset_op(reset, dev, id);
+}
+
+static const struct reset_driver_api stm32_reset_com_api = {
+	.status = stm32_reset_com_status,
+	.assert_level = stm32_reset_com_assert,
+	.deassert_level = stm32_reset_com_deassert,
+	.reset = stm32_reset_com_reset,
+};
+
+static const struct stm32_reset_config stm32_reset_cfg = {
+	.base = DT_REG_ADDR(DT_INST_PARENT(0)),
+};
+
+DEVICE_DT_INST_DEFINE(0,
+		      NULL,
+		      NULL, &stm32_reset_cfg,
+		      PRE_CORE, 6,
+		      &stm32_reset_com_api);
