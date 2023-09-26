@@ -174,6 +174,7 @@ if(NS)
 
 	target_include_directories(platform_ns
 		PUBLIC
+		        ${CMAKE_BINARY_DIR}/generated
 			${PLATFORM_DIR}/include
 			${STM_SOC_DIR}/native_driver
 			${STM_SOC_DIR}/native_driver/include

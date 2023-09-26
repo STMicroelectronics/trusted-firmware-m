@@ -15,6 +15,7 @@
 #include <clk.h>
 #include <flash_layout.h>
 #include <device_cfg.h>
+#include <target_cfg.h>
 
 #ifndef ARG_UNUSED
 #define ARG_UNUSED(arg)  ((void)arg)
@@ -78,7 +79,8 @@ static const ARM_FLASH_CAPABILITIES DriverCapabilities = {
  */
 typedef struct {
 	const uint32_t memory_base;   /*!< FLASH memory base address */
-	unsigned long clock_id;
+	const struct device *clk_dev;
+	uint32_t clock_id;
 	ARM_FLASH_INFO *data;         /*!< FLASH data */
 	ARM_FLASH_STATUS status;
 } arm_flash_dev_t;
@@ -216,8 +218,10 @@ static __maybe_unused int32_t ARM_Flash_X_PowerControl(arm_flash_dev_t *flash_de
 
 static bool mm_clk_enable(arm_flash_dev_t *flash_dev)
 {
-	if (flash_dev->clock_id != CLK_UNDEF && !clk_is_enabled(flash_dev->clock_id)) {
-		clk_enable(flash_dev->clock_id);
+	struct clk *clk = clk_get(flash_dev->clk_dev, (clk_subsys_t) flash_dev->clock_id);
+
+	if (clk && !clk_is_enabled(clk)) {
+		clk_enable(clk);
 		return true;
 	}
 
@@ -226,8 +230,10 @@ static bool mm_clk_enable(arm_flash_dev_t *flash_dev)
 
 static void mm_clk_disable(arm_flash_dev_t *flash_dev, bool clk_enabled)
 {
-	if (clk_enabled)
-		clk_disable(flash_dev->clock_id);
+	struct clk *clk = clk_get(flash_dev->clk_dev, (clk_subsys_t) flash_dev->clock_id);
+
+	if (clk && clk_enabled)
+		clk_disable(clk);
 }
 
 static __maybe_unused int32_t ARM_Flash_X_ReadData(arm_flash_dev_t *flash_dev,
@@ -386,6 +392,7 @@ static ARM_FLASH_INFO FLASH_##devname##_DATA = {						\
 												\
 static arm_flash_dev_t FLASH_##devname##_DEV = {						\
 	.memory_base = FLASH_##devname##_BASE,							\
+	.clk_dev = STM32_DEV_RCC,								\
 	.clock_id = FLASH_##devname##_CLK,							\
 	.data = &(FLASH_##devname##_DATA),							\
 	.status = {										\

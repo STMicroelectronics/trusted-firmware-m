@@ -14,6 +14,7 @@
 #include <clk.h>
 
 #include <stm32_rif.h>
+#include <target_cfg.h>
 
 /* Device Tree related definitions */
 #define DT_RISAF_COMPAT			"st,stm32-risaf"
@@ -170,15 +171,18 @@ static int stm32_risaf_reg_cfg(const struct risaf_cfg *risaf,
 
 static int stm32_rif_risafx_init(const struct risaf_cfg *risaf)
 {
+	struct clk *clk;
 	int i, err = 0;
 	bool clk_disabled = false;
 
 	if (!risaf)
 		return -ENOTSUP;
 
-	if (risaf->clock_id != CLK_UNDEF && !clk_is_enabled(risaf->clock_id)) {
+	clk = clk_get(STM32_DEV_RCC, (clk_subsys_t) risaf->clock_id);
+
+	if (clk && !clk_is_enabled(clk)) {
 		clk_disabled = true;
-		clk_enable(risaf->clock_id);
+		clk_enable(clk);
 	}
 
 	for(i = 0; i < risaf->nregions; i++) {
@@ -189,8 +193,8 @@ static int stm32_rif_risafx_init(const struct risaf_cfg *risaf)
 			break;
 	}
 
-	if (clk_disabled)
-		clk_disable(risaf->clock_id);
+	if (clk && clk_disabled)
+		clk_disable(clk);
 
 	return err;
 }

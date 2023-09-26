@@ -12,6 +12,7 @@
 #include <inttypes.h>
 #include <debug.h>
 #include <clk.h>
+#include <target_cfg.h>
 #else
 /* optee */
 #include <drivers/stm32_serc.h>
@@ -70,9 +71,10 @@ static struct stm32_serc_platdata serc_pdata;
 
 static void stm32_serc_get_driverdata(struct stm32_serc_platdata *pdata)
 {
+	struct clk *clk = clk_get(STM32_DEV_RCC, (clk_subsys_t) pdata->clk_id);
 	uint32_t regval = 0;
 
-	clk_enable(pdata->clk_id);
+	clk_enable(clk);
 
 	regval = io_read32(pdata->base + _SERC_HWCFGR);
 	serc_drvdata.num_ilac = _SERC_FLD_GET(_SERC_HWCFGR_CFG1, regval);
@@ -87,7 +89,7 @@ static void stm32_serc_get_driverdata(struct stm32_serc_platdata *pdata)
 
 	DMSG("HW cap: num ilac:[%"PRIu8"]", serc_drvdata.num_ilac);
 
-	clk_disable(pdata->clk_id);
+	clk_disable(clk);
 }
 
 #ifdef CFG_DT
@@ -155,11 +157,12 @@ void SERF_IRQHandler(void)
 
 static void stm32_serc_setup(struct stm32_serc_platdata *pdata)
 {
+	struct clk *clk = clk_get(STM32_DEV_RCC, (clk_subsys_t) pdata->clk_id);
 	struct serc_driver_data *drv_data = pdata->drv_data;
 	int nreg = div_round_up(drv_data->num_ilac, _PERIPH_IDS_PER_REG);
 	int i = 0;
 
-	clk_enable(pdata->clk_id);
+	clk_enable(clk);
 	mmio_setbits_32(pdata->base + _SERC_ENABLE, _SERC_ENABLE_SERFEN);
 
 	for (i = 0; i < nreg; i++) {
