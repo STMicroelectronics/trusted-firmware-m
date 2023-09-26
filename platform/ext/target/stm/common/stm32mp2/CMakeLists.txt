@@ -99,6 +99,7 @@ target_sources(platform_s
 		${STM_SOC_DIR}/native_driver/src/clk/clk-stm32-core.c
 		${STM_SOC_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
 		${STM_SOC_DIR}/native_driver/src/clk/stm32mp2_clk.c
+		${STM_SOC_DIR}/native_driver/src/reset/core.c
 		${STM_SOC_DIR}/native_driver/src/reset/stm32_reset.c
 		${STM_SOC_DIR}/native_driver/src/timer/systick.c
 		${STM_SOC_DIR}/native_driver/src/pinctrl/common.c
@@ -191,6 +192,7 @@ if(NS)
 			${STM_SOC_DIR}/native_driver/src/clk/clk-stm32-core.c
 			${STM_SOC_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
 			${STM_SOC_DIR}/native_driver/src/clk/stm32mp2_clk.c
+			${STM_SOC_DIR}/native_driver/src/reset/core.c
 			${STM_SOC_DIR}/native_driver/src/reset/stm32_reset.c
 			${STM_SOC_DIR}/native_driver/src/timer/systick.c
 			${STM_SOC_DIR}/native_driver/src/pinctrl/common.c
@@ -259,6 +261,7 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/clk/clk-stm32-core.c
 			${STM_SOC_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
 			${STM_SOC_DIR}/native_driver/src/clk/stm32mp2_clk.c
+			${STM_SOC_DIR}/native_driver/src/reset/core.c
 			${STM_SOC_DIR}/native_driver/src/reset/stm32_reset.c
 			${STM_SOC_DIR}/native_driver/src/timer/systick.c
 			${STM_SOC_DIR}/native_driver/src/pinctrl/common.c
