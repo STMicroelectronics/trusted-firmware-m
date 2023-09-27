@@ -41,5 +41,4 @@ void __unused stm32mp_stgen_config(unsigned long rate);
 void __unused stm32mp_stgen_restore_counter(unsigned long long value,
 				   unsigned long long offset_in_ms);
 unsigned long long __unused stm32mp_stgen_get_counter(void);
-
 #endif /* STM32MP_CLKFUNC_H */

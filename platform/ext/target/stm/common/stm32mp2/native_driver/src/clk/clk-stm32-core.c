@@ -1,1141 +1,652 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR BSD-3-Clause)
 /*
- * Copyright (C) 2018-2020, STMicroelectronics - All Rights Reserved
- *
- * SPDX-License-Identifier: GPL-2.0+ OR BSD-3-Clause
+ * Copyright (C) STMicroelectronics 2022 - All Rights Reserved
  */
 
 #include <errno.h>
 #include <limits.h>
 #include <lib/mmio.h>
 
-#ifdef TFM_ENV
 #include <lib/timeout.h>
 #include <debug.h>
-#include <clk.h>
-#include <stm32mp_clkfunc.h>
-#else
-#include <drivers/clk.h>
-#include <drivers/delay_timer.h>
-#include <drivers/generic_delay_timer.h>
-#include <drivers/st/stm32mp_clkfunc.h>
-#endif
+#include <lib/utils_def.h>
 
 #include "clk-stm32-core.h"
 
-/* Offset between RCC_MP_xxxENSETR and RCC_MP_xxxENCLRR registers */
-#define _RCC_MP_ENCLRR_OFFSET			U(4)
+#define RCC_MP_ENCLRR_OFFSET	0x4
 
-#define MASK_WIDTH_SHIFT(_width, _shift)\
-	GENMASK(((_width) + (_shift) - 1U), _shift)
+#define TIMEOUT_US_200MS	U(200000)
+#define TIMEOUT_US_1S		U(1000000)
 
-static struct stm32_clk_priv *stm32_clock_data;
-
-inline struct stm32_clk_priv *clk_stm32_get_priv(void)
+/* STM32 MUX API */
+size_t stm32_mux_get_parent(struct clk *clk, uint32_t mux_id)
 {
-	return stm32_clock_data;
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	uintptr_t rcc_base = clk_stm32_get_rcc_base(priv);
+	const struct mux_cfg *mux = &priv->muxes[mux_id];
+	uint32_t mask = MASK_WIDTH_SHIFT(mux->width, mux->shift);
+
+	return (io_read32(rcc_base + mux->offset) & mask) >> mux->shift;
 }
 
-uintptr_t clk_stm32_get_rcc_base(void)
+int stm32_mux_set_parent(struct clk_stm32_priv *priv, uint16_t mux_id, uint8_t sel)
 {
-	return stm32_clock_data->base;
-}
+	uintptr_t rcc_base = clk_stm32_get_rcc_base(priv);
+	const struct mux_cfg *mux = &priv->muxes[mux_id];
+	uint32_t mask = MASK_WIDTH_SHIFT(mux->width, mux->shift);
+	uintptr_t address = rcc_base + mux->offset;
 
-int stm32_init_clocks(struct stm32_clk_priv *priv)
-{
-	int i;
+	io_clrsetbits32(address, mask, (sel << mux->shift) & mask);
 
-	stm32_clock_data = priv;
-
-	for (i = 1; i < priv->num; i++) {
-		const struct clk_stm32 *clk = _clk_get(priv, i);
-
-		if (clk->ops == NULL) {
-			ERROR("%s: %d has no ops !", __func__, i);
-			panic();
-		}
-	}
-
-	return 0;
-}
-/* TODO: define the lock in stm32_clk_priv */
-#if defined(TFM_ENV) && !defined(TFM_MULTI_CORE_TOPOLOGY)
-int refcount_lock;
-static void stm32_clk_lock(int *fake) {}
-static void stm32_clk_unlock(int *fake) {}
-#else
-#include <lib/spinlock.h>
-static struct spinlock reg_lock;
-static struct spinlock refcount_lock;
-
-static void stm32_clk_lock(struct spinlock *lock)
-{
-	if (stm32mp_lock_available()) {
-		/* Assume interrupts are masked */
-		spin_lock(lock);
-	}
-}
-
-static void stm32_clk_unlock(struct spinlock *lock)
-{
-	if (stm32mp_lock_available()) {
-		spin_unlock(lock);
-	}
-}
-
-void stm32_clk_rcc_regs_lock(void)
-{
-	stm32_clk_lock(&reg_lock);
-}
-
-void stm32_clk_rcc_regs_unlock(void)
-{
-	stm32_clk_unlock(&reg_lock);
-}
-#endif
-
-#define TIMEOUT_US_1S	U(1000000)
-#define OSCRDY_TIMEOUT	TIMEOUT_US_1S
-
-void clk_oscillator_set_bypass(struct stm32_clk_priv *priv, int id, bool digbyp, bool bypass)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_oscillator_data *osc_data = clk->clock_cfg;
-	struct stm32_clk_bypass *bypass_data = osc_data->bypass;
-	uintptr_t address;
-
-	if (bypass_data == NULL) {
-		return;
-	}
-
-	address = priv->base + bypass_data->offset;
-
-	if (digbyp) {
-		mmio_setbits_32(address, BIT(bypass_data->bit_digbyp));
-	}
-
-	if (bypass || digbyp) {
-		mmio_setbits_32(address, BIT(bypass_data->bit_byp));
-	}
-}
-
-void clk_oscillator_set_css(struct stm32_clk_priv *priv, int id, bool css)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_oscillator_data *osc_data = clk->clock_cfg;
-	struct stm32_clk_css *css_data = osc_data->css;
-	uintptr_t address;
-
-	if (css_data == NULL) {
-		return;
-	}
-
-	address = priv->base + css_data->offset;
-
-	if (css) {
-		mmio_setbits_32(address, BIT(css_data->bit_css));
-	}
-
-}
-
-void clk_oscillator_set_drive(struct stm32_clk_priv *priv, int id, uint8_t lsedrv)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_oscillator_data *osc_data = clk->clock_cfg;
-	struct stm32_clk_drive *drive_data = osc_data->drive;
-	uintptr_t address;
-	uint32_t mask;
-	uint32_t value;
-
-	if (drive_data == NULL) {
-		return;
-	}
-
-	address = priv->base + drive_data->offset;
-
-	mask = (BIT(drive_data->drv_width) - 1U) <<  drive_data->drv_shift;
-
-	/*
-	 * Warning: not recommended to switch directly from "high drive"
-	 * to "medium low drive", and vice-versa.
-	 */
-	value = (mmio_read_32(address) & mask) >> drive_data->drv_shift;
-
-	while (value != lsedrv) {
-		if (value > lsedrv) {
-			value--;
-		} else {
-			value++;
-		}
-		mmio_clrsetbits_32(address, mask,
-				   value << drive_data->drv_shift);
-	}
-}
-
-int clk_oscillator_wait_ready(struct stm32_clk_priv *priv, int id, bool ready_on)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_oscillator_data *osc_data = clk->clock_cfg;
-
-	return _clk_stm32_gate_wait_ready(priv, osc_data->gate_id, ready_on);
-}
-
-int clk_oscillator_wait_ready_on(struct stm32_clk_priv *priv, int id)
-{
-	return clk_oscillator_wait_ready(priv, id, true);
-}
-
-int clk_oscillator_wait_ready_off(struct stm32_clk_priv *priv, int id)
-{
-	return clk_oscillator_wait_ready(priv, id, false);
-}
-
-void clk_stm32_oscillator_init(struct stm32_clk_priv *priv, int id, uint32_t frequency)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_oscillator_data *osc_data = clk->clock_cfg;
-
-	osc_data->frequency = frequency;
-}
-
-int clk_gate_enable(struct stm32_clk_priv *priv, int id)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_gate_cfg *cfg = clk->clock_cfg;
-
-	mmio_setbits_32(priv->base + cfg->offset, BIT(cfg->bit_idx));
-	__ISB();
+	if (mux->ready != MUX_NO_RDY)
+		return stm32_gate_wait_ready(priv, (uint16_t)mux->ready, true);
 
 	return 0;
 }
 
-void clk_gate_disable(struct stm32_clk_priv *priv, int id)
+/* STM32 GATE API */
+void stm32_gate_endisable(struct clk_stm32_priv *priv,
+			  uint16_t gate_id, bool enable)
 {
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_gate_cfg *cfg = clk->clock_cfg;
+	uintptr_t rcc_base = clk_stm32_get_rcc_base(priv);
+	const struct gate_cfg *gate = &priv->gates[gate_id];
+	uintptr_t addr = rcc_base + gate->offset;
 
-	mmio_clrbits_32(priv->base + cfg->offset, BIT(cfg->bit_idx));
+	if (enable) {
+		if (gate->set_clr)
+			io_write32(addr, BIT(gate->bit_idx));
+		else
+			mmio_setbits_32(addr, BIT(gate->bit_idx));
+	} else {
+		if (gate->set_clr)
+			io_write32(addr + RCC_MP_ENCLRR_OFFSET,
+				   BIT(gate->bit_idx));
+		else
+			mmio_clrbits_32(addr, BIT(gate->bit_idx));
+	}
 	__ISB();
 }
 
-bool clk_gate_is_enabled(struct stm32_clk_priv *priv, int id)
+void stm32_gate_disable(struct clk_stm32_priv *priv, uint16_t gate_id)
 {
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_gate_cfg *cfg = clk->clock_cfg;
+	uint8_t *gate_cpt = priv->gate_cpt;
 
-	return ((mmio_read_32(priv->base + cfg->offset) & BIT(cfg->bit_idx)) != 0U);
+	if (--gate_cpt[gate_id] > 0)
+		return;
+
+	stm32_gate_endisable(priv, gate_id, false);
 }
 
-const struct stm32_clk_ops clk_gate_ops = {
-	.enable = clk_gate_enable,
-	.disable = clk_gate_disable,
-	.is_enabled = clk_gate_is_enabled,
-};
-
-void _clk_stm32_gate_disable(struct stm32_clk_priv *priv, uint16_t gate_id)
+void stm32_gate_enable(struct clk_stm32_priv *priv, uint16_t gate_id)
 {
-	const struct gate_cfg *gate = &priv->gates[gate_id];
-	uintptr_t addr = priv->base + gate->offset;
+	uint8_t *gate_cpt = priv->gate_cpt;
 
-	if (gate->set_clr != 0U) {
-		mmio_write_32(addr + _RCC_MP_ENCLRR_OFFSET,
-			      BIT(gate->bit_idx));
-	} else {
-		mmio_clrbits_32(addr, BIT(gate->bit_idx));
-	}
+	if (gate_cpt[gate_id]++ > 0)
+		return;
+
+	stm32_gate_endisable(priv, gate_id, true);
 }
 
-int _clk_stm32_gate_enable(struct stm32_clk_priv *priv, uint16_t gate_id)
+bool stm32_gate_is_enabled(struct clk_stm32_priv *priv, uint16_t gate_id)
 {
 	const struct gate_cfg *gate = &priv->gates[gate_id];
-	uintptr_t addr = priv->base + gate->offset;
+	uintptr_t addr = clk_stm32_get_rcc_base(priv) + gate->offset;
 
-	if (gate->set_clr != 0U) {
-		mmio_write_32(addr, BIT(gate->bit_idx));
+	return (io_read32(addr) & BIT(gate->bit_idx)) != 0U;
+}
 
-	} else {
-		mmio_setbits_32(addr, BIT(gate->bit_idx));
-	}
+int stm32_gate_wait_ready(struct clk_stm32_priv *priv,
+			  uint16_t gate_id, bool ready_on)
+{
+	const struct gate_cfg *gate = &priv->gates[gate_id];
+	uintptr_t address = clk_stm32_get_rcc_base(priv) + gate->offset;
+	uint32_t mask_rdy = BIT(gate->bit_idx);
+	uint64_t timeout = timeout_init_us(TIMEOUT_US_1S);
+	uint32_t mask = 0U;
+
+	if (ready_on)
+		mask = BIT(gate->bit_idx);
+
+	while ((io_read32(address) & mask_rdy) != mask)
+		if (timeout_elapsed(timeout))
+			break;
+
+	if ((io_read32(address) & mask_rdy) != mask)
+		return -1;
 
 	return 0;
 }
 
-const char *_clk_stm32_get_name(struct stm32_clk_priv *priv, int id)
+/* STM32 GATE READY clock operators */
+int stm32_gate_ready_endisable(struct clk_stm32_priv *priv,
+			       uint16_t gate_id, bool enable,
+			       bool wait_rdy)
 {
-	return priv->clks[id].name;
+	stm32_gate_endisable(priv, gate_id, enable);
+
+	if (wait_rdy)
+		return stm32_gate_wait_ready(priv, gate_id + 1, enable);
+
+	return 0;
 }
 
-const char *clk_stm32_get_name(struct stm32_clk_priv *priv,
-			       unsigned long binding_id)
+int stm32_gate_rdy_enable(struct clk_stm32_priv *priv, uint16_t gate_id)
 {
-	int id;
-
-	id = clk_get_index(priv, binding_id);
-	if (id == -EINVAL) {
-		return NULL;
-	}
-
-	return _clk_stm32_get_name(priv, id);
+	return stm32_gate_ready_endisable(priv, gate_id, true, true);
 }
 
-const struct clk_stm32 *_clk_get(struct stm32_clk_priv *priv, int id)
+int stm32_gate_rdy_disable(struct clk_stm32_priv *priv, uint16_t gate_id)
 {
-	if (id < priv->num) {
-		return &priv->clks[id];
-	}
-
-	return NULL;
+	return stm32_gate_ready_endisable(priv, gate_id, false, true);
 }
 
-#define clk_div_mask(_width) GENMASK(((_width) - 1U), 0U)
-
-static unsigned int _get_table_div(const struct clk_div_table *table,
+/* STM32 DIV API */
+static unsigned int _get_table_div(const struct div_table_cfg *table,
 				   unsigned int val)
 {
-	const struct clk_div_table *clkt;
+	const struct div_table_cfg *clkt = NULL;
 
-	for (clkt = table; clkt->div; clkt++) {
-		if (clkt->val == val) {
+	for (clkt = table; clkt->div; clkt++)
+		if (clkt->val == val)
 			return clkt->div;
-		}
-	}
 
 	return 0;
 }
 
-static unsigned int _get_div(const struct clk_div_table *table,
+static unsigned int _get_table_val(const struct div_table_cfg *table,
+				   unsigned int div)
+{
+	const struct div_table_cfg *clkt = NULL;
+
+	for (clkt = table; clkt->div; clkt++)
+		if (clkt->div == div)
+			return clkt->val;
+
+	return 0;
+}
+
+static unsigned int _get_div(const struct div_table_cfg *table,
 			     unsigned int val, unsigned long flags,
 			     uint8_t width)
 {
-	if ((flags & CLK_DIVIDER_ONE_BASED) != 0UL) {
+	if (flags & CLK_DIVIDER_ONE_BASED)
 		return val;
-	}
 
-	if ((flags & CLK_DIVIDER_POWER_OF_TWO) != 0UL) {
+	if (flags & CLK_DIVIDER_POWER_OF_TWO)
 		return BIT(val);
-	}
 
-	if ((flags & CLK_DIVIDER_MAX_AT_ZERO) != 0UL) {
+	if (flags & CLK_DIVIDER_MAX_AT_ZERO)
 		return (val != 0U) ? val : BIT(width);
-	}
 
-	if (table != NULL) {
+	if (table)
 		return _get_table_div(table, val);
-	}
 
 	return val + 1U;
 }
 
-static unsigned long _divider_recalc_rate(unsigned long parent_rate,
-					  unsigned int val,
-					  const struct clk_div_table *table,
-					  unsigned long flags,
-					  unsigned long width)
+static unsigned int _get_val(const struct div_table_cfg *table,
+			     unsigned int div, unsigned long flags,
+			     uint8_t width)
 {
-	unsigned int div;
+	if (flags & CLK_DIVIDER_ONE_BASED)
+		return div;
 
-	div = _get_div(table, val, flags, width);
-	if (div == 0U) {
-		return parent_rate;
-	}
+	if (flags & CLK_DIVIDER_POWER_OF_TWO)
+		return __builtin_ffs(div) - 1;
 
-	return div_round_up((uint64_t)parent_rate, div);
+	if (flags & CLK_DIVIDER_MAX_AT_ZERO)
+		return (div != 0U) ? div : BIT(width);
+
+	if (table)
+		return _get_table_val(table, div);
+
+	return div - 1U;
 }
 
-#define TIMEOUT_US_200MS	U(200000)
-#define CLKSRC_TIMEOUT		TIMEOUT_US_200MS
-#define MUX_NO_BIT_RDY		UINT8_MAX
-
-static int clk_mux_set_parent(struct stm32_clk_priv *priv,
-			      const struct parent_cfg *parents, int sel)
+static bool _is_valid_table_div(const struct div_table_cfg *table,
+				unsigned int div)
 {
-	const struct mux_cfg *mux = parents->mux;
-	uintptr_t address = priv->base + mux->offset;
-	uint32_t mask;
-	uint64_t timeout;
+	const struct div_table_cfg *clkt = NULL;
 
-	mask = MASK_WIDTH_SHIFT(mux->width, mux->shift);
-
-	mmio_clrsetbits_32(address, mask, sel & mask);
-
-	if (mux->bitrdy == MUX_NO_BIT_RDY) {
-		return 0;
-	}
-
-	timeout = timeout_init_us(CLKSRC_TIMEOUT);
-
-	mask = BIT(mux->bitrdy);
-
-	while ((mmio_read_32(address) & mask) == 0U) {
-		if (timeout_elapsed(timeout)) {
-			return -ETIMEDOUT;
-		}
-	}
-
-	return 0;
-}
-
-int _clk_stm32_set_parent(struct stm32_clk_priv *priv, int id, int src_id)
-{
-	const struct parent_cfg *parents;
-	uint16_t pid;
-	int idx_src;
-
-	pid = priv->clks[id].parent;
-
-	if ((pid == CLK_IS_ROOT) || (pid < MUX_MAX_PARENTS)) {
-		return -1;
-	}
-
-	parents = &priv->parents[pid & MUX_PARENT_MASK];
-
-	for (idx_src = 0; idx_src <  parents->num_parents; idx_src++) {
-		if (parents->id_parents[idx_src] == (uint16_t)src_id) {
-			return clk_mux_set_parent(priv, parents, idx_src);
-		}
-	}
-
-	return -1;
-}
-
-static uint8_t _clk_get_mux_index(struct stm32_clk_priv *priv, uint16_t mux_id)
-{
-	const struct parent_cfg *parents;
-	uintptr_t rcc_base = priv->base;
-	uint32_t mask;
-	uint32_t sel;
-	const struct mux_cfg *mux;
-
-	parents = &priv->parents[mux_id & MUX_PARENT_MASK];
-
-	mux = parents->mux;
-
-	mask = MASK_WIDTH_SHIFT(mux->width, mux->shift);
-
-	sel = (mmio_read_32(rcc_base + mux->offset) & mask) >> mux->shift;
-
-	return sel;
-}
-
-int _clk_get_parent_index(struct stm32_clk_priv *priv, int id)
-{
-	uint16_t pid = priv->clks[id].parent;
-
-	if ((pid == CLK_IS_ROOT) || (pid < MUX_MAX_PARENTS)) {
-		return -1;
-	}
-
-	return _clk_get_mux_index(priv, pid);
-}
-
-static int _mux_get_parent(struct stm32_clk_priv *priv, const struct parent_cfg *parents)
-{
-	const struct mux_cfg *mux = parents->mux;
-	uintptr_t rcc_base = priv->base;
-	uint32_t mask;
-
-	mask = MASK_WIDTH_SHIFT(mux->width, mux->shift);
-
-	return (mmio_read_32(rcc_base + mux->offset) & mask) >> mux->shift;
-}
-
-int _clk_stm32_get_parent(struct stm32_clk_priv *priv, int id)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	const struct parent_cfg *parents;
-	uint16_t pid;
-	int sel;
-
-	pid = priv->clks[id].parent;
-
-	if (pid == CLK_IS_ROOT) {
-		return CLK_IS_ROOT;
-	}
-
-	if (pid < MUX_MAX_PARENTS) {
-		return pid & MUX_PARENT_MASK;
-	}
-
-	parents = &priv->parents[pid & MUX_PARENT_MASK];
-
-	if ((clk->ops != NULL) && (clk->ops->get_parent != NULL)) {
-		sel = clk->ops->get_parent(priv, id);
-
-		return parents->id_parents[sel];
-	}
-
-	sel = _mux_get_parent(priv, parents);
-
-	if (sel < parents->num_parents) {
-		return parents->id_parents[sel];
-	}
-
-	return CLK_IS_ROOT;
-}
-
-int clk_get_index(struct stm32_clk_priv *priv, unsigned long binding_id)
-{
-	int i;
-
-	for (i = 1; i < priv->num; i++) {
-		if (binding_id == priv->clks[i].binding) {
-			return i;
-		}
-	}
-
-	return -EINVAL;
-}
-
-unsigned long _clk_stm32_get_rate(struct stm32_clk_priv *priv, int id)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	int parent;
-	unsigned long rate = 0UL;
-
-	if (id >= priv->num) {
-		return rate;
-	}
-
-	parent = _clk_stm32_get_parent(priv, id);
-
-	if ((clk->ops != NULL) && (clk->ops->recalc_rate != NULL)) {
-		unsigned long prate = 0UL;
-
-		if (parent != CLK_IS_ROOT) {
-			prate = _clk_stm32_get_rate(priv, parent);
-		}
-
-		rate = clk->ops->recalc_rate(priv, id, prate);
-
-		return rate;
-	}
-
-	switch (parent) {
-	case CLK_IS_ROOT:
-		panic();
-
-	default:
-		rate = _clk_stm32_get_rate(priv, parent);
-		break;
-	}
-	return rate;
-
-}
-
-static uint8_t _stm32_clk_get_flags(struct stm32_clk_priv *priv, int id)
-{
-	return priv->clks[id].flags;
-}
-
-bool _stm32_clk_is_flags(struct stm32_clk_priv *priv, int id, uint8_t flag)
-{
-	if (_stm32_clk_get_flags(priv, id) & flag) {
-		return true;
-	}
+	for (clkt = table; clkt->div; clkt++)
+		if (clkt->div == div)
+			return true;
 
 	return false;
 }
 
-static int __clk_stm32_enable_core(struct stm32_clk_priv *priv, uint16_t id)
+static bool _is_valid_div(const struct div_table_cfg *table,
+			  unsigned int div, unsigned long flags)
 {
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	if ((clk->ops != NULL) && (clk->ops->enable != NULL)) {
-		clk->ops->enable(priv, id);
-	}
+	if (flags & CLK_DIVIDER_POWER_OF_TWO)
+		return IS_POWER_OF_TWO(div);
 
-	return 0;
+	if (table)
+		return _is_valid_table_div(table, div);
+
+	return true;
 }
 
-static int _clk_stm32_enable_core(struct stm32_clk_priv *priv, int id)
+static int divider_get_val(unsigned long rate, unsigned long parent_rate,
+			   const struct div_table_cfg *table, uint8_t width,
+			   unsigned long flags)
 {
+	unsigned int div = 0U;
+	unsigned int value = 0U;
 
-	if (priv->gate_refcounts[id] == 0U) {
-#ifdef STM32_M33TDCID
-		int parent;
-		int ret = 0;
+	div =  div_round_up((uint64_t)parent_rate, rate);
 
-		parent = _clk_stm32_get_parent(priv, id);
-		if (parent != CLK_IS_ROOT) {
-			ret = _clk_stm32_enable_core(priv, parent);
-			if (ret) {
-				return ret;
-			}
-		}
-#endif
-		__clk_stm32_enable_core(priv, id);
-	}
+	if (!_is_valid_div(table, div, flags))
+		return -1;
 
-	priv->gate_refcounts[id]++;
+	value = _get_val(table, div, flags, width);
 
-	if (priv->gate_refcounts[id] == UINT_MAX) {
-		ERROR("%s: %d max enable count !", __func__, id);
-		panic();
-	}
-
-	return 0;
+	return MIN(value, (unsigned int)MASK_WIDTH_SHIFT(width, 0));
 }
 
-int _clk_stm32_enable(struct stm32_clk_priv *priv, int id)
-{
-	int ret;
-
-	stm32_clk_lock(&refcount_lock);
-	ret = _clk_stm32_enable_core(priv, id);
-	stm32_clk_unlock(&refcount_lock);
-
-	return ret;
-}
-
-static void __clk_stm32_disable_core(struct stm32_clk_priv *priv, uint16_t id)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	if ((clk->ops != NULL) && (clk->ops->disable != NULL)) {
-		clk->ops->disable(priv, id);
-	}
-}
-
-void _clk_stm32_disable_core(struct stm32_clk_priv *priv, int id)
-{
-	int parent;
-
-	if ((priv->gate_refcounts[id] == 1U) && _stm32_clk_is_flags(priv, id, CLK_IS_CRITICAL)) {
-		return;
-	}
-
-	if (priv->gate_refcounts[id] == 0U) {
-		/* case of clock ignore unused */
-		if (_clk_stm32_is_enable(priv, id)) {
-			__clk_stm32_disable_core(priv, id);
-			return;
-		}
-		VERBOSE("%s: %d already disabled !\n\n", __func__, id);
-		return;
-	}
-
-	if (--priv->gate_refcounts[id] > 0U) {
-		return;
-	}
-
-	__clk_stm32_disable_core(priv, id);
-
-	parent = _clk_stm32_get_parent(priv, id);
-	if (parent != CLK_IS_ROOT) {
-		_clk_stm32_disable_core(priv, parent);
-	}
-}
-
-void _clk_stm32_disable(struct stm32_clk_priv *priv, int id)
-{
-	stm32_clk_lock(&refcount_lock);
-
-	_clk_stm32_disable_core(priv, id);
-
-	stm32_clk_unlock(&refcount_lock);
-}
-
-bool _clk_stm32_is_enable(struct stm32_clk_priv *priv, int id)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-
-	if ((clk->ops != NULL) && (clk->ops->is_enabled != NULL)) {
-		return clk->ops->is_enabled(priv, id);
-	}
-
-	return priv->gate_refcounts[id];
-}
-
-static int clk_stm32_enable(unsigned long binding_id)
-{
-	struct stm32_clk_priv *priv = clk_stm32_get_priv();
-	int id;
-
-	id = clk_get_index(priv, binding_id);
-	if (id == -EINVAL) {
-		return id;
-	}
-
-	return _clk_stm32_enable(priv, id);
-}
-
-static void clk_stm32_disable(unsigned long binding_id)
-{
-	struct stm32_clk_priv *priv = clk_stm32_get_priv();
-	int id;
-
-	id = clk_get_index(priv, binding_id);
-	if (id != -EINVAL) {
-		_clk_stm32_disable(priv, id);
-	}
-}
-
-
-static bool clk_stm32_is_enabled(unsigned long binding_id)
-{
-	struct stm32_clk_priv *priv = clk_stm32_get_priv();
-	int id;
-
-	id = clk_get_index(priv, binding_id);
-	if (id == -EINVAL) {
-		return false;
-	}
-
-	return _clk_stm32_is_enable(priv, id);
-}
-
-static unsigned long clk_stm32_get_rate(unsigned long binding_id)
-{
-	struct stm32_clk_priv *priv = clk_stm32_get_priv();
-	int id;
-
-	id = clk_get_index(priv, binding_id);
-	if (id == -EINVAL) {
-		return 0UL;
-	}
-
-	return _clk_stm32_get_rate(priv, id);
-}
-
-static int clk_stm32_get_parent(unsigned long binding_id)
-{
-	struct stm32_clk_priv *priv = clk_stm32_get_priv();
-	int id;
-
-	id = clk_get_index(priv, binding_id);
-	if (id == -EINVAL) {
-		return id;
-	}
-
-	return _clk_stm32_get_parent(priv, id);
-
-}
-static const clk_ops_t stm32mp_clk_ops = {
-	.enable		= clk_stm32_enable,
-	.disable	= clk_stm32_disable,
-	.is_enabled	= clk_stm32_is_enabled,
-	.get_rate	= clk_stm32_get_rate,
-	.get_parent	= clk_stm32_get_parent,
-};
-
-
-static void __unused clk_stm32_enable_critical_clocks(void)
-{
-	struct stm32_clk_priv *priv = clk_stm32_get_priv();
-	int i;
-
-	for (i = 1; i < priv->num; i++) {
-//		const struct clk_stm32 *clk = _clk_get(priv, i);
-
-		if (_stm32_clk_is_flags(priv, i, CLK_IS_CRITICAL)) {
-//			printf("%s: %s is CRITICAL\n", __func__, clk->name);
-			_clk_stm32_enable(priv, i);
-		}
-	}
-}
-
-void stm32_clk_register(void)
-{
-	clk_register(&stm32mp_clk_ops);
-
-#ifdef STM32_M33TDCID
-	clk_stm32_enable_critical_clocks();
-#endif
-}
-
-static int _clk_stm32_get_counter(struct stm32_clk_priv *priv, uint16_t idx)
-{
-	return priv->gate_refcounts[idx];
-}
-
-int clk_stm32_get_counter(unsigned long binding_id)
-{
-	struct stm32_clk_priv *priv = clk_stm32_get_priv();
-	int id;
-
-	id = clk_get_index(priv, binding_id);
-	if (id != -1) {
-		return _clk_stm32_get_counter(priv, id);
-	}
-	return 0;
-}
-
-unsigned long _clk_stm32_divider_recalc(struct stm32_clk_priv *priv,
-					int div_id,
-					unsigned long prate)
-{
-	uintptr_t rcc_base = priv->base;
-	const struct div_cfg *divider;
-	uint32_t val;
-
-	divider = &priv->div[div_id];
-	val = mmio_read_32(rcc_base + divider->offset) >> divider->shift;
-	val &= clk_div_mask(divider->width);
-
-	return _divider_recalc_rate(prate, val, divider->table,
-				    divider->flags, divider->width);
-}
-
-unsigned long clk_stm32_divider_recalc(struct stm32_clk_priv *priv, int id,
-				       unsigned long prate)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_stm32_div_cfg *div_cfg = clk->clock_cfg;
-
-	return _clk_stm32_divider_recalc(priv, div_cfg->id, prate);
-}
-
-const struct stm32_clk_ops clk_stm32_divider_ops = {
-	.recalc_rate = clk_stm32_divider_recalc,
-};
-
-#define DIV_NO_BIT_RDY		UINT8_MAX
-
-int clk_stm32_set_div(struct stm32_clk_priv *priv, int div_id, uint32_t value)
+uint32_t stm32_div_get_value(struct clk_stm32_priv *priv, int div_id)
 {
 	const struct div_cfg *divider = &priv->div[div_id];
-	uintptr_t address = priv->base + divider->offset;
-	uint32_t mask;
-	uint64_t timeout;
+	uint32_t val = 0;
+
+	val = io_read32(clk_stm32_get_rcc_base(priv) + divider->offset) >> divider->shift;
+	val &= MASK_WIDTH_SHIFT(divider->width, 0);
+
+	return val;
+}
+
+int stm32_div_set_value(struct clk_stm32_priv *priv,
+			uint32_t div_id, uint32_t value)
+{
+	const struct div_cfg *divider = NULL;
+	uintptr_t address = 0;
+	uint32_t mask = 0;
+
+	if (div_id >= priv->nb_div)
+		panic();
+
+	divider = &priv->div[div_id];
+	address = clk_stm32_get_rcc_base(priv) + divider->offset;
 
 	mask = MASK_WIDTH_SHIFT(divider->width, divider->shift);
-	mmio_clrsetbits_32(address, mask, value & mask);
+	io_clrsetbits32(address, mask, (value << divider->shift) & mask);
 
-	if (divider->bitrdy == DIV_NO_BIT_RDY) {
+	if (divider->ready == DIV_NO_RDY)
+		return 0;
+
+	return stm32_gate_wait_ready(priv, (uint16_t)divider->ready, true);
+}
+
+unsigned long stm32_div_get_rate(struct clk_stm32_priv *priv,
+				 int div_id, unsigned long prate)
+{
+	const struct div_cfg *divider = &priv->div[div_id];
+	uint32_t val = stm32_div_get_value(priv, div_id);
+	unsigned int div = 0U;
+
+	div = _get_div(divider->table, val, divider->flags, divider->width);
+	if (!div)
+		return prate;
+
+	return div_round_up((uint64_t)prate, div);
+}
+
+int stm32_div_set_rate(struct clk_stm32_priv *priv,
+		       int div_id, unsigned long rate, unsigned long prate)
+{
+	const struct div_cfg *divider = &priv->div[div_id];
+	int value = 0;
+
+	value = divider_get_val(rate, prate, divider->table,
+				divider->width, divider->flags);
+
+	if (value < 0)
+		return -1;
+
+	return stm32_div_set_value(priv, div_id, value);
+}
+
+/* STM32 MUX clock operators */
+static size_t clk_stm32_mux_get_parent(struct clk *clk)
+{
+	struct clk_stm32_mux_cfg *cfg = clk->priv;
+
+	return stm32_mux_get_parent(clk, cfg->mux_id);
+}
+
+static int clk_stm32_mux_set_parent(struct clk *clk, size_t pidx)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_mux_cfg *cfg = clk->priv;
+
+	return stm32_mux_set_parent(priv, cfg->mux_id, pidx);
+}
+
+struct clk *stm32_clk_get(const struct device *dev, clk_subsys_t sys)
+{
+	struct clk_stm32_priv *priv = dev_get_data(dev);
+	uint32_t clock_id = (uint32_t)sys;
+
+	if (clock_id > priv->nb_clk_refs)
+		return NULL;
+
+	return priv->clk_refs[clock_id];
+}
+
+const struct clk_ops clk_stm32_mux_ops = {
+	.get_parent	= clk_stm32_mux_get_parent,
+	.set_parent	= clk_stm32_mux_set_parent,
+};
+
+const struct clk_ops clk_stm32_mux_ro_ops = {
+	.get_parent	= clk_stm32_mux_get_parent,
+};
+
+/* STM32 GATE clock operators */
+int clk_stm32_gate_enable(struct clk *clk)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_gate_cfg *cfg = clk->priv;
+
+	stm32_gate_enable(priv, cfg->gate_id);
+
+	return 0;
+}
+
+void clk_stm32_gate_disable(struct clk *clk)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_gate_cfg *cfg = clk->priv;
+
+	stm32_gate_disable(priv, cfg->gate_id);
+}
+
+bool clk_stm32_gate_is_enabled(struct clk *clk)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_gate_cfg *cfg = clk->priv;
+
+	return stm32_gate_is_enabled(priv, cfg->gate_id);
+}
+
+const struct clk_ops clk_stm32_gate_ops = {
+	.enable		= clk_stm32_gate_enable,
+	.disable	= clk_stm32_gate_disable,
+	.is_enabled	= clk_stm32_gate_is_enabled,
+};
+
+int clk_stm32_gate_ready_enable(struct clk *clk)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_gate_cfg *cfg = clk->priv;
+
+	return stm32_gate_rdy_enable(priv, cfg->gate_id);
+}
+
+void clk_stm32_gate_ready_disable(struct clk *clk)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_gate_cfg *cfg = clk->priv;
+
+	if (stm32_gate_rdy_disable(priv, cfg->gate_id))
+		panic();
+}
+
+const struct clk_ops clk_stm32_gate_ready_ops = {
+	.enable		= clk_stm32_gate_ready_enable,
+	.disable	= clk_stm32_gate_ready_disable,
+	.is_enabled	= clk_stm32_gate_is_enabled,
+};
+
+/* STM32 DIV clock operators */
+unsigned long clk_stm32_divider_get_rate(struct clk *clk,
+					 unsigned long parent_rate)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_div_cfg *cfg = clk->priv;
+
+	return stm32_div_get_rate(priv, cfg->div_id, parent_rate);
+}
+
+int clk_stm32_divider_set_rate(struct clk *clk,
+				      unsigned long rate,
+				      unsigned long parent_rate)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_div_cfg *cfg = clk->priv;
+
+	return stm32_div_set_rate(priv, cfg->div_id, rate, parent_rate);
+}
+
+const struct clk_ops clk_stm32_divider_ops = {
+	.get_rate	= clk_stm32_divider_get_rate,
+	.set_rate	= clk_stm32_divider_set_rate,
+};
+
+/* STM32 COMPOSITE clock operators */
+size_t clk_stm32_composite_get_parent(struct clk *clk)
+{
+	struct clk_stm32_composite_cfg *cfg = clk->priv;
+
+	if (cfg->mux_id == NO_MUX) {
+		/* It could be a normal case */
 		return 0;
 	}
 
-	timeout = timeout_init_us(CLKSRC_TIMEOUT);
-	mask = BIT(divider->bitrdy);
+	return stm32_mux_get_parent(clk, cfg->mux_id);
+}
 
-	while ((mmio_read_32(address) & mask) == 0U) {
-		if (timeout_elapsed(timeout)) {
-			return -ETIMEDOUT;
-		}
-	}
+int clk_stm32_composite_set_parent(struct clk *clk, size_t pidx)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_composite_cfg *cfg = clk->priv;
+
+	if (cfg->mux_id == NO_MUX)
+		panic();
+
+	return stm32_mux_set_parent(priv, cfg->mux_id, pidx);
+}
+
+unsigned long clk_stm32_composite_get_rate(struct clk *clk,
+					   unsigned long parent_rate)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_composite_cfg *cfg = clk->priv;
+
+	if (cfg->div_id == NO_DIV)
+		return parent_rate;
+
+	return stm32_div_get_rate(priv, cfg->div_id, parent_rate);
+}
+
+int clk_stm32_composite_set_rate(struct clk *clk, unsigned long rate,
+					unsigned long parent_rate)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_composite_cfg *cfg = clk->priv;
+
+	if (cfg->div_id == NO_DIV)
+		return 0;
+
+	return stm32_div_set_rate(priv, cfg->div_id, rate, parent_rate);
+}
+
+int clk_stm32_composite_gate_enable(struct clk *clk)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_composite_cfg *cfg = clk->priv;
+
+	stm32_gate_enable(priv, cfg->gate_id);
 
 	return 0;
 }
 
-int _clk_stm32_gate_wait_ready(struct stm32_clk_priv *priv, uint16_t gate_id,
-			       bool ready_on)
+void clk_stm32_composite_gate_disable(struct clk *clk)
 {
-	const struct gate_cfg *gate = &priv->gates[gate_id];
-	uintptr_t address = priv->base + gate->offset;
-	uint32_t mask_rdy = BIT(gate->bit_idx);
-	uint64_t timeout;
-	uint32_t mask_test;
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_composite_cfg *cfg = clk->priv;
 
-	if (ready_on) {
-		mask_test = BIT(gate->bit_idx);
-	} else {
-		mask_test = 0U;
-	}
-
-	timeout = timeout_init_us(OSCRDY_TIMEOUT);
-
-	while ((mmio_read_32(address) & mask_rdy) != mask_test) {
-		if (timeout_elapsed(timeout)) {
-			break;
-		}
-	}
-
-	if ((mmio_read_32(address) & mask_rdy) != mask_test)
-		return -ETIMEDOUT;
-
-	return 0;
+	stm32_gate_disable(priv, cfg->gate_id);
 }
 
-int clk_stm32_gate_enable(struct stm32_clk_priv *priv, int id)
+bool clk_stm32_composite_gate_is_enabled(struct clk *clk)
 {
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_stm32_gate_cfg *cfg = clk->clock_cfg;
-	const struct gate_cfg *gate = &priv->gates[cfg->id];
-	uintptr_t addr = priv->base + gate->offset;
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_composite_cfg *cfg = clk->priv;
 
-	if (gate->set_clr != 0U) {
-		mmio_write_32(addr, BIT(gate->bit_idx));
+	return stm32_gate_is_enabled(priv, cfg->gate_id);
+}
 
-	} else {
-		mmio_setbits_32(addr, BIT(gate->bit_idx));
+const struct clk_ops clk_stm32_composite_ops = {
+	.get_parent	= clk_stm32_composite_get_parent,
+	.set_parent	= clk_stm32_composite_set_parent,
+	.get_rate	= clk_stm32_composite_get_rate,
+	.set_rate	= clk_stm32_composite_set_rate,
+	.enable		= clk_stm32_composite_gate_enable,
+	.disable	= clk_stm32_composite_gate_disable,
+	.is_enabled	= clk_stm32_composite_gate_is_enabled,
+};
+
+int clk_stm32_set_parent_by_index(struct clk *clk, size_t pidx)
+{
+	struct clk *parent = clk_get_parent_by_index(clk, pidx);
+	int res = -1;
+
+	if (parent)
+		res = clk_set_parent(clk, parent);
+
+	return res;
+}
+
+static unsigned long fixed_factor_get_rate(struct clk *clk,
+					   unsigned long parent_rate)
+{
+	struct fixed_factor_cfg *d = clk->priv;
+
+	unsigned long long rate = (unsigned long long)parent_rate * d->mult;
+
+	if (d->div == 0U) {
+		EMSG("error division by zero");
+		panic();
 	}
 
-	return 0;
-
-}
-
-void clk_stm32_gate_disable(struct stm32_clk_priv *priv, int id)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_stm32_gate_cfg *cfg = clk->clock_cfg;
-	const struct gate_cfg *gate = &priv->gates[cfg->id];
-	uintptr_t addr = priv->base + gate->offset;
-
-	if (gate->set_clr != 0U) {
-		mmio_write_32(addr + _RCC_MP_ENCLRR_OFFSET,
-			      BIT(gate->bit_idx));
-	} else {
-		mmio_clrbits_32(addr, BIT(gate->bit_idx));
-	}
-}
-
-bool _clk_stm32_gate_is_enabled(struct stm32_clk_priv *priv, int gate_id)
-{
-	const struct gate_cfg *gate;
-	uint32_t addr;
-
-	gate = &priv->gates[gate_id];
-	addr = priv->base + gate->offset;
-
-	return ((mmio_read_32(addr) & BIT(gate->bit_idx)) != 0U);
-}
-
-bool clk_stm32_gate_is_enabled(struct stm32_clk_priv *priv, int id)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_stm32_gate_cfg *cfg = clk->clock_cfg;
-
-	return _clk_stm32_gate_is_enabled(priv, cfg->id);
-}
-
-const struct stm32_clk_ops clk_stm32_gate_ops = {
-	.enable = clk_stm32_gate_enable,
-	.disable = clk_stm32_gate_disable,
-	.is_enabled = clk_stm32_gate_is_enabled,
+	return (unsigned long)(rate / d->div);
 };
 
-const struct stm32_clk_ops clk_fixed_factor_ops = {
-	.recalc_rate = fixed_factor_recalc_rate,
+const struct clk_ops clk_fixed_factor_ops = {
+	.get_rate	= fixed_factor_get_rate,
 };
 
-unsigned long fixed_factor_recalc_rate(struct stm32_clk_priv *priv,
-				       int id, unsigned long prate)
+static unsigned long clk_fixed_get_rate(struct clk *clk,
+					unsigned long parent_rate __unused)
 {
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	const struct fixed_factor_cfg *cfg = clk->clock_cfg;
-	unsigned long long rate;
-
-	rate = (unsigned long long)prate * cfg->mult;
-
-	return (unsigned long)rate / cfg->div;
-};
-
-#define APB_DIV_MASK GENMASK(2, 0)
-#define TIM_PRE_MASK BIT(0)
-
-unsigned long timer_recalc_rate(struct stm32_clk_priv *priv,
-				int id, unsigned long prate)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	const struct clk_timer_cfg *cfg = clk->clock_cfg;
-	uint32_t prescaler, timpre;
-	uintptr_t rcc_base = priv->base;
-
-	prescaler = mmio_read_32(rcc_base + cfg->apbdiv) &
-		APB_DIV_MASK;
-
-	timpre = mmio_read_32(rcc_base + cfg->timpre) &
-		TIM_PRE_MASK;
-
-	if (prescaler == 0U) {
-		return prate;
-	}
-
-	return prate * (timpre + 1U) * 2U;
-};
-
-const struct stm32_clk_ops clk_timer_ops = {
-	.recalc_rate = timer_recalc_rate,
-};
-
-unsigned long clk_fixed_rate_recalc(struct stm32_clk_priv *priv, int id,
-				    unsigned long prate)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_stm32_fixed_rate_cfg *cfg = clk->clock_cfg;
+	struct clk_fixed_rate_cfg *cfg = clk->priv;
 
 	return cfg->rate;
 }
 
-const struct stm32_clk_ops clk_stm32_fixed_rate_ops = {
-	.recalc_rate = clk_fixed_rate_recalc,
+const struct clk_ops clk_fixed_clk_ops = {
+	.get_rate	= clk_fixed_get_rate,
 };
 
-unsigned long clk_stm32_osc_recalc_rate(struct stm32_clk_priv *priv,
-					int id, unsigned long prate)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_oscillator_data *osc_data = clk->clock_cfg;
-
-	return osc_data->frequency;
-};
-
-bool clk_stm32_osc_gate_is_enabled(struct stm32_clk_priv *priv, int id)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_oscillator_data *osc_data = clk->clock_cfg;
-
-	return _clk_stm32_gate_is_enabled(priv, osc_data->gate_id);
-
-}
-
-int clk_stm32_osc_gate_enable(struct stm32_clk_priv *priv, int id)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_oscillator_data *osc_data = clk->clock_cfg;
-
-	_clk_stm32_gate_enable(priv, osc_data->gate_id);
-
-	if (_clk_stm32_gate_wait_ready(priv, osc_data->gate_rdy_id, true) != 0U) {
-		ERROR("%s: %s (%d)\n", __func__, osc_data->name, __LINE__);
-		//panic();
-	}
-
-	return 0;
-}
-
-void clk_stm32_osc_gate_disable(struct stm32_clk_priv *priv, int id)
-{
-	const struct clk_stm32 *clk = _clk_get(priv, id);
-	struct clk_oscillator_data *osc_data = clk->clock_cfg;
-
-	_clk_stm32_gate_disable(priv, osc_data->gate_id);
-
-	if (_clk_stm32_gate_wait_ready(priv, osc_data->gate_rdy_id, false) != 0U) {
-		ERROR("%s: %s (%d)\n", __func__, osc_data->name, __LINE__);
-		//panic();
-	}
-}
-
-const struct stm32_clk_ops clk_stm32_osc_ops = {
-	.recalc_rate = clk_stm32_osc_recalc_rate,
-	.is_enabled = clk_stm32_osc_gate_is_enabled,
-	.enable = clk_stm32_osc_gate_enable,
-	.disable = clk_stm32_osc_gate_disable,
-};
-
-const struct stm32_clk_ops clk_stm32_osc_nogate_ops = {
-	.recalc_rate = clk_stm32_osc_recalc_rate,
-};
-
-void clk_stm32_clock_ignore_unused(void)
-{
-	struct stm32_clk_priv *priv = clk_stm32_get_priv();
-	int i;
-
-	for (i = 1; i < priv->num; i++) {
-		if (_stm32_clk_is_flags(priv, i, CLK_IS_CRITICAL) || _stm32_clk_is_flags(priv, i, CLK_IGNORE_UNUSED)) {
-			continue;
-		}
-
-		if (_clk_stm32_is_enable(priv, i) == true) {
-			if (_clk_stm32_get_counter(priv, i) == 0U)  {
-				__clk_stm32_disable_core(priv, i);
-			}
-		}
-	}
-}
-
-static void __unused clk_stm32_display_clock_ignore_unused(void)
-{
-	struct stm32_clk_priv *priv = clk_stm32_get_priv();
-	int i;
-
-	printf("%s:\n", __func__);
-
-	printf("CLOCK WITH CLK_IS_CRITICAL FLAGS:\n");
-	for (i = 1; i < priv->num; i++) {
-		const struct clk_stm32 *clk = _clk_get(priv, i);
-
-		if (_stm32_clk_is_flags(priv, i, CLK_IS_CRITICAL)) {
-			printf("%s\n", clk->name);
-		}
-	}
-
-	printf("\nCLOCK WITH CLK_IGNORE_UNUSED FLAGS:\n");
-	for (i = 1; i < priv->num; i++) {
-		const struct clk_stm32 *clk = _clk_get(priv, i);
-		if (_stm32_clk_is_flags(priv, i, CLK_IGNORE_UNUSED)) {
-			printf("%s, EN = %d COUNTER = %d\n", clk->name, _clk_stm32_is_enable(priv, i), _clk_stm32_get_counter(priv, i));
-		}
-	}
-
-	printf("\nCLOCK DISABLED BECAUSE UNUSED:\n");
-	for (i = 1; i < priv->num; i++) {
-		const struct clk_stm32 *clk = _clk_get(priv, i);
-
-		if (_stm32_clk_is_flags(priv, i, CLK_IS_CRITICAL) || _stm32_clk_is_flags(priv, i, CLK_IGNORE_UNUSED)) {
-			continue;
-		}
-
-		if (_clk_stm32_is_enable(priv, i) == true) {
-
-			if (_clk_stm32_get_counter(priv, i) == 0U)  {
-				printf("%s, EN = %d COUNTER = %d\n", clk->name, _clk_stm32_is_enable(priv, i), _clk_stm32_get_counter(priv, i));
-			}
-		}
-	}
-	printf("\n");
-}
-
-static void __unused clk_stm32_display_tree(struct stm32_clk_priv *priv, int clk,
-				   int ident)
+#if STM32_CLK_DBG
+static void clk_stm32_display_tree(struct clk *clk, int indent)
 {
 	unsigned long rate;
 	const char *name;
-	int counter = priv->gate_refcounts[clk];
+	int counter = clk->enabled_count;
 	int i;
 	int state;
 
-	name = _clk_stm32_get_name(priv, clk);
-	rate = _clk_stm32_get_rate(priv, clk);
-	state = _clk_stm32_is_enable(priv, clk);
+	name = clk_get_name(clk);
+	rate = clk_get_rate(clk);
 
-	printf("%d %s ", counter, state ? " on" : "off");
+	state = clk->ops->is_enabled ? clk->ops->is_enabled(clk) : (counter > 0);
 
-	for (i = 0; i < ident * 4; i++) {
-		if ((i % 4) != 0) {
+	printf("%d %s ", counter, state ? "Y" : "N");
+
+	for (i = 0; i < indent * 4; i++) {
+		if ((i % 4) != 0)
 			printf("-");
-		} else {
+		else
 			printf("|");
-		}
 	}
 
-	if (i != 0) {
+	if (i != 0)
 		printf(" ");
-	}
 
-	printf("%s (%ld)\n", name, rate);
+	printf("%s (%d)\n\r", name ? name : "noname", rate);
 }
 
-static void __unused clk_stm32_tree(struct stm32_clk_priv *priv, int clk, int ident)
+static void clk_stm32_tree(struct clk *clk_root, int indent)
 {
-	unsigned int i;
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk_root));
+	unsigned int i = 0;
 
-	for (i = 1U; i < priv->num; i++) {
-		int p;
+	for (i = 0; i < priv->nb_clk_refs; i++) {
+		struct clk *clk = priv->clk_refs[i];
 
-		p = _clk_stm32_get_parent(priv, i);
-		if (p == clk) {
-			clk_stm32_display_tree(priv, i, ident + 1);
-			clk_stm32_tree(priv, i, ident + 1);
+		if (!clk)
+			continue;
+		if (clk_get_parent(clk) == clk_root) {
+			clk_stm32_display_tree(clk, indent + 1);
+			clk_stm32_tree(clk, indent + 1);
 		}
 	}
 }
 
-void __unused clk_stm32_display_clock_tree(void)
+void clk_stm32_display_clock_summary(struct device *dev)
 {
-	struct stm32_clk_priv *priv = clk_stm32_get_priv();
-	unsigned int i;
+	struct clk_stm32_priv *priv = dev_get_data(dev);
+	unsigned int i = 0;
 
-	clk_stm32_display_clock_ignore_unused();
+	for (i = 0; i < priv->nb_clk_refs; i++) {
+		struct clk *clk = priv->clk_refs[i];
 
-	printf("\n%s:\n", __func__);
+		if (!clk)
+			continue;
 
-	for (i = 1U; i < priv->num; i++) {
-		int p;
+		if (clk_get_parent(clk))
+			continue;
 
-		p = _clk_stm32_get_parent(priv, i);
-		if (p == CLK_IS_ROOT) {
-			clk_stm32_display_tree(priv, i, 0);
-			clk_stm32_tree(priv, i, 0);
-		}
+		clk_stm32_display_tree(clk, 0);
+
+		clk_stm32_tree(clk, 0);
+	}
+}
+#endif
+
+struct clk *stm32mp_rcc_clock_id_to_clk(struct clk_stm32_priv *priv, unsigned long clock_id)
+{
+	if (clock_id > priv->nb_clk_refs)
+		return NULL;
+
+	return priv->clk_refs[clock_id];
+}
+
+void clk_stm32_register_clocks(struct clk_stm32_priv *priv)
+{
+	unsigned int i = 0;
+
+	for (i = 0; i < priv->nb_clk_refs; i++) {
+		struct clk *clk = priv->clk_refs[i];
+
+		if (!clk)
+			continue;
+
+		clk->enabled_count = 0;
+
+		if (clk_register(clk))
+			panic();
+	}
+
+	for (i = 0; i < priv->nb_clk_refs; i++) {
+		struct clk *clk = priv->clk_refs[i];
+
+		if (!clk)
+			continue;
+
+		if (priv->is_critical && priv->is_critical(clk))
+			clk_enable(clk);
 	}
 }

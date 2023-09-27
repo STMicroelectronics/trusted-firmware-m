@@ -1,122 +1,118 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR BSD-3-Clause)
 /*
- * Copyright (C) 2018-2020, STMicroelectronics - All Rights Reserved
- *
- * SPDX-License-Identifier: GPL-2.0+ OR BSD-3-Clause
+ * Copyright (C) STMicroelectronics 2022 - All Rights Reserved
  */
 
 #ifndef CLK_STM32_CORE_H
 #define CLK_STM32_CORE_H
 
+#include <clk.h>
+
 struct mux_cfg {
-	uint16_t	offset;
-	uint8_t		shift;
-	uint8_t		width;
-	uint8_t		bitrdy;
+	uint16_t offset;
+	uint8_t shift;
+	uint8_t width;
+	uint8_t ready;
 };
 
 struct gate_cfg {
-	uint16_t	offset;
-	uint8_t		bit_idx;
-	uint8_t		set_clr;
+	uint16_t offset;
+	uint8_t bit_idx;
+	uint8_t set_clr;
 };
 
-struct clk_div_table {
-	unsigned int	val;
-	unsigned int	div;
+struct div_table_cfg {
+	unsigned int val;
+	unsigned int div;
 };
 
 struct div_cfg {
-	uint16_t	offset;
-	uint8_t		shift;
-	uint8_t		width;
-	uint8_t		flags;
-	uint8_t		bitrdy;
-	const struct clk_div_table *table;
+	uint16_t offset;
+	uint8_t shift;
+	uint8_t width;
+	uint8_t flags;
+	uint8_t ready;
+	const struct div_table_cfg *table;
 };
 
-struct parent_cfg {
-	uint8_t		num_parents;
-	const uint16_t	*id_parents;
-	struct mux_cfg	*mux;
+struct stm32_rcc_config {
+	uintptr_t base;
+	const struct stm32_osci_dt_cfg *osci;
+	const uint32_t nosci;
+	const struct stm32_pll_dt_cfg *pll;
+	const uint32_t npll;
+	const uint32_t *busclk;
+	const uint32_t nbusclk;
+	const uint32_t *kernelclk;
+	const uint32_t nkernelclk;
+	const uint32_t *flexgen;
+	const uint32_t nflexgen;
 };
 
-struct stm32_clk_priv;
-
-struct stm32_clk_ops {
-	unsigned long (*recalc_rate)(struct stm32_clk_priv *priv, int id, unsigned long rate);
-	int (*get_parent)(struct stm32_clk_priv *priv, int id);
-	int (*enable)(struct stm32_clk_priv *priv, int id);
-	void (*disable)(struct stm32_clk_priv *priv, int id);
-	bool (*is_enabled)(struct stm32_clk_priv *priv, int id);
+struct clk_stm32_priv {
+	const struct stm32_rcc_config *rcc_cfg;
+	size_t nb_clk_refs;
+	struct clk **clk_refs;
+	const struct mux_cfg *muxes;
+	const uint32_t nb_muxes;
+	const struct gate_cfg *gates;
+	uint8_t *gate_cpt;
+	const uint32_t nb_gates;
+	const struct div_cfg *div;
+	const uint32_t nb_div;
+	bool clk_ignore_unused;
+	bool (*is_ignore_unused)(struct clk *clk);
+	bool (*is_critical)(struct clk *clk);
 };
 
-struct clk_stm32 {
-	const char		*name;
-	uint16_t		binding;
-	uint16_t		parent;
-	uint8_t			flags;
-	void			*clock_cfg;
-	const struct stm32_clk_ops	*ops;
+static inline uintptr_t clk_stm32_get_rcc_base(struct clk_stm32_priv *priv)
+{
+	return priv->rcc_cfg->base;
+}
+
+struct clk_fixed_rate_cfg {
+	unsigned long rate;
 };
 
-#define CLK_IS_ROOT 0
-
-#define MUX_NO_BIT_RDY UINT8_MAX
-
-#define CLK_IS_CRITICAL 	BIT(0)
-#define CLK_IGNORE_UNUSED 	BIT(1)
-
-struct stm32_clk_priv {
-	uintptr_t			base;
-	const unsigned int		num;
-	const struct clk_stm32		*clks;
-	const struct parent_cfg		*parents;
-	const struct gate_cfg		*gates;
-	const struct div_cfg		*div;
-	unsigned int			*gate_refcounts;
-	void 				*pdata;
-};
-
-struct stm32_clk_bypass {
-	uint16_t	offset;
-	uint8_t		bit_byp;
-	uint8_t		bit_digbyp;
-};
-
-struct stm32_clk_css {
-	uint16_t	offset;
-	uint8_t		bit_css;
-};
-
-struct stm32_clk_drive {
-	uint16_t	offset;
-	uint8_t		drv_shift;
-	uint8_t		drv_width;
-	uint8_t		drv_default;
-};
-
-struct clk_oscillator_data {
-	const char		*name;
-	unsigned long		frequency;
-	uint16_t		gate_id;
-	uint16_t		gate_rdy_id;
-	struct stm32_clk_bypass *bypass;
-	struct stm32_clk_css	*css;
-	struct stm32_clk_drive	*drive;
-};
-
-struct clk_fixed_rate {
-	const char *name;
-	unsigned long fixed_rate;
+struct fixed_factor_cfg {
+	unsigned int mult;
+	unsigned int div;
 };
 
 struct clk_gate_cfg {
-	uint32_t	offset;
-	uint8_t		bit_idx;
+	uint32_t offset;
+	uint8_t bit_idx;
 };
 
-#define _NO_ID UINT16_MAX
+struct clk_stm32_mux_cfg {
+	int mux_id;
+};
 
+struct clk_stm32_gate_cfg {
+	int gate_id;
+};
+
+struct clk_stm32_div_cfg {
+	int div_id;
+};
+
+struct clk_stm32_composite_cfg {
+	int gate_id;
+	int div_id;
+	int mux_id;
+};
+
+struct clk_stm32_timer_cfg {
+	uint32_t apbdiv;
+	uint32_t timpre;
+};
+
+struct clk_stm32_gate_ready_cfg {
+	int gate_id;
+	int gate_rdy_id;
+};
+
+/* Define for divider clocks */
 #define CLK_DIVIDER_ONE_BASED		BIT(0)
 #define CLK_DIVIDER_POWER_OF_TWO	BIT(1)
 #define CLK_DIVIDER_ALLOW_ZERO		BIT(2)
@@ -126,223 +122,204 @@ struct clk_gate_cfg {
 #define CLK_DIVIDER_MAX_AT_ZERO		BIT(6)
 #define CLK_DIVIDER_BIG_ENDIAN		BIT(7)
 
-#define MUX_MAX_PARENTS U(0x8000)
-#define MUX_PARENT_MASK GENMASK(14, 0)
-#define MUX_FLAG	U(0x8000)
-#define MUX(mux)	((mux) | MUX_FLAG)
+#define DIV_NO_RDY		UINT8_MAX
+#define MUX_NO_RDY		UINT8_MAX
 
-#define NO_GATE		0
+#define MASK_WIDTH_SHIFT(_width, _shift) \
+	GENMASK_32(((_width) + (_shift) - 1U), (_shift))
 
-int stm32_init_clocks(struct stm32_clk_priv *priv);
-void stm32_clk_register(void);
+/* Define for composite clocks */
+#define NO_MUX		INT32_MAX
+#define NO_DIV		INT32_MAX
+#define NO_GATE		INT32_MAX
 
-struct stm32_clk_priv *clk_stm32_get_priv(void);
-uintptr_t clk_stm32_get_rcc_base(void);
+void stm32_gate_endisable(struct clk_stm32_priv *priv,
+			  uint16_t gate_id, bool enable);
+void stm32_gate_enable(struct clk_stm32_priv *priv,
+		       uint16_t gate_id);
+void stm32_gate_disable(struct clk_stm32_priv *priv,
+			uint16_t gate_id);
+bool stm32_gate_is_enabled(struct clk_stm32_priv *priv,
+			   uint16_t gate_id);
+int stm32_gate_wait_ready(struct clk_stm32_priv *priv,
+			  uint16_t gate_id, bool ready_on);
+int stm32_gate_rdy_enable(struct clk_stm32_priv *priv,
+			  uint16_t gate_id);
+int stm32_gate_rdy_disable(struct clk_stm32_priv *priv,
+			   uint16_t gate_id);
 
-int clk_get_index(struct stm32_clk_priv *priv, unsigned long binding_id);
-const struct clk_stm32 *_clk_get(struct stm32_clk_priv *priv, int id);
+size_t stm32_mux_get_parent(struct clk *clk, uint32_t mux_id);
+int stm32_mux_set_parent(struct clk_stm32_priv *priv,
+			 uint16_t pid, uint8_t sel);
 
+unsigned long stm32_div_get_rate(struct clk_stm32_priv *priv,
+				 int div_id, unsigned long prate);
+int stm32_div_set_rate(struct clk_stm32_priv *priv,
+		       int div_id, unsigned long rate,
+		       unsigned long prate);
 
-uint16_t _clk_set_mux_by_index(uint16_t id, uint8_t index);
+uint32_t stm32_div_get_value(struct clk_stm32_priv *priv, int div_id);
+int stm32_div_set_value(struct clk_stm32_priv *priv,
+			uint32_t div_id, uint32_t value);
 
-void clk_oscillator_set_bypass(struct stm32_clk_priv *priv, int id, bool digbyp, bool bypass);
-void clk_oscillator_set_drive(struct stm32_clk_priv *priv, int id, uint8_t lsedrv);
-void clk_oscillator_set_css(struct stm32_clk_priv *priv, int id, bool css);
+int clk_stm32_parse_fdt_by_name(const void *fdt, int node, const char *name,
+				uint32_t *tab, uint32_t *nb);
 
-int _clk_stm32_gate_wait_ready(struct stm32_clk_priv *priv, uint16_t gate_id, bool ready_on);
+int clk_stm32_gate_ready_enable(struct clk *clk);
+void clk_stm32_gate_ready_disable(struct clk *clk);
+int clk_stm32_gate_enable(struct clk *clk);
+void clk_stm32_gate_disable(struct clk *clk);
+bool clk_stm32_gate_is_enabled(struct clk *clk);
 
-int clk_oscillator_wait_ready(struct stm32_clk_priv *priv, int id, bool ready_on);
-int clk_oscillator_wait_ready_on(struct stm32_clk_priv *priv, int id);
-int clk_oscillator_wait_ready_off(struct stm32_clk_priv *priv, int id);
+unsigned long clk_stm32_divider_get_rate(struct clk *clk,
+					 unsigned long parent_rate);
 
-const char *_clk_stm32_get_name(struct stm32_clk_priv *priv, int id);
-const char *clk_stm32_get_name(struct stm32_clk_priv *priv, unsigned long binding_id);
+int clk_stm32_divider_set_rate(struct clk *clk,
+				      unsigned long rate,
+				      unsigned long parent_rate);
 
-void _clk_stm32_gate_disable(struct stm32_clk_priv *priv, uint16_t gate_id);
-int _clk_stm32_gate_enable(struct stm32_clk_priv *priv, uint16_t gate_id);
+size_t clk_stm32_composite_get_parent(struct clk *clk);
+int clk_stm32_composite_set_parent(struct clk *clk, size_t pidx);
+unsigned long clk_stm32_composite_get_rate(struct clk *clk,
+					   unsigned long parent_rate);
+int clk_stm32_composite_set_rate(struct clk *clk, unsigned long rate,
+					unsigned long parent_rate);
+int clk_stm32_composite_gate_enable(struct clk *clk);
+void clk_stm32_composite_gate_disable(struct clk *clk);
+bool clk_stm32_composite_gate_is_enabled(struct clk *clk);
 
-int _clk_stm32_set_parent(struct stm32_clk_priv *priv, int id, int src_id);
-int _clk_get_parent_index(struct stm32_clk_priv *priv, int id);
-int _clk_stm32_get_parent(struct stm32_clk_priv *priv, int id);
+int clk_stm32_set_parent_by_index(struct clk *clk, size_t pidx);
 
-unsigned long _clk_stm32_get_rate(struct stm32_clk_priv *priv, int id);
+extern const struct clk_ops clk_fixed_factor_ops;
+extern const struct clk_ops clk_fixed_clk_ops;
+extern const struct clk_ops clk_stm32_gate_ops;
+extern const struct clk_ops clk_stm32_gate_ready_ops;
+extern const struct clk_ops clk_stm32_divider_ops;
+extern const struct clk_ops clk_stm32_mux_ops;
+extern const struct clk_ops clk_stm32_composite_ops;
 
-int _clk_stm32_set_div(struct stm32_clk_priv *priv, int _idx,
-		       uint32_t value);
+struct clk *stm32mp_rcc_clock_id_to_clk(struct clk_stm32_priv *priv,
+					unsigned long clock_id);
 
-bool _stm32_clk_is_flags(struct stm32_clk_priv *priv, int id, uint8_t flag);
+#define PARENT(_parent) ((struct clk *[]) { _parent})
+#define PARENTS(_parent...) ((struct clk *[]) { _parent })
 
-int _clk_stm32_enable(struct stm32_clk_priv *priv, int id);
+#if CLK_MINIMAL_SZ
+#define CLOCK_NAME(name)
+#else
+#define CLOCK_NAME(x) .name = (x),
+#endif
 
-void _clk_stm32_disable(struct stm32_clk_priv *priv, int id);
+#define STM32_FIXED_RATE(_name, _rate)\
+	struct clk _name = {\
+		.ops = &clk_fixed_clk_ops,\
+		.priv = &(struct clk_fixed_rate_cfg) {\
+			.rate = (_rate),\
+		},\
+		CLOCK_NAME(#_name)\
+		.flags = 0,\
+		.num_parents = 0,\
+		.dev = DT_RCC_DEVICE,\
+	}
 
-bool _clk_stm32_is_enable(struct stm32_clk_priv *priv, int id);
+#define STM32_FIXED_FACTOR(_name, _parent, _flags, _mult, _div)\
+	struct clk _name = {\
+		.ops = &clk_fixed_factor_ops,\
+		.priv = &(struct fixed_factor_cfg) {\
+			.mult = _mult,\
+			.div = _div,\
+		},\
+		CLOCK_NAME(#_name)\
+		.flags = (_flags),\
+		.num_parents = 1,\
+		.parents = PARENT(_parent),\
+		.dev = DT_RCC_DEVICE,\
+	}
 
-int clk_stm32_get_counter(unsigned long binding_id);
+#define STM32_GATE(_name, _parent, _flags, _gate_id)\
+	struct clk _name = {\
+		.ops = &clk_stm32_gate_ops,\
+		.priv = &(struct clk_stm32_gate_cfg) {\
+			.gate_id = _gate_id,\
+		},\
+		CLOCK_NAME(#_name)\
+		.flags = (_flags),\
+		.num_parents = 1,\
+		.parents = PARENT(_parent),\
+		.dev = DT_RCC_DEVICE,\
+	}
 
-void clk_stm32_oscillator_init(struct stm32_clk_priv *priv, int id, uint32_t frequency);
+#define STM32_DIVIDER(_name, _parent, _flags, _div_id)\
+	struct clk _name = {\
+		.ops = &clk_stm32_divider_ops,\
+		.priv = &(struct clk_stm32_div_cfg) {\
+			.div_id = (_div_id),\
+		},\
+		CLOCK_NAME(#_name)\
+		.flags = (_flags),\
+		.num_parents = 1,\
+		.parents = PARENT(_parent),\
+		.dev = DT_RCC_DEVICE,\
+	}
 
-unsigned long _clk_stm32_divider_recalc(struct stm32_clk_priv *priv,
-					int div_id,
-					unsigned long prate);
+#define STM32_MUX(_name, _nb_parents, _parents, _flags, _mux_id)\
+	struct clk _name = {\
+		.ops = &clk_stm32_mux_ops,\
+		.priv = &(struct clk_stm32_mux_cfg) {\
+			.mux_id = (_mux_id),\
+		},\
+		CLOCK_NAME(#_name)\
+		.flags = (_flags),\
+		.num_parents = (_nb_parents),\
+		.parents = PARENTS(_parents),\
+		.dev = DT_RCC_DEVICE,\
+	}
 
-unsigned long clk_stm32_divider_recalc(struct stm32_clk_priv *priv, int idx,
-				       unsigned long prate);
+#define STM32_GATE_READY(_name, _parent, _flags, _gate_id)\
+	struct clk _name = {\
+		.ops = &clk_stm32_gate_ready_ops,\
+		.priv = &(struct clk_stm32_gate_cfg) {\
+			.gate_id = _gate_id,\
+		},\
+		CLOCK_NAME(#_name)\
+		.flags = (_flags),\
+		.num_parents = 1,\
+		.parents = PARENT(_parent),\
+		.dev = DT_RCC_DEVICE,\
+	}
 
-extern const struct stm32_clk_ops clk_stm32_divider_ops;
+#define STM32_COMPOSITE(_name, _nb_parents, _parents, _flags,\
+			_gate_id, _div_id, _mux_id)\
+	struct clk _name = {\
+		.ops = &clk_stm32_composite_ops,\
+		.priv = &(struct clk_stm32_composite_cfg) {\
+			.gate_id = (_gate_id),\
+			.div_id = (_div_id),\
+			.mux_id = (_mux_id),\
+		},\
+		CLOCK_NAME(#_name)\
+		.flags = (_flags),\
+		.num_parents = (_nb_parents),\
+		.parents = _parents,\
+		.dev = DT_RCC_DEVICE,\
+	}
 
-struct clk_stm32_div_cfg {
-	int id;
-};
+#define STM32_DT_OSCI_FREQ_CFG(_node_id, _id)				\
+	[_id] = {							\
+		.enabled = DT_NODE_HAS_STATUS(_node_id, okay),		\
+		.freq = DT_PROP(_node_id, clock_frequency)		\
+	}
 
-#define STM32_DIV(idx, _binding, _parent, _flags, _div_id)[idx] = {\
-	.name = #idx,\
-	.binding = (_binding),\
-	.parent =  (_parent),\
-	.flags = (_flags),\
-	.clock_cfg	= &(struct clk_stm32_div_cfg) {\
-		.id	= (_div_id),\
-	},\
-	.ops = &clk_stm32_divider_ops,\
-}
+#define DT_RCC_CLOCK_OSCI(_inst, _id, _name) \
+		STM32_DT_OSCI_FREQ_CFG(DT_CLOCKS_CTLR_BY_NAME(_inst, _name), _id)
 
-int clk_stm32_gate_enable(struct stm32_clk_priv *priv, int idx);
-void clk_stm32_gate_disable(struct stm32_clk_priv *priv, int idx);
+#define DT_RCC_DEVICE DEVICE_GET(DEVICE_DT_DEV_ID(DT_DRV_INST(0)))
 
-bool _clk_stm32_gate_is_enabled(struct stm32_clk_priv *priv, int gate_id);
-bool clk_stm32_gate_is_enabled(struct stm32_clk_priv *priv, int idx);
+struct clk *stm32_clk_get(const struct device *dev, clk_subsys_t sys);
+void clk_stm32_register_clocks(struct clk_stm32_priv *priv);
 
-extern const struct stm32_clk_ops clk_stm32_gate_ops;
-
-struct clk_stm32_gate_cfg {
-	int id;
-};
-
-#define STM32_GATE(idx, _binding, _parent, _flags, _gate_id)[idx] = {\
-	.name = #idx,\
-	.binding = (_binding),\
-	.parent =  (_parent),\
-	.flags = (_flags),\
-	.clock_cfg	= &(struct clk_stm32_gate_cfg) {\
-		.id	= (_gate_id),\
-	},\
-	.ops = &clk_stm32_gate_ops,\
-}
-
-struct fixed_factor_cfg {
-	unsigned int mult;
-	unsigned int div;
-};
-
-unsigned long fixed_factor_recalc_rate(struct stm32_clk_priv *priv,
-				       int _idx, unsigned long prate);
-
-extern const struct stm32_clk_ops clk_fixed_factor_ops;
-
-#define FIXED_FACTOR(idx, _idx, _parent, _mult, _div)[idx] = {\
-	.name = #idx,\
-	.binding = _idx,\
-	.parent = _parent,\
-	.clock_cfg	= &(struct fixed_factor_cfg) {\
-		.mult = _mult,\
-		.div = _div,\
-	},\
-	.ops = &clk_fixed_factor_ops,\
-}
-
-extern const struct stm32_clk_ops clk_gate_ops;
-
-#define GATE(idx, _binding, _parent, _flags, _offset, _bit_idx)[idx] = {\
-	.name = #idx,\
-	.binding = (_binding),\
-	.parent =  (_parent),\
-	.flags = (_flags),\
-	.clock_cfg	= &(struct clk_gate_cfg) {\
-		.offset		= (_offset),\
-		.bit_idx	= (_bit_idx),\
-	},\
-	.ops = &clk_gate_ops,\
-}
-
-#define STM32_MUX(idx, _binding, _mux_id, _flags)[idx] = {\
-	.name = #idx,\
-	.binding = (_binding),\
-	.parent =  (MUX(_mux_id)),\
-	.flags = (_flags),\
-	.clock_cfg = NULL,\
-	.ops = NULL,\
-}
-
-struct clk_timer_cfg {
-	uint32_t apbdiv;
-	uint32_t timpre;
-};
-
-extern const struct stm32_clk_ops clk_timer_ops;
-
-#define CLK_SET_RATE_PARENT 0
-
-#define CK_TIMER(idx, _idx, _parent, _flags, _apbdiv, _timpre)[idx] = {\
-	.name = #idx,\
-	.binding = _idx,\
-	.parent = _parent,\
-	.flags = (CLK_SET_RATE_PARENT | (_flags)),\
-	.clock_cfg	= &(struct clk_timer_cfg) {\
-		.apbdiv = _apbdiv,\
-		.timpre = _timpre,\
-	},\
-	.ops = &clk_timer_ops,\
-}
-
-struct clk_stm32_fixed_rate_cfg {
-	unsigned long rate;
-};
-
-extern const struct stm32_clk_ops clk_stm32_fixed_rate_ops;
-
-#define CLK_FIXED_RATE(idx, _binding, _rate)[idx] = {\
-	.name = #idx,\
-	.binding = (_binding),\
-	.parent =  (CLK_IS_ROOT),\
-	.clock_cfg	= &(struct clk_stm32_fixed_rate_cfg) {\
-		.rate	= (_rate),\
-	},\
-	.ops = &clk_stm32_fixed_rate_ops,\
-}
-
-#define BYPASS(_offset, _bit_byp, _bit_digbyp) &(struct stm32_clk_bypass) {\
-	.offset = _offset,\
-	.bit_byp = _bit_byp,\
-	.bit_digbyp = _bit_digbyp,\
-}
-
-#define CSS(_offset, _bit_css)	&(struct stm32_clk_css) {\
-	.offset = _offset,\
-	.bit_css = _bit_css,\
-}
-
-#define DRIVE(_offset, _shift, _width, _default) &(struct stm32_clk_drive) {\
-	.offset = _offset,\
-	.drv_shift = _shift,\
-	.drv_width = _width,\
-	.drv_default = _default,\
-}
-
-#define OSCILLATOR(idx_osc, _id, _name, _gate_id, _gate_rdy_id, _bypass, _css,\
-		   _drive)[idx_osc] = {\
-	.name		= _name,\
-	.gate_id	= _gate_id,\
-	.gate_rdy_id	= _gate_rdy_id,\
-	.bypass		= _bypass,\
-	.css		= _css,\
-	.drive		= _drive,\
-}
-
-extern const struct stm32_clk_ops clk_stm32_osc_ops;
-
-extern const struct stm32_clk_ops clk_stm32_osc_nogate_ops;
-
-void __unused clk_stm32_display_clock_tree(void);
-int clk_stm32_set_div(struct stm32_clk_priv *priv, int div_id, uint32_t value);
+#if STM32_CLK_DBG
+void clk_stm32_display_clock_summary(struct device *dev);
+#endif
 
 #endif /* CLK_STM32_CORE_H */
