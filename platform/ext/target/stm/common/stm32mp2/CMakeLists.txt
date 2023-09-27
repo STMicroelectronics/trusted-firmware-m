@@ -90,7 +90,6 @@ target_sources(platform_s
 		${STM_SOC_DIR}/secure/tfm_hal_platform.c
 		${STM_SOC_DIR}/cmsis_driver/driver_spi_flash.c
 		${STM_SOC_DIR}/cmsis_driver/driver_flash_mm.c
-		${STM_SOC_DIR}/cmsis_driver/driver_usart.c
 		${STM_SOC_DIR}/native_driver/src/core/mpu_armv8m_drv.c
 		${STM_SOC_DIR}/native_driver/src/core/sau_armv8m_drv.c
 		${STM_SOC_DIR}/native_driver/src/pwr/stm32_pwr.c
@@ -103,6 +102,7 @@ target_sources(platform_s
 		${STM_SOC_DIR}/native_driver/src/reset/stm32_reset.c
 		${STM_SOC_DIR}/native_driver/src/systick/stm32_systick.c
 		${STM_SOC_DIR}/native_driver/src/gpio/stm32_gpio.c
+		${STM_SOC_DIR}/native_driver/src/uart/console.c
 		${STM_SOC_DIR}/native_driver/src/uart/stm32_uart.c
 		${STM_SOC_DIR}/native_driver/src/spi/stm32_ospi.c
 		${STM_SOC_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c
@@ -184,7 +184,6 @@ if(NS)
 		PRIVATE
 			${DEVICETREE_DIR}/initlevel.c
 			${STM_SOC_DIR}/device/source/system_stm32mp2xx_m33.c
-			${STM_SOC_DIR}/cmsis_driver/driver_usart.c
 			${STM_SOC_DIR}/native_driver/src/pwr/stm32_pwr.c
 			${STM_SOC_DIR}/native_driver/src/clk/clk.c
 			${STM_SOC_DIR}/native_driver/src/clk/clk-stm32-core.c
@@ -193,6 +192,7 @@ if(NS)
 			${STM_SOC_DIR}/native_driver/src/reset/stm32_reset.c
 			${STM_SOC_DIR}/native_driver/src/systick/stm32_systick.c
 			${STM_SOC_DIR}/native_driver/src/gpio/stm32_gpio.c
+			${STM_SOC_DIR}/native_driver/src/uart/console.c
 			${STM_SOC_DIR}/native_driver/src/uart/stm32_uart.c
 	)
 
@@ -247,7 +247,6 @@ if(BL2)
 			${STM_SOC_DIR}/bl2/boot_hal.c
 			${STM_SOC_DIR}/cmsis_driver/driver_spi_flash.c
 			${STM_SOC_DIR}/cmsis_driver/driver_flash_mm.c
-			${STM_SOC_DIR}/cmsis_driver/driver_usart.c
 			${STM_SOC_DIR}/native_driver/src/core/mpu_armv8m_drv.c
 			${STM_SOC_DIR}/native_driver/src/pwr/stm32_pwr.c
 			${STM_SOC_DIR}/native_driver/src/bsec/stm32_bsec3.c
@@ -259,6 +258,7 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/reset/stm32_reset.c
 			${STM_SOC_DIR}/native_driver/src/systick/stm32_systick.c
 			${STM_SOC_DIR}/native_driver/src/gpio/stm32_gpio.c
+			${STM_SOC_DIR}/native_driver/src/uart/console.c
 			${STM_SOC_DIR}/native_driver/src/uart/stm32_uart.c
 			${STM_SOC_DIR}/native_driver/src/spi/stm32_ospi.c
 			${STM_SOC_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c

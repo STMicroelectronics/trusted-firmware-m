@@ -13,6 +13,7 @@ set(STM32_IPC				OFF			CACHE BOOL      "Use IPC (rpmsg) to communicate with main
 set(STM32_PROV_FAKE			OFF                     CACHE BOOL      "Provisioning with dummy values. NOT to be used in production")
 
 ## platform
+set(PLATFORM_DEFAULT_UART_STDOUT        OFF			CACHE BOOL      "Use default uart stdout implementation.")
 set(CONFIG_TFM_USE_TRUSTZONE            ON			CACHE BOOL      "Enable use of TrustZone to transition between NSPE and SPE")
 set(TFM_MULTI_CORE_TOPOLOGY             OFF			CACHE BOOL      "Whether to build for a dual-cpu architecture")
 set(PLATFORM_DEFAULT_NV_COUNTERS        OFF                     CACHE BOOL      "Use default nv counter implementation.")
