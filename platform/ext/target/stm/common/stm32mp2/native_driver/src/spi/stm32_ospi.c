@@ -3,6 +3,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0+ OR BSD-3-Clause
  */
+#define DT_DRV_COMPAT st_stm32mp25_omi
 
 #include <stdint.h>
 #include <string.h>
@@ -11,12 +12,15 @@
 #include <lib/utils_def.h>
 #include <lib/timeout.h>
 
+#include <target_cfg.h>
+#include <device.h>
+
 #include <debug.h>
 #include <spi_mem.h>
-#include <rstctrl.h>
 #include <stm32_ospi.h>
-#include <stm32_gpio.h>
 #include <clk.h>
+#include <pinctrl.h>
+#include <reset.h>
 
 /* Timeout for device interface reset */
 #define _TIMEOUT_US_1_MS	1000U
@@ -87,6 +91,17 @@
 
 #define _FREQ_100MHZ		100000000U
 
+struct stm32_omi_config {
+	uintptr_t base;
+	uintptr_t mm_base;
+	size_t mm_size;
+	const struct device *clk_dev;
+	const clk_subsys_t clk_subsys;
+	const struct pinctrl_dev_config *pcfg;
+	const struct reset_control *rst_ctl;
+	const int n_rst;
+};
+
 static struct stm32_ospi_platdata stm32_ospi;
 
 __attribute__((weak))
@@ -97,7 +112,7 @@ int stm32_ospi_get_platdata(struct stm32_ospi_platdata *pdata)
 
 static uintptr_t ospi_base(void)
 {
-	return stm32_ospi.reg_base;
+	return stm32_ospi.drv_cfg->base;
 }
 
 static int stm32_ospi_wait_for_not_busy(void)
@@ -184,8 +199,10 @@ static int stm32_ospi_poll(const struct spi_mem_op *op)
 
 static int stm32_ospi_mm(const struct spi_mem_op *op)
 {
+	const struct stm32_omi_config *drv_cfg = stm32_ospi.drv_cfg;
+
 	memcpy(op->data.buf,
-	       (void *)(stm32_ospi.mm_base + (size_t)op->addr.val),
+	       (void *)(drv_cfg->mm_base + (size_t)op->addr.val),
 	       op->data.nbytes);
 
 	return 0;
@@ -318,11 +335,12 @@ static int stm32_ospi_exec_op(const struct spi_mem_op *op)
 
 static int stm32_ospi_dirmap_read(const struct spi_mem_op *op)
 {
-	size_t addr_max;
+	const struct stm32_omi_config *drv_cfg = stm32_ospi.drv_cfg;
 	uint8_t fmode = _OSPI_CR_FMODE_INDR;
+	size_t addr_max;
 
 	addr_max = op->addr.val + op->data.nbytes + 1U;
-	if ((addr_max < stm32_ospi.mm_size) && (op->addr.buswidth != 0U)) {
+	if ((addr_max < drv_cfg->mm_size) && (op->addr.buswidth != 0U)) {
 		fmode = _OSPI_CR_FMODE_MM;
 	}
 
@@ -355,7 +373,9 @@ static void stm32_ospi_release_bus(void)
 
 static int stm32_ospi_set_speed(unsigned int hz)
 {
-	unsigned long ospi_clk = clk_get_rate(stm32_ospi.clock_id);
+	const struct stm32_omi_config *drv_cfg = stm32_ospi.drv_cfg;
+	struct clk *clk = clk_get(drv_cfg->clk_dev, drv_cfg->clk_subsys);
+	unsigned long ospi_clk = clk_get_rate(clk);
 	uint32_t prescaler = UINT8_MAX;
 	uint32_t csht;
 	int ret;
@@ -448,31 +468,11 @@ static const struct spi_bus_ops stm32_ospi_bus_ops = {
 
 int stm32_ospi_init(void)
 {
-	int i;
 	int ret;
 
 	ret = stm32_ospi_get_platdata(&stm32_ospi);
 	if (ret != 0) {
 		return ret;
-	}
-
-	ret = set_pinctrl_config(stm32_ospi.pinctrl);
-	if (ret != 0) {
-		return ret;
-	}
-
-	clk_enable(stm32_ospi.clock_id);
-
-	for (i = 0; i < _OSPI_MAX_RESET; i++) {
-		if (rstctrl_assert_to(stm32_ospi.reset_id[i],
-				      _TIMEOUT_US_1_MS)) {
-			panic();
-		}
-
-		if (rstctrl_deassert_to(stm32_ospi.reset_id[i],
-					_TIMEOUT_US_1_MS)) {
-			panic();
-		}
 	}
 
 	mmio_write_32(ospi_base() + _OSPI_TCR, _OSPI_TCR_SSHIFT);
@@ -484,21 +484,85 @@ int stm32_ospi_init(void)
 
 int stm32_ospi_deinit(void)
 {
-	int i;
+	const struct stm32_omi_config *drv_cfg = stm32_ospi.drv_cfg;
+	struct clk *clk;
+	int err, i;
 
-	for (i = 0; i < _OSPI_MAX_RESET; i++) {
-		if (rstctrl_assert_to(stm32_ospi.reset_id[i],
-				      _TIMEOUT_US_1_MS)) {
-			panic();
-		}
+	clk = clk_get(drv_cfg->clk_dev, drv_cfg->clk_subsys);
 
-		if (rstctrl_deassert_to(stm32_ospi.reset_id[i],
-					_TIMEOUT_US_1_MS)) {
-			panic();
-		}
+	for (i = 0; i < drv_cfg->n_rst; i++) {
+		err = reset_control_reset(&drv_cfg->rst_ctl[i]);
+		if (err)
+			return err;
 	}
 
-	clk_disable(stm32_ospi.clock_id);
+	clk_disable(clk);
 
 	return 0;
 }
+
+/********************************************************/
+struct stm32_omi_data {
+	struct spi_slave *spi_slave;
+};
+
+int stm32_omi_init(const struct device *dev)
+{
+	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	struct clk *clk;
+	int err, i;
+
+	clk = clk_get(drv_cfg->clk_dev, drv_cfg->clk_subsys);
+	if (!clk)
+		return -ENODEV;
+
+	err = pinctrl_apply_state(drv_cfg->pcfg, PINCTRL_STATE_DEFAULT);
+	if (err)
+		return err;
+
+	err = clk_enable(clk);
+	if (err)
+		return err;
+
+	for (i = 0; i < drv_cfg->n_rst; i++) {
+		err = reset_control_reset(&drv_cfg->rst_ctl[i]);
+		if (err)
+			return err;
+	}
+
+	mmio_write_32(drv_cfg->base + _OSPI_TCR, _OSPI_TCR_SSHIFT);
+	mmio_write_32(drv_cfg->base + _OSPI_DCR1,
+		      _OSPI_DCR1_DEVSIZE | _OSPI_DCR1_DLYBYP);
+
+	/* temporaire, wait full integration*/
+	stm32_ospi.drv_cfg = drv_cfg;
+
+	return 0;
+}
+
+#define STM32_OMI_INIT(n)							\
+										\
+PINCTRL_DT_INST_DEFINE(n);							\
+										\
+static const struct reset_control rst_ctrl_##n[] = DT_INST_RESETS_CONTROL(n);	\
+										\
+static const struct stm32_omi_config stm32_omi_cfg_##n = {			\
+	.base = DT_INST_REG_ADDR_BY_NAME(n, omi),				\
+	.mm_base = DT_INST_REG_ADDR_BY_NAME(n, omi_mm),				\
+	.mm_size = DT_INST_REG_SIZE_BY_NAME(n, omi_mm),				\
+	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),			\
+	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),		\
+	.rst_ctl = rst_ctrl_##n,						\
+        .n_rst = DT_INST_NUM_RESETS(n),						\
+	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(n),				\
+};										\
+										\
+static struct stm32_omi_data stm32_omi_data_##n = {};				\
+										\
+DEVICE_DT_INST_DEFINE(n,							\
+		      &stm32_omi_init,						\
+		      &stm32_omi_data_##n, &stm32_omi_cfg_##n,			\
+		      CORE, 10,							\
+		      NULL);
+
+DT_INST_FOREACH_STATUS_OKAY(STM32_OMI_INIT)
