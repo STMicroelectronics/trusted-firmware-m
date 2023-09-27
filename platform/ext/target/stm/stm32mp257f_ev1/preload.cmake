@@ -20,3 +20,10 @@ add_compile_definitions(
 	CORE_CM33
 	TFM_ENV
 )
+
+# set platform directory
+set(STM_BOARD_DIR ${CMAKE_CURRENT_LIST_DIR})
+set(STM_DIR ${STM_BOARD_DIR}/..)
+set(STM_COMMON_DIR ${STM_DIR}/common)
+set(STM_SOC_DIR ${STM_COMMON_DIR}/stm32mp2)
+set(STM_DEVICETREE_DIR ${STM_COMMON_DIR}/devicetree)

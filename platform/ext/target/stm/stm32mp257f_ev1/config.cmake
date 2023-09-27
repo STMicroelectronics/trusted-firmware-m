@@ -6,8 +6,8 @@
 #-------------------------------------------------------------------------------
 
 # set common platform config
-if (EXISTS ${CMAKE_SOURCE_DIR}/platform/ext/target/stm/common/stm32mp2/config.cmake)
-	include(${CMAKE_SOURCE_DIR}/platform/ext/target/stm/common/stm32mp2/config.cmake)
+if (EXISTS ${STM_SOC_DIR}/config.cmake)
+	include(${STM_SOC_DIR}/config.cmake)
 endif()
 
 ########################## Dependencies ################################
@@ -19,7 +19,10 @@ if (STM32_M33TDCID)
 	message(FATAL_ERROR "INVALID CONFIG: STM32_M33TDCID NOT SUPPORTED ON ${TFM_PLATFORM}")
 endif()
 
-set(STM32_BOARD_MODEL			"stm32mp257f eval1"	CACHE STRING	"Define board model name" FORCE)
+set(STM32_BOARD_MODEL	"stm32mp257f eval1"			CACHE STRING	  "Define board model name" FORCE)
+set(DTS_EXT_DIR		""					CACHE STRING	  "If not empty, set external dts directory")
+set(DTS_BOARD_S		"arm/stm/stm32mp257f-ev1_s.dts"		CACHE STRING	  "set board devicetree file")
+set(DTS_BOARD_NS	"arm/stm/stm32mp257f-ev1_ns.dts"	CACHE STRING	  "set board devicetree file")
 
 set(STM32_IPC				ON         CACHE BOOL     "Use IPC (rpmsg) to communicate with main processor" FORCE)
 set(BL2                                 OFF        CACHE BOOL     "Whether to build BL2" FORCE)

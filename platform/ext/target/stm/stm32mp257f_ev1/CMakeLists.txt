@@ -6,11 +6,8 @@
 #-------------------------------------------------------------------------------
 cmake_policy(SET CMP0076 NEW)
 
-set(STM_BOARD ${CMAKE_CURRENT_LIST_DIR})
-set(STM_COMMON_DIR ${STM_BOARD}/../common)
-
 #def for stm32mp2
-include(${STM_COMMON_DIR}/stm32mp2/CMakeLists.txt)
+include(${STM_SOC_DIR}/CMakeLists.txt)
 #========================= Platform defs ===============================#
 target_compile_definitions(platform_region_defs
 	INTERFACE
@@ -20,13 +17,13 @@ target_compile_definitions(platform_region_defs
 # Specify the location of platform specific build dependencies.
 target_sources(tfm_s
 	PRIVATE
-		${STM_BOARD}/plat_device.c
+		${STM_BOARD_DIR}/plat_device.c
 )
 
 if(NS)
 	target_sources(tfm_ns
 		PRIVATE
-			${STM_BOARD}/plat_device.c
+			${STM_BOARD_DIR}/plat_device.c
 	)
 
 	target_compile_definitions(tfm_ns
@@ -36,7 +33,7 @@ if(NS)
 	)
 endif()
 
-install(FILES ${STM_BOARD}/include/flash_layout.h
-	${STM_BOARD}/include/region_defs.h
+install(FILES ${STM_BOARD_DIR}/include/flash_layout.h
+	${STM_BOARD_DIR}/include/region_defs.h
 	DESTINATION ${CMAKE_BINARY_DIR}
 )
