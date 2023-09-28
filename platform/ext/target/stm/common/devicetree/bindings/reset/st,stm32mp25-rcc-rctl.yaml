@@ -1,0 +1,9 @@
+# Copyright (c) 2023, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  STM32MP25 Reset controller node
+
+compatible: "st,stm32mp25-rcc-rctl"
+
+include: st,stm32-rcc-rctl.yaml
