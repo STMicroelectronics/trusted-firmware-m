@@ -1,0 +1,42 @@
+# Copyright (c) 2018, Linaro Limited
+# SPDX-License-Identifier: Apache-2.0
+
+description: STM32 GPIO node
+
+compatible: "st,stm32-gpio"
+
+include: [gpio-controller.yaml, base.yaml]
+
+properties:
+  reg:
+    required: true
+
+  clocks:
+    required: true
+
+  "#gpio-cells":
+    const: 2
+
+  st,bank-name:
+    type: string
+    description: Should be a name string for this bank as specified in the datasheet.
+
+  st,bank-ioport:
+    type: int
+    description: |
+      Should correspond to the EXTI IOport selection (EXTI line used
+      to select GPIOs as interrupts).
+
+  gpio-ranges:
+    type: phandle-array
+    description: DMA channels specifiers
+    description: |
+        The gpio-ranges property described below represents this with
+        a discrete set of ranges mapping pins from the pin controller local number space
+        to pins in the GPIO controller local number space.
+
+gpio-cells:
+  - pin
+  - flags
+
+
