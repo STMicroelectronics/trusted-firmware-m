@@ -1,0 +1,20 @@
+# Copyright (c) 2020 STMICROELECTRONICS
+# SPDX-License-Identifier: Apache-2.0
+
+# Common fields for STM32 UART peripherals.
+description: STM32 UART-BASE
+
+include: [uart-controller.yaml, pinctrl-device.yaml, reset-device.yaml]
+
+properties:
+  reg:
+    required: true
+
+  clocks:
+    required: true
+
+  pinctrl-0:
+    required: true
+
+  pinctrl-names:
+    required: true
