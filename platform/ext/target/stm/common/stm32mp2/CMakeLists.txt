@@ -209,6 +209,11 @@ if(NS)
 			$<$<BOOL:${STM32_M33TDCID}>:STM32_M33TDCID>
 	)
 
+	target_link_libraries(platform_ns
+		PUBLIC
+			tfm_config
+	)
+
 	# GNU ld has some strange behaviour to do with weak functions, and does not deal
 	# well with strong functions in static libraries overriding weak functions in
 	# object files. For this reason, the file tfm_ns_plat_init is on tfm_ns target
@@ -292,6 +297,11 @@ if(BL2)
 			STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
 			$<$<BOOL:${STM32_M33TDCID}>:STM32_M33TDCID>
 			STM32_PROV_FAKE=${STM32_PROV_FAKE}
+	)
+
+	target_link_libraries(platform_bl2
+		PUBLIC
+			tfm_config
 	)
 
 	# GNU ld has some strange behaviour to do with weak functions, and does not deal
