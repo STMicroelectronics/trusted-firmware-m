@@ -75,6 +75,7 @@ def create_tag(args):
     repo = Repo(os.getcwd(), search_parent_directories=True)
 
     changelog_rst = args.release + "/changelog.rst"
+    release_dir = os.path.dirname(changelog_rst)
 
     with open(changelog_rst) as fp:
         chglog_file = fp.read()
@@ -84,19 +85,19 @@ def create_tag(args):
 
     tests_platform = []
 
-    for test_rst in os.listdir(args.release):
+    for test_rst in os.listdir(release_dir):
         if test_rst.endswith('_test.rst'):
-            with open(os.path.join(args.release,test_rst)) as fp:
+            with open(os.path.join(release_dir,test_rst)) as fp:
                 tests_platform.append(fp.read())
 
-    tag_rst = RstHelper(os.path.join(args.release, "tag_" + args.tag + ".rst"))
+    tag_rst = RstHelper(os.path.join(release_dir, "tag_" + args.tag + ".rst"))
 
     tag_var = {}
     tag_var['tag_tittle'] = tag_rst.to_title(args.tag, '=')
     tag_var['branch'] = repo.active_branch
     tag_var['tag'] = args.tag
     tag_var['sha1'] = repo.head.object.hexsha
-    tag_var['doc_release'] = os.path.basename(args.release)
+    tag_var['doc_release'] = os.path.basename(release_dir)
     tag_var['features_log'] = feature_log
     tag_var['tests_platform'] = tests_platform
     tag_var['issues_log'] = issue_known(args)
