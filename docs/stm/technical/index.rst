@@ -6,6 +6,8 @@ Technical references
     :glob:
 
     copro/index
+    devicetree/index
+    initlevel
     *
 
 --------------
