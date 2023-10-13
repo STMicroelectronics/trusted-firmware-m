@@ -27,7 +27,7 @@
 #endif
 
 #ifndef __used
-#define __used __attribute__((__used__))
+#define __used		__attribute__((__used__))
 #endif
 
 #ifndef __maybe_unused
@@ -38,6 +38,9 @@
 #define __unused	__attribute__((__unused__))
 #endif
 
+#ifndef __weak
+#define __weak		__attribute__((weak))
+#endif
 /**
  * @brief Defines a new element for an iterable section for a generic type.
  *
