@@ -41,6 +41,16 @@ properties:
         This is an array of strings defining the names of the GPIO lines
         going out of the GPIO controller
 
+  gpio-ranges:
+    type: phandle-array
+    description: |
+        The gpio-ranges property described below represents this with
+        a discrete set of ranges mapping pins from the pin controller local number space
+        to pins in the GPIO controller local number space.
+
+        The format is: <[pin controller phandle], [GPIO controller offset],
+                        [pin controller offset], [number of pins]>;
+
 child-binding:
   description: |
     Optional GPIO hog configuration.
