@@ -507,9 +507,5 @@ SECTIONS
 
     Load$$LR$$LR_NS_PARTITION$$Base = NS_PARTITION_START;
 
-#ifdef BL2
-    Load$$LR$$LR_SECONDARY_PARTITION$$Base = SECONDARY_PARTITION_START;
-#endif /* BL2 */
-
     PROVIDE(__stack = Image$$ARM_LIB_STACK$$ZI$$Limit);
 }
