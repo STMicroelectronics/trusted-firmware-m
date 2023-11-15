@@ -464,7 +464,14 @@ int spi_nor_init(unsigned long long *size, unsigned int *erase_size)
 		nor_dev.erase_op.addr.buswidth = SPI_MEM_BUSWIDTH_1_LINE;
 	}
 
-	if (nor_dev.size > BANK_SIZE) {
+	if ((nor_dev.read_op.addr.nbytes != nor_dev.write_op.addr.nbytes) ||
+	    (nor_dev.read_op.addr.nbytes != nor_dev.erase_op.addr.nbytes)) {
+		ERROR("%s: use 3-bytes or 4-bytes address opcodes, do not mixed\n",
+		      __func__);
+		return -EINVAL;
+	}
+
+	if ((nor_dev.size > BANK_SIZE) && (nor_dev.read_op.addr.nbytes == 3U)) {
 		nor_dev.flags |= SPI_NOR_USE_BANK;
 	}
 
@@ -489,7 +496,8 @@ int spi_nor_init(unsigned long long *size, unsigned int *erase_size)
 		}
 	}
 
-	if (nor_dev.read_op.data.buswidth == 4U) {
+	if ((nor_dev.read_op.data.buswidth == 4U) ||
+	    (nor_dev.write_op.data.buswidth == 4U)) {
 		switch (id) {
 		case MACRONIX_ID:
 			INFO("Enable Macronix quad support\n");
