@@ -4,6 +4,7 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
+#include <string.h>
 #include <cmsis.h>
 #include <region.h>
 #include <lib/utils_def.h>
@@ -81,6 +82,30 @@ int spi_nor_get_config(struct nor_device *device)
 	device->size = SPI_NOR_FLASH_SIZE;
 	device->write_size = SPI_NOR_FLASH_PAGE_SIZE;
 	device->erase_size = SPI_NOR_FLASH_SECTOR_SIZE;
+
+	memset(&device->read_op, 0U, sizeof(struct spi_mem_op));
+	device->read_op.cmd.opcode = SPI_NOR_OP_READ_1_1_4_4B;
+	device->read_op.cmd.buswidth = SPI_MEM_BUSWIDTH_1_LINE;
+	device->read_op.addr.nbytes = 4U;
+	device->read_op.addr.buswidth = SPI_MEM_BUSWIDTH_1_LINE;
+	device->read_op.dummy.nbytes = 1U;
+	device->read_op.dummy.buswidth = SPI_MEM_BUSWIDTH_1_LINE;
+	device->read_op.data.buswidth = SPI_MEM_BUSWIDTH_4_LINE;
+	device->read_op.data.dir = SPI_MEM_DATA_IN;
+
+	memset(&device->write_op, 0U, sizeof(struct spi_mem_op));
+	device->write_op.cmd.opcode = SPI_NOR_OP_WRITE_1_4_4_4B;
+	device->write_op.cmd.buswidth = SPI_MEM_BUSWIDTH_1_LINE;
+	device->write_op.addr.nbytes = 4U;
+	device->write_op.addr.buswidth = SPI_MEM_BUSWIDTH_4_LINE;
+	device->write_op.data.buswidth = SPI_MEM_BUSWIDTH_4_LINE;
+	device->write_op.data.dir = SPI_MEM_DATA_OUT;
+
+	memset(&device->erase_op, 0U, sizeof(struct spi_mem_op));
+	device->erase_op.cmd.opcode = SPI_NOR_OP_SE_4B;
+	device->erase_op.cmd.buswidth = SPI_MEM_BUSWIDTH_1_LINE;
+	device->erase_op.addr.nbytes = 4U;
+	device->erase_op.addr.buswidth = SPI_MEM_BUSWIDTH_1_LINE;
 
 	return 0;
 }
