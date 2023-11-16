@@ -89,7 +89,7 @@
 			resets = <&rctl OSPIIOM_R>;
 			//st,syscfg-amcr = <&syscfg 0x2c00 0x7>;
 			status = "disabled";
-		
+
 			ranges = <0 0 0x50430000 0x400>,
 				 <1 0 0x50440000 0x400>,
 				 <2 0 0x60000000 0x80000000>,
@@ -165,11 +165,18 @@
 				 <&clk_lsi>, <&clk_msi>, <&clk_i2sin>;
 			clock-names = "clk-hse", "clk-hsi", "clk-lse",
 				      "clk-lsi", "clk-msi", "clk-i2sin";
-			
+
 			rctl: reset-controller {
 				compatible = "st,stm32mp25-rcc-rctl";
 				#reset-cells = <1>;
 			};
+		};
+
+		syscfg: syscon@54230000 {
+			compatible = "st,stm32mp25-syscfg", "syscon";
+			reg = <0x54230000 0x10000>;
+			#syscfg-reg-cells = <1>;
+			#syscfg-reg-mask-cells = <2>;
 		};
 
 		pinctrl: pinctrl@54240000 {
