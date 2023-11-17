@@ -14,7 +14,13 @@ description: |
 
 compatible: "st,stm32mp25-omi"
 
-include: [base.yaml, pinctrl-device.yaml, reset-device.yaml]
+include:
+  - base.yaml
+  - pinctrl-device.yaml
+  - reset-device.yaml
+  - name: st,stm32mp25-syscfg-properties.yaml
+    property-allowlist:
+      - st,syscfg-dlyb
 
 properties:
   reg:
@@ -33,4 +39,7 @@ properties:
     required: true
 
   pinctrl-names:
+    required: true
+
+  st,syscfg-dlyb:
     required: true
