@@ -10,7 +10,6 @@
 #include <lib/mmio.h>
 #include <lib/mmiopoll.h>
 #include <lib/utils_def.h>
-#include <lib/timeout.h>
 
 #include <target_cfg.h>
 #include <device.h>
@@ -21,75 +20,97 @@
 #include <clk.h>
 #include <pinctrl.h>
 #include <reset.h>
-
-/* Timeout for device interface reset */
-#define _TIMEOUT_US_1_MS	1000U
+#include <syscon.h>
 
 /* OCTOSPI registers */
-#define _OSPI_CR		0x00U
-#define _OSPI_DCR1		0x08U
-#define _OSPI_DCR2		0x0CU
-#define _OSPI_SR		0x20U
-#define _OSPI_FCR		0x24U
-#define _OSPI_DLR		0x40U
-#define _OSPI_AR		0x48U
-#define _OSPI_DR		0x50U
-#define _OSPI_CCR		0x100U
-#define _OSPI_TCR		0x108U
-#define _OSPI_IR		0x110U
-#define _OSPI_ABR		0x120U
+#define _OSPI_CR			0x00U
+#define _OSPI_DCR1			0x08U
+#define _OSPI_DCR2			0x0CU
+#define _OSPI_SR			0x20U
+#define _OSPI_FCR			0x24U
+#define _OSPI_DLR			0x40U
+#define _OSPI_AR			0x48U
+#define _OSPI_DR			0x50U
+#define _OSPI_CCR			0x100U
+#define _OSPI_TCR			0x108U
+#define _OSPI_IR			0x110U
+#define _OSPI_ABR			0x120U
 
 /* OCTOSPI control register */
-#define _OSPI_CR_EN		BIT(0)
-#define _OSPI_CR_ABORT		BIT(1)
-#define _OSPI_CR_CSSEL		BIT(24)
-#define _OSPI_CR_FMODE		GENMASK_32(29, 28)
-#define _OSPI_CR_FMODE_SHIFT	28U
-#define _OSPI_CR_FMODE_INDW	0U
-#define _OSPI_CR_FMODE_INDR	1U
-#define _OSPI_CR_FMODE_MM	3U
+#define _OSPI_CR_EN			BIT(0)
+#define _OSPI_CR_ABORT			BIT(1)
+#define _OSPI_CR_CSSEL			BIT(24)
+#define _OSPI_CR_FMODE			GENMASK_32(29, 28)
+#define _OSPI_CR_FMODE_SHIFT		28U
+#define _OSPI_CR_FMODE_INDW		0U
+#define _OSPI_CR_FMODE_INDR		1U
+#define _OSPI_CR_FMODE_MM		3U
 
 /* OCTOSPI device configuration register 1 */
-#define _OSPI_DCR1_CKMODE	BIT(0)
-#define _OSPI_DCR1_DLYBYP	BIT(3)
-#define _OSPI_DCR1_CSHT		GENMASK_32(13, 8)
-#define _OSPI_DCR1_CSHT_SHIFT	8U
-#define _OSPI_DCR1_DEVSIZE	GENMASK_32(20, 16)
+#define _OSPI_DCR1_CKMODE		BIT(0)
+#define _OSPI_DCR1_DLYBYP		BIT(3)
+#define _OSPI_DCR1_CSHT			GENMASK_32(13, 8)
+#define _OSPI_DCR1_CSHT_SHIFT		8U
+#define _OSPI_DCR1_DEVSIZE		GENMASK_32(20, 16)
 
 /* OCTOSPI device configuration register 2 */
-#define _OSPI_DCR2_PRESCALER	GENMASK_32(7, 0)
+#define _OSPI_DCR2_PRESCALER		GENMASK_32(7, 0)
 
 /* OCTOSPI status register */
-#define _OSPI_SR_TEF		BIT(0)
-#define _OSPI_SR_TCF		BIT(1)
-#define _OSPI_SR_FTF		BIT(2)
-#define _OSPI_SR_SMF		BIT(3)
-#define _OSPI_SR_BUSY		BIT(5)
+#define _OSPI_SR_TEF			BIT(0)
+#define _OSPI_SR_TCF			BIT(1)
+#define _OSPI_SR_FTF			BIT(2)
+#define _OSPI_SR_SMF			BIT(3)
+#define _OSPI_SR_BUSY			BIT(5)
 
 /* OCTOSPI flag clear register */
-#define _OSPI_FCR_CTEF		BIT(0)
-#define _OSPI_FCR_CTCF		BIT(1)
-#define _OSPI_FCR_CSMF		BIT(3)
+#define _OSPI_FCR_CTEF			BIT(0)
+#define _OSPI_FCR_CTCF			BIT(1)
+#define _OSPI_FCR_CSMF			BIT(3)
 
 /* OCTOSPI communication configuration register */
-#define _OSPI_CCR_ADMODE_SHIFT	8U
-#define _OSPI_CCR_ADSIZE_SHIFT	12U
-#define _OSPI_CCR_ABMODE_SHIFT	16U
-#define _OSPI_CCR_ABSIZE_SHIFT	20U
-#define _OSPI_CCR_DMODE_SHIFT	24U
+#define _OSPI_CCR_ADMODE_SHIFT		8U
+#define _OSPI_CCR_ADSIZE_SHIFT		12U
+#define _OSPI_CCR_ABMODE_SHIFT		16U
+#define _OSPI_CCR_ABSIZE_SHIFT		20U
+#define _OSPI_CCR_DMODE_SHIFT		24U
 
 /* OCTOSPI timing configuration register */
-#define _OSPI_TCR_DCYC		GENMASK_32(4, 0)
-#define _OSPI_TCR_SSHIFT	BIT(30)
+#define _OSPI_TCR_DCYC			GENMASK_32(4, 0)
+#define _OSPI_TCR_SSHIFT		BIT(30)
 
-#define _OSPI_MAX_CHIP		2U
+/* OCTOSPI SYSCFG DLYBOS registers */
+#define _DLYBOS_CR		0x0U
+#define _DLYBOS_SR		0x4U
 
-#define _OSPI_FIFO_TIMEOUT_US	30U
-#define _OSPI_CMD_TIMEOUT_US	1000U
-#define _OSPI_BUSY_TIMEOUT_US	100U
-#define _OSPI_ABT_TIMEOUT_US	100U
+/* OCTOSPI SYSCFG DLYBOS control register */
+#define _DLYBOS_CR_EN			BIT(0)
+#define _DLYBOS_CR_RXTAPSEL_SHIFT	1U
+#define _DLYBOS_CR_RXTAPSEL		GENMASK(6, 1)
+#define _DLYBOS_CR_TXTAPSEL_SHIFT	7U
+#define _DLYBOS_CR_TXTAPSEL		GENMASK(12, 7)
+#define _DLYBOS_TAPSEL_NB		33U
+#define _DLYBOS_BYP_EN			BIT(16)
+#define _DLYBOS_BYP_CMD			GENMASK(21, 17)
 
-#define _FREQ_100MHZ		100000000U
+/* OCTOSPI SYSCFG DLYBOS status register */
+#define _DLYBOS_SR_LOCK			BIT(0)
+#define _DLYBOS_SR_RXTAPSEL_ACK		BIT(1)
+#define _DLYBOS_SR_TXTAPSEL_ACK		BIT(2)
+
+#define _OSPI_MAX_CHIP			2U
+
+#define _OSPI_FIFO_TIMEOUT_US		30U
+#define _OSPI_CMD_TIMEOUT_US		1000U
+#define _OSPI_BUSY_TIMEOUT_US		100U
+#define _OSPI_ABT_TIMEOUT_US		100U
+#define _DLYBOS_TIMEOUT_US		10000U
+
+#define _FREQ_100MHZ			100000000U
+#define _DLYB_FREQ_50MHZ		50000000U
+
+#define _OP_READ_ID			0x9FU
+#define _MAX_ID_LEN			8U
 
 struct stm32_omi_config {
 	uintptr_t base;
@@ -103,6 +124,14 @@ struct stm32_omi_config {
 	const struct device *dlyb_dev;
 	uint16_t dlyb_base;
 };
+
+/********************************************************/
+struct stm32_omi_data {
+	struct spi_slave *spi_slave;
+	uint64_t str_idcode;
+	int cs_used;
+};
+/********************************************************/
 
 static struct stm32_ospi_platdata stm32_ospi;
 
@@ -136,7 +165,6 @@ static int stm32_ospi_wait_cmd(const struct spi_mem_op *op)
 {
 	uint32_t sr;
 	int ret = 0;
-
 
 	ret = mmio_read32_poll_timeout(ospi_base() + _OSPI_SR, sr,
 				       (sr & _OSPI_SR_TCF) != 0U,
@@ -324,60 +352,12 @@ abort:
 	return ret;
 }
 
-static int stm32_ospi_exec_op(const struct spi_mem_op *op)
-{
-	uint8_t fmode = _OSPI_CR_FMODE_INDW;
-
-	if ((op->data.dir == SPI_MEM_DATA_IN) && (op->data.nbytes != 0U)) {
-		fmode = _OSPI_CR_FMODE_INDR;
-	}
-
-	return stm32_ospi_send(op, fmode);
-}
-
-static int stm32_ospi_dirmap_read(const struct spi_mem_op *op)
-{
-	const struct stm32_omi_config *drv_cfg = stm32_ospi.drv_cfg;
-	uint8_t fmode = _OSPI_CR_FMODE_INDR;
-	size_t addr_max;
-
-	addr_max = op->addr.val + op->data.nbytes + 1U;
-	if ((addr_max < drv_cfg->mm_size) && (op->addr.buswidth != 0U)) {
-		fmode = _OSPI_CR_FMODE_MM;
-	}
-
-	return stm32_ospi_send(op, fmode);
-}
-
-static int stm32_ospi_claim_bus(unsigned int cs)
-{
-	uint32_t cr;
-
-	if (cs >= _OSPI_MAX_CHIP) {
-		return -ENODEV;
-	}
-
-	/* Set chip select and enable the controller */
-	cr = _OSPI_CR_EN;
-	if (cs == 1U) {
-		cr |= _OSPI_CR_CSSEL;
-	}
-
-	mmio_clrsetbits_32(ospi_base() + _OSPI_CR, _OSPI_CR_CSSEL, cr);
-
-	return 0;
-}
-
-static void stm32_ospi_release_bus(void)
-{
-	mmio_clrbits_32(ospi_base() + _OSPI_CR, _OSPI_CR_EN);
-}
-
 static int stm32_ospi_set_speed(unsigned int hz)
 {
 	const struct stm32_omi_config *drv_cfg = stm32_ospi.drv_cfg;
 	struct clk *clk = clk_get(drv_cfg->clk_dev, drv_cfg->clk_subsys);
 	unsigned long ospi_clk = clk_get_rate(clk);
+	unsigned int bus_freq;
 	uint32_t prescaler = UINT8_MAX;
 	uint32_t csht;
 	int ret;
@@ -406,9 +386,344 @@ static int stm32_ospi_set_speed(unsigned int hz)
 
 	mmio_clrsetbits_32(ospi_base() + _OSPI_DCR1, _OSPI_DCR1_CSHT, csht);
 
-	VERBOSE("%s: speed=%lu\n", __func__, ospi_clk / (prescaler + 1U));
+	bus_freq = div_round_up(ospi_clk, prescaler + 1U);
+	if (bus_freq <= _DLYB_FREQ_50MHZ) {
+		mmio_setbits_32(ospi_base() + _OSPI_DCR1, _OSPI_DCR1_DLYBYP);
+	} else {
+		mmio_clrbits_32(ospi_base() + _OSPI_DCR1, _OSPI_DCR1_DLYBYP);
+	}
+
+	VERBOSE("%s: speed=%d\n", __func__, ospi_clk / (prescaler + 1U));
 
 	return 0;
+}
+
+static int stm32_ospi_readid(void)
+{
+	struct stm32_omi_data *drv_data = stm32_ospi.drv_data;
+	uint64_t id;
+	struct spi_mem_op readid_op;
+	int ret;
+
+	memset(&readid_op, 0x0U, sizeof(struct spi_mem_op));
+	readid_op.cmd.opcode = _OP_READ_ID;
+	readid_op.cmd.buswidth = SPI_MEM_BUSWIDTH_1_LINE;
+	readid_op.data.nbytes = _MAX_ID_LEN;
+	readid_op.data.buf = &id;
+	readid_op.data.buswidth = SPI_MEM_BUSWIDTH_1_LINE;
+
+	ret = stm32_ospi_send(&readid_op, _OSPI_CR_FMODE_INDR);
+	if (ret != 0) {
+		return ret;
+	}
+
+	VERBOSE("Flash ID 0x%x%x\n", (uint32_t)(id >> 32), (uint32_t)id);
+
+	/* On stm32_ospi_readid() first execution, save the golden read id */
+	if (drv_data->str_idcode == 0U) {
+		drv_data->str_idcode = id;
+	}
+
+	if (id == drv_data->str_idcode) {
+		return 0;
+	}
+
+	return -EIO;
+}
+
+static int stm32_ospi_dlyb_set_tap(uint8_t tap, bool rx_tap)
+{
+	const struct stm32_omi_config *drv_cfg = stm32_ospi.drv_cfg;
+	uint32_t mask, ack, sr;
+	uint8_t shift;
+	int ret;
+
+	if (rx_tap) {
+		mask = _DLYBOS_CR_RXTAPSEL;
+		shift = _DLYBOS_CR_RXTAPSEL_SHIFT;
+		ack = _DLYBOS_SR_RXTAPSEL_ACK;
+	} else {
+		mask = _DLYBOS_CR_TXTAPSEL;
+		shift = _DLYBOS_CR_TXTAPSEL_SHIFT;
+		ack = _DLYBOS_SR_TXTAPSEL_ACK;
+	}
+
+	syscon_clrsetbits(drv_cfg->dlyb_dev, drv_cfg->dlyb_base + _DLYBOS_CR,
+			  mask, (tap << shift) & mask);
+
+	ret = syscon_read_poll_timeout(drv_cfg->dlyb_dev,
+				       drv_cfg->dlyb_base + _DLYBOS_SR,
+				       sr, (sr & ack) != 0U,
+				       _DLYBOS_TIMEOUT_US);
+	if (ret != 0) {
+		ERROR("%s: %s delay block phase configuration timeout\n",
+		      __func__, rx_tap ? "RX" : "TX");
+	}
+
+	return ret;
+}
+
+static void stm32_ospi_dlyb_stop(void)
+{
+	const struct stm32_omi_config *drv_cfg = stm32_ospi.drv_cfg;
+
+	syscon_write(drv_cfg->dlyb_dev, drv_cfg->dlyb_base + _DLYBOS_CR, 0x0U);
+}
+
+static int stm32_ospi_dlyb_find_tap(uint8_t *window_len)
+{
+	uint8_t rx_tap, rx_len, rx_window_len, rx_window_end;
+	int ret;
+
+	rx_len = 0U;
+	rx_window_len = 0U;
+	rx_window_end = 0U;
+
+	ret = stm32_ospi_dlyb_set_tap(0U, false);
+	if (ret != 0) {
+		return ret;
+	}
+
+	for (rx_tap = 0U; rx_tap < _DLYBOS_TAPSEL_NB; rx_tap++) {
+		ret = stm32_ospi_dlyb_set_tap(rx_tap, true);
+		if (ret != 0) {
+			return ret;
+		}
+
+		ret = stm32_ospi_readid();
+		if (ret != 0) {
+			if (ret == -ETIMEDOUT) {
+				break;
+			}
+
+			rx_len = 0U;
+		} else {
+			rx_len++;
+
+			if (rx_len > rx_window_len) {
+				rx_window_len = rx_len;
+				rx_window_end = rx_tap;
+			}
+		}
+	}
+
+	VERBOSE("%s: rx_window_end = %d rx_window_len = %d\n",
+		__func__, rx_window_end, rx_window_len);
+
+	if (rx_window_len == 0U) {
+		WARN("%s: can't find RX phase settings\n", __func__);
+
+		return -EIO;
+	}
+
+	rx_tap = rx_window_end - rx_window_len / 2U;
+	VERBOSE("%s: RX_TAP_SEL set to %d\n", __func__, rx_tap);
+
+	return stm32_ospi_dlyb_set_tap(rx_tap, true);
+}
+
+static int stm32_ospi_dlyb_init(void)
+{
+	const struct stm32_omi_config *drv_cfg = stm32_ospi.drv_cfg;
+	uint32_t sr;
+	int ret;
+
+	syscon_clrsetbits(drv_cfg->dlyb_dev, drv_cfg->dlyb_base + _DLYBOS_CR,
+			  _DLYBOS_CR_EN, _DLYBOS_CR_EN);
+
+	/* In lock mode, wait for lock status bit */
+	ret = syscon_read_poll_timeout(drv_cfg->dlyb_dev,
+				       drv_cfg->dlyb_base + _DLYBOS_SR,
+				       sr, (sr & _DLYBOS_SR_LOCK) != 0U,
+				       _DLYBOS_TIMEOUT_US);
+	if (ret != 0) {
+		ERROR("%s: delay Block lock timeout\n", __func__);
+		syscon_clrbits(drv_cfg->dlyb_dev,
+			       drv_cfg->dlyb_base + _DLYBOS_CR,
+			       _DLYBOS_CR_EN);
+	}
+
+	return ret;
+}
+
+static int stm32_ospi_dlyb_set_cr(uint32_t dlyb_cr)
+{
+	uint8_t rx_tap;
+	uint8_t tx_tap;
+	int ret;
+
+	ret = stm32_ospi_dlyb_init();
+	if (ret != 0) {
+		return ret;
+	}
+
+	/* restore Rx and TX tap */
+	rx_tap = (dlyb_cr & _DLYBOS_CR_RXTAPSEL) >> _DLYBOS_CR_RXTAPSEL_SHIFT;
+	ret = stm32_ospi_dlyb_set_tap(rx_tap, true);
+	if (ret != 0) {
+		return ret;
+	}
+
+	tx_tap = (dlyb_cr & _DLYBOS_CR_TXTAPSEL) >> _DLYBOS_CR_TXTAPSEL_SHIFT;
+
+	return stm32_ospi_dlyb_set_tap(tx_tap, false);
+}
+
+static void stm32_ospi_dlyb_get_cr(uint32_t *dlyb_cr)
+{
+	const struct stm32_omi_config *drv_cfg = stm32_ospi.drv_cfg;
+
+	syscon_read(drv_cfg->dlyb_dev, drv_cfg->dlyb_base + _DLYBOS_CR,
+		    dlyb_cr);
+}
+
+static int stm32_ospi_str_calibration(void)
+{
+	const struct stm32_omi_config *drv_cfg = stm32_ospi.drv_cfg;
+	struct clk *clk = clk_get(drv_cfg->clk_dev, drv_cfg->clk_subsys);
+	uint32_t dlyb_cr;
+	uint8_t window_len_tcr0 = 0U;
+	uint8_t window_len_tcr1 = 0U;
+	int ret;
+	int ret_tcr0;
+	int ret_tcr1;
+	uint32_t prescaler = mmio_read_32(ospi_base() + _OSPI_DCR2) &
+					  _OSPI_DCR2_PRESCALER;
+	unsigned int bus_freq = div_round_up(clk_get_rate(clk), prescaler + 1U);
+
+	/*
+	 * Set memory device at low frequency (50 MHz) and sent
+	 * READID (0x9F) command, save the answer as golden answer
+	 */
+	ret = stm32_ospi_set_speed(_DLYB_FREQ_50MHZ);
+	if (ret != 0) {
+		return ret;
+	}
+
+	ret = stm32_ospi_readid();
+	if (ret != 0) {
+		return ret;
+	}
+
+	/* Set frequency at requested value */
+	ret = stm32_ospi_set_speed(bus_freq);
+	if (ret != 0) {
+		return ret;
+	}
+
+	/* Calibration needed above 50MHz */
+	if (bus_freq <= _DLYB_FREQ_50MHZ) {
+		return 0;
+	}
+
+	/* Perform calibration */
+	ret = stm32_ospi_dlyb_init();
+	if (ret != 0) {
+		return ret;
+	}
+
+	/* Perform only RX TAP selection */
+	ret_tcr0 = stm32_ospi_dlyb_find_tap(&window_len_tcr0);
+	if (ret_tcr0 == 0) {
+		stm32_ospi_dlyb_get_cr(&dlyb_cr);
+	}
+
+	stm32_ospi_dlyb_stop();
+
+	ret = stm32_ospi_dlyb_init();
+	if (ret != 0) {
+		return ret;
+	}
+
+	mmio_setbits_32(ospi_base() + _OSPI_TCR, _OSPI_TCR_SSHIFT);
+
+	ret_tcr1 = stm32_ospi_dlyb_find_tap(&window_len_tcr1);
+	if ((ret_tcr0 != 0) && (ret_tcr1 != 0)) {
+		WARN("Calibration phase failed\n");
+
+		return ret_tcr0;
+	}
+
+	if (window_len_tcr0 >= window_len_tcr1) {
+		mmio_clrbits_32(ospi_base() + _OSPI_TCR, _OSPI_TCR_SSHIFT);
+		stm32_ospi_dlyb_stop();
+
+		ret = stm32_ospi_dlyb_set_cr(dlyb_cr);
+		if (ret != 0) {
+			return ret;
+		}
+	}
+
+	return 0;
+}
+
+static int stm32_ospi_exec_op(const struct spi_mem_op *op)
+{
+	uint8_t fmode = _OSPI_CR_FMODE_INDW;
+
+	if ((op->data.dir == SPI_MEM_DATA_IN) && (op->data.nbytes != 0U)) {
+		fmode = _OSPI_CR_FMODE_INDR;
+	}
+
+	return stm32_ospi_send(op, fmode);
+}
+
+static int stm32_ospi_dirmap_read(const struct spi_mem_op *op)
+{
+	const struct stm32_omi_config *drv_cfg = stm32_ospi.drv_cfg;
+	uint8_t fmode = _OSPI_CR_FMODE_INDR;
+	size_t addr_max;
+
+	addr_max = op->addr.val + op->data.nbytes + 1U;
+	if ((addr_max < drv_cfg->mm_size) && (op->addr.buswidth != 0U)) {
+		fmode = _OSPI_CR_FMODE_MM;
+	}
+
+	return stm32_ospi_send(op, fmode);
+}
+
+static int stm32_ospi_claim_bus(unsigned int cs)
+{
+	struct stm32_omi_data *drv_data = stm32_ospi.drv_data;
+	int ret;
+
+	if (cs >= _OSPI_MAX_CHIP) {
+		return -ENODEV;
+	}
+
+	mmio_setbits_32(ospi_base() + _OSPI_CR, _OSPI_CR_EN);
+
+	if (drv_data->cs_used == cs) {
+		return 0;
+	}
+
+	drv_data->cs_used = cs;
+	drv_data->str_idcode = 0U;
+
+	stm32_ospi_dlyb_stop();
+
+	/* Set chip select */
+	mmio_clrsetbits_32(ospi_base() + _OSPI_CR, _OSPI_CR_CSSEL,
+			     drv_data->cs_used ? _OSPI_CR_CSSEL : 0);
+	mmio_clrbits_32(ospi_base() + _OSPI_TCR, _OSPI_TCR_SSHIFT);
+
+	ret = stm32_ospi_str_calibration();
+	if (ret != 0) {
+		WARN("Set flash frequency to a safe value (%u Hz)\n",
+		     _DLYB_FREQ_50MHZ);
+
+		stm32_ospi_dlyb_stop();
+		mmio_clrbits_32(ospi_base() + _OSPI_TCR, _OSPI_TCR_SSHIFT);
+
+		ret = stm32_ospi_set_speed(_DLYB_FREQ_50MHZ);
+	}
+
+	return ret;
+}
+
+static void stm32_ospi_release_bus(void)
+{
+	mmio_clrbits_32(ospi_base() + _OSPI_CR, _OSPI_CR_EN);
 }
 
 static int stm32_ospi_set_mode(unsigned int mode)
@@ -477,10 +792,6 @@ int stm32_ospi_init(void)
 		return ret;
 	}
 
-	mmio_write_32(ospi_base() + _OSPI_TCR, _OSPI_TCR_SSHIFT);
-	mmio_write_32(ospi_base() + _OSPI_DCR1,
-		      _OSPI_DCR1_DEVSIZE | _OSPI_DCR1_DLYBYP);
-
 	return spi_mem_init_slave(stm32_ospi.spi_slave, &stm32_ospi_bus_ops);
 };
 
@@ -504,13 +815,10 @@ int stm32_ospi_deinit(void)
 }
 
 /********************************************************/
-struct stm32_omi_data {
-	struct spi_slave *spi_slave;
-};
-
 int stm32_omi_init(const struct device *dev)
 {
 	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	struct stm32_omi_data *drv_data = dev_get_data(dev);
 	struct clk *clk;
 	int err, i;
 
@@ -532,12 +840,13 @@ int stm32_omi_init(const struct device *dev)
 			return err;
 	}
 
-	mmio_write_32(drv_cfg->base + _OSPI_TCR, _OSPI_TCR_SSHIFT);
-	mmio_write_32(drv_cfg->base + _OSPI_DCR1,
-		      _OSPI_DCR1_DEVSIZE | _OSPI_DCR1_DLYBYP);
-
 	/* temporaire, wait full integration*/
 	stm32_ospi.drv_cfg = drv_cfg;
+	stm32_ospi.drv_data = drv_data;
+
+	/* Set dcr devsize to max address */
+	mmio_setbits_32(ospi_base() + _OSPI_DCR1, _OSPI_DCR1_DEVSIZE);
+	drv_data->cs_used = -1;
 
 	return 0;
 }
@@ -566,7 +875,7 @@ static struct stm32_omi_data stm32_omi_data_##n = {};				\
 DEVICE_DT_INST_DEFINE(n,							\
 		      &stm32_omi_init,						\
 		      &stm32_omi_data_##n, &stm32_omi_cfg_##n,			\
-		      CORE, 10,							\
+		      CORE, 12,							\
 		      NULL);
 
 DT_INST_FOREACH_STATUS_OKAY(STM32_OMI_INIT)

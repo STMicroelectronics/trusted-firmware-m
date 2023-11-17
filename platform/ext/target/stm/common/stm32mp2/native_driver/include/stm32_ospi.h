@@ -11,6 +11,7 @@
 
 struct stm32_ospi_platdata {
 	const struct stm32_omi_config *drv_cfg;
+	struct stm32_omi_data *drv_data;
 
 	struct spi_slave *spi_slave;
 };
