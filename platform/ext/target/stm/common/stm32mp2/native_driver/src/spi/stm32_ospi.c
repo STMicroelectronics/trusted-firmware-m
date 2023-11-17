@@ -99,7 +99,9 @@ struct stm32_omi_config {
 	const clk_subsys_t clk_subsys;
 	const struct pinctrl_dev_config *pcfg;
 	const struct reset_control *rst_ctl;
-	const int n_rst;
+	int n_rst;
+	const struct device *dlyb_dev;
+	uint16_t dlyb_base;
 };
 
 static struct stm32_ospi_platdata stm32_ospi;
@@ -555,6 +557,8 @@ static const struct stm32_omi_config stm32_omi_cfg_##n = {			\
 	.rst_ctl = rst_ctrl_##n,						\
         .n_rst = DT_INST_NUM_RESETS(n),						\
 	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(n),				\
+	.dlyb_dev = DEVICE_DT_GET(DT_INST_PHANDLE(n, st_syscfg_dlyb)),		\
+	.dlyb_base = DT_INST_PHA_BY_IDX(n, st_syscfg_dlyb, 0, offset),		\
 };										\
 										\
 static struct stm32_omi_data stm32_omi_data_##n = {};				\
