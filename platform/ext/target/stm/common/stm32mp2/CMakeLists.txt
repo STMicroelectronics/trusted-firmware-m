@@ -153,6 +153,7 @@ target_sources(tfm_s
 	PRIVATE
 		${STM_SOC_DIR}/device/source/startup_stm32mp2_s.c
 		${STM_SOC_DIR}/native_driver/src/timer/systick.c
+		${STM_SOC_DIR}/native_driver/src/syscfg/stm32_syscfg.c
 )
 
 #========================= Platform Non-Secure ================================#
@@ -222,6 +223,7 @@ if(NS)
 			${STM_SOC_DIR}/device/source/startup_stm32mp2_ns.c
 			${STM_SOC_DIR}/tfm_ns_plat_init.c
 			${STM_SOC_DIR}/native_driver/src/timer/systick.c
+			${STM_SOC_DIR}/native_driver/src/syscfg/stm32_syscfg.c
 	)
 endif()
 
@@ -311,6 +313,7 @@ if(BL2)
 		PRIVATE
 			${STM_SOC_DIR}/device/source/startup_stm32mp2_bl2.c
 			${STM_SOC_DIR}/native_driver/src/timer/systick.c
+			${STM_SOC_DIR}/native_driver/src/syscfg/stm32_syscfg.c
 	)
 
 	add_custom_target(bl2_stm32
