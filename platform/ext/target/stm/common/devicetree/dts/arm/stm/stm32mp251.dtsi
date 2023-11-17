@@ -98,7 +98,8 @@
 			ospi1: spi@50430000 {
 				compatible = "st,stm32mp25-omi";
 				reg = <0 0 0x400>, <2 0 0x80000000>;
-				reg-names = "omi", "omi_mm";		
+				reg-names = "omi", "omi_mm";
+				st,syscfg-dlyb = <&syscfg 0x1000>;
 				clocks = <&rcc CK_KER_OSPI1>;
 				resets = <&rctl OSPI1_R>, <&rctl OSPI1DLL_R>;
 				status = "disabled";
@@ -108,6 +109,7 @@
 				compatible = "st,stm32mp25-omi";
 				reg = <1 0 0x400>, <3 0 0x80000000>;
 				reg-names = "omi", "omi_mm";
+				st,syscfg-dlyb = <&syscfg 0x1400>;
 				clocks = <&rcc CK_KER_OSPI2>;
 				resets = <&rctl OSPI2_R>, <&rctl OSPI2DLL_R>;
 				status = "disabled";
