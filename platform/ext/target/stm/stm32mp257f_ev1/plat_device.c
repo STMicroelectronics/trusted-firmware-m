@@ -65,7 +65,7 @@ int sau_get_platdata(struct sau_platdata *pdata)
 /* ospi */
 struct spi_slave flash0 = {
 	.cs = 0,
-	.max_hz = 50000000,
+	.max_hz = 133000000,
 	.mode = SPI_RX_QUAD | SPI_TX_QUAD,
 };
 
