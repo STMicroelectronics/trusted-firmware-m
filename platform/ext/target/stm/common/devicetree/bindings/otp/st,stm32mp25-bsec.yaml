@@ -15,5 +15,4 @@ properties:
     required: true
 
   memory-region:
-    description: phandle to the bsec miror region
-    type: phandle
+    required: true
