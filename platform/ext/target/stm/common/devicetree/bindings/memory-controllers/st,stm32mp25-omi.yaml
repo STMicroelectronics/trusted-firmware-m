@@ -18,6 +18,7 @@ include:
   - base.yaml
   - pinctrl-device.yaml
   - reset-device.yaml
+  - memory-region.yaml
   - name: st,stm32mp25-syscfg-properties.yaml
     property-allowlist:
       - st,syscfg-dlyb
@@ -26,19 +27,10 @@ properties:
   reg:
     required: true
 
-  reg-names:
-    required: true
-
   clocks:
     required: true
 
   resets:
-    required: true
-
-  pinctrl-0:
-    required: true
-
-  pinctrl-names:
     required: true
 
   st,syscfg-dlyb:
