@@ -47,3 +47,7 @@
 	clock-frequency = <1000000>; /* tick at 1us */
 	status = "okay";
 };
+
+&bsec {
+	status = "disabled";
+};
