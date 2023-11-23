@@ -14,5 +14,15 @@ description: |
   optional constraints to request a dynamically allocated block of
   memory.
 
+compatible: "reserved-memory"
+
+include: [base.yaml]
+
 properties:
-  reg: true
+  reg:
+    required: true
+
+  "#memory-region-cells":
+    required: true
+    type: int
+    const: 0

@@ -5,8 +5,9 @@
 # by adding a memory-region property to the device node.
 
 properties:
-  memory-regions:
+  memory-region:
     type: phandle-array
+    specifier-space: memory-region
     description: List of memory region phandles
 
   memory-region-names:
