@@ -80,38 +80,32 @@
 		ranges;
 
 		ommanager: ommanager@50500000 {
-			#address-cells = <2>;
-			#size-cells = <1>;
 			compatible = "st,stm32mp25-omm";
 			reg = <0x50500000 0x400>, <0x60000000 0x10000000>;
 			reg-names = "omm", "omm_mm";
+			ranges = <0 0 0x50430000 0x400>,
+				 <1 0 0x50440000 0x400>;
 			clocks = <&rcc CK_BUS_OSPIIOM>;
 			resets = <&rctl OSPIIOM_R>;
-			//st,syscfg-amcr = <&syscfg 0x2c00 0x7>;
 			status = "disabled";
-
-			ranges = <0 0 0x50430000 0x400>,
-				 <1 0 0x50440000 0x400>,
-				 <2 0 0x60000000 0x80000000>,
-				 <3 0 0x68000000 0x80000000>;
+			#address-cells = <2>;
+			#size-cells = <1>;
 
 			ospi1: spi@50430000 {
 				compatible = "st,stm32mp25-omi";
-				reg = <0 0 0x400>, <2 0 0x80000000>;
-				reg-names = "omi", "omi_mm";
-				st,syscfg-dlyb = <&syscfg 0x1000>;
+				reg = <0 0 0x400>;
 				clocks = <&rcc CK_KER_OSPI1>;
 				resets = <&rctl OSPI1_R>, <&rctl OSPI1DLL_R>;
+				st,syscfg-dlyb = <&syscfg 0x1000>;
 				status = "disabled";
 			};
 
 			ospi2: spi@50440000 {
 				compatible = "st,stm32mp25-omi";
-				reg = <1 0 0x400>, <3 0 0x80000000>;
-				reg-names = "omi", "omi_mm";
-				st,syscfg-dlyb = <&syscfg 0x1400>;
+				reg = <1 0 0x400>;
 				clocks = <&rcc CK_KER_OSPI2>;
 				resets = <&rctl OSPI2_R>, <&rctl OSPI2DLL_R>;
+				st,syscfg-dlyb = <&syscfg 0x1400>;
 				status = "disabled";
 			};
 		};
