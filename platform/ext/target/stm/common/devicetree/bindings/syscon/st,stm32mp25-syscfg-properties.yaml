@@ -1,0 +1,16 @@
+# Copyright (c) 2023, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: stm32 system configuration properties
+
+properties:
+
+  st,syscfg-dlyb:
+    type: phandle-array
+    specifier-space: syscfg-reg
+    description: |
+      Use to set the OSPI delay block within SYSCFG to:
+        - Tune the phase of the RX sampling clock (or DQS) in order
+        to sample the data in their valid window.
+        - Tune the phase of the TX launch clock in order to meet setup
+        and hold constraints of TX signals versus the memory clock.
