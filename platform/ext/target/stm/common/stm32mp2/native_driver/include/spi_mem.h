@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, STMicroelectronics - All Rights Reserved
+ * Copyright (c) 2023, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <device.h>
 
 #define SPI_MEM_BUSWIDTH_1_LINE		1U
 #define SPI_MEM_BUSWIDTH_2_LINE		2U
@@ -73,85 +74,82 @@ struct spi_mem_op {
 };
 
 /* SPI mode flags */
-#define SPI_CPHA	BIT(0)			/* clock phase */
-#define SPI_CPOL	BIT(1)			/* clock polarity */
-#define SPI_CS_HIGH	BIT(2)			/* CS active high */
-#define SPI_LSB_FIRST	BIT(3)			/* per-word bits-on-wire */
-#define SPI_3WIRE	BIT(4)			/* SI/SO signals shared */
-#define SPI_PREAMBLE	BIT(5)			/* Skip preamble bytes */
-#define SPI_TX_DUAL	BIT(6)			/* transmit with 2 wires */
-#define SPI_TX_QUAD	BIT(7)			/* transmit with 4 wires */
-#define SPI_RX_DUAL	BIT(8)			/* receive with 2 wires */
-#define SPI_RX_QUAD	BIT(9)			/* receive with 4 wires */
-#define SPI_TX_OCTAL	BIT(10)			/* transmit with 8 wires */
-#define SPI_RX_OCTAL	BIT(11)			/* receive with 8 wires */
+#define SPI_CPHA	BIT(0)		/* clock phase */
+#define SPI_CPOL	BIT(1)		/* clock polarity */
+#define SPI_CS_HIGH	BIT(2)		/* CS active high */
+#define SPI_LSB_FIRST	BIT(3)		/* per-word bits-on-wire */
+#define SPI_3WIRE	BIT(4)		/* SI/SO signals shared */
+#define SPI_PREAMBLE	BIT(5)		/* Skip preamble bytes */
+#define SPI_TX_DUAL	BIT(6)		/* transmit with 2 wires */
+#define SPI_TX_QUAD	BIT(7)		/* transmit with 4 wires */
+#define SPI_RX_DUAL	BIT(8)		/* receive with 2 wires */
+#define SPI_RX_QUAD	BIT(9)		/* receive with 4 wires */
+#define SPI_TX_OCTAL	BIT(10)		/* transmit with 8 wires */
+#define SPI_RX_OCTAL	BIT(11)		/* receive with 8 wires */
 
 struct spi_bus_ops {
 	/*
 	 * Claim the bus and prepare it for communication.
 	 *
+	 * @dev: The controller device.
 	 * @cs:	The chip select.
+	 * @hz:	The transfer speed in Hertz.
+	 * @mode: Requested SPI mode (SPI_... flags).
 	 * Returns: 0 if the bus was claimed successfully, or a negative value
 	 * if it wasn't.
 	 */
-	int (*claim_bus)(unsigned int cs);
+	int (*claim_bus)(const struct device *dev, unsigned int cs,
+			 unsigned int max_hz, unsigned int mode);
 
 	/*
 	 * Release the SPI bus.
-	 */
-	void (*release_bus)(void);
-
-	/*
-	 * Set transfer speed.
 	 *
-	 * @hz:	The transfer speed in Hertz.
-	 * Returns: 0 on success, a negative error code otherwise.
+	 * @dev: The controller device.
 	 */
-	int (*set_speed)(unsigned int hz);
-
-	/*
-	 * Set the SPI mode/flags.
-	 *
-	 * @mode: Requested SPI mode (SPI_... flags).
-	 * Returns: 0 on success, a negative error code otherwise.
-	 */
-	int (*set_mode)(unsigned int mode);
+	void (*release_bus)(const struct device *dev);
 
 	/*
 	 * Execute a SPI memory operation.
 	 *
+	 * @dev: The controller device.
 	 * @op:	The memory operation to execute.
 	 * Returns: 0 on success, a negative error code otherwise.
 	 */
-	int (*exec_op)(const struct spi_mem_op *op);
+	int (*exec_op)(const struct device *dev,
+		       const struct spi_mem_op *op);
 
 	/*
 	 * Read data through a direct mapping.
 	 *
+	 * @dev: The controller device.
 	 * @op: The memory operation to execute.
 	 * Returns: 0 on success, a negative error code otherwise.
 	 */
-	int (*dirmap_read)(const struct spi_mem_op *op);
+	int (*dirmap_read)(const struct device *dev,
+			   const struct spi_mem_op *op);
 };
 
 /*
  * struct spi_slave - Representation of a SPI slave.
  *
- * @max_hz:		Maximum speed for this slave in Hertz.
- * @cs:			ID of the chip select connected to the slave.
- * @mode:		SPI mode to use for this slave (see SPI mode flags).
- * @ops:		Ops defined by the bus.
+ * @dev_ctrl: The SPI controller device.
+ * @max_hz: Maximum speed for this slave in Hertz.
+ * @cs: ID of the chip select connected to the slave.
+ * @mode: SPI mode to use for this slave (see SPI mode flags).
  */
 struct spi_slave {
+	const struct device *dev_ctrl;
 	unsigned int max_hz;
 	unsigned int cs;
 	unsigned int mode;
-	const struct spi_bus_ops *ops;
 };
 
-int spi_mem_exec_op(const struct spi_mem_op *op);
-int spi_mem_dirmap_read(const struct spi_mem_op *op);
-int spi_mem_init_slave(struct spi_slave *cfg,
-		       const struct spi_bus_ops *ops);
+int spi_mem_exec_op(const struct spi_slave *spi_slave,
+		    const struct spi_mem_op *op);
+int spi_mem_dirmap_read(const struct spi_slave *spi_slave,
+			const struct spi_mem_op *op);
+int spi_mem_get_mode(unsigned int tx_bus_width, unsigned int rx_bus_width,
+		     unsigned int *mode);
+int spi_mem_init_slave(const struct spi_slave *spi_slave);
 
 #endif /* DRIVERS_SPI_MEM_H */
