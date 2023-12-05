@@ -52,7 +52,34 @@
 		     &ospi1_io03_pins_a
 		     &ospi1_cs0_pins_a>;
 	memory-region = <&mm_ospi2>;
+	#address-cells = <1>;
+	#size-cells = <0>;
 	status = "okay";
+
+	flash0: flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		spi-rx-bus-width = <4>;
+		spi-tx-bus-width = <4>;
+		spi-max-frequency = <133000000>;
+		size = <0x4000000>;
+		erase-size = <0x1000>;
+		write-size = <256>;
+		read-cmd = "READ_1_1_4_4B";
+		write-cmd = "WRITE_1_4_4_4B";
+		erase-cmd = "SE_4B";
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			tfm_ps_partition: partition@0 {
+				label = "ps_area";
+				reg = <0x00000000 0x00100000>;
+			};
+		};
+	};
 };
 
 &bsec {
