@@ -19,6 +19,7 @@
 
 #include "region_defs.h"
 #include "device_cfg.h"
+#include "devicetree.h"
 
 /* This header file is included from linker scatter file as well, where only a
  * limited C constructs are allowed. Therefore it is not possible to include
@@ -151,12 +152,11 @@
 #define TFM_HAL_PS_PROGRAM_UNIT		FLASH_DDR_PROGRAM_UNIT
 #define PS_RAM_FS_SIZE			TFM_HAL_PS_FLASH_AREA_SIZE
 #else
-#define TFM_HAL_PS_FLASH_DRIVER		Driver_OSPI_SPI_NOR_FLASH
-#define TFM_HAL_PS_FLASH_AREA_ADDR	0x0
-#define TFM_HAL_PS_FLASH_AREA_SIZE	(0x100000)			/* 1 MB */
+#define TFM_HAL_PS_FLASH_DRIVER		UTIL_CAT(Driver_, DT_NODELABEL(tfm_ps_partition))
+#define TFM_HAL_PS_FLASH_AREA_ADDR	DT_REG_ADDR(DT_NODELABEL(tfm_ps_partition))
+#define TFM_HAL_PS_FLASH_AREA_SIZE	DT_REG_SIZE(DT_NODELABEL(tfm_ps_partition))
 #define TFM_HAL_PS_SECTORS_PER_BLOCK	(0x1)
 #define TFM_HAL_PS_PROGRAM_UNIT		(0x1)
-#define PS_SECTOR_SIZE			FLASH_AREA_IMAGE_SECTOR_SIZE
 #endif
 
 #define TOTAL_RETRAM_SZ			(RETRAM_SZ)			/* 128 KB */
