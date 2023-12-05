@@ -1,16 +1,16 @@
 /*
- * Copyright (c) 2021, STMicroelectronics - All Rights Reserved
+ * Copyright (c) 2023, STMicroelectronics - All Rights Reserved
  * Author(s): Ludovic Barre, <ludovic.barre@st.com> for STMicroelectronics.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <stdbool.h>
 
+#include <stdbool.h>
 #include <Driver_Flash.h>
 #include <flash_layout.h>
-
-#include <stm32_ospi.h>
 #include <spi_nor.h>
+
+#define DT_DRV_COMPAT fixed_partitions
 
 #ifndef ARG_UNUSED
 #define ARG_UNUSED(arg)  ((void)arg)
@@ -64,64 +64,56 @@ static const ARM_FLASH_CAPABILITIES DriverCapabilities = {
 /* Busy status values of the Flash driver */
 #define DRIVER_STATUS_IDLE		(0u)
 #define DRIVER_STATUS_BUSY		(1u)
+
 /* Error status values of the Flash driver */
 #define DRIVER_STATUS_NO_ERROR		(0u)
 #define DRIVER_STATUS_ERROR		(1u)
 
-static ARM_FLASH_STATUS FlashStatus = {0, 0, 0};
+/*
+ * ARM PARTITION device structure
+ */
+typedef struct {
+	const struct device *dev_flash;
+	uint32_t offset;
+	uint32_t size;
+	ARM_FLASH_INFO *data;
+	ARM_FLASH_STATUS status;
+} arm_part_dev_t;
 
-static ARM_FLASH_INFO FlashInfo = {
-	.sector_info    = NULL,     /* Uniform sector layout */
-	.sector_count   = SPI_NOR_FLASH_SIZE / SPI_NOR_FLASH_SECTOR_SIZE,
-	.sector_size    = SPI_NOR_FLASH_SECTOR_SIZE,
-	.page_size      = SPI_NOR_FLASH_PAGE_SIZE,
-	.program_unit   = 1u,       /* Minimum write size in bytes */
-	.erased_value   = 0xFF
-};
-
-static bool is_range_valid(uint32_t offset)
+static bool is_range_valid(arm_part_dev_t *dev, uint32_t offset)
 {
-	return offset < SPI_NOR_FLASH_SIZE ? true : false;
+	return (offset >= dev->offset) && (offset < dev->offset + dev->size) ?
+	       true : false;
 }
 
-static bool is_write_aligned(uint32_t value)
+static bool is_write_aligned(arm_part_dev_t *dev, uint32_t value)
 {
-	return value % FlashInfo.program_unit ? false : true;
+	return value % dev->data->program_unit ? false : true;
 }
 
-static ARM_DRIVER_VERSION ARM_Flash_GetVersion(void)
+static ARM_DRIVER_VERSION ARM_Part_GetVersion(void)
 {
 	return DriverVersion;
 }
 
-static ARM_FLASH_CAPABILITIES ARM_Flash_GetCapabilities(void)
+static ARM_FLASH_CAPABILITIES ARM_Part_GetCapabilities(void)
 {
 	return DriverCapabilities;
 }
 
-static int32_t ARM_Flash_Initialize(ARM_Flash_SignalEvent_t cb_event)
+static int32_t ARM_Part_X_Initialize(arm_part_dev_t *dev,
+				     ARM_Flash_SignalEvent_t cb_event)
 {
-	unsigned long long size;
-	unsigned int erase_size;
-
-	if (stm32_ospi_init())
-		return ARM_DRIVER_ERROR;
-
-	if (spi_nor_init(&size, &erase_size))
-		return ARM_DRIVER_ERROR;
-
 	return ARM_DRIVER_OK;
 }
 
-static int32_t ARM_Flash_Uninitialize(void)
+static int32_t ARM_Part_X_Uninitialize(arm_part_dev_t *dev)
 {
-	if (stm32_ospi_deinit())
-		return ARM_DRIVER_ERROR;
-
 	return ARM_DRIVER_OK;
 }
 
-static int32_t ARM_Flash_PowerControl(ARM_POWER_STATE state)
+static int32_t ARM_Part_X_PowerControl(arm_part_dev_t *dev,
+				       ARM_POWER_STATE state)
 {
 	switch(state) {
 	case ARM_POWER_FULL:
@@ -135,128 +127,188 @@ static int32_t ARM_Flash_PowerControl(ARM_POWER_STATE state)
 	}
 }
 
-static int32_t ARM_Flash_ReadData(uint32_t addr, void *data, uint32_t cnt)
+static int32_t ARM_Part_X_ReadData(arm_part_dev_t *dev, uint32_t addr,
+				   void *data, uint32_t cnt)
 {
+	const struct spi_nor_ops *ops = dev->dev_flash->api;
 	uint32_t bytes = cnt * data_width_byte[DriverCapabilities.data_width];
 	size_t length_read;
 	int ret;
 
-	FlashStatus.error = DRIVER_STATUS_NO_ERROR;
+	dev->status.error = DRIVER_STATUS_NO_ERROR;
 
 	/* Check Flash memory boundaries */
-	if (!is_range_valid(addr + bytes - 1)) {
-		FlashStatus.error = DRIVER_STATUS_ERROR;
+	if (!is_range_valid(dev, addr + bytes - 1)) {
+		dev->status.error = DRIVER_STATUS_ERROR;
 		return ARM_DRIVER_ERROR_PARAMETER;
 	}
 
-	FlashStatus.busy = DRIVER_STATUS_BUSY;
+	dev->status.busy = DRIVER_STATUS_BUSY;
 
-	ret = spi_nor_read(addr, (uintptr_t)data, bytes, &length_read);
+	ret = ops->read(dev->dev_flash, addr, (uintptr_t)data,
+			bytes, &length_read);
 
-	FlashStatus.busy = DRIVER_STATUS_IDLE;
+	dev->status.busy = DRIVER_STATUS_IDLE;
 
 	if (ret || (length_read != bytes)) {
-		FlashStatus.error = DRIVER_STATUS_ERROR;
+		dev->status.error = DRIVER_STATUS_ERROR;
 		return ARM_DRIVER_ERROR;
 	}
 
 	return cnt;
 }
 
-static int32_t ARM_Flash_ProgramData(uint32_t addr, const void *data,
-				     uint32_t cnt)
+static int32_t ARM_Part_X_ProgramData(arm_part_dev_t *dev, uint32_t addr,
+				      const void *data, uint32_t cnt)
 {
+	const struct spi_nor_ops *ops = dev->dev_flash->api;
 	uint32_t bytes = cnt * data_width_byte[DriverCapabilities.data_width];
 	size_t length_write;
 	int ret;
 
-	FlashStatus.error = DRIVER_STATUS_NO_ERROR;
+	dev->status.error = DRIVER_STATUS_NO_ERROR;
 
 	/* Check Flash memory boundaries */
-	if (!(is_range_valid(addr + bytes - 1) &&
-	    is_write_aligned(addr) &&
-	    is_write_aligned(bytes))) {
-		FlashStatus.error = DRIVER_STATUS_ERROR;
+	if (!(is_range_valid(dev, addr + bytes - 1) &&
+	    is_write_aligned(dev, addr) &&
+	    is_write_aligned(dev, bytes))) {
+		dev->status.error = DRIVER_STATUS_ERROR;
 		return ARM_DRIVER_ERROR_PARAMETER;
 	}
 
-	FlashStatus.busy = DRIVER_STATUS_BUSY;
+	dev->status.busy = DRIVER_STATUS_BUSY;
 
-	ret = spi_nor_write(addr, (uintptr_t)data, bytes, &length_write);
+	ret = ops->write(dev->dev_flash, addr, (uintptr_t)data,
+			 bytes, &length_write);
 
-	FlashStatus.busy = DRIVER_STATUS_IDLE;
+	dev->status.busy = DRIVER_STATUS_IDLE;
 
 	if (ret || (length_write != bytes)) {
-		FlashStatus.error = DRIVER_STATUS_ERROR;
+		dev->status.error = DRIVER_STATUS_ERROR;
 		return ARM_DRIVER_ERROR;
 	}
 
 	return cnt;
 }
 
-static int32_t ARM_Flash_EraseSector(uint32_t addr)
+static int32_t ARM_Part_X_EraseSector(arm_part_dev_t *dev, uint32_t addr)
 {
+	const struct spi_nor_ops *ops = dev->dev_flash->api;
 	int ret;
 
-	FlashStatus.error = DRIVER_STATUS_NO_ERROR;
-	FlashStatus.busy = DRIVER_STATUS_BUSY;
+	dev->status.error = DRIVER_STATUS_NO_ERROR;
+	dev->status.busy = DRIVER_STATUS_BUSY;
 
-	ret = spi_nor_erase(addr);
+	ret = ops->erase(dev->dev_flash, addr);
 
-	FlashStatus.busy = DRIVER_STATUS_IDLE;
+	dev->status.busy = DRIVER_STATUS_IDLE;
 
 	if (ret) {
-		FlashStatus.error = DRIVER_STATUS_ERROR;
+		dev->status.error = DRIVER_STATUS_ERROR;
 		return ARM_DRIVER_ERROR;
 	}
 
 	return ARM_DRIVER_OK;
 }
 
-static int32_t ARM_Flash_EraseChip(void)
+static int32_t ARM_Part_X_EraseChip(arm_part_dev_t *dev)
 {
-	uint32_t i;
-	int ret = 0;
-
-	FlashStatus.error = DRIVER_STATUS_NO_ERROR;
-        FlashStatus.busy = DRIVER_STATUS_BUSY;
-
-	for (i = 0; i < FlashInfo.sector_count; i++) {
-		ret = spi_nor_erase(FlashInfo.sector_size * i);
-		if (ret)
-			break;
-	}
-
-	FlashStatus.busy = DRIVER_STATUS_IDLE;
-
-	if (ret) {
-		FlashStatus.error = DRIVER_STATUS_ERROR;
-		return ARM_DRIVER_ERROR;
-	}
-
-	return ARM_DRIVER_OK;
+	return ARM_DRIVER_ERROR_UNSUPPORTED;
 }
 
-static ARM_FLASH_STATUS ARM_Flash_GetStatus(void)
+static ARM_FLASH_STATUS ARM_Part_X_GetStatus(arm_part_dev_t *dev)
 {
-	return FlashStatus;
+	return dev->status;
 }
 
-static ARM_FLASH_INFO * ARM_Flash_GetInfo(void)
+static ARM_FLASH_INFO * ARM_Part_X_GetInfo(arm_part_dev_t *dev)
 {
-	return &FlashInfo;
+	return dev->data;
 }
 
-ARM_DRIVER_FLASH Driver_OSPI_SPI_NOR_FLASH = {
-	ARM_Flash_GetVersion,
-	ARM_Flash_GetCapabilities,
-	ARM_Flash_Initialize,
-	ARM_Flash_Uninitialize,
-	ARM_Flash_PowerControl,
-	ARM_Flash_ReadData,
-	ARM_Flash_ProgramData,
-	ARM_Flash_EraseSector,
-	ARM_Flash_EraseChip,
-	ARM_Flash_GetStatus,
-	ARM_Flash_GetInfo
+#define PARTITION(n)									\
+static ARM_FLASH_INFO PART_DATA_##n = {							\
+	.sector_info  = NULL, /* Uniform sector layout */				\
+	.sector_count = DT_REG_SIZE(n) / DT_PROP(DT_GPARENT(n), erase_size),		\
+	.sector_size  = DT_PROP(DT_GPARENT(n), erase_size),				\
+	.page_size  = DT_PROP(DT_GPARENT(n), write_size),				\
+	.program_unit = 1u,								\
+	.erased_value = 0xFF,								\
+};											\
+											\
+static arm_part_dev_t PART_DEV_##n = {							\
+	.dev_flash = DEVICE_DT_GET(DT_GPARENT(n)),					\
+	.offset = DT_REG_ADDR(n),							\
+	.size = DT_REG_SIZE(n),								\
+	.data = &(PART_DATA_##n),							\
+	.status = {									\
+		.busy = DRIVER_STATUS_IDLE,						\
+		.error = DRIVER_STATUS_NO_ERROR,					\
+		.reserved = 0u,								\
+	},										\
+};											\
+											\
+static int32_t ARM_Part_##n##_Initialize(ARM_Flash_SignalEvent_t cb_event)		\
+{											\
+	return ARM_Part_X_Initialize(&PART_DEV_##n, cb_event);				\
+}											\
+											\
+static int32_t ARM_Part_##n##_Uninitialize(void)					\
+{											\
+	return ARM_Part_X_Uninitialize(&PART_DEV_##n);					\
+}											\
+											\
+static int32_t ARM_Part_##n##_PowerControl(ARM_POWER_STATE state)			\
+{											\
+	return ARM_Part_X_PowerControl(&PART_DEV_##n, state);				\
+}											\
+											\
+static int32_t ARM_Part_##n##_ReadData(uint32_t addr, void *data, uint32_t cnt)		\
+{											\
+	return ARM_Part_X_ReadData(&PART_DEV_##n, addr, data, cnt);			\
+}											\
+											\
+static int32_t ARM_Part_##n##_ProgramData(uint32_t addr,				\
+						const void *data, uint32_t cnt)		\
+{											\
+	return ARM_Part_X_ProgramData(&PART_DEV_##n, addr, data, cnt);			\
+}											\
+											\
+static int32_t ARM_Part_##n##_EraseSector(uint32_t addr)				\
+{											\
+	return ARM_Part_X_EraseSector(&PART_DEV_##n, addr);				\
+}											\
+											\
+static int32_t ARM_Part_##n##_EraseChip(void)						\
+{											\
+	return ARM_Part_X_EraseChip(&PART_DEV_##n);					\
+}											\
+											\
+static ARM_FLASH_STATUS ARM_Part_##n##_GetStatus(void)					\
+{											\
+	return ARM_Part_X_GetStatus(&PART_DEV_##n);					\
+}											\
+											\
+static ARM_FLASH_INFO * ARM_Part_##n##_GetInfo(void)					\
+{											\
+	return ARM_Part_X_GetInfo(&PART_DEV_##n);					\
+}											\
+											\
+extern ARM_DRIVER_FLASH Driver_##n;							\
+ARM_DRIVER_FLASH Driver_##n = {								\
+	ARM_Part_GetVersion,								\
+	ARM_Part_GetCapabilities,							\
+	ARM_Part_##n##_Initialize,							\
+	ARM_Part_##n##_Uninitialize,							\
+	ARM_Part_##n##_PowerControl,							\
+	ARM_Part_##n##_ReadData,							\
+	ARM_Part_##n##_ProgramData,							\
+	ARM_Part_##n##_EraseSector,							\
+	ARM_Part_##n##_EraseChip,							\
+	ARM_Part_##n##_GetStatus,							\
+	ARM_Part_##n##_GetInfo								\
 };
+
+#define FOREACH_PARTITION(n) DT_INST_FOREACH_CHILD(n, PARTITION)
+
+DT_INST_FOREACH_STATUS_OKAY(FOREACH_PARTITION)
