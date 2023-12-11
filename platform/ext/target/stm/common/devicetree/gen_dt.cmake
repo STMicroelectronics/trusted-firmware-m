@@ -20,6 +20,9 @@ set(DT_GEN_DEFINES_SCRIPT ${DEVICETREE_DIR}/gen_defines.py)
 set(DT_VENDOR_PREFIXES ${DT_BINDINGS_DIR}/vendor-prefixes.txt)
 set(DT_PYTHON_DEVICETREE_SRC ${DEVICETREE_DIR}/python-devicetree/src)
 
+# output variables
+set(GENERATED_DT_DIR ${CMAKE_BINARY_DIR}/generated/devicetree)
+
 function(dt_preprocess)
     set(req_single_args "OUT_FILE")
     set(single_args "DEPS_FILE;WORKING_DIRECTORY")
@@ -130,6 +133,59 @@ function(gen_devicetree DTS_DIR DTS_BOARD OUT_DIR)
 	endif()
 
 endfunction()
+
+macro(add_devicetree_target)
+	# Parse arguments
+	set(options "")
+	set(oneValueArgs TARGET DTS_BOARD)
+	set(multiValueArgs DTS_DIR DTC_FLAGS)
+	cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+	if (NOT EXISTS ${ARG_DTS_DIR})
+		set(ARG_DTS_DIR ${DT_DTS_DIR})
+	endif()
+
+	set(DTS_FILE ${ARG_DTS_DIR}/${ARG_DTS_BOARD})
+
+	if ((NOT EXISTS ${DTS_FILE}) OR (IS_DIRECTORY ${DTS_FILE}))
+		message(FATAL_ERROR "devicetree: board ${DTS_FILE} not exist")
+	endif()
+
+	set(GEN_DT_OUT_DIR ${GENERATED_DT_DIR}/${ARG_TARGET})
+
+	set(GEN_DT_OPT
+		-DDTS_DIR=${ARG_DTS_DIR}
+		-DDTS_BOARD=${ARG_DTS_BOARD}
+		-DOUT_DIR=${GEN_DT_OUT_DIR}
+		-DDTC_FLAGS=${ARG_DTC_FLAGS}
+	)
+
+	add_custom_command(
+		OUTPUT ${GEN_DT_OUT_DIR}/devicetree_generated.h
+		COMMENT "DEVICETREE: ${ARG_TARGET}: preprocess and header generation"
+		COMMAND ${CMAKE_COMMAND} ${GEN_DT_OPT} -P ${DEVICETREE_DIR}/gen_dt.cmake
+	)
+
+	add_custom_target(dt_${ARG_TARGET}_gen_h
+		DEPENDS ${GENERATED_DT_DIR}/${ARG_TARGET}/devicetree_generated.h
+	)
+
+	add_library(dt_${ARG_TARGET}_defs INTERFACE)
+	target_include_directories(dt_${ARG_TARGET}_defs
+		INTERFACE
+			${DT_INCLUDE_DIR}
+			${GEN_DT_OUT_DIR}
+	)
+
+	# allow to add devicetree include directory at target with
+	# devicetree link.
+	target_link_libraries(${ARG_TARGET}
+		PUBLIC
+			dt_${ARG_TARGET}_defs
+	)
+
+	add_dependencies(${ARG_TARGET} dt_${ARG_TARGET}_gen_h)
+endmacro()
 
 if(DEFINED DTS_BOARD AND DEFINED OUT_DIR)
 	if (NOT EXISTS ${DTS_DIR})
