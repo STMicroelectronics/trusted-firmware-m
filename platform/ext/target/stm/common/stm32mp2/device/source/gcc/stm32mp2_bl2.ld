@@ -24,8 +24,9 @@
 
 MEMORY
 {
-    RETRAM     (rx)  : ORIGIN = BL2_CODE_START,    LENGTH = BL2_CODE_SIZE
-    RAM        (rwx) : ORIGIN = BL2_DATA_START,    LENGTH = BL2_DATA_SIZE
+    RETRAM     (rx)  : ORIGIN = BL2_CODE_START,		LENGTH = BL2_CODE_SIZE
+    RAM        (rwx) : ORIGIN = BL2_DATA_START,		LENGTH = BL2_DATA_SIZE
+    STACK      (rwx) : ORIGIN = BL2_MSP_STACK_START,	LENGTH = BL2_MSP_STACK_SIZE
 }
 
 __heap_size__  = BL2_HEAP_SIZE;
@@ -171,13 +172,6 @@ SECTIONS
 
     bss_size = __bss_end__ - __bss_start__;
 
-    .msp_stack : ALIGN(32)
-    {
-        . += __msp_stack_size__;
-    } > RAM
-    Image$$ARM_LIB_STACK$$ZI$$Base = ADDR(.msp_stack);
-    Image$$ARM_LIB_STACK$$ZI$$Limit = ADDR(.msp_stack) + SIZEOF(.msp_stack);
-
     .heap : ALIGN(8)
     {
         . = ALIGN(8);
@@ -188,6 +182,15 @@ SECTIONS
         __HeapLimit = .;
         __heap_limit = .; /* Add for _sbrk */
     } > RAM
+
+    /* allocate stack at the end */
+    .msp_stack : ALIGN(32)
+    {
+        . += __msp_stack_size__;
+    } > STACK
+
+    Image$$ARM_LIB_STACK$$ZI$$Base = ADDR(.msp_stack);
+    Image$$ARM_LIB_STACK$$ZI$$Limit = ADDR(.msp_stack) + SIZEOF(.msp_stack);
     Image$$ARM_LIB_HEAP$$ZI$$Limit = ADDR(.heap) + SIZEOF(.heap);
 
     PROVIDE(__stack = Image$$ARM_LIB_STACK$$ZI$$Limit);

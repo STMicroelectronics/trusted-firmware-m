@@ -45,10 +45,10 @@ void Reset_Handler  (void) __NO_RETURN;
 /*----------------------------------------------------------------------------
   Exception / Interrupt Handler
  *----------------------------------------------------------------------------*/
-#define DEFAULT_IRQ_HANDLER(handler_name)  \
-void handler_name(void); \
-__WEAK void handler_name(void) { \
-    while(1); \
+#define DEFAULT_IRQ_HANDLER(handler_name)	\
+void handler_name(void);			\
+__WEAK void handler_name(void) {		\
+	while(1);				\
 }
 
 /* Exceptions */
@@ -707,12 +707,28 @@ const pFunc __VECTOR_TABLE[] __VECTOR_TABLE_ATTRIBUTE = {
 #pragma GCC diagnostic pop
 #endif
 
+static void secure_sram1(void)
+{
+	uint32_t i;
+
+	for(i = 0; i < 31; i++)
+		RISAB3_S->PGSECCFGR[i] = 0xffffffff;
+}
+
 /*----------------------------------------------------------------------------
   Reset Handler called on controller reset
  *----------------------------------------------------------------------------*/
-void Reset_Handler(void)
+/* attribute naked , remove a useless push at begin of function , since stack
+ * is not accessible amy stack push before RISAB3 configuration should be
+ * avoided
+ */
+void __attribute__ ((naked)) Reset_Handler(void)
 {
-  __set_MSPLIM((uint32_t)(&__STACK_LIMIT));
-  SystemInit();                             /* CMSIS System Initialization */
-  __PROGRAM_START();                        /* Enter PreMain (C library entry point) */
+	__set_MSPLIM((uint32_t)(&__STACK_LIMIT));
+
+	RISAB3_S->PGSECCFGR[31] = 0xffffffff;
+	secure_sram1();
+
+	SystemInit();                             /* CMSIS System Initialization */
+	__PROGRAM_START();                        /* Enter PreMain (C library entry point) */
 }
