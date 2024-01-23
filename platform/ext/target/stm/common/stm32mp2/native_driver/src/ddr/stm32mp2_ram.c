@@ -21,11 +21,11 @@
 #include <regulator.h>
 #include <clk.h>
 
-#if CONFIG_STM32MP25X_REVA
-#define DDR_MAX_SIZE		UL(0x80000000)	/* Max 2GB */
-#else
-#define DDR_MAX_SIZE		UL(0x100000000)	/* Max 4GB */
-#endif
+/*
+ * Cortex m33 System control starts at 0xE000 0000
+ * Max ddr size is 0xE000 0000 - DDR_MEM_BASE
+ */
+#define DDR_MAX_SIZE	(0xE0000000 - DDR_MEM_BASE)
 
 uintptr_t stm32mp_ddrphyc_base(void)
 {
