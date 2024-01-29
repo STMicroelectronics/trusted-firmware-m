@@ -83,8 +83,8 @@
 			};
 			vddcore: buck2 {
 				regulator-name = "vddcore";
-				regulator-min-microvolt = <820000>;
-				regulator-max-microvolt = <820000>;
+				regulator-min-microvolt = <910000>;
+				regulator-max-microvolt = <910000>;
 				regulator-always-on;
 			};
 			vddgpu_pmic: buck3 {
