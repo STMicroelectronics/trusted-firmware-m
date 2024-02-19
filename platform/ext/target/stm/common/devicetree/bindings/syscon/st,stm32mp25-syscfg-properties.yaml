@@ -19,3 +19,11 @@ properties:
     type: phandle-array
     specifier-space: syscfg-reg-mask
     description: enable syscfg safe reset connector if defined
+
+  st,syscfg-amcr:
+    type: phandle-array
+    specifier-space: syscfg-reg-mask
+    description: The Address Mapping Control Register (AMCR) is used
+      to split the 256MB memory map area shared between the 2 OSPI
+      Memory Interface (OMI). The Octo Memory Manager sets the AMCR
+      depending of the memory-region configuration.
