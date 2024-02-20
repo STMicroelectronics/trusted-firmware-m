@@ -5,7 +5,7 @@
 
 /dts-v1/;
 
-#include "stm32mp257f-ev1_s.dts"
+#include "stm32mp257f-ev1-ns.dts"
 
 / {
 	model = "STMicroelectronics STM32MP257F-EV1 Evaluation Board cut1.1";
