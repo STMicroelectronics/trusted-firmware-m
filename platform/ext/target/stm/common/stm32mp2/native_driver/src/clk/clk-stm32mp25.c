@@ -3205,6 +3205,7 @@ static bool clk_stm32_clock_is_critical(__maybe_unused struct clk *clk)
 
 #if defined(STM32_SEC)
 		, &ck_icn_p_risaf4
+		, &ck_icn_p_rtc
 #endif
 	};
 	size_t i = 0;
