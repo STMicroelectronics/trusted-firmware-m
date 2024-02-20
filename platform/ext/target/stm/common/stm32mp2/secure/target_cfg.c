@@ -68,9 +68,11 @@ enum tfm_plat_err_t nvic_interrupt_target_state_cfg(void)
 		NVIC->ITNS[i] = 0xFFFFFFFF;
 	}
 
-	/* Make sure that IAC/SERF are targeted to S state */
-	NVIC_ClearTargetState(IAC_IRQn);
-	NVIC_ClearTargetState(SERF_IRQn);
+	if (IS_ENABLED(STM32_M33TDCID)) {
+		/* Make sure that IAC/SERF are targeted to S state */
+		NVIC_ClearTargetState(IAC_IRQn);
+		NVIC_ClearTargetState(SERF_IRQn);
+	}
 
 	return TFM_PLAT_ERR_SUCCESS;
 }
@@ -78,8 +80,10 @@ enum tfm_plat_err_t nvic_interrupt_target_state_cfg(void)
 /*----------------- NVIC interrupt enabling for S peripherals ----------------*/
 enum tfm_plat_err_t nvic_interrupt_enable()
 {
-	stm32_iac_enable_irq();
-	stm32_serc_enable_irq();
+	if (IS_ENABLED(STM32_M33TDCID)) {
+		stm32_iac_enable_irq();
+		stm32_serc_enable_irq();
+	}
 
 	return TFM_PLAT_ERR_SUCCESS;
 }
