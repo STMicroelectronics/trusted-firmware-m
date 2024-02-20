@@ -1421,7 +1421,7 @@ class Node:
 
         # Skip properties that start with '#', like '#size-cells', and mapping
         # properties like 'gpio-map'/'interrupt-map'
-        if name[0] == "#" or name.endswith("-map"):
+        if name[0] == "#" or prop_type == "compound":
             return
 
         self.props[name] = Property(prop_spec, val, self)
