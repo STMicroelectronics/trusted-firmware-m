@@ -110,11 +110,22 @@
 			};
 		};
 
+		ddr: ddr@58040000 {
+			compatible = "st,stm32mp2-ddr";
+			reg = <0x58040000 0x10000>,
+			      <0x58c00000 0x400000>,
+			      <0x58050000 0x10000>;
+			reg-names = "ctrl", "phy", "dbg";
+			clocks = <&rcc CK_BUS_DDR>;
+			status = "disabled";
+		};
+
 		rifsc: rifsc@52080000 {
-			compatible = "st,stm32mp25-rifsc", "syscon";
+			compatible = "st,stm32mp25-rifsc";
 			reg = <0x52080000 0x1000>;
 			#address-cells = <1>;
 			#size-cells = <1>;
+			status = "disabled";
 
 			uart5: serial@50110000 {
 				compatible = "st,stm32h7-uart";
@@ -122,31 +133,118 @@
 				clocks = <&rcc CK_KER_UART5>;
 				status = "disabled";
 			};
+
+			i2c7: i2c@50180000 {
+				compatible = "st,stm32mp25-i2c";
+				reg = <0x50180000 0x400>;
+				clocks = <&rcc CK_KER_I2C7>;
+				resets = <&rctl I2C7_R>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				i2c-analog-filter;
+				status = "disabled";
+			};
 		};
 
 		iac: iac@52090000 {
-			compatible = "st,stm32-iac";
+			compatible = "st,stm32mp25-iac";
 			reg = <0x52090000 0x400>;
 			interrupts = <246 0>;
+			status = "disabled";
+		};
+
+		risab1: risab@520f0000 {
+			compatible = "st,stm32mp25-risab";
+			reg = <0x520f0000 0x1000>, <0xe000000 0x20000>;
+			reg-names = "risab", "risab_mm";
+			clocks = <&rcc CK_ICN_LS_MCU>;
+			status = "disabled";
+		};
+
+		risab2: risab@52100000 {
+			compatible = "st,stm32mp25-risab";
+			reg = <0x52100000 0x1000>, <0xe020000 0x20000>;
+			reg-names = "risab", "risab_mm";
+			clocks = <&rcc CK_ICN_LS_MCU>;
+			status = "disabled";
+		};
+
+		risab3: risab@52110000 {
+			compatible = "st,stm32mp25-risab";
+			reg = <0x52110000 0x1000>, <0xe040000 0x20000>;
+			reg-names = "risab", "risab_mm";
+			clocks = <&rcc CK_ICN_LS_MCU>;
+			status = "disabled";
+		};
+
+		risab4: risab@52120000 {
+			compatible = "st,stm32mp25-risab";
+			reg = <0x52120000 0x1000>, <0xe060000 0x20000>;
+			reg-names = "risab", "risab_mm";
+			clocks = <&rcc CK_ICN_LS_MCU>;
+			status = "disabled";
+		};
+
+		risab5: risab@52130000 {
+			compatible = "st,stm32mp25-risab";
+			reg = <0x52130000 0x1000>, <0xe080000 0x20000>;
+			reg-names = "risab", "risab_mm";
+			clocks = <&rcc CK_ICN_LS_MCU>;
+			status = "disabled";
+		};
+
+		risab6: risab@52140000 {
+			compatible = "st,stm32mp25-risab";
+			reg = <0x52140000 0x1000>, <0xe0a0000 0x20000>;
+			reg-names = "risab", "risab_mm";
+			clocks = <&rcc CK_ICN_LS_MCU>;
+			status = "disabled";
+		};
+
+		risaf1: risaf@520a0000 {
+			compatible = "st,stm32mp25-risaf";
+			reg = <0x520a0000 0x1000>;
+			clocks = <&rcc CK_BUS_BKPSRAM>;
+			st,mem-map = <0x0 0x52000000 0x0 0x2000>;
+			status = "disabled";
+		};
+
+		risaf2: risaf@520b0000 {
+			compatible = "st,stm32mp25-risaf";
+			reg = <0x520b0000 0x1000>;
+			clocks = <&rcc CK_KER_OSPI1>;
+			st,mem-map = <0x0 0x60000000 0x0 0x10000000>;
+			status = "disabled";
 		};
 
 		risaf4: risaf@520d0000 {
-			compatible = "st,stm32-risaf-enc";
+			compatible = "st,stm32mp25-risaf-enc";
 			reg = <0x520d0000 0x1000>;
 			clocks = <&rcc CK_BUS_RISAF4>;
-			st,mem-map = <0x80000000 0x80000000>;
+			st,mem-map = <0x0 0x80000000 0x1 0x00000000>;
+			status = "disabled";
+		};
+
+		risaf5: risaf@520e0000 {
+			compatible = "st,stm32mp25-risaf";
+			reg = <0x520e0000 0x1000>;
+			clocks = <&rcc CK_BUS_PCIE>;
+			st,mem-map = <0x0 0x10000000 0x0 0x10000000>;
+			status = "disabled";
 		};
 
 		bsec: efuse@54000000 {
 			compatible = "st,stm32mp25-bsec";
 			reg = <0x54000000 0x1000>;
+			status = "disabled";
 		};
 
 		serc: serc@54080000 {
-			compatible = "st,stm32-serc";
+			compatible = "st,stm32mp25-serc";
 			reg = <0x54080000 0x1000>;
 			interrupts = <240 0>;
 			clocks = <&rcc CK_BUS_SERC>;
+			status = "disabled";
 		};
 
 		rcc: rcc@54200000 {
@@ -175,6 +273,13 @@
 			#syscfg-reg-mask-cells = <2>;
 		};
 
+		pwr: pwr@54210000 {
+			compatible = "st,stm32mp25-pwr";
+			reg = <0x54210000 0x400>;
+			resets = <&rctl VSW_R>;
+			status = "disabled";
+		};
+
 		pinctrl: pinctrl@54240000 {
 			#address-cells = <1>;
 			#size-cells = <1>;
@@ -195,7 +300,7 @@
 			};
 
 			gpiob: gpio@54250000 {
-				compatible = "st,stm32-gpio";				
+				compatible = "st,stm32-gpio";
 				gpio-controller;
 				#gpio-cells = <2>;
 				interrupt-controller;
@@ -320,7 +425,7 @@
 			#size-cells = <1>;
 			compatible = "st,stm32mp257-z-pinctrl";
 			ranges = <0 0x56200000 0x400>;
-		        #gpio-range-cells = <3>;	
+		        #gpio-range-cells = <3>;
 
 			gpioz: gpio@56200000 {
 				compatible = "st,stm32-gpio";
