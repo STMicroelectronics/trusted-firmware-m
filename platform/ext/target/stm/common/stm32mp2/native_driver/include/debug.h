@@ -54,5 +54,10 @@
 
 #define panic() while(1)
 
+#define _ASSERT(_test)				\
+	do {					\
+		if (!(_test))			\
+			while(1);		\
+	} while(false)
 #endif /* DEBUG_H */
 
