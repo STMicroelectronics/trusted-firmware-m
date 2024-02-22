@@ -25,12 +25,12 @@
 MEMORY
 {
     RETRAM     (rx)  : ORIGIN = BL2_CODE_START,    LENGTH = BL2_CODE_SIZE
-    RETRAM_OTP (rx)  : ORIGIN = BL2_OTP_AREA_BASE, LENGTH = BL2_OTP_AREA_SIZE
     RAM        (rwx) : ORIGIN = BL2_DATA_START,    LENGTH = BL2_DATA_SIZE
 }
 
 __heap_size__  = BL2_HEAP_SIZE;
 __msp_stack_size__ = BL2_MSP_STACK_SIZE;
+REGION_ALIAS("FLASH", RETRAM);
 
 /* Library configurations */
 GROUP(libgcc.a libc.a libm.a libnosys.a)
@@ -39,11 +39,6 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
-    .BL2_OTP :
-    {
-       KEEP(*(.BL2_OTP_Const))
-    } > RETRAM_OTP
-
     .text :
     {
         KEEP(*(.vectors))
@@ -129,7 +124,7 @@ SECTIONS
     Image$$SHARED_DATA$$RW$$Base = ADDR(.tfm_bl2_shared_data);
     Image$$SHARED_DATA$$RW$$Limit = ADDR(.tfm_bl2_shared_data) + SIZEOF(.tfm_bl2_shared_data);
 
-    .data : AT (__etext)
+    .data :
     {
         __data_start__ = .;
         *(vtable)
@@ -161,7 +156,7 @@ SECTIONS
         /* All data end */
         __data_end__ = .;
 
-    } > RAM
+    } > RAM AT > RETRAM
     Image$$ER_DATA$$Base = ADDR(.data);
 
     .bss :
