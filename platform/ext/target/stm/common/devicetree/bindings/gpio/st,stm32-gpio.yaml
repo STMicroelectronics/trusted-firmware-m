@@ -7,7 +7,10 @@ description: |
 
 compatible: "st,stm32-gpio"
 
-include: [gpio-controller.yaml, base.yaml]
+include:
+  - base.yaml
+  - gpio-controller.yaml
+  - st,stm32mp25-rif.yaml
 
 properties:
   reg:

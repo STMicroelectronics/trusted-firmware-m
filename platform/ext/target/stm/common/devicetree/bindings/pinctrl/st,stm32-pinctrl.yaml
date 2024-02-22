@@ -9,7 +9,8 @@ description: |
 
 compatible: "st,stm32-pinctrl"
 
-include: [base.yaml]
+include:
+  - base.yaml
 
 properties:
   "#gpio-range-cells":

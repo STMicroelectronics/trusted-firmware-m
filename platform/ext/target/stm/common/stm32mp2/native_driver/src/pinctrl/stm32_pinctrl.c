@@ -8,10 +8,13 @@
 #include <lib/utils_def.h>
 #include <lib/mmio.h>
 
+#include <device.h>
 #include <pinctrl.h>
 #include <clk.h>
 #include <devicetree/gpio.h>
+#include <stm32_rifsc.h>
 #include <stm32_gpio.h>
+#include <debug.h>
 
 #define GPIO_MODE_OFFSET	U(0x00)
 #define GPIO_TYPE_OFFSET	U(0x04)
@@ -21,9 +24,15 @@
 #define GPIO_AFRL_OFFSET	U(0x20)
 #define GPIO_AFRH_OFFSET	U(0x24)
 #define GPIO_SECR_OFFSET	U(0x30)
+#define GPIO_PRIVCFGR_OFFSET	U(0x34)
+#define GPIO_RCFGLOCKR_OFFSET	U(0x38)
+#define GPIO_CIDCFGR(y)		(U(0x50) + U(0x8) * (y))
+#define GPIO_SEMCR(y)		(U(0x54) + U(0x8) * (y))
 
 #define GPIO_ALTERNATE_MASK	U(0x0F)
 #define GPIO_ALT_LOWER_LIMIT	U(0x08)
+
+#define GPIO_PER_BANK		16
 
 struct stm32_gpio_config {
 	uintptr_t base;
@@ -32,6 +41,8 @@ struct stm32_gpio_config {
 	int gpio_offset;
 	int pinctrl_offset;
 	int npins;
+	const struct risup_cfg *rif_cfg;
+	const int nrif_cfg;
 };
 
 static void _stm32_gpio_set_mode(uintptr_t base, struct gpio_cfg *gpio)
@@ -119,20 +130,82 @@ static int stm32_gpio_pin_is_valid(const struct device *dev, int pin_no)
 	return 1;
 }
 
-#define STM32_GPIO_INIT(n)						\
-static const struct stm32_gpio_config stm32_gpio_cfg_##n = {		\
-	.base = DT_INST_REG_ADDR(n),					\
-	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),		\
-	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),	\
-	.gpio_offset = DT_INST_GPIO_RANGES_CELL(n, gpio_offset),	\
-	.pinctrl_offset = DT_INST_GPIO_RANGES_CELL(n, pin_offset),	\
-	.npins = DT_INST_GPIO_RANGES_CELL(n, npins),			\
-};									\
-									\
-DEVICE_DT_INST_DEFINE(n,						\
-		      NULL,						\
-		      NULL, &stm32_gpio_cfg_##n,			\
-		      CORE, 0,						\
+static int _stm32_gpio_set_risup(const struct device *dev,
+				 const struct risup_cfg *risup)
+{
+	const struct stm32_gpio_config *drv_cfg = dev_get_config(dev);
+
+	if (!risup || risup->id >= GPIO_PER_BANK)
+		return -EINVAL;
+
+	mmio_clrsetbits_32(drv_cfg->base + GPIO_PRIVCFGR_OFFSET,
+			   BIT(risup->id), risup->priv << risup->id);
+
+	mmio_clrsetbits_32(drv_cfg->base + GPIO_SECR_OFFSET,
+			   BIT(risup->id), risup->sec << risup->id);
+
+	mmio_clrsetbits_32(drv_cfg->base + GPIO_CIDCFGR(risup->id),
+			   RIFSC_RISC_PERx_CID_MASK, risup->cid_attr);
+
+	return 0;
+}
+
+static int stm32_gpio_init(const struct device *dev)
+{
+	const struct stm32_gpio_config *drv_cfg = dev_get_config(dev);
+	struct clk *clk;
+	int i, err = 0;
+
+	if (!drv_cfg->nrif_cfg)
+		return 0;
+
+	clk = clk_get(drv_cfg->clk_dev, drv_cfg->clk_subsys);
+	if (!clk)
+		return -ENODEV;
+
+	err = clk_enable(clk);
+	if (err)
+		return err;
+
+	for (i = 0; i < drv_cfg->nrif_cfg; i++) {
+		const struct risup_cfg *risup = drv_cfg->rif_cfg + i;
+
+		err = _stm32_gpio_set_risup(dev, risup);
+		if (err) {
+			EMSG("gpio risup cfg error");
+			goto out;
+		}
+	}
+
+out:
+	clk_disable(clk);
+
+	return err;
+}
+
+#define STM32_GPIO_INIT(n)								\
+											\
+static const struct risup_cfg risup_config_##n[] = {					\
+	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, st_protreg),				\
+		    (DT_INST_FOREACH_PROP_ELEM_SEP(n, st_protreg, STM32_RIFPROT, (,))),	\
+		    ())									\
+};											\
+											\
+static const struct stm32_gpio_config stm32_gpio_cfg_##n = {				\
+	.base = DT_INST_REG_ADDR(n),							\
+	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),				\
+	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),			\
+	.gpio_offset = DT_INST_GPIO_RANGES_CELL(n, gpio_offset),			\
+	.pinctrl_offset = DT_INST_GPIO_RANGES_CELL(n, pin_offset),			\
+	.npins = DT_INST_GPIO_RANGES_CELL(n, npins),					\
+	.rif_cfg = risup_config_##n,							\
+	.nrif_cfg = ARRAY_SIZE(risup_config_##n),					\
+};											\
+											\
+DEVICE_DT_INST_DEFINE(n,								\
+		      &stm32_gpio_init,							\
+		      NULL, &stm32_gpio_cfg_##n,					\
+		      PRE_CORE, 10,							\
 		      NULL);
 
 DT_INST_FOREACH_STATUS_OKAY(STM32_GPIO_INIT)
