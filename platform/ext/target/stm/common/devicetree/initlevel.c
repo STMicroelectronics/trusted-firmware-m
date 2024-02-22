@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 #include <device.h>
+#include <debug.h>
 
 extern const struct init_entry __init_start[];
 extern const struct init_entry __init_EARLY_start[];
@@ -34,7 +35,11 @@ void sys_init_run_level(enum init_level level)
 		 * with its reference, otherwise it is a system init.
 		 */
 		if (dev == NULL) {
-			(void)entry->init_fn.sys();
+			int err;
+
+			err = entry->init_fn.sys();
+			if (err)
+				EMSG("oops sysinit");
 			continue;
 		}
 
@@ -42,10 +47,13 @@ void sys_init_run_level(enum init_level level)
 		 * Mark device initialized. If initialization
 		 * failed, record the error condition.
 		 */
-		if (entry->init_fn.dev != NULL)
+		if (entry->init_fn.dev != NULL) {
 			dev->state->init_res = entry->init_fn.dev(dev);
-
-		dev->state->initialized = true;
+			dev->state->initialized = true;
+			if (dev->state->init_res)
+				EMSG("device:%s err:%d",
+				     dev->name, dev->state->init_res);
+		}
 	}
 }
 
