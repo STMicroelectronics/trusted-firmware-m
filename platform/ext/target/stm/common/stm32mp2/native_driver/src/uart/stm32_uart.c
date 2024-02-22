@@ -16,6 +16,7 @@
 #include <lib/mmio.h>
 #include <lib/mmiopoll.h>
 #include <lib/timeout.h>
+#include <debug.h>
 
 #include <target_cfg.h>
 
@@ -233,7 +234,7 @@ static uint32_t _stm32_uart_set_config(const struct device *dev)
 	 * Configure UART Clock Prescaler : set PRESCALER according to
 	 * drv_data->init.prescaler value.
 	 */
-	assert(drv_data->init.prescaler <= UART_PRESCALER_MAX);
+        _ASSERT(drv_data->init.prescaler <= UART_PRESCALER_MAX);
 	mmio_clrsetbits_32(drv_cfg->base + USART_PRESC, USART_PRESC_PRESCALER,
 			   drv_data->init.prescaler);
 
@@ -527,7 +528,7 @@ DEVICE_DT_INST_DEFINE(n,						\
 		      &stm32_uart_dt_init,				\
 		      &stm32_uart_data_##n,				\
 		      &stm32_uart_cfg_##n,				\
-		      CORE, 10,						\
+		      CORE, 0,						\
 		      &uart_stm32_api);
 
 DT_INST_FOREACH_STATUS_OKAY(STM32_UART_INIT)

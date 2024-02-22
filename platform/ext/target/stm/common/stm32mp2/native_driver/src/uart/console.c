@@ -92,4 +92,4 @@ static int uart_console_init(void)
 
 	return 0;
 }
-SYS_INIT(uart_console_init, CORE, 11);
+SYS_INIT(uart_console_init, CORE, 1);

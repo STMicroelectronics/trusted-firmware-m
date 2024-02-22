@@ -319,6 +319,7 @@ if(BL2)
 		PRIVATE
 			${STM_SOC_DIR}/device/source/startup_stm32mp2_bl2.c
 			${STM_SOC_DIR}/native_driver/src/timer/systick.c
+			${STM_SOC_DIR}/native_driver/src/uart/console.c
 			${STM_SOC_DIR}/native_driver/src/syscfg/stm32_syscfg.c
 			${STM_SOC_DIR}/native_driver/src/i2c/stm32_i2c.c
 			${STM_SOC_DIR}/native_driver/src/regulator/stm32mp2_pmic.c
