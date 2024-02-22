@@ -55,7 +55,7 @@ static void clk_init_parent(struct clk *clk)
 	default:
 		pidx = clk->ops->get_parent(clk);
 
-		assert(pidx < clk->num_parents);
+		_ASSERT(pidx < clk->num_parents);
 
 		clk->parent = clk->parents[pidx];
 		break;
@@ -84,7 +84,7 @@ int clk_reparent(struct clk *clk, struct clk *parent)
 
 int clk_register(struct clk *clk)
 {
-	assert(clk_check(clk));
+	_ASSERT(clk_check(clk));
 
 	clk_init_parent(clk);
 	clk_compute_rate_no_lock(clk);
@@ -108,7 +108,7 @@ static void clk_disable_no_lock(struct clk *clk)
 {
 	struct clk *parent = NULL;
 
-	assert(clk->enabled_count);
+	_ASSERT(clk->enabled_count);
 
 	if (--clk->enabled_count)
 		return;

@@ -37,6 +37,10 @@ struct div_cfg {
 
 struct stm32_rcc_config {
 	uintptr_t base;
+	const uint32_t c1msrd;
+	const struct device *syscfg;
+	const uint32_t saferst_reg;
+	const uint32_t saferst_mask;
 	const struct stm32_osci_dt_cfg *osci;
 	const uint32_t nosci;
 	const struct stm32_pll_dt_cfg *pll;
@@ -307,7 +311,11 @@ struct clk *stm32mp_rcc_clock_id_to_clk(struct clk_stm32_priv *priv,
 #define STM32_DT_OSCI_FREQ_CFG(_node_id, _id)				\
 	[_id] = {							\
 		.enabled = DT_NODE_HAS_STATUS(_node_id, okay),		\
-		.freq = DT_PROP(_node_id, clock_frequency)		\
+		.freq = DT_PROP(_node_id, clock_frequency),		\
+		.bypass = DT_PROP_OR(_node_id, st_bypass, false),	\
+		.digbyp = DT_PROP_OR(_node_id, st_digbyp, false),	\
+		.css = DT_PROP_OR(_node_id, st_css, false),		\
+		.drive = DT_PROP_OR(_node_id, st_drive, UINT32_MAX),	\
 	}
 
 #define DT_RCC_CLOCK_OSCI(_inst, _id, _name) \

@@ -13,10 +13,13 @@
 #include <lib/timeout.h>
 #include <lib/delay.h>
 #include <debug.h>
+
+#include <device.h>
 #include <clk.h>
 #include <stm32mp_clkfunc.h>
 #include <stm32mp25_clk.h>
 #include <stm32mp25_rcc.h>
+#include <syscon.h>
 
 #include <dt-bindings/clock/stm32mp25-clksrc.h>
 #include <dt-bindings/clock/stm32mp25-clks.h>
@@ -137,7 +140,7 @@
 #define RCC_CIDCFGR_CFEN		BIT(0)
 #define RCC_CIDCFGR_SEM_EN		BIT(1)
 #define RCC_CIDCFGR_SCID_SHIFT		4
-#define RCC_SEMWL_SHIFT			6
+#define RCC_SEMWL_SHIFT			16
 
 /* Compartiment IDs */
 #define RIF_CID0		0x0
@@ -948,6 +951,7 @@ static void stm32_enable_oscillator_lse(struct clk_stm32_priv *priv)
 	struct clk_oscillator_data *osc_data = clk_oscillator_get_data(OSC_LSE);
 	const struct stm32_rcc_config *rcc_cfg = priv->rcc_cfg;
 	const struct stm32_osci_dt_cfg *osci = &rcc_cfg->osci[OSC_LSE];
+	uint32_t drive = osci->drive;
 
 	if (!stm32_rcc_has_access_by_id(priv, RCC_RIF_OSCILLATORS))
 		return;
@@ -960,7 +964,10 @@ static void stm32_enable_oscillator_lse(struct clk_stm32_priv *priv)
 
 	clk_oscillator_set_bypass(priv, osc_data, osci->digbyp, osci->bypass);
 
-	clk_oscillator_set_drive(priv, osc_data,  osci->drive);
+	if (drive == UINT32_MAX)
+		drive = osc_data->drive->drv_default;
+
+	clk_oscillator_set_drive(priv, osc_data, drive);
 
 	/* Enable lse clock, but don't wait ready bit */
 	stm32_gate_enable(priv, osc_data->gate_id);
@@ -1097,7 +1104,7 @@ static void __maybe_unused stm32mp2_clk_xbar_on_hsi(struct clk_stm32_priv *priv)
 	uintptr_t rcc_base = clk_stm32_get_rcc_base(priv);
 	uint32_t i;
 
-	for (i = 0; i < XBAR_ROOT_CHANNEL_NB; i++) {
+	for (i = 0; i < XBAR_CHANNEL_NB; i++) {
 		if (!stm32_rcc_has_access_by_id(priv, i))
 			continue;
 
@@ -1153,7 +1160,7 @@ static int clk_stm32_pll_config_output(struct clk_stm32_priv *priv,
 		io_setbits32(pllxcfgr4, RCC_PLLxCFGR4_DSMEN);
 	}
 
-	assert(pllcfg[REFDIV] != 0U);
+	_ASSERT(pllcfg[REFDIV] != 0U);
 
 	io_clrsetbits32(pllxcfgr2, RCC_PLLxCFGR2_FBDIV_MASK,
 			   (pllcfg[FBDIV] << RCC_PLLxCFGR2_FBDIV_SHIFT) &
@@ -1492,7 +1499,7 @@ static int stm32_clk_configure(struct clk_stm32_priv *priv, uint32_t val)
 		break;
 
 	default:
-		EMSG("%s: cmd unknown ! : 0x%x\n", __func__, val);
+		EMSG("clk: cmd unknown ! : 0x%x\n", val);
 		ret = -1;
 	}
 
@@ -3175,7 +3182,7 @@ static void clk_stm32_set_flexgen_as_critical(struct clk_stm32_priv *priv)
 			continue;
 
 		clk = stm32mp_rcc_clock_id_to_clk(priv, clock_id);
-		assert(clk);
+		_ASSERT(clk);
 
 		clk_enable(clk);
 	}
@@ -3243,6 +3250,20 @@ static void clk_stm32_init_oscillators(struct clk_stm32_priv *priv)
 	}
 }
 
+static int clk_stm32_apply_rcc_config(const struct device *dev)
+{
+	const struct stm32_rcc_config *drv_cfg = dev_get_config(dev);
+
+	io_write32(drv_cfg->base + RCC_C1MSRDCR,
+		   drv_cfg->c1msrd & _RCC_C1MSRDCR_C1MSRD_MASK);
+
+	if (drv_cfg->syscfg && drv_cfg->saferst_reg != INT32_MAX)
+		syscon_setbits(drv_cfg->syscfg,
+			       drv_cfg->saferst_reg, drv_cfg->saferst_mask);
+
+	return 0;
+}
+
 static int stm32mp25_clk_dt_init(const struct device *dev)
 {
 	struct clk_stm32_priv *priv = (struct clk_stm32_priv *)dev_get_data(dev);
@@ -3252,22 +3273,28 @@ static int stm32mp25_clk_dt_init(const struct device *dev)
 
 	clk_stm32_init_oscillators(priv);
 
+#if defined(STM32_BL2)
+	mmio_setbits_32(clk_stm32_get_rcc_base(priv) + RCC_DDRITFCFGR,
+			RCC_DDRITFCFGR_DDRSHR);
+	/* Enable DDR clock and remove reset */
+	mmio_write_32(clk_stm32_get_rcc_base(priv) + RCC_DDRCPCFGR,
+		      RCC_DDRCPCFGR_DDRCPEN | RCC_DDRCPCFGR_DDRCPLPEN);
+#endif
+
 	err = stm32mp2_init_clock_tree(priv);
 	if (err != 0)
 		return err;
+
+	if (IS_ENABLED(STM32_M33TDCID)) {
+		err = clk_stm32_apply_rcc_config(dev);
+		if (err)
+			return err;
+	}
 
 	clk_stm32_register_clocks(priv);
 
 	/* todo after rif application */
 	clk_stm32_set_flexgen_as_critical(priv);
-
-#if defined(STM32_BL2)
-	mmio_setbits_32(clk_stm32_get_rcc_base(priv) + RCC_DDRITFCFGR, RCC_DDRITFCFGR_DDRSHR);
-
-	/* Enable DDR clock and remove reset */
-	mmio_write_32(clk_stm32_get_rcc_base(priv) + RCC_DDRCPCFGR,
-		      RCC_DDRCPCFGR_DDRCPEN | RCC_DDRCPCFGR_DDRCPLPEN);
-#endif
 
 	return 0;
 }
@@ -3284,11 +3311,41 @@ static const struct stm32_osci_dt_cfg stm32_osci[] = {
 	DT_RCC_CLOCK_OSCI(DT_DRV_INST(0), OSC_MSI, clk_msi),
 };
 
-static const struct stm32_pll_dt_cfg stm32_pll[] = {
+#define STM32_PLLCFG_DEFINE(node_id, __source)					\
+	[__source] = {								\
+		.enabled = true,						\
+		.cfg = DT_PROP_OR(node_id, cfg, {}),				\
+		.csg = DT_PROP_OR(node_id, csg, {}),				\
+		.frac = DT_PROP_OR(node_id, frac, 0),				\
+		.src = DT_PROP_OR(node_id, src, 0),				\
+		.csg_enabled = DT_NODE_HAS_PROP(node_id, csg)			\
+	},
+
+#define STM32_PLLX_DEFINE(node_id, _source)					\
+	DT_FOREACH_CHILD_VARGS(node_id, STM32_PLLCFG_DEFINE, _source)
+
+#define STM32_PLL_DEFINE_COND(child, source)					\
+	COND_CODE_1(DT_NODE_EXISTS(DT_INST_CHILD(0, child)),			\
+		    (STM32_PLLX_DEFINE(DT_INST_CHILD(0, child), source)),	\
+		    ())
+
+static struct stm32_pll_dt_cfg stm32_pll[] = {
+	STM32_PLL_DEFINE_COND(pll1, PLL1_ID)
+	STM32_PLL_DEFINE_COND(pll2, PLL2_ID)
+	STM32_PLL_DEFINE_COND(pll3, PLL3_ID)
+	STM32_PLL_DEFINE_COND(pll4, PLL4_ID)
+	STM32_PLL_DEFINE_COND(pll5, PLL5_ID)
+	STM32_PLL_DEFINE_COND(pll6, PLL6_ID)
+	STM32_PLL_DEFINE_COND(pll7, PLL7_ID)
+	STM32_PLL_DEFINE_COND(pll8, PLL8_ID)
 };
 
 const struct stm32_rcc_config stm32mp25_rcc_cfg = {
 	.base = DT_INST_REG_ADDR(0),
+	.c1msrd = DT_INST_PROP_OR(0, st_c1msrd, 0),
+	.syscfg = DEVICE_DT_GET_OR_NULL(DT_INST_PHANDLE(0, st_syscfg_safe_reset)),
+	.saferst_reg = DT_INST_PHA_OR(0, st_syscfg_safe_reset, offset, INT32_MAX),
+	.saferst_mask = DT_INST_PHA_OR(0, st_syscfg_safe_reset, mask, 0),
 	.busclk = stm32mp25_bclk,
 	.nbusclk = ARRAY_SIZE(stm32mp25_bclk),
 	.kernelclk = stm32mp25_kclk,

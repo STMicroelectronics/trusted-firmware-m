@@ -26,7 +26,12 @@ description: |
 
 compatible: "st,stm32mp25-rcc"
 
-include: [clock-controller.yaml, base.yaml]
+include:
+  - base.yaml
+  - clock-controller.yaml
+  - name: st,stm32mp25-syscfg-properties.yaml
+    property-allowlist:
+      - st,syscfg-safe-reset
 
 properties:
   reg:
@@ -34,6 +39,11 @@ properties:
 
   "#clock-cells":
     const: 1
+
+  st,c1msrd:
+    type: int
+    description: |
+      defines the minimum duration of the low-level pulse on NRSTC1MS when C1MSRST is high.
 
   st,busclk:
     type: array
@@ -121,23 +131,21 @@ properties:
                 MCO_CFG(MCO2, MUX_MCO2_FLEX62, MCO_OFF)
         >;
 
+  st,pll-enable:
+    type: phandles
+    description: |
+      Phandle of the default pll configuration.
+      A pll could have several configuration (5 max) and should be described in a subnode
+      just below.
+
 clock-cells:
   - bits
 
 child-binding:
-  description: pll configuration
-#   properties:
-#     st,pll:
-#       description: |
-#         Phandle of the default pll configuration.
-#         A pll could have several configuration (5 max) and should be described in a subnode
-#         just below.
-#       type: phandle
-
   child-binding:
     properties:
       cfg:
-       description: |
+        description: |
          The parameters for PLL frequency configuration in the following order
          <FBDIV FREFDIV POSTDIV1 POSTDIV2>
          FREF * (FBDIV / FREFDIV) / POSTDIV1 / POSTDIV2
@@ -146,8 +154,8 @@ child-binding:
            0x1: division by 1
            ...
            0x7: division by 7
-         (see ref manual for details)
-       type: array
+          (see ref manual for details)
+        type: array
 
       src:
         description: |
@@ -170,4 +178,3 @@ child-binding:
           - SSCG_MODE_CENTER_SPREAD = 0
           - SSCG_MODE_DOWN_SPREAD = 1
         type: int
-

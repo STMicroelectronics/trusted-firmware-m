@@ -19,3 +19,20 @@ properties:
 
   "#clock-cells":
     const: 0
+
+  st,bypass:
+    type: boolean
+    description: activates bypass mode (only for HSE, LSE)
+
+  st,digbypass:
+    type: boolean
+    description: activates digital bypass mode
+
+  st,css:
+    type: boolean
+    description: activates the clock security system (only for HSE, LSE)
+
+  st,drive:
+    type: int
+    description: contains the value of the drive (only for LSE)
+    enum: [0, 1, 2, 3]

@@ -14,3 +14,8 @@ properties:
         to sample the data in their valid window.
         - Tune the phase of the TX launch clock in order to meet setup
         and hold constraints of TX signals versus the memory clock.
+
+  st,syscfg-safe-reset:
+    type: phandle-array
+    specifier-space: syscfg-reg-mask
+    description: enable syscfg safe reset connector if defined
