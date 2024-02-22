@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2023, STMicroelectronics - All Rights Reserved
  *
- * SPDX-License-Identifier: GPL-2.0+ OR BSD-3-Clause
+ * SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
  */
 #define DT_DRV_COMPAT st_stm32mp25_omi
 
