@@ -74,19 +74,19 @@ struct reset_control {
  * @return static initializer for a struct reset_control for the property
  * @see DT_RESET_CONTROL_GET_BY_IDX()
  */
-#define DT_RESET_CONTROL_INST_GET_BY_IDX(inst, idx) \
+#define DT_INST_RESET_CONTROL_GET_BY_IDX(inst, idx) \
 	DT_RESET_CONTROL_GET_BY_IDX(DT_DRV_INST(inst), idx)
 
 
 /**
- * @brief Equivalent to DT_RESET_CONTROL_INST_GET_BY_IDX(inst, 0).
+ * @brief Equivalent to DT_INST_RESET_CONTROL_GET_BY_IDX(inst, 0).
  *
  * @param inst DT_DRV_COMPAT instance number
  * @return static initializer for a struct reset_control for the property
- * @see DT_RESET_CONTROL_INST_GET_BY_IDX()
+ * @see DT_INST_RESET_CONTROL_GET_BY_IDX()
  */
-#define DT_RESET_CONTROL_INST_GET(inst) \
-	DT_RESET_CONTROL_INST_GET_BY_IDX(inst, 0)
+#define DT_INST_RESET_CONTROL_GET(inst) \
+	DT_INST_RESET_CONTROL_GET_BY_IDX(inst, 0)
 
 #define _DT_RCTL(rst_id, node_id) DT_RESET_CONTROL_GET_BY_IDX(node_id, rst_id)
 
