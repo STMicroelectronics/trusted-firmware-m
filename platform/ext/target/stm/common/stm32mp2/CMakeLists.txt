@@ -148,6 +148,7 @@ target_sources(tfm_s
 		${STM_SOC_DIR}/native_driver/src/syscfg/stm32_syscfg.c
 		${STM_SOC_DIR}/native_driver/src/i2c/stm32_i2c.c
 		${STM_SOC_DIR}/native_driver/src/power/stm32mp2_pwr.c
+		${STM_SOC_DIR}/native_driver/src/bsec/stm32_bsec3.c
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c>
@@ -321,6 +322,7 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/timer/systick.c
 			${STM_SOC_DIR}/native_driver/src/uart/console.c
 			${STM_SOC_DIR}/native_driver/src/syscfg/stm32_syscfg.c
+			${STM_SOC_DIR}/native_driver/src/bsec/stm32_bsec3.c
 			${STM_SOC_DIR}/native_driver/src/i2c/stm32_i2c.c
 			${STM_SOC_DIR}/native_driver/src/regulator/stm32mp2_pmic.c
 			${STM_SOC_DIR}/native_driver/src/ddr/stm32mp2_ram.c

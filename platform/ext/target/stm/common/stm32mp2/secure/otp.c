@@ -107,6 +107,10 @@ enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
 	int err;
 
 	switch (id) {
+#if defined(STM32_BL2)
+	case PLAT_OTP_ID_BL2_ROTPK_0:
+	case PLAT_OTP_ID_BL2_ROTPK_1:
+#endif
 	case PLAT_OTP_ID_LCS:
 	case PLAT_OTP_ID_IAK:
 	case PLAT_OTP_ID_IAK_LEN:
@@ -151,6 +155,10 @@ enum tfm_plat_err_t tfm_plat_otp_get_size(enum tfm_otp_element_id_t id,
 	int err = 0;
 
 	switch (id) {
+#if defined(STM32_BL2)
+	case PLAT_OTP_ID_BL2_ROTPK_0:
+	case PLAT_OTP_ID_BL2_ROTPK_1:
+#endif
 	case PLAT_OTP_ID_LCS:
 	case PLAT_OTP_ID_IAK:
 	case PLAT_OTP_ID_IMPLEMENTATION_ID:
@@ -206,6 +214,10 @@ enum tfm_plat_err_t tfm_plat_otp_write(enum tfm_otp_element_id_t id,
 	int err = TFM_PLAT_ERR_UNSUPPORTED;
 
 	switch (id) {
+#if defined(STM32_BL2)
+	case PLAT_OTP_ID_BL2_ROTPK_0:
+	case PLAT_OTP_ID_BL2_ROTPK_1:
+#endif
 	case PLAT_OTP_ID_LCS:
 	case PLAT_OTP_ID_IMPLEMENTATION_ID:
 	case PLAT_OTP_ID_ENTROPY_SEED:
