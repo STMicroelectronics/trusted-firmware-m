@@ -13,10 +13,14 @@ configure_file(${STM_SOC_DIR}/boards/board_model.h.in
 include(${STM_DEVICETREE_DIR}/gen_dt.cmake)
 
 #========================= Platform region defs ===============================#
+# these flags are includes in bl2, tfm_s and tfm_ns
 target_compile_definitions(platform_region_defs
 	INTERFACE
 		$<$<BOOL:${STM32_IPC}>:STM32_IPC>
 		$<$<STREQUAL:${STM32_STM32MP2_SOC_REV},revA>:CONFIG_STM32MP25X_REVA=1>
+		$<$<STREQUAL:${STM32_BOOT_DEV},ospi>:STM32_BOOT_DEV_OSPI>
+		$<$<STREQUAL:${STM32_BOOT_DEV},ddr>:STM32_BOOT_DEV_DDR>
+		$<$<BOOL:${STM32_M33TDCID}>:STM32_M33TDCID>
 )
 
 target_include_directories(platform_region_defs
@@ -108,7 +112,6 @@ target_compile_definitions(platform_s
 	PUBLIC
 		STM32_SEC
 		STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
-		$<$<BOOL:${STM32_M33TDCID}>:STM32_M33TDCID>
 		STM32_PROV_FAKE=${STM32_PROV_FAKE}
 )
 
@@ -191,7 +194,6 @@ if(NS)
 		PUBLIC
 			STM32_NSEC
 			STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
-			$<$<BOOL:${STM32_M33TDCID}>:STM32_M33TDCID>
 	)
 
 	target_link_libraries(platform_ns
@@ -282,7 +284,6 @@ if(BL2)
 		PUBLIC
 			STM32_BL2
 			STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
-			$<$<BOOL:${STM32_M33TDCID}>:STM32_M33TDCID>
 			STM32_PROV_FAKE=${STM32_PROV_FAKE}
 	)
 

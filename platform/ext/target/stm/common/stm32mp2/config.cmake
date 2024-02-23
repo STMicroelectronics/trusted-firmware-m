@@ -12,6 +12,7 @@ set(STM32_LOG_LEVEL		        STM32_LOG_LEVEL_INFO    CACHE STRING    "Set defaul
 set(STM32_IPC				OFF			CACHE BOOL      "Use IPC (rpmsg) to communicate with main processor")
 set(STM32_PROV_FAKE			OFF                     CACHE BOOL      "Provisioning with dummy values. NOT to be used in production")
 set(STM32_STM32MP2_SOC_REV		"revA"			CACHE STRING	"Set soc revision: revA")
+set(STM32_M33TDCID			OFF			CACHE BOOL	"Define M33 like Trusted Domain Compartiment ID")
 
 ## platform
 set(PLATFORM_DEFAULT_UART_STDOUT        OFF			CACHE BOOL      "Use default uart stdout implementation.")
@@ -22,6 +23,16 @@ set(PLATFORM_DEFAULT_OTP_WRITEABLE      OFF                     CACHE BOOL      
 set(PLATFORM_DEFAULT_OTP                OFF                     CACHE BOOL      "Use trusted on-chip flash to implement OTP memory")
 set(PLATFORM_DEFAULT_PROVISIONING       OFF                     CACHE BOOL      "Use default provisioning implementation")
 set(TFM_DUMMY_PROVISIONING              OFF                     CACHE BOOL      "Provision with dummy values. NOT to be used in production")
+
+if (STM32_M33TDCID)
+	set(BL2                         ON                      CACHE BOOL     "Whether to build BL2" FORCE)
+        set(MCUBOOT_UPGRADE_STRATEGY    "RAM_LOAD"              CACHE STRING   "Upgrade strategy when multiple boot images are loaded [OVERWRITE_ONLY, SWAP, DIRECT_XIP, RAM_LOAD]" FORCE)
+	set(MCUBOOT_IMAGE_NUMBER        1                       CACHE STRING   "Whether to combine S and NS into either 1 image, or sign each seperately" FORCE)
+	set(STM32_BOOT_DEV		"ospi"	                CACHE STRING   "Set boot device: ddr or ospi")
+	set(BL2_HEADER_SIZE		0x800			CACHE STRING   "Header size to aligned vector table")
+else()
+	set(BL2                         OFF                     CACHE BOOL     "Whether to build BL2" FORCE)
+endif()
 
 if (STM32_STM32MP2_SOC_REV STREQUAL "revA")
 	set(STM32_HEADER_MAJOR_VER 2)
