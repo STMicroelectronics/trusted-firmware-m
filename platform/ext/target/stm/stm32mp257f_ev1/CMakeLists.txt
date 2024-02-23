@@ -12,6 +12,7 @@ include(${STM_SOC_DIR}/CMakeLists.txt)
 target_compile_definitions(platform_region_defs
 	INTERFACE
 		$<$<BOOL:${STM32_DDR_CACHED}>:STM32_DDR_CACHED>
+		STM32MP_DDR_DUAL_AXI_PORT=1
 )
 
 # Specify the location of platform specific build dependencies.
@@ -30,6 +31,13 @@ if(NS)
 		PUBLIC
 			__DOMAIN_NS=1
 			DOMAIN_NS=__DOMAIN_NS
+	)
+endif()
+
+if(BL2)
+	target_sources(bl2
+		PRIVATE
+			${STM_BOARD_DIR}/plat_device.c
 	)
 endif()
 

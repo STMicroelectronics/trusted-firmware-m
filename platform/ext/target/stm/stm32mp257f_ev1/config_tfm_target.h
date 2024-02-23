@@ -13,6 +13,10 @@
 
 /* For size optimization, set CLK_MINIMAL_SZ (no clock name defined e.g.) */
 #undef CLK_MINIMAL_SZ
-#define CLK_MINIMAL_SZ	0
+#define CLK_MINIMAL_SZ	1
+
+/* Set ddr4 type */
+#undef STM32MP_DDR4_TYPE
+#define STM32MP_DDR4_TYPE 1
 
 #endif /* __CONFIG_TFM_TARGET_H__ */

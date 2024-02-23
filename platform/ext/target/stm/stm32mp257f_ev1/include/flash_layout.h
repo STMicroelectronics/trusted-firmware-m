@@ -20,6 +20,46 @@
 #include "region_defs.h"
 #include "device_cfg.h"
 #include "devicetree.h"
+#include <cmsis_fixed_partitions.h>
+
+/*
+ * In M33tdcid
+ *   Flash image is define in devicetree by labels:
+ *      Label					Comment
+ *      ---------------------------------------------------------
+ *	bl2_primary_partition			BL2 bootloader - MCUboot (retram sz + bootrom padding)
+ *	bl2_secondary_partition			BL2 bootloader - MCUboot (retram sz + bootrom padding)
+ *	ddr_fw_primary_partition		Primary ddr setting
+ *	ddr_fw_secondary_partition		Secondary ddr setting
+ *	tfm_primary_partition			Primary image area (tfm_sign.bin)
+ *						Secure + Non-Secure image;
+ *						Primary memory partition
+ *		0x0000_0000 - 0x0000_03ff		Common image header
+ *		0x0000_0400 - 0x00x0_xxxx		Secure image
+ *		0x0008_xxxx - 0x008x_xxxx		Non-secure image
+ *		0x000x_xxxx - 0x0010_0000		Hash value(SHA256), RSA signature and other
+ *	tfm_secondary_partition			Secondary slot : Secure + Non-Secure image;
+ *						Secondary memory partition, structured
+ *						identically to the primary slot
+ */
+/*
+ *
+ * Code RAM layout
+ *
+ *   BL2, only in M33tdcid
+ *       0x0E08_0000 - 0x0E0A_0000		BL2  - MCUboot
+ *
+ *   tfm_s_ns is copied to Z->DDR_RAM_OFFSET
+ *   Z:0x0000_0000 - Z:x0010_0000		(tfm_s_ns) image has been copied to ddr:
+ *       Z:0x0000_0000 - Z:0x0008_0000		    Secure image
+ *       Z:0x0008_0000 - Z:0x0010_0000		    Non-secure image
+ *
+ * In A35tdcid (copro)
+ *   No flash Image, no BL2. A35 copies tfm_s_ns image to Z->DDR_RAM_OFFSET
+ *       Z:0x0000_0000 - Z:x0010_0000		(tfm_s_ns) image has been copied to ddr:
+ *       Z:0x0000_0000 - Z:0x0008_0000		    Secure image
+ *       Z:0x0008_0000 - Z:0x0010_0000		    Non-secure image
+ */
 
 /* This header file is included from linker scatter file as well, where only a
  * limited C constructs are allowed. Therefore it is not possible to include
@@ -51,7 +91,6 @@
 #define NS_BKPREG_ALIAS_BASE		(0x46010000 + 0x100)
 #define BKPREG_SZ			(0x80)			/* 128B */
 
-#define OSPI_ALIAS_BASE			(0x50430000)
 #define OSPI_MEM_BASE			(0x60000000)
 
 #define NS_DDR_ALIAS_BASE		(0x80000000)
@@ -61,12 +100,17 @@
 #define NS_REMAP2_ALIAS_BASE		(0x10000000)
 #define NS_REMAP1_ALIAS_BASE		(0x00000000)
 
-/* Offset and size definition in flash area used by assemble.py */
+/*
+ * Offset and size definition in flash area used by assemble.py
+ * Image not take account the bl2 header
+ *
+ * the bl2 header is add after assemble.py
+ */
 #define SECURE_IMAGE_OFFSET		0x0
-#define SECURE_IMAGE_MAX_SIZE		IMAGE_S_CODE_SIZE
+#define SECURE_IMAGE_MAX_SIZE		S_CODE_SIZE
 
-#define NON_SECURE_IMAGE_OFFSET		IMAGE_S_CODE_SIZE
-#define NON_SECURE_IMAGE_MAX_SIZE	IMAGE_NS_CODE_SIZE
+#define NON_SECURE_IMAGE_OFFSET		(S_CODE_SIZE)
+#define NON_SECURE_IMAGE_MAX_SIZE	NS_CODE_SIZE
 
 #define DDR_RAM_OFFSET			0x0
 
@@ -152,15 +196,81 @@
 #define TFM_HAL_PS_PROGRAM_UNIT		FLASH_DDR_PROGRAM_UNIT
 #define PS_RAM_FS_SIZE			TFM_HAL_PS_FLASH_AREA_SIZE
 #else
-#define TFM_HAL_PS_FLASH_DRIVER		UTIL_CAT(Driver_, DT_NODELABEL(tfm_ps_partition))
-#define TFM_HAL_PS_FLASH_AREA_ADDR	DT_REG_ADDR(DT_NODELABEL(tfm_ps_partition))
-#define TFM_HAL_PS_FLASH_AREA_SIZE	DT_REG_SIZE(DT_NODELABEL(tfm_ps_partition))
+#define TFM_HAL_PS_FLASH_DRIVER		DT_CMSIS_FIXED_PARTITIONS_DRIVER_BY_LABEL(tfm_ps_partition)
+#define TFM_HAL_PS_FLASH_AREA_ADDR	DT_CMSIS_FIXED_PARTITIONS_ADDR_BY_LABEL(tfm_ps_partition)
+#define TFM_HAL_PS_FLASH_AREA_SIZE	DT_CMSIS_FIXED_PARTITIONS_SIZE_BY_LABEL(tfm_ps_partition)
 #define TFM_HAL_PS_SECTORS_PER_BLOCK	(0x1)
 #define TFM_HAL_PS_PROGRAM_UNIT		(0x1)
 #endif
 
-#define TOTAL_RETRAM_SZ			(RETRAM_SZ)			/* 128 KB */
-#define TOTAL_SRAM_SZ			(SRAM1_SZ + SRAM2_SZ)		/* 256 KB */
-#define TOTAL_SYSRAM_SZ			(SYSRAM_SZ)			/* 256 KB */
+/* FIXME LBA integration for M33tdcid */
+#ifdef STM32_M33TDCID
+
+#define FLASH_BASE_ADDRESS		(OSPI1_MEM_BASE)
+#define FLASH_AREA_IMAGE_SECTOR_SIZE	SPI_NOR_FLASH_SECTOR_SIZE
+
+#define FLASH_IMAGE_OFFSET		0x0
+
+#define FLASH_AREA_BL2_OFFSET		FLASH_IMAGE_OFFSET
+#define FLASH_AREA_BL2_SIZE		RETRAM_SZ
+
+//#define FLASH_S_PARTITION_SIZE		IMAGE_S_CODE_SIZE + BL2_HEADER_SIZE
+//#define FLASH_NS_PARTITION_SIZE		IMAGE_NS_CODE_SIZE + BL2_TRAILER_SIZE
+
+/*
+ * Not used, only the RAM loading firmware upgrade operation
+ * is supported on STM32MP2. The maximum number of status entries
+ * supported by the bootloader.
+ */
+#define MCUBOOT_STATUS_MAX_ENTRIES	(0)
+/* Maximum number of image sectors supported by the bootloader. */
+#define MCUBOOT_MAX_IMG_SECTORS		((IMAGE_S_CODE_SIZE + \
+					  IMAGE_NS_CODE_SIZE) / \
+					 SPI_NOR_FLASH_SECTOR_SIZE)
+
+#if !defined(MCUBOOT_IMAGE_NUMBER) || (MCUBOOT_IMAGE_NUMBER == 1)
+
+#ifdef STM32_BOOT_DEV_OSPI
+#define FLASH_DEV_NAME			FLASH_DEV_NAME_0
+/* Secure + Non-secure image primary slot */
+#define FLASH_AREA_0_ID			(1)
+#define FLASH_DEVICE_ID_0		100
+#define FLASH_DEV_NAME_0		DT_CMSIS_FIXED_PARTITIONS_DRIVER_BY_LABEL(tfm_primary_partition)
+#define FLASH_AREA_0_OFFSET		DT_CMSIS_FIXED_PARTITIONS_ADDR_BY_LABEL(tfm_primary_partition)
+#define FLASH_AREA_0_SIZE		DT_CMSIS_FIXED_PARTITIONS_SIZE_BY_LABEL(tfm_primary_partition)
+/* Secure + Non-secure secondary slot */
+#define FLASH_AREA_2_ID			(FLASH_AREA_0_ID + 1)
+#define FLASH_DEVICE_ID_2		102
+#define FLASH_DEV_NAME_2		DT_CMSIS_FIXED_PARTITIONS_DRIVER_BY_LABEL(tfm_secondary_partition)
+#define FLASH_AREA_2_OFFSET		DT_CMSIS_FIXED_PARTITIONS_ADDR_BY_LABEL(tfm_secondary_partition)
+#define FLASH_AREA_2_SIZE		DT_CMSIS_FIXED_PARTITIONS_SIZE_BY_LABEL(tfm_secondary_partition)
+#define TFM_HAL_FLASH_PROGRAM_UNIT	SPI_NOR_FLASH_PAGE_SIZE
+#define DDR_RAM_OFFSET			0x0
+#endif
+
+/*
+ * On stm32mp2, only the RAM loading firmware upgrade operation
+ * is supported. The scratch area is not used
+ */
+#define FLASH_AREA_SCRATCH_ID		(FLASH_AREA_2_ID + 1)
+
+/*
+ * DDR firmware is copied from boot device to mcuram memory
+ *   - boot device is defined by ddr_fw_primary_partition of dt
+ *   - mcuram is defined reserved memory of dt
+ *
+ *   considerate the mcuram like the max size of ddr fw size
+ */
+#define DDR_FW_SIZE			DT_REG_SIZE(DT_NODELABEL(cm33_sram2)) /* exclusif for ddr */
+#define DDR_FW_DEST_ADDR		DT_REG_ADDR(DT_NODELABEL(cm33_sram2))
+#define FLASH_DEV_FW_DDR_NAME		DT_CMSIS_FIXED_PARTITIONS_DRIVER_BY_LABEL(ddr_fw_primary_partition)
+#define FLASH_DEV_FW_DDR_OFFSET		DT_CMSIS_FIXED_PARTITIONS_ADDR_BY_LABEL(ddr_fw_primary_partition)
+#define FLASH_DEV_FW_DDR_SIZE		DT_CMSIS_FIXED_PARTITIONS_SIZE_BY_LABEL(ddr_fw_primary_partition)
+
+#else /* MCUBOOT_IMAGE_NUMBER > 1 */
+#error "Only MCUBOOT_IMAGE_NUMBER 1 is supported!"
+#endif /* MCUBOOT_IMAGE_NUMBER */
+
+#endif /* STM32_M33TDCID */
 
 #endif /* __FLASH_LAYOUT_H__ */
