@@ -8,6 +8,28 @@
 #include <plat_device.h>
 
 #include <stm32_copro.h>
+#include <debug.h>
+
+/* temporary workaround */
+#include <cmsis.h>
+#include <init.h>
+#include <lib/delay.h>
+
+#define __HAL_RCC_CPU1_BOOT_ENABLE()        SET_BIT(RCC->CPUBOOTCR, RCC_CPUBOOTCR_BOOT_CPU1)
+
+static int cpu1_wakeup(void)
+{
+	/* Use C2SEV */
+	EXTI1->C1IMR3 |= 1 ;
+	__HAL_RCC_CPU1_BOOT_ENABLE();
+	EXTI1->SWIER3 |=1;
+
+	return 0;
+}
+SYS_INIT(cpu1_wakeup, POST_CORE, 99);
+
+/* when copro will be used with platform service  */
+#if 0
 #include <stm32_pwr.h>
 #include <rstctrl.h>
 
@@ -89,3 +111,4 @@ stm32_copro_service(const psa_invec *in_vec, const psa_outvec *out_vec)
 
 	return TFM_PLATFORM_ERR_SUCCESS;
 }
+#endif
