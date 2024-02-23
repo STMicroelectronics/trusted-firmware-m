@@ -285,7 +285,6 @@ if(BL2)
 			${STM_SOC_DIR}/secure/provisioning.c
 	)
 
-
 	target_compile_options(platform_bl2
 		PUBLIC
 			${COMPILER_CMSE_FLAG}
@@ -303,6 +302,8 @@ if(BL2)
 			tfm_config
 	)
 
+	add_subdirectory(${STM_SOC_DIR}/native_driver/src/ddr native_driver/src/ddr)
+
 	# GNU ld has some strange behaviour to do with weak functions, and does not deal
 	# well with strong functions in static libraries overriding weak functions in
 	# object files.
@@ -311,6 +312,7 @@ if(BL2)
 			${STM_SOC_DIR}/device/source/startup_stm32mp2_bl2.c
 			${STM_SOC_DIR}/native_driver/src/timer/systick.c
 			${STM_SOC_DIR}/native_driver/src/syscfg/stm32_syscfg.c
+			${STM_SOC_DIR}/native_driver/src/ddr/stm32mp2_ram.c
 			${STM_SOC_DIR}/native_driver/src/power/stm32mp2_pwr.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c

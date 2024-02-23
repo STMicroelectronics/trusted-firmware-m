@@ -10,16 +10,20 @@
  */
 #include <stdio.h>
 #include <stdbool.h>
+#include <errno.h>
 
 #include <cmsis.h>
 #include <region.h>
 #include <region_defs.h>
+#include <Driver_Flash.h>
 #include <bootutil/bootutil_log.h>
 #include <init.h>
 #include <debug.h>
 
 #include <stm32_icache.h>
 #include <stm32_bsec3.h>
+
+extern ARM_DRIVER_FLASH FLASH_DEV_FW_DDR_NAME;
 
 REGION_DECLARE(Image$$, ER_DATA, $$Base)[];
 REGION_DECLARE(Image$$, ARM_LIB_HEAP, $$ZI$$Limit)[];
@@ -79,6 +83,31 @@ int stm32mp2_init_debug(void)
 	return 0;
 }
 SYS_INIT(stm32mp2_init_debug, CORE, 11);
+
+static int stm32mp2_prepare_ddr_fw(void)
+{
+	int err, count;
+
+	if (FLASH_DEV_FW_DDR_NAME.Initialize(NULL) != ARM_DRIVER_OK) {
+		err = -ENODEV;
+		goto error;
+	}
+
+	count = FLASH_DEV_FW_DDR_NAME.ReadData(FLASH_DEV_FW_DDR_OFFSET,
+					(void*) DDR_FW_DEST_ADDR,
+					DDR_FW_SIZE);
+	if (count != DDR_FW_SIZE) {
+		err = -EIO;
+		goto error;
+	}
+
+	return 0;
+
+error:
+	EMSG("%s fail", __func__);
+	return err;
+}
+SYS_INIT(stm32mp2_prepare_ddr_fw, CORE, 15);
 
 /**
   * @brief  Platform init
