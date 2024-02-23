@@ -4,15 +4,12 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <errno.h>
-#include <stdint.h>
+#ifndef STM32MP2_PWR_H
+#define STM32MP2_PWR_H
+
+#include <stddef.h>
 #include <stdbool.h>
-
-#include <debug.h>
-#include <lib/mmio.h>
-#include <lib/utils_def.h>
-
-#include <stm32_pwr.h>
+#include <limits.h>
 
 #define _PWR_CR1					U(0x00)
 #define _PWR_CR2					U(0x04)
@@ -441,84 +438,28 @@
 #define _PWR_VERR_MAJREV_MASK		GENMASK(7, 4)
 #define _PWR_VERR_MAJREV_SHIFT		4
 
+/* FIXME: wait power domain to remove this hook */
+struct stm32_pwr_platdata {
+	uintptr_t base;
+};
 
-#define _PWR_FLD_PREP(field, value)	(((uint32_t)(value) << (field ## _SHIFT)) & (field ## _MASK))
-#define _PWR_FLD_GET(field, value)	(((uint32_t)(value) & (field ## _MASK)) >> (field ## _SHIFT))
+enum c_state {
+	CERR = INT_MIN,
+	CRESET = 0,
+	CRUN = 1,
+	CSLEEP = 2,
+	CSTOP = 3
+};
 
+enum d_state {
+	DERR = INT_MIN,
+	DRUN = 0,
+	DSTOP1 = 1,
+	DSTOP2 = 2,
+	DSTOP3 = 3,
+	DSTANDBY = 4,
+};
 
-#define _PWR_CPU_MIN 1
-#define _PWR_CPU_MAX 2
-
-static struct stm32_pwr_platdata pdata;
-
-__attribute__((weak))
-int stm32_pwr_get_platdata(struct stm32_pwr_platdata *pdata)
-{
-	return 0;
-}
-
-static uint32_t _cpux_base(uint32_t cpu)
-{
-	uint32_t offset = _PWR_CPU1D1SR;
-
-	if (cpu < _PWR_CPU_MIN || cpu > _PWR_CPU_MAX)
-		return 0;
-
-	offset += sizeof(uint32_t) * (cpu - _PWR_CPU_MIN);
-	return pdata.base + offset;
-}
-
-static int _cpu_state(uint32_t cpu, uint32_t *state)
-{
-	uint32_t cpux_base;
-
-	cpux_base = _cpux_base(cpu);
-	if (!cpux_base) {
-		IMSG("cpu:%d not valid");
-		return -1;
-	}
-
-	*state = mmio_read_32(cpux_base);
-	return 0;
-}
-
-enum c_state stm32_pwr_cpu_get_cstate(uint32_t cpu)
-{
-	uint32_t state;
-
-	if (_cpu_state(cpu, &state))
-		return CERR;
-
-	return _PWR_FLD_GET(_PWR_CPUXDXSR_CSTATE, state);
-}
-
-enum d_state stm32_pwr_cpu_get_dstate(uint32_t cpu)
-{
-	uint32_t state;
-
-	if (_cpu_state(cpu, &state))
-		return DERR;
-
-	return _PWR_FLD_GET(_PWR_CPUXDXSR_DSTATE, state);
-}
-
-void stm32_pwr_backupd_wp(bool enable)
-{
-	if (!enable) {
-		mmio_setbits_32(pdata.base + _PWR_BDCR1, _PWR_BDCR1_DBD3P);
-		while ((mmio_read_32(pdata.base + _PWR_BDCR1) & _PWR_BDCR1_DBD3P) == 0U) {
-			;
-		}
-	}
-}
-
-int stm32_pwr_init(void)
-{
-	int err;
-
-	err = stm32_pwr_get_platdata(&pdata);
-	if (err)
-		return err;
-
-	return 0;
-}
+enum c_state stm32_pwr_cpu_get_cstate(uint32_t cpu);
+enum d_state stm32_pwr_cpu_get_dstate(uint32_t cpu);
+#endif /* STM32MP2_PWR_H */

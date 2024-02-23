@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: (GPL-2.0 OR BSD-2-Clause)
+# Copyright (c) 2023, STMicroelectronics
+
+description: |
+  STMicroelectronics power control (PWR) provides an overview of the supply
+  architecture of the different power domains, and the control
+  of the supply configuration.
+
+compatible: "st,stm32mp25-pwr"
+
+include: [base.yaml, reset-device.yaml]
+
+properties:
+  reg:
+    required: true
+
+  resets:
+    required: true
+    description: |
+      backup domain reset

@@ -75,7 +75,7 @@ target_sources(platform_s
 		${STM_SOC_DIR}/cmsis_driver/driver_flash_mm.c
 		${STM_SOC_DIR}/native_driver/src/core/mpu_armv8m_drv.c
 		${STM_SOC_DIR}/native_driver/src/core/sau_armv8m_drv.c
-		${STM_SOC_DIR}/native_driver/src/pwr/stm32_pwr.c
+		${STM_SOC_DIR}/native_driver/src/power/stm32mp2_pwr.c
 		${STM_SOC_DIR}/native_driver/src/bsec/stm32_bsec3.c
 		${STM_SOC_DIR}/native_driver/src/syscfg/stm32_syscfg.c
 		${STM_SOC_DIR}/native_driver/src/clk/clk.c
@@ -143,6 +143,7 @@ target_sources(tfm_s
 		${STM_SOC_DIR}/device/source/startup_stm32mp2_s.c
 		${STM_SOC_DIR}/native_driver/src/timer/systick.c
 		${STM_SOC_DIR}/native_driver/src/syscfg/stm32_syscfg.c
+		${STM_SOC_DIR}/native_driver/src/power/stm32mp2_pwr.c
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c>
@@ -183,7 +184,7 @@ if(NS)
 		PRIVATE
 			${DEVICETREE_DIR}/initlevel.c
 			${STM_SOC_DIR}/device/source/system_stm32mp2xx_m33.c
-			${STM_SOC_DIR}/native_driver/src/pwr/stm32_pwr.c
+			${STM_SOC_DIR}/native_driver/src/power/stm32mp2_pwr.c
 			${STM_SOC_DIR}/native_driver/src/clk/clk.c
 			${STM_SOC_DIR}/native_driver/src/clk/clk-stm32-core.c
 			${STM_SOC_DIR}/native_driver/src/clk/clk-stm32mp25.c
@@ -257,7 +258,7 @@ if(BL2)
 			${STM_SOC_DIR}/cmsis_driver/driver_spi_flash.c
 			${STM_SOC_DIR}/cmsis_driver/driver_flash_mm.c
 			${STM_SOC_DIR}/native_driver/src/core/mpu_armv8m_drv.c
-			${STM_SOC_DIR}/native_driver/src/pwr/stm32_pwr.c
+			${STM_SOC_DIR}/native_driver/src/power/stm32mp2_pwr.c
 			${STM_SOC_DIR}/native_driver/src/bsec/stm32_bsec3.c
 			${STM_SOC_DIR}/native_driver/src/syscfg/stm32_syscfg.c
 			${STM_SOC_DIR}/native_driver/src/clk/clk.c
@@ -309,6 +310,7 @@ if(BL2)
 			${STM_SOC_DIR}/device/source/startup_stm32mp2_bl2.c
 			${STM_SOC_DIR}/native_driver/src/timer/systick.c
 			${STM_SOC_DIR}/native_driver/src/syscfg/stm32_syscfg.c
+			${STM_SOC_DIR}/native_driver/src/power/stm32mp2_pwr.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c
