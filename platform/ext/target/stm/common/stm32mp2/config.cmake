@@ -11,7 +11,7 @@ set(STM32_BOARD_MODEL			"stm32mp257 common"	CACHE STRING	"Define board model nam
 set(STM32_LOG_LEVEL		        STM32_LOG_LEVEL_INFO    CACHE STRING    "Set default stm32 log level as NOTICE, (see debug.h)")
 set(STM32_IPC				OFF			CACHE BOOL      "Use IPC (rpmsg) to communicate with main processor")
 set(STM32_PROV_FAKE			OFF                     CACHE BOOL      "Provisioning with dummy values. NOT to be used in production")
-set(STM32_STM32MP2_SOC_REV		"revA"			CACHE STRING	"Set soc revision: revA")
+set(STM32_STM32MP2_SOC_REV		"revA"			CACHE STRING	"Set soc revision: revA, revB")
 set(STM32_M33TDCID			OFF			CACHE BOOL	"Define M33 like Trusted Domain Compartiment ID")
 
 ## platform
@@ -38,6 +38,9 @@ endif()
 if (STM32_STM32MP2_SOC_REV STREQUAL "revA")
 	set(STM32_HEADER_MAJOR_VER 2)
 	set(STM32_HEADER_MINOR_VER 0)
+elseif(STM32_STM32MP2_SOC_REV STREQUAL "revB")
+	set(STM32_HEADER_MAJOR_VER 2)
+	set(STM32_HEADER_MINOR_VER 2)
 else()
 	message(FATAL_ERROR "SoC Revision not supported")
 endif()
