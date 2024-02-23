@@ -303,18 +303,18 @@ if(BL2)
 
 	add_custom_target(bl2_stm32
 		ALL
-		SOURCES bl2.stm32
+		DEPENDS bl2 bl2.stm32
 	)
 
 	add_custom_command(OUTPUT bl2.stm32
-		DEPENDS $<TARGET_FILE_DIR:bl2>/bl2.bin
-		DEPENDS $<TARGET_FILE_DIR:bl2>/bl2.elf
 		COMMENT "STM32 image tool for bl2"
 		COMMAND ${PYTHON_EXECUTABLE} ${STM_SOC_DIR}/tools/imageheader/stm32_imgtool.py
 		-e $<TARGET_FILE_DIR:bl2>/bl2.elf
 		-b $<TARGET_FILE_DIR:bl2>/bl2.bin
 		-o $<TARGET_FILE_DIR:bl2>/bl2.stm32
 		-bt 0x30
+		-v_maj ${STM32_HEADER_MAJOR_VER}
+		-v_min ${STM32_HEADER_MINOR_VER}
 	)
 
 endif()

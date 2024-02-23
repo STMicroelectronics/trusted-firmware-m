@@ -22,3 +22,10 @@ set(PLATFORM_DEFAULT_OTP_WRITEABLE      OFF                     CACHE BOOL      
 set(PLATFORM_DEFAULT_OTP                OFF                     CACHE BOOL      "Use trusted on-chip flash to implement OTP memory")
 set(PLATFORM_DEFAULT_PROVISIONING       OFF                     CACHE BOOL      "Use default provisioning implementation")
 set(TFM_DUMMY_PROVISIONING              OFF                     CACHE BOOL      "Provision with dummy values. NOT to be used in production")
+
+if (STM32_STM32MP2_SOC_REV STREQUAL "revA")
+	set(STM32_HEADER_MAJOR_VER 2)
+	set(STM32_HEADER_MINOR_VER 0)
+else()
+	message(FATAL_ERROR "SoC Revision not supported")
+endif()
