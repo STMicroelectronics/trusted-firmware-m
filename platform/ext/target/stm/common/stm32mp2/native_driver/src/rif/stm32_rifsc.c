@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
  * Copyright (c) 2020, STMicroelectronics
+ * Author(s): Ludovic Barre, <ludovic.barre@foss.st.com> for STMicroelectronics.
+ *
  */
 #define DT_DRV_COMPAT st_stm32mp25_rifsc
 
@@ -13,8 +15,7 @@
 #include <errno.h>
 
 #include <device.h>
-
-#include <dt-bindings/rif/stm32mp25-rifsc.h>
+#include <stm32_rifsc.h>
 
 /* RIFSC offset register */
 #define _RIFSC_RISC_SECCFGR0		U(0x10)
@@ -69,6 +70,17 @@
 #define _PERIPH_IDS_PER_REG		32
 #define _OFST_PERX_CIDCFGR		U(0x8)
 
+#define RIFSC_RIMC_MODE_MASK		BIT(2)
+#define RIFSC_RIMC_MCID_MASK		GENMASK_32(6, 4)
+#define RIFSC_RIMC_MSEC_MASK		BIT(8)
+#define RIFSC_RIMC_MPRIV_MASK		BIT(9)
+#define RIFSC_RIMC_M_ID_MASK		GENMASK_32(23, 16)
+
+#define RIFSC_RIMC_ATTRx_MASK		(RIFSC_RIMC_MODE_MASK | \
+					 RIFSC_RIMC_MCID_MASK | \
+					 RIFSC_RIMC_MSEC_MASK | \
+					 RIFSC_RIMC_MPRIV_MASK)
+
 /* max entries */
 #define MAX_RIMU	16
 #define MAX_RISUP	128
@@ -82,13 +94,6 @@
 #define RIF_CID1			0x1
 #define RIF_CID2			0x2
 #define STM32MP25_RIFSC_ENTRIES		178
-
-struct risup_cfg {
-	uint32_t id;
-	bool sec;
-	bool priv;
-	uint32_t cid_attr;
-};
 
 struct rimu_cfg {
 	uint32_t id;
@@ -117,9 +122,8 @@ struct rifsc_driver_data {
  * - a firewall framework must be created
  * - firewall = <&rifsc id>
  */
-int stm32_rifsc_get_access_by_id(uint32_t id)
+int stm32_rifsc_get_access_by_id(const struct device *dev, uint32_t id)
 {
-	const struct device *dev = DEVICE_GET(DEVICE_DT_DEV_ID(DT_DRV_INST(0)));
 	const struct stm32_rifsc_config *dev_cfg = dev_get_config(dev);
 	uintptr_t x_offset = _RIFSC_RISC_PERX_CIDCFGR + _OFST_PERX_CIDCFGR * id;
 	unsigned int master = RIF_CID2;
@@ -285,23 +289,39 @@ static int stm32_rifsc_init(const struct device *dev)
 	return stm32_rimu_setup(dev);
 }
 
-static const struct rimu_cfg rimu_config[] = {
-};
+#define STM32_RIMU(_node_id, _prop, _idx)					\
+	{									\
+		.id = RIFPROT_FLD(RIFSC_RIMC_M_ID, _node_id, _prop, _idx),	\
+		.attr = RIFPROT_FLD(RIFSC_RIMC_ATTRx, _node_id, _prop, _idx),	\
+	}
 
-static const struct risup_cfg risup_config[] = {
-};
-
-const struct stm32_rifsc_config stm32_rifsc_cfg = {
-	.base = DT_REG_ADDR(DT_DRV_INST(0)),
-	.risup = risup_config,
-	.nrisup = ARRAY_SIZE(risup_config),
-	.rimu = rimu_config,
-	.nrimu = ARRAY_SIZE(rimu_config),
-};
-
-static struct rifsc_driver_data rifsc_drvdata = {};
-
-DEVICE_DT_INST_DEFINE(0, &stm32_rifsc_init,
-		      &rifsc_drvdata, &stm32_rifsc_cfg,
-		      PRE_CORE, 0,
+#define STM32_RIFSC_INIT(n)									\
+												\
+static const struct rimu_cfg rimu_config_##n[] = {						\
+	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, st_rimu),						\
+		    (DT_INST_FOREACH_PROP_ELEM_SEP(n, st_rimu, STM32_RIMU, (,))),		\
+		    ())										\
+};												\
+												\
+static const struct risup_cfg risup_config_##n[] = {						\
+	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, st_protreg),					\
+		    (DT_INST_FOREACH_PROP_ELEM_SEP(n, st_protreg, STM32_RIFPROT, (,))),		\
+		    ())										\
+};												\
+												\
+static const struct stm32_rifsc_config stm32_rifsc_cfg_##n = {					\
+	.base = DT_INST_REG_ADDR(n),								\
+	.risup = risup_config_##n,								\
+	.nrisup = ARRAY_SIZE(risup_config_##n),							\
+	.rimu = rimu_config_##n,								\
+	.nrimu = ARRAY_SIZE(rimu_config_##n),							\
+};												\
+												\
+static struct rifsc_driver_data stm32_rifsc_data_##n = {};					\
+												\
+DEVICE_DT_INST_DEFINE(n, &stm32_rifsc_init,							\
+		      &stm32_rifsc_data_##n, &stm32_rifsc_cfg_##n,				\
+		      PRE_CORE, 0,								\
 		      NULL);
+
+DT_INST_FOREACH_STATUS_OKAY(STM32_RIFSC_INIT)

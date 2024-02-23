@@ -92,8 +92,8 @@ target_sources(platform_s
 		${STM_SOC_DIR}/native_driver/src/spi/stm32_ospi.c
 		${STM_SOC_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c
 		${STM_SOC_DIR}/native_driver/src/mtd/nor/spi_nor.c
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c>
 		${STM_SOC_DIR}/native_driver/src/rif/stm32_rif.c
-		${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c
 		${STM_SOC_DIR}/native_driver/src/rif/stm32_iac.c
 		${STM_SOC_DIR}/native_driver/src/rif/stm32_serc.c
 		$<$<BOOL:${STM32_DDR_CACHED}>:${STM_SOC_DIR}/native_driver/src/core/stm32_icache.c>
@@ -142,6 +142,7 @@ target_sources(tfm_s
 		${STM_SOC_DIR}/device/source/startup_stm32mp2_s.c
 		${STM_SOC_DIR}/native_driver/src/timer/systick.c
 		${STM_SOC_DIR}/native_driver/src/syscfg/stm32_syscfg.c
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c>
 )
 
 #========================= Platform Non-Secure ================================#
@@ -306,6 +307,7 @@ if(BL2)
 			${STM_SOC_DIR}/device/source/startup_stm32mp2_bl2.c
 			${STM_SOC_DIR}/native_driver/src/timer/systick.c
 			${STM_SOC_DIR}/native_driver/src/syscfg/stm32_syscfg.c
+			${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c
 	)
 
 	add_custom_target(bl2_stm32

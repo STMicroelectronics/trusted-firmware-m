@@ -47,4 +47,22 @@
 #define RIF_UNLOCK		0x0
 #define RIF_LOCK		0x1
 
+/* Used when a field in a macro has no impact */
+#define RIF_UNUSED		0x0
+
+#define RIF_EXTI1_RESOURCE(x)		(x)
+#define RIF_EXTI2_RESOURCE(x)		(x)
+#define RIF_FMC_CTRL(x)			(x)
+#define RIF_IOPORT_PIN(x)		(x)
+#define RIF_HPDMA_CHANNEL(x)		(x)
+#define RIF_IPCC_CPU1_CHANNEL(x)        (x - 1)
+#define RIF_IPCC_CPU2_CHANNEL(x)        (((x) - 1) + 16)
+#define RIF_PWR_RESOURCE(x)		(x)
+#define RIF_HSEM_RESOURCE(x)		(x)
+/* Shareable PWR resources, RIF_PWR_RESOURCE_WIO(0) doesn't exist */
+#define RIF_PWR_RESOURCE_WIO(x)		((x) + 6)
+#define RIF_RCC_RESOURCE(x)		(x)
+#define RIF_RTC_RESOURCE(x)		(x)
+#define RIF_TAMP_RESOURCE(x)		(x)
+
 #endif /* _DT_BINDINGS_STM32MP25_RIF_H */
