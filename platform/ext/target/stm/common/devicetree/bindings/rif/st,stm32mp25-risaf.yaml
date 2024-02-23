@@ -1,0 +1,30 @@
+# Copyright (c) 2023, STMicroelectronics
+# SPDX -License-Identifier: Apache-2.0
+
+description: |
+  The RIF (resource isolation framework) is a comprehensive set of hardware
+  blocks designed to enforce and manage isolation of STM32 hardware resources,
+  like memory and peripherals.
+  Through RISAF registers, a trusted domain application, or the application to
+  whom the configuration has been delegated, assigns memory regions and
+  subregions to one or more security domains (secure, privilege, compartment).
+  RISAF managing DRR includes the DDR memory cipher engine (DDRMCE) feature.
+
+compatible: "st,stm32mp25-risaf"
+
+include: [base.yaml, memory-region.yaml]
+
+properties:
+  reg:
+    required: true
+
+  clocks:
+    required: true
+
+  memory-region:
+    required: true
+
+  st,mem-map:
+    type: array
+    description: |
+      Defines the memory range covered by the RISAF.

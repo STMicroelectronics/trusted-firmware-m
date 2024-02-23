@@ -1,0 +1,9 @@
+# Copyright (c) 2023, STMicroelectronics
+# SPDX -License-Identifier: Apache-2.0
+
+description: |
+        RISAF (enc:encode) managing DRR includes the DDR memory cipher engine (DDRMCE) feature.
+
+compatible: "st,stm32mp25-risaf-enc"
+
+include: st,stm32mp25-risaf.yaml
