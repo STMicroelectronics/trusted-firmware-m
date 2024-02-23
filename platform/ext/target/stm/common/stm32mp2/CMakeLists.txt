@@ -16,6 +16,7 @@ include(${STM_DEVICETREE_DIR}/gen_dt.cmake)
 target_compile_definitions(platform_region_defs
 	INTERFACE
 		$<$<BOOL:${STM32_IPC}>:STM32_IPC>
+		$<$<STREQUAL:${STM32_STM32MP2_SOC_REV},revA>:CONFIG_STM32MP25X_REVA=1>
 )
 
 target_include_directories(platform_region_defs

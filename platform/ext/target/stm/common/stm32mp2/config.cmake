@@ -11,6 +11,7 @@ set(STM32_BOARD_MODEL			"stm32mp257 common"	CACHE STRING	"Define board model nam
 set(STM32_LOG_LEVEL		        STM32_LOG_LEVEL_INFO    CACHE STRING    "Set default stm32 log level as NOTICE, (see debug.h)")
 set(STM32_IPC				OFF			CACHE BOOL      "Use IPC (rpmsg) to communicate with main processor")
 set(STM32_PROV_FAKE			OFF                     CACHE BOOL      "Provisioning with dummy values. NOT to be used in production")
+set(STM32_STM32MP2_SOC_REV		"revA"			CACHE STRING	"Set soc revision: revA")
 
 ## platform
 set(PLATFORM_DEFAULT_UART_STDOUT        OFF			CACHE BOOL      "Use default uart stdout implementation.")
