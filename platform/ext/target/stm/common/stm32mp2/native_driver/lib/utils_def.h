@@ -8,7 +8,6 @@
 #define UTILS_DEF_H
 
 #include <lib/utils_def_exp.h>
-#include <stddef.h>
 
 /* Compute the number of elements in the given array */
 #define ARRAY_SIZE(a)				\
@@ -63,17 +62,33 @@
 	((val) + _div - (__typeof__(div)) 1) / _div;		\
 })
 
+/*
+ * Divide positive or negative dividend by positive or negative divisor
+ * and round to closest integer. Result is undefined for negative
+ * divisors if the dividend variable type is unsigned and for negative
+ * dividends if the divisor variable type is unsigned.
+ */
+#define div_round_closest(x, divisor)(			\
+{							\
+	__typeof__(x) __x = x;				\
+	__typeof__(divisor) __d = divisor;		\
+	(((__typeof__(x))-1) > 0 ||			\
+	 ((__typeof__(divisor))-1) > 0 ||		\
+	 (((__x) > 0) == ((__d) > 0))) ?		\
+		(((__x) + ((__d) / 2)) / (__d)) :	\
+		(((__x) - ((__d) / 2)) / (__d));	\
+}							\
+)
+
 #define MIN(x, y) __extension__ ({	\
 	__typeof__(x) _x = (x);		\
 	__typeof__(y) _y = (y);		\
-	(void)(&_x == &_y);		\
 	_x < _y ? _x : _y;		\
 })
 
 #define MAX(x, y) __extension__ ({	\
 	__typeof__(x) _x = (x);		\
 	__typeof__(y) _y = (y);		\
-	(void)(&_x == &_y);		\
 	_x > _y ? _x : _y;		\
 })
 

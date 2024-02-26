@@ -13,6 +13,7 @@
 #define USEC_PER_MSEC	1000L
 #define MSEC_PER_SEC	1000L
 #define USEC_PER_SEC	1000000L
+#define NSEC_PER_SEC	1000000000UL
 
 __WEAK uint64_t timeout_init_us(uint64_t us)
 {
