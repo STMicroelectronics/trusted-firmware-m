@@ -94,8 +94,8 @@ target_sources(platform_s
 		${STM_SOC_DIR}/native_driver/src/mtd/nor/spi_nor.c
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c>
-		${STM_SOC_DIR}/native_driver/src/rif/stm32_iac.c
 		${STM_SOC_DIR}/native_driver/src/rif/stm32_serc.c
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_iac.c>
 		$<$<BOOL:${STM32_DDR_CACHED}>:${STM_SOC_DIR}/native_driver/src/core/stm32_icache.c>
 		$<$<BOOL:${STM32_DDR_CACHED}>:${STM_SOC_DIR}/native_driver/src/core/stm32_dcache.c>
 		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${STM_SOC_DIR}/secure/services/src/tfm_platform_system.c>
@@ -274,7 +274,6 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/mtd/nor/spi_nor.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c
-			${STM_SOC_DIR}/native_driver/src/rif/stm32_iac.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_serc.c
 			$<$<BOOL:${STM32_DDR_CACHED}>:${STM_SOC_DIR}/native_driver/src/core/stm32_icache.c>
 			$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${STM_SOC_DIR}/secure/nv_counters.c>

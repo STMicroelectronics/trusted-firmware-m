@@ -1,29 +1,26 @@
-// SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright (c) 2020, STMicroelectronics
+ * Copyright (c) 2023, STMicroelectronics - All Rights Reserved
+ * Author(s): Ludovic Barre, <ludovic.barre@foss.st.com> for STMicroelectronics.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  */
-#ifdef TFM_ENV
+#define DT_DRV_COMPAT st_stm32mp25_iac
+
 #include <cmsis.h>
+#include <errno.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
+
+#include <device.h>
 #include <lib/utils_def.h>
 #include <stm32_iac.h>
 #include <lib/mmio.h>
 #include <inttypes.h>
 #include <debug.h>
-#else
-/* optee */
-#include <drivers/stm32_iac.h>
-#include <io.h>
-#include <kernel/dt.h>
-#include <kernel/boot.h>
-#include <kernel/panic.h>
-#include <libfdt.h>
-#include <mm/core_memprot.h>
-#include <tee_api_defines.h>
-#include <trace.h>
-#include <util.h>
-#endif
+#include <tfm_hal_spm_logdev.h>
+
+#if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
 /* IAC offset register */
 #define _IAC_IER0		U(0x000)
@@ -74,68 +71,60 @@
 #define IAC_ERR_INVAL		22	/* Invalid argument */
 #define IAC_ERR_NOTSUP		45	/* Operation not supported */
 
-static struct iac_driver_data iac_drvdata;
-static struct stm32_iac_platdata iac_pdata;
+struct stm32_iac_config {
+	uintptr_t base;
+	uint32_t irq;
+	uint32_t id_disable[DT_INST_PROP_LEN_OR(0, id_disable, 0)];
+};
 
-static void stm32_iac_get_driverdata(struct stm32_iac_platdata *pdata)
+struct stm32_iac_data {
+	uint8_t num_ilac;
+	bool rif_en;
+	bool sec_en;
+	bool priv_en;
+};
+
+static const struct stm32_iac_config iac_cfg = {
+	.base = DT_INST_REG_ADDR(0),
+	.irq = DT_INST_IRQN(0),
+	.id_disable = DT_INST_PROP_OR(0, id_disable, {}),
+};
+
+static struct stm32_iac_data iac_data = {};
+
+static void stm32_iac_get_hwconfig(void)
 {
-	uint32_t regval = 0;
+	const struct stm32_iac_config *drv_cfg = &iac_cfg;
+	struct stm32_iac_data *drv_data = &iac_data;
+	uint32_t regval;
 
-	regval = io_read32(pdata->base + _IAC_HWCFGR1);
-	iac_drvdata.num_ilac = _IAC_FLD_GET(_IAC_HWCFGR1_CFG5, regval);
-	iac_drvdata.rif_en = _IAC_FLD_GET(_IAC_HWCFGR1_CFG1, regval) != 0;
-	iac_drvdata.sec_en = _IAC_FLD_GET(_IAC_HWCFGR1_CFG2, regval) != 0;
-	iac_drvdata.priv_en = _IAC_FLD_GET(_IAC_HWCFGR1_CFG3, regval) != 0;
+	regval = io_read32(drv_cfg->base + _IAC_HWCFGR1);
+	drv_data->num_ilac = _IAC_FLD_GET(_IAC_HWCFGR1_CFG5, regval);
+	drv_data->rif_en = _IAC_FLD_GET(_IAC_HWCFGR1_CFG1, regval) != 0;
+	drv_data->sec_en = _IAC_FLD_GET(_IAC_HWCFGR1_CFG2, regval) != 0;
+	drv_data->priv_en = _IAC_FLD_GET(_IAC_HWCFGR1_CFG3, regval) != 0;
 
-	pdata->drv_data = &iac_drvdata;
-
-	regval = io_read32(pdata->base + _IAC_VERR);
+	regval = io_read32(drv_cfg->base + _IAC_VERR);
 
 	DMSG("IAC version %"PRIu32".%"PRIu32,
 	     _IAC_FLD_GET(_IAC_VERR_MAJREV, regval),
 	     _IAC_FLD_GET(_IAC_VERR_MINREV, regval));
 
 	DMSG("HW cap: enabled[rif:sec:priv]:[%s:%s:%s] num ilac:[%"PRIu8"]",
-	     iac_drvdata.rif_en ? "true" : "false",
-	     iac_drvdata.sec_en ? "true" : "false",
-	     iac_drvdata.priv_en ? "true" : "false",
-	     iac_drvdata.num_ilac);
+	     drv_data->rif_en ? "true" : "false",
+	     drv_data->sec_en ? "true" : "false",
+	     drv_data->priv_en ? "true" : "false",
+	     drv_data->num_ilac);
 }
-
-#ifdef CFG_DT
-static int stm32_iac_parse_fdt(struct stm32_iac_platdata *pdata)
-{
-	return -IAC_ERR_NODEV;
-}
-
-__weak int stm32_iac_get_platdata(struct stm32_iac_platdata *pdata __unused)
-{
-	/* In DT config, the platform datas are fill by DT file */
-	return 0;
-}
-
-#else
-static int stm32_iac_parse_fdt(struct stm32_iac_platdata *pdata)
-{
-	return -IAC_ERR_NOTSUP;
-}
-
-/*
- * This function could be overridden by platform to define
- * pdata of iac driver
- */
-__weak int stm32_iac_get_platdata(struct stm32_iac_platdata *pdata)
-{
-	return -IAC_ERR_NODEV;
-}
-#endif /*CFG_DT*/
 
 #define IAC_EXCEPT_MSB_BIT(x) (x * _PERIPH_IDS_PER_REG + _PERIPH_IDS_PER_REG - 1)
 #define IAC_EXCEPT_LSB_BIT(x) (x * _PERIPH_IDS_PER_REG)
 
+#define IAC_LOG(x) tfm_hal_output_spm_log((x), sizeof(x))
+
 __weak void access_violation_handler(void)
 {
-	EMSG("Ooops... %s");
+	IAC_LOG("Ooops...\n\r");
 	while (1) {
 		;
 	}
@@ -143,85 +132,87 @@ __weak void access_violation_handler(void)
 
 void IAC_IRQHandler(void)
 {
-	int nreg = div_round_up(iac_drvdata.num_ilac, _PERIPH_IDS_PER_REG);
+	const struct stm32_iac_config *drv_cfg = &iac_cfg;
+	struct stm32_iac_data *drv_data = &iac_data;
+	int nreg = div_round_up(drv_data->num_ilac, _PERIPH_IDS_PER_REG);
 	uint32_t isr = 0;
+	char tmp[50];
 	int i = 0;
 
 	for (i = 0; i < nreg; i++) {
 		uint32_t offset = sizeof(uint32_t) * i;
 
-		isr = io_read32(iac_pdata.base + _IAC_ISR0 + offset);
-		isr &= io_read32(iac_pdata.base + _IAC_IER0 + offset);
+		isr = io_read32(drv_cfg->base + _IAC_ISR0 + offset);
+		isr &= io_read32(drv_cfg->base + _IAC_IER0 + offset);
 		if (isr) {
-			EMSG("iac exceptions: [%d:%d]=%#08x",
-			     IAC_EXCEPT_MSB_BIT(i),
-			     IAC_EXCEPT_LSB_BIT(i), isr);
-			io_write32(iac_pdata.base + _IAC_ICR0 + offset, isr);
+			snprintf(tmp, sizeof(tmp),
+				 "\r\niac exceptions: [%d:%d]=%#08x\r\n",
+				 IAC_EXCEPT_MSB_BIT(i),
+				 IAC_EXCEPT_LSB_BIT(i), isr);
+
+			tfm_hal_output_spm_log(tmp, strlen(tmp));
+			io_write32(drv_cfg->base + _IAC_ICR0 + offset, isr);
 		}
 	}
 
-	NVIC_ClearPendingIRQ(IAC_IRQn);
+	NVIC_ClearPendingIRQ(drv_cfg->irq);
 
 	access_violation_handler();
 }
 
-static void stm32_iac_setup(struct stm32_iac_platdata *pdata)
+static void stm32_iac_setup(void)
 {
-	struct iac_driver_data *drv_data = pdata->drv_data;
+	const struct stm32_iac_config *drv_cfg = &iac_cfg;
+	struct stm32_iac_data *drv_data = &iac_data;
 	int nreg = div_round_up(drv_data->num_ilac, _PERIPH_IDS_PER_REG);
 	int i = 0;
 
 	for (i = 0; i < nreg; i++) {
-		uint32_t reg_ofst = pdata->base + sizeof(uint32_t) * i;
+		uint32_t reg_ofst = drv_cfg->base + sizeof(uint32_t) * i;
 
 		//clear status flags
 		io_write32(reg_ofst + _IAC_ICR0, UINT32_MAX);
-
-		//set configuration
-		if (i < pdata->nmask)
-			io_write32(reg_ofst + _IAC_IER0, pdata->it_mask[i]);
+		//enable all peripherals of nreg
+		io_write32(reg_ofst + _IAC_IER0, ~0x0);
 	}
 }
 
 int stm32_iac_enable_irq(void)
 {
-	if (iac_pdata.base == 0)
-		return -IAC_ERR_NODEV;
+	const struct stm32_iac_config *drv_cfg = &iac_cfg;
+
+	if (drv_cfg->base == 0)
+		return -ENODEV;
 
 	/* just less than exception fault */
-	NVIC_SetPriority(iac_pdata.irq, 1);
-	NVIC_EnableIRQ(iac_pdata.irq);
+	NVIC_SetPriority(drv_cfg->irq, 1);
+	NVIC_EnableIRQ(drv_cfg->irq);
 }
 
-int stm32_iac_init(void)
+/*FIXME just a workaround for poc */
+void stm32_iac_id_disable(void)
 {
-	int err = 0;
+	const struct stm32_iac_config *drv_cfg = &iac_cfg;
+	int i;
 
-	err = stm32_iac_get_platdata(&iac_pdata);
-	if (err)
-		return err;
+	for (i = 0; i < ARRAY_SIZE(drv_cfg->id_disable); i++) {
+		uint32_t reg_ofst = (drv_cfg->id_disable[i] / _PERIPH_IDS_PER_REG) * sizeof(uint32_t);
+		uint32_t bit_ofst = (drv_cfg->id_disable[i]) & 0x1F;
 
-	err = stm32_iac_parse_fdt(&iac_pdata);
-	if (err && err != -IAC_ERR_NOTSUP)
-		return err;
+		io_clrbits32(drv_cfg->base + _IAC_IER0 + reg_ofst,
+			     BIT(bit_ofst));
+	}
+}
 
-	if (!iac_pdata.drv_data)
-		stm32_iac_get_driverdata(&iac_pdata);
+static int stm32_iac_init(void)
+{
+	stm32_iac_get_hwconfig();
+	stm32_iac_setup();
 
-	stm32_iac_setup(&iac_pdata);
+	stm32_iac_id_disable();
 
 	return 0;
 }
 
-#ifndef TFM_ENV
-static TEE_Result iac_init(void)
-{
-	if (stm32_iac_init()) {
-		panic();
-		return TEE_ERROR_GENERIC;
-	}
-
-	return TEE_SUCCESS;
-}
-early_init(iac_init);
+SYS_INIT(stm32_iac_init, PRE_CORE, 15);
 #endif
