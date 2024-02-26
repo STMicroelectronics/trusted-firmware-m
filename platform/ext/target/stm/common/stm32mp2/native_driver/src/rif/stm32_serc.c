@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright (c) 2020, STMicroelectronics
+ * Copyright (c) 2023, STMicroelectronics
+ * Author(s): Ludovic Barre, <ludovic.barre@foss.st.com> for STMicroelectronics.
+ *
  */
-#ifdef TFM_ENV
+#define DT_DRV_COMPAT st_stm32mp25_serc
+
 #include <cmsis.h>
+#include <errno.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
+
 #include <lib/utils_def.h>
 #include <stm32_serc.h>
 #include <lib/mmio.h>
@@ -13,19 +19,9 @@
 #include <debug.h>
 #include <clk.h>
 #include <target_cfg.h>
-#else
-/* optee */
-#include <drivers/stm32_serc.h>
-#include <io.h>
-#include <kernel/dt.h>
-#include <kernel/boot.h>
-#include <kernel/panic.h>
-#include <libfdt.h>
-#include <mm/core_memprot.h>
-#include <tee_api_defines.h>
-#include <trace.h>
-#include <util.h>
-#endif
+#include <tfm_hal_spm_logdev.h>
+
+#if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
 /* SERC offset register */
 #define _SERC_IER0		U(0x000)
@@ -54,78 +50,54 @@
 /* Periph id per register */
 #define _PERIPH_IDS_PER_REG	32
 
-#define _SERC_FLD_PREP(field, value)	(((uint32_t)(value) << (field ## _SHIFT)) & (field ## _MASK))
-#define _SERC_FLD_GET(field, value)	(((uint32_t)(value) & (field ## _MASK)) >> (field ## _SHIFT))
+struct stm32_serc_config {
+	uintptr_t base;
+	const struct device *clk_dev;
+	const clk_subsys_t clk_subsys;
+	uint32_t irq;
+	uint32_t id_disable[DT_INST_PROP_LEN_OR(0, id_disable, 0)];
+};
 
-/*
- * no common errno between component
- * define serc internal errno
- */
-#define	SERC_ERR_NOMEM		12	/* Out of memory */
-#define SERC_ERR_NODEV		19	/* No such device */
-#define SERC_ERR_INVAL		22	/* Invalid argument */
-#define SERC_ERR_NOTSUP		45	/* Operation not supported */
+struct stm32_serc_data {
+	uint8_t num_ilac;
+};
 
-static struct serc_driver_data serc_drvdata;
-static struct stm32_serc_platdata serc_pdata;
+static const struct stm32_serc_config serc_cfg = {
+	.base = DT_INST_REG_ADDR(0),
+	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(0)),
+	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(0, bits),
+	.irq = DT_INST_IRQN(0),
+	.id_disable = DT_INST_PROP_OR(0, id_disable, {}),
+};
 
-static void stm32_serc_get_driverdata(struct stm32_serc_platdata *pdata)
+static struct stm32_serc_data serc_data = {};
+
+static void stm32_serc_get_hwconfig(void)
 {
-	struct clk *clk = clk_get(STM32_DEV_RCC, (clk_subsys_t) pdata->clk_id);
-	uint32_t regval = 0;
+	const struct stm32_serc_config *drv_cfg = &serc_cfg;
+	struct stm32_serc_data *drv_data = &serc_data;
+	uint32_t regval;
 
-	clk_enable(clk);
+	regval = io_read32(drv_cfg->base + _SERC_HWCFGR);
+	drv_data->num_ilac = _FLD_GET(_SERC_HWCFGR_CFG1, regval);
 
-	regval = io_read32(pdata->base + _SERC_HWCFGR);
-	serc_drvdata.num_ilac = _SERC_FLD_GET(_SERC_HWCFGR_CFG1, regval);
-
-	pdata->drv_data = &serc_drvdata;
-
-	regval = io_read32(pdata->base + _SERC_VERR);
+	regval = io_read32(drv_cfg->base + _SERC_VERR);
 
 	DMSG("SERC version %"PRIu32".%"PRIu32,
-	     _SERC_FLD_GET(_SERC_VERR_MAJREV, regval),
-	     _SERC_FLD_GET(_SERC_VERR_MINREV, regval));
+	     _FLD_GET(_SERC_VERR_MAJREV, regval),
+	     _FLD_GET(_SERC_VERR_MINREV, regval));
 
-	DMSG("HW cap: num ilac:[%"PRIu8"]", serc_drvdata.num_ilac);
-
-	clk_disable(clk);
+	DMSG("HW cap: num ilac:[%"PRIu8"]", drv_data->num_ilac);
 }
-
-#ifdef CFG_DT
-static int stm32_serc_parse_fdt(struct stm32_serc_platdata *pdata)
-{
-	return -SERC_ERR_NODEV;
-}
-
-__weak int stm32_rifsc_get_platdata(struct stm32_rifsc_platdata *pdata __unused)
-{
-	/* In DT config, the platform datas are fill by DT file */
-	return 0;
-}
-
-#else
-static int stm32_serc_parse_fdt(struct stm32_serc_platdata *pdata)
-{
-	return -SERC_ERR_NOTSUP;
-}
-
-/*
- * This function could be overridden by platform to define
- * pdata of serc driver
- */
-__weak int stm32_serc_get_platdata(struct stm32_serc_platdata *pdata)
-{
-	return -SERC_ERR_NODEV;
-}
-#endif /*CFG_DT*/
 
 #define SERC_EXCEPT_MSB_BIT(x) (x * _PERIPH_IDS_PER_REG + _PERIPH_IDS_PER_REG - 1)
 #define SERC_EXCEPT_LSB_BIT(x) (x * _PERIPH_IDS_PER_REG)
 
+#define SERC_LOG(x) tfm_hal_output_spm_log((x), sizeof(x))
+
 __weak void access_violation_handler(void)
 {
-	EMSG("Ooops... %s");
+	SERC_LOG("Ooops...\n\r");
 	while (1) {
 		;
 	}
@@ -133,88 +105,101 @@ __weak void access_violation_handler(void)
 
 void SERF_IRQHandler(void)
 {
-	int nreg = div_round_up(serc_drvdata.num_ilac, _PERIPH_IDS_PER_REG);
+	const struct stm32_serc_config *drv_cfg = &serc_cfg;
+	struct stm32_serc_data *drv_data = &serc_data;
+	int nreg = div_round_up(drv_data->num_ilac, _PERIPH_IDS_PER_REG);
 	uint32_t isr = 0;
+	char tmp[50];
 	int i = 0;
 
 	for (i = 0; i < nreg; i++) {
 		uint32_t offset = sizeof(uint32_t) * i;
 
-		isr = io_read32(serc_pdata.base + _SERC_ISR0 + offset);
-		isr &= io_read32(serc_pdata.base + _SERC_IER0 + offset);
+		isr = io_read32(drv_cfg->base + _SERC_ISR0 + offset);
+		isr &= io_read32(drv_cfg->base + _SERC_IER0 + offset);
 		if (isr) {
-			EMSG("serc exceptions: [%d:%d]=%#08x",
-			     SERC_EXCEPT_MSB_BIT(i),
-			     SERC_EXCEPT_LSB_BIT(i), isr);
-			io_write32(serc_pdata.base + _SERC_ICR0 + offset, isr);
+			snprintf(tmp, sizeof(tmp),
+				 "\r\nserc exceptions: [%d:%d]=%#08x\r\n",
+				 SERC_EXCEPT_MSB_BIT(i),
+				 SERC_EXCEPT_LSB_BIT(i), isr);
+
+			tfm_hal_output_spm_log(tmp, strlen(tmp));
+			io_write32(drv_cfg->base + _SERC_ICR0 + offset, isr);
 		}
 	}
 
-	NVIC_ClearPendingIRQ(SERF_IRQn);
+	NVIC_ClearPendingIRQ(drv_cfg->irq);
 
 	access_violation_handler();
 }
 
-static void stm32_serc_setup(struct stm32_serc_platdata *pdata)
+static void stm32_serc_setup(void)
 {
-	struct clk *clk = clk_get(STM32_DEV_RCC, (clk_subsys_t) pdata->clk_id);
-	struct serc_driver_data *drv_data = pdata->drv_data;
+	const struct stm32_serc_config *drv_cfg = &serc_cfg;
+	struct stm32_serc_data *drv_data = &serc_data;
 	int nreg = div_round_up(drv_data->num_ilac, _PERIPH_IDS_PER_REG);
 	int i = 0;
 
-	clk_enable(clk);
-	mmio_setbits_32(pdata->base + _SERC_ENABLE, _SERC_ENABLE_SERFEN);
+	mmio_setbits_32(drv_cfg->base + _SERC_ENABLE, _SERC_ENABLE_SERFEN);
 
 	for (i = 0; i < nreg; i++) {
-		uint32_t reg_ofst = pdata->base + sizeof(uint32_t) * i;
+		uint32_t reg_ofst = drv_cfg->base + sizeof(uint32_t) * i;
 
 		//clear status flags
 		io_write32(reg_ofst + _SERC_ICR0, 0x0);
-
-		if (i < pdata->nmask)
-			io_write32(reg_ofst + _SERC_IER0, pdata->it_mask[i]);
+		//enable all peripherals of nreg
+		io_write32(reg_ofst + _SERC_IER0, ~0x0);
 	}
 }
 
 int stm32_serc_enable_irq(void)
 {
-	if (serc_pdata.base == 0)
-		return -SERC_ERR_NODEV;
+	const struct stm32_serc_config *drv_cfg = &serc_cfg;
+
+	if (drv_cfg->base == 0)
+		return -ENODEV;
 
 	/* just less than exception fault */
-	NVIC_SetPriority(serc_pdata.irq, 1);
-	NVIC_EnableIRQ(serc_pdata.irq);
+	NVIC_SetPriority(drv_cfg->irq, 1);
+	NVIC_EnableIRQ(drv_cfg->irq);
 }
 
-int stm32_serc_init(void)
+/*FIXME just a workaround for poc */
+void stm32_serc_id_disable(void)
 {
-	int err = 0;
+	const struct stm32_serc_config *drv_cfg = &serc_cfg;
+	int i;
 
-	err = stm32_serc_get_platdata(&serc_pdata);
+	for (i = 0; i < ARRAY_SIZE(drv_cfg->id_disable); i++) {
+		uint32_t reg_ofst = (drv_cfg->id_disable[i] / _PERIPH_IDS_PER_REG) * sizeof(uint32_t);
+		uint32_t bit_ofst = (drv_cfg->id_disable[i]) & 0x1F;
+
+		io_clrbits32(drv_cfg->base + _SERC_IER0 + reg_ofst,
+			     BIT(bit_ofst));
+	}
+}
+
+static int stm32_serc_init(void)
+{
+	const struct stm32_serc_config *drv_cfg = &serc_cfg;
+	struct clk *clk;
+	int err;
+
+	clk = clk_get(drv_cfg->clk_dev, drv_cfg->clk_subsys);
+	if (!clk)
+		return -ENODEV;
+
+	err = clk_enable(clk);
 	if (err)
 		return err;
 
-	err = stm32_serc_parse_fdt(&serc_pdata);
-	if (err && err != -SERC_ERR_NOTSUP)
-		return err;
+	stm32_serc_get_hwconfig();
+	stm32_serc_setup();
 
-	if (!serc_pdata.drv_data)
-		stm32_serc_get_driverdata(&serc_pdata);
-
-	stm32_serc_setup(&serc_pdata);
+	stm32_serc_id_disable();
 
 	return 0;
 }
 
-#ifndef TFM_ENV
-static TEE_Result serc_init(void)
-{
-	if (stm32_serc_init()) {
-		panic();
-		return TEE_ERROR_GENERIC;
-	}
-
-	return TEE_SUCCESS;
-}
-early_init(serc_init);
+SYS_INIT(stm32_serc_init, PRE_CORE, 15);
 #endif
