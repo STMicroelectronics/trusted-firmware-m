@@ -21,6 +21,8 @@ target_compile_definitions(platform_region_defs
 		$<$<STREQUAL:${STM32_BOOT_DEV},ospi>:STM32_BOOT_DEV_OSPI>
 		$<$<STREQUAL:${STM32_BOOT_DEV},ddr>:STM32_BOOT_DEV_DDR>
 		$<$<BOOL:${STM32_M33TDCID}>:STM32_M33TDCID>
+		# this flag is not defined in tfm_s and needed by stm32_bsec3
+		$<$<BOOL:${TFM_DUMMY_PROVISIONING}>:TFM_DUMMY_PROVISIONING>
 )
 
 target_include_directories(platform_region_defs
@@ -134,6 +136,7 @@ endif()
 # GNU ld has some strange behaviour to do with weak functions, and does not deal
 # well with strong functions in static libraries overriding weak functions in
 # object files.
+# Ditto with devicetree driver.
 target_sources(tfm_s
 	PRIVATE
 		${STM_SOC_DIR}/device/source/startup_stm32mp2_s.c
@@ -235,6 +238,7 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver
 			${STM_SOC_DIR}/native_driver/include
 			${STM_SOC_DIR}/device/include
+			${STM_SOC_DIR}/secure
 			${MCUBOOT_PATH}/boot/bootutil/include
 			$<TARGET_PROPERTY:bl2,BINARY_DIR>/ext/mcuboot
 			${CMAKE_SOURCE_DIR}/bl2/ext/mcuboot/include
@@ -272,8 +276,10 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_serc.c
 			$<$<BOOL:${STM32_DDR_CACHED}>:${STM_SOC_DIR}/native_driver/src/core/stm32_icache.c>
 			$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${STM_SOC_DIR}/secure/nv_counters.c>
-			${STM_COMMON_DIR}/hal/provision/otp_provision.c
+			$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_OTP}>>:${STM_SOC_DIR}/secure/otp.c>
+			${STM_SOC_DIR}/secure/provisioning.c
 	)
+
 
 	target_compile_options(platform_bl2
 		PUBLIC
