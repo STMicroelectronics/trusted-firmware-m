@@ -14,20 +14,12 @@
 #include <cmsis.h>
 #include <region.h>
 #include <region_defs.h>
-#include <Driver_Flash.h>
-#include <uart_stdout.h>
 #include <bootutil/bootutil_log.h>
-#include <template/flash_otp_nv_counters_backend.h>
+#include <init.h>
+#include <debug.h>
 
-#include <plat_device.h>
 #include <stm32_icache.h>
 #include <stm32_bsec3.h>
-#include <stm32_syscfg.h>
-#include <stm32_pwr.h>
-#include <stm32_ddr.h>
-
-extern ARM_DRIVER_FLASH FLASH_DEV_NAME;
-extern  struct flash_otp_nv_counters_region_t otp_stm_provision;
 
 REGION_DECLARE(Image$$, ER_DATA, $$Base)[];
 REGION_DECLARE(Image$$, ARM_LIB_HEAP, $$ZI$$Limit)[];
@@ -68,7 +60,7 @@ int stm32_icache_remap(void)
 	return 0;
 }
 
-int init_debug(void)
+int stm32mp2_init_debug(void)
 {
 #if defined(DAUTH_NONE)
 #elif defined(DAUTH_NS_ONLY)
@@ -86,23 +78,7 @@ int init_debug(void)
 #endif
 	return 0;
 }
-
-int backup_domain_init(void)
-{
-	int err;
-
-	stm32_pwr_backupd_wp(false);
-
-	err = rstctrl_assert_to(STM32_RSTCTRL_REF(VSW_R), 1000);
-	if (err)
-		return err;
-
-	err = rstctrl_deassert_to(STM32_RSTCTRL_REF(VSW_R), 1000);
-	if (err)
-		return err;
-
-	return 0;
-}
+SYS_INIT(stm32mp2_init_debug, CORE, 11);
 
 /**
   * @brief  Platform init
@@ -111,46 +87,29 @@ int backup_domain_init(void)
   */
 int32_t boot_platform_init(void)
 {
-	int err;
-	__IO uint32_t otp;
-
-	/*  Place here to force linker to keep provision and init const */
-	otp = otp_stm_provision.init_value;
-
-	err = stm32_platform_bl2_init();
-	if (err)
-		return err;
-
-	/* safe reset connector enabled */
-	stm32_syscfg_safe_rst(true);
-
-	/* Init for log */
-#if MCUBOOT_LOG_LEVEL > MCUBOOT_LOG_LEVEL_OFF
-	stdio_init();
-#endif
-
-	init_debug();
+	sys_init_run_level(INIT_LEVEL_PRE_CORE);
+	sys_init_run_level(INIT_LEVEL_CORE);
 
 	BOOT_LOG_INF("welcome");
 	BOOT_LOG_INF("mcu sysclk: %d", SystemCoreClock);
 
-	err = stm32_ddr_init();
-	if (err)
-		return err;
-
 #if defined(STM32_DDR_CACHED)
-	err = stm32_icache_remap();
-	if (err)
-		return err;
+	{
+		int err;
+
+		err = stm32_icache_remap();
+		if (err)
+			return err;
+	}
 #endif
 
-	err = backup_domain_init();
-	if (err)
-		return err;
+	return 0;
+}
 
-	err = FLASH_DEV_NAME.Initialize(NULL);
-	if (err != ARM_DRIVER_OK)
-		return err;
+int32_t boot_platform_post_init(void)
+{
+	sys_init_run_level(INIT_LEVEL_POST_CORE);
+	sys_init_run_level(INIT_LEVEL_REST);
 
 	return 0;
 }
