@@ -1,0 +1,102 @@
+// SPDX-License-Identifier: (BSD-3-Clause)
+/*
+ * Copyright (C) STMicroelectronics 2023 - All Rights Reserved
+ */
+
+&clk_hse {
+	clock-frequency = <40000000>;
+};
+
+&clk_hsi {
+	clock-frequency = <64000000>;
+};
+
+&clk_lse {
+	clock-frequency = <32768>;
+	st,drive = <2>;
+};
+
+&clk_lsi {
+	clock-frequency = <32000>;
+};
+
+&clk_msi {
+	clock-frequency = <16000000>;
+};
+
+&rcc {
+	st,syscfg-safe-reset = <&syscfg 0x2018 0x1>;
+	st,c1msrd = <2>;
+
+	st,busclk = <
+		DIV_CFG(DIV_LSMCU, 1)
+		DIV_CFG(DIV_APB1, 0)
+		DIV_CFG(DIV_APB2, 0)
+		DIV_CFG(DIV_APB3, 0)
+		DIV_CFG(DIV_APB4, 0)
+		DIV_CFG(DIV_APBDBG, 0)
+	>;
+
+	st,flexgen = <
+		FLEXGEN_CFG(0, XBAR_SRC_PLL4, 0, 2)
+		FLEXGEN_CFG(1, XBAR_SRC_PLL4, 0, 5)
+		FLEXGEN_CFG(2, XBAR_SRC_PLL4, 0, 1)
+		FLEXGEN_CFG(4, XBAR_SRC_PLL4, 0, 3)
+		FLEXGEN_CFG(5, XBAR_SRC_PLL4, 0, 2)
+		FLEXGEN_CFG(8, XBAR_SRC_PLL4, 0, 11)
+		FLEXGEN_CFG(48, XBAR_SRC_PLL5, 0, 3)
+		FLEXGEN_CFG(51, XBAR_SRC_PLL4, 0, 5)
+		FLEXGEN_CFG(52, XBAR_SRC_PLL4, 0, 5)
+		FLEXGEN_CFG(58, XBAR_SRC_HSE, 0, 1)
+		FLEXGEN_CFG(63, XBAR_SRC_PLL4, 0, 2)
+	>;
+
+	st,kerclk = <
+		MUX_CFG(MUX_ADC12, MUX_ADC12_FLEX46)
+		MUX_CFG(MUX_ADC3, MUX_ADC3_FLEX47)
+		MUX_CFG(MUX_USB2PHY1, MUX_USB2PHY1_FLEX57)
+		MUX_CFG(MUX_USB2PHY2, MUX_USB2PHY2_FLEX58)
+		MUX_CFG(MUX_USB3PCIEPHY, MUX_USB3PCIEPHY_HSE)
+		MUX_CFG(MUX_DSIPHY, MUX_DSIPHY_FLEX28)
+		MUX_CFG(MUX_DSIBLANE, MUX_DSIBLANE_DSIPHY)
+		MUX_CFG(MUX_LVDSPHY, MUX_LVDSPHY_FLEX32)
+		MUX_CFG(MUX_DTS, MUX_DTS_HSE)
+		MUX_CFG(MUX_RTC, MUX_RTC_LSE)
+		MUX_CFG(MUX_D3PER, MUX_D3PER_MSI)
+		MCO_CFG(MCO1, MUX_MCO1_FLEX61, MCO_OFF)
+		MCO_CFG(MCO2, MUX_MCO2_FLEX62, MCO_OFF)
+	>;
+
+//	st,pll-enable = <&pll1_cfg_1200Mhz>, <&pll2_cfg_600Mhz>, <&pll4_cfg_1200Mhz>, <&pll5_cfg_532Mhz>;
+
+	pll1 {
+		pll1_cfg_1200Mhz: pll1-cfg-1200Mhz {
+			cfg = <30 1 1 1>;
+			src = <MUX_CFG(MUX_MUXSEL5, MUXSEL_HSE)>;
+		};
+	};
+
+	/* DRAM clock = 2 * PLL2 clock */
+	pll2 {
+		pll2_cfg_600Mhz: pll2-cfg-600Mhz {
+			cfg = <59 1 4 1>;
+			src = <MUX_CFG(MUX_MUXSEL6, MUXSEL_HSE)>;
+			frac = <0xF3B8CA>;
+		};
+	};
+
+	pll4 {
+		pll4_cfg_1200Mhz: pll4-cfg-1200Mhz {
+			cfg = <30 1 1 1>;
+			src = <MUX_CFG(MUX_MUXSEL0, MUXSEL_HSE)>;
+		};
+	};
+
+	pll5 {
+		pll5_cfg_532Mhz: pll5-cfg-532Mhz {
+			cfg = <133 5 1 2>;
+			src = <MUX_CFG(MUX_MUXSEL1, MUXSEL_HSE)>;
+		};
+	};
+};
+
