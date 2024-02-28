@@ -26,3 +26,8 @@ properties:
     required: true
     type: int
     const: 0
+
+  st,protreg:
+    type: array
+    description: |
+      protection value of rif peripherals, each entry is defined by a 32 bit.
