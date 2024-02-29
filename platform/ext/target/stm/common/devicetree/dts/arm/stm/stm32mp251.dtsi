@@ -87,6 +87,7 @@
 				 <1 0 0x50440000 0x400>;
 			clocks = <&rcc CK_BUS_OSPIIOM>;
 			resets = <&rctl OSPIIOM_R>;
+			st,syscfg-amcr = <&syscfg 0x2c00 0x7>;
 			status = "disabled";
 			#address-cells = <2>;
 			#size-cells = <1>;
