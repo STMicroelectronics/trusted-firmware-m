@@ -523,6 +523,7 @@ static int spi_nor_build_op(uint8_t cmd, struct spi_mem_op *op)
 		break;
 	case SPI_NOR_OP_READ_1_1_4_4B:
 		op->addr.nbytes = 4U;
+		/* fall through */
 	case SPI_NOR_OP_READ_1_1_4:
 		op->dummy.nbytes = 1U;
 		op->dummy.buswidth = SPI_MEM_BUSWIDTH_1_LINE;
@@ -536,6 +537,7 @@ static int spi_nor_build_op(uint8_t cmd, struct spi_mem_op *op)
 		break;
 	case SPI_NOR_OP_WRITE_1_4_4_4B:
 		op->addr.nbytes = 4U;
+		/* fall through */
 	case SPI_NOR_OP_WRITE_1_4_4:
 		op->addr.buswidth = SPI_MEM_BUSWIDTH_4_LINE;
 		op->data.buswidth = SPI_MEM_BUSWIDTH_4_LINE;
@@ -545,6 +547,7 @@ static int spi_nor_build_op(uint8_t cmd, struct spi_mem_op *op)
 	case SPI_NOR_OP_BE_4B:
 	case SPI_NOR_OP_SE_4B:
 		op->addr.nbytes = 4U;
+		/* fall through */
 	case SPI_NOR_OP_BE:
 	case SPI_NOR_OP_SE:
 		break;
