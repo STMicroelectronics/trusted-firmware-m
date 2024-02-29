@@ -81,7 +81,7 @@ static int spi_mem_check_bus_ops(const struct spi_bus_ops *ops)
 
 	if (ops == NULL) {
 		VERBOSE("Ops not defined\n");
-		error = true;
+		return -EINVAL;
 	}
 
 	if (ops->claim_bus == NULL) {
