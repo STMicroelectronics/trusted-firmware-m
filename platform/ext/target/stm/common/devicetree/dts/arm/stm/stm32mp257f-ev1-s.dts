@@ -47,10 +47,6 @@
 };
 
 &ospi2 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&ospi1_clk_pins_a
-		     &ospi1_io03_pins_a
-		     &ospi1_cs0_pins_a>;
 	memory-region = <&mm_ospi2>;
 	#address-cells = <1>;
 	#size-cells = <0>;
