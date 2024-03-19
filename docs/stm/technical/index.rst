@@ -6,6 +6,7 @@ Technical references
     :glob:
 
     copro/index
+    m33tdcid/index
     devicetree/index
     initlevel
     *
