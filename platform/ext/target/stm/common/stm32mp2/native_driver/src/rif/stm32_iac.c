@@ -18,7 +18,7 @@
 #include <lib/mmio.h>
 #include <inttypes.h>
 #include <debug.h>
-#include <tfm_hal_spm_logdev.h>
+#include <uart_stdout.h>
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
@@ -120,7 +120,9 @@ static void stm32_iac_get_hwconfig(void)
 #define IAC_EXCEPT_MSB_BIT(x) (x * _PERIPH_IDS_PER_REG + _PERIPH_IDS_PER_REG - 1)
 #define IAC_EXCEPT_LSB_BIT(x) (x * _PERIPH_IDS_PER_REG)
 
-#define IAC_LOG(x) tfm_hal_output_spm_log((x), sizeof(x))
+#define IAC_LOG(str) do { \
+    stdio_output_string((const unsigned char *)str, strlen(str)); \
+} while (0);
 
 __weak void access_violation_handler(void)
 {
@@ -150,7 +152,7 @@ void IAC_IRQHandler(void)
 				 IAC_EXCEPT_MSB_BIT(i),
 				 IAC_EXCEPT_LSB_BIT(i), isr);
 
-			tfm_hal_output_spm_log(tmp, strlen(tmp));
+			IAC_LOG(tmp);
 			io_write32(drv_cfg->base + _IAC_ICR0 + offset, isr);
 		}
 	}

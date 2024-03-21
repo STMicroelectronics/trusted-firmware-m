@@ -19,7 +19,7 @@
 #include <debug.h>
 #include <clk.h>
 #include <target_cfg.h>
-#include <tfm_hal_spm_logdev.h>
+#include <uart_stdout.h>
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
@@ -93,7 +93,9 @@ static void stm32_serc_get_hwconfig(void)
 #define SERC_EXCEPT_MSB_BIT(x) (x * _PERIPH_IDS_PER_REG + _PERIPH_IDS_PER_REG - 1)
 #define SERC_EXCEPT_LSB_BIT(x) (x * _PERIPH_IDS_PER_REG)
 
-#define SERC_LOG(x) tfm_hal_output_spm_log((x), sizeof(x))
+#define SERC_LOG(str) do { \
+    stdio_output_string((const unsigned char *)str, strlen(str)); \
+} while (0);
 
 __weak void access_violation_handler(void)
 {
@@ -123,7 +125,7 @@ void SERF_IRQHandler(void)
 				 SERC_EXCEPT_MSB_BIT(i),
 				 SERC_EXCEPT_LSB_BIT(i), isr);
 
-			tfm_hal_output_spm_log(tmp, strlen(tmp));
+			SERC_LOG(tmp);
 			io_write32(drv_cfg->base + _SERC_ICR0 + offset, isr);
 		}
 	}
