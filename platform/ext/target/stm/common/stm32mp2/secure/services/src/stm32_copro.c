@@ -16,7 +16,7 @@
 #include <lib/delay.h>
 
 #define __HAL_RCC_CPU1_BOOT_ENABLE()        SET_BIT(RCC->CPUBOOTCR, RCC_CPUBOOTCR_BOOT_CPU1)
-#if 0
+
 static int cpu1_wakeup(void)
 {
 	/* Use C2SEV */
@@ -27,7 +27,6 @@ static int cpu1_wakeup(void)
 	return 0;
 }
 SYS_INIT(cpu1_wakeup, POST_CORE, 99);
-#endif
 
 /* when copro will be used with platform service  */
 #if 0
