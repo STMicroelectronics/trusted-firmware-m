@@ -27,5 +27,7 @@ struct risup_cfg {
 };
 
 int stm32_rifsc_get_access_by_id(const struct device *dev, uint32_t id);
+int stm32_set_risup(const struct device *dev, const struct risup_cfg *risup,
+		    const int nrisup);
 
 #endif /* __STM32_RIFSC_H */

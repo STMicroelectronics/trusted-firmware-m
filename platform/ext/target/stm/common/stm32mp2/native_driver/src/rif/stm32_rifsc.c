@@ -185,6 +185,30 @@ static int stm32_risup_cfg(const struct device *dev, const struct risup_cfg *ris
 	return 0;
 }
 
+/*
+ * Must be rework
+ * - a firewall framework must be created
+ */
+int stm32_set_risup(const struct device *dev, const struct risup_cfg *risups,
+		    const int nrisups)
+{
+	struct rifsc_driver_data *drv_data = dev_get_data(dev);
+	int i = 0;
+	int err = 0;
+
+	for (i = 0; i < nrisups && i < drv_data->nb_risup; i++) {
+		const struct risup_cfg *risup = risups + i;
+
+		err = stm32_risup_cfg(dev, risup);
+		if (err) {
+			EMSG("risup cfg(%d/%d) error", i + 1, nrisups);
+			return err;
+		}
+	}
+
+	return 0;
+}
+
 static int stm32_risup_setup(const struct device *dev)
 {
 	const struct stm32_rifsc_config *dev_cfg = dev_get_config(dev);
