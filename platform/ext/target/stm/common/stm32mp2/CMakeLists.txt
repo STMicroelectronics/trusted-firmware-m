@@ -91,6 +91,7 @@ target_sources(platform_s
 		${STM_SOC_DIR}/native_driver/src/uart/console.c
 		${STM_SOC_DIR}/native_driver/src/uart/stm32_uart.c
 		${STM_SOC_DIR}/native_driver/src/spi/stm32_ospi.c
+		${STM_SOC_DIR}/native_driver/src/spi/stm32_omm.c
 		${STM_SOC_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c
 		${STM_SOC_DIR}/native_driver/src/mtd/nor/spi_nor.c
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c>
@@ -150,6 +151,7 @@ target_sources(tfm_s
 		${STM_SOC_DIR}/native_driver/src/i2c/stm32_i2c.c
 		${STM_SOC_DIR}/native_driver/src/power/stm32mp2_pwr.c
 		${STM_SOC_DIR}/native_driver/src/bsec/stm32_bsec3.c
+		${STM_SOC_DIR}/native_driver/src/spi/stm32_omm.c
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c>
@@ -281,6 +283,7 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/uart/console.c
 			${STM_SOC_DIR}/native_driver/src/uart/stm32_uart.c
 			${STM_SOC_DIR}/native_driver/src/spi/stm32_ospi.c
+			${STM_SOC_DIR}/native_driver/src/spi/stm32_omm.c
 			${STM_SOC_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c
 			${STM_SOC_DIR}/native_driver/src/mtd/nor/spi_nor.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c
@@ -331,6 +334,7 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c
+			${STM_SOC_DIR}/native_driver/src/spi/stm32_omm.c
 	)
 
 	add_custom_target(bl2_stm32
