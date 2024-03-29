@@ -61,6 +61,8 @@ GERRIT_BRANCH = os.getenv('GERRIT_BRANCH', 'stm32mp25-dev')
 
 BUGZILLA_HOST = os.getenv('BUGZILLA_HOST', 'intbugzilla.st.com')
 BUGZILLA_PRODUCT = os.getenv('BUGZILLA_PRODUCT', 'STM32MP25')
+BUGZILLA_SUB_SYS = os.getenv('BUGZILLA_SUB_SYS', 'MPU_TFM')
+
 
 ST_AUTH_PATH = os.getenv('ST_AUTH_PATH', '/local/home/frq09524/.st/AUTH')
 
@@ -79,9 +81,9 @@ class BugZilla(object):
     """
     * group bugzilla request
     """
-    def __init__(self, host, product):
+    def __init__(self, host, sub_sys):
         self.host = host
-        self.product = product
+        self.sub_sys = sub_sys
         with open(ST_AUTH_PATH) as auth_file:
             auth = json.load(auth_file)
             self.api_key = auth[BUGZILLA_HOST]['bugzilla/https']['api_key']
@@ -91,7 +93,7 @@ class BugZilla(object):
 
     def get_buglist(self, commit_revision, cgi_link=False):
         """
-        * &include_fields=id,summary,status,cf_description&f1=cf_commit_revision&o1=anywordssubstr&product=STM32MP25&v1=<commit_revision>
+        * &include_fields=id,summary,status,cf_description&f1=cf_commit_revision&o1=anywordssubstr&cf_subsystem=MPU_TFM&v1=<commit_revision>
         """
         if not commit_revision:
             commit_str = "000000"
@@ -103,7 +105,7 @@ class BugZilla(object):
         terms = [{'include_fields': include_fields},
                  {'f1': 'cf_commit_revision'},
                  {'o1': 'anywordssubstr'},
-                 {'product': self.product},
+                 {'cf_subsystem': self.sub_sys},
                  {'query_format': 'advanced'},
                  {'v1': commit_str}]
 
@@ -252,7 +254,7 @@ def main(args):
     logging.debug("gerrit_id:{}".format(gerrit_id))
 
     logging.info("waiting bugzilla request...")
-    bugtool = BugZilla(BUGZILLA_HOST, BUGZILLA_PRODUCT)
+    bugtool = BugZilla(BUGZILLA_HOST, BUGZILLA_SUB_SYS)
     blist = bugtool.get_buglist(gerrit_id, args.cgi_link)
     logging.debug("nb bz found:{}".format(len(blist.bugs)))
 
