@@ -13,14 +13,13 @@ set(MBEDCRYPTO_BUILD_TYPE               minsizerel		CACHE STRING    "Build type 
 #Before Soc config
 set(STM32_BOARD_MODEL		"stm32mp257f eval1"		CACHE STRING	"Define board model name" FORCE)
 set(DTS_EXT_DIR			""				CACHE STRING	"If not empty, set external dts directory")
-set(STM32_STM32MP257f_EV1_REV	"revA"				CACHE STRING	"Select ev1 board revision: revA, revB")
+set(STM32_STM32MP257f_EV1_REV	"revA"				CACHE STRING	"Select ev1 board revision: revA")
+set(STM32_STM32MP2_SOC_REV	"revB"				CACHE STRING	"Set soc revision: revA, revB" FORCE)
 
 SET(DTS_BOARD_BASE "arm/stm/stm32mp257f-ev1")
 
-if (STM32_STM32MP257f_EV1_REV STREQUAL "revA")
-	set(STM32_STM32MP2_SOC_REV		"revB"		CACHE STRING	"Set soc revision: revA, revB" FORCE)
-elseif(STM32_STM32MP257f_EV1_REV STREQUAL "revB")
-	set(STM32_STM32MP2_SOC_REV		"revA"		CACHE STRING	"Set soc revision: revA, revB" FORCE)
+if (NOT STM32_STM32MP257f_EV1_REV STREQUAL "revA")
+	message(FATAL_ERROR "Board revision not defined by st")
 	string(APPEND DTS_BOARD_BASE "-${STM32_STM32MP257f_EV1_REV}")
 endif()
 
