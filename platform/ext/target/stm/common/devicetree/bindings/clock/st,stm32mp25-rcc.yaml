@@ -29,6 +29,7 @@ compatible: "st,stm32mp25-rcc"
 include:
   - base.yaml
   - clock-controller.yaml
+  - st,stm32mp25-rif.yaml
   - name: st,stm32mp25-syscfg-properties.yaml
     property-allowlist:
       - st,syscfg-safe-reset
