@@ -12,9 +12,10 @@
 #define ATTEST_INCLUDE_OPTIONAL_CLAIMS	0
 
 /* For size optimization, set CLK_MINIMAL_SZ (no clock name defined e.g.) */
-#undef CLK_MINIMAL_SZ
+#ifndef CLK_MINIMAL_SZ
 #define CLK_MINIMAL_SZ	1
 
+#endif
 /* Set ddr4 type */
 #undef STM32MP_DDR4_TYPE
 #define STM32MP_DDR4_TYPE 1
