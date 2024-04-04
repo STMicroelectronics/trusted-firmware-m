@@ -191,6 +191,19 @@ int regulator_set_voltage(const struct device *dev, int32_t min_uv,
 	return api->set_voltage(dev, min_uv, max_uv);
 }
 
+int regulator_get_voltage(const struct device *dev,
+			  int32_t *volt_uv)
+{
+	const struct regulator_driver_api *api =
+		(const struct regulator_driver_api *)dev->api;
+
+	if (api->get_voltage == NULL) {
+		return -ENOSYS;
+	}
+
+	return api->get_voltage(dev, volt_uv);
+}
+
 int regulator_set_current_limit(const struct device *dev, int32_t min_ua,
 				int32_t max_ua)
 {
