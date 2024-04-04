@@ -24,6 +24,7 @@ target_compile_definitions(platform_region_defs
 		$<$<BOOL:${STM32_M33TDCID}>:STM32_M33TDCID>
 		# this flag is not defined in tfm_s and needed by stm32_bsec3
 		$<$<BOOL:${TFM_DUMMY_PROVISIONING}>:TFM_DUMMY_PROVISIONING>
+		$<$<BOOL:${TFM_PARTITION_SCP}>:S_HEAP_SIZE=0x00020000>
 )
 
 target_include_directories(platform_region_defs
