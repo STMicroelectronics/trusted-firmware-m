@@ -49,3 +49,6 @@ elseif(STM32_STM32MP2_SOC_REV STREQUAL "revB")
 else()
 	message(FATAL_ERROR "SoC Revision not supported")
 endif()
+
+set(SCP_FW_VERSION                      "32006b16e589a2904b6e5b60cf8428"   CACHE STRING    "The version of SCP-firmware to use")
+set(SCP_FW_PATH                         "DOWNLOAD"  CACHE PATH      "Path to SCP-firmware (or DOWNLOAD to fetch automatically")
