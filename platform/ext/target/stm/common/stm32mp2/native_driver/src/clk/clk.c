@@ -379,11 +379,13 @@ int clk_set_rate(struct clk *clk, unsigned long rate)
 	return res;
 }
 
-int clk_get_duty_cyle(struct clk *clk, struct clk_duty *duty)
+int clk_get_duty_cycle(struct clk *clk, struct clk_duty *duty)
 {
-
 	if (clk->ops->get_duty_cycle)
 		return clk->ops->get_duty_cycle(clk, duty);
+
+	if (clk->parent && (clk->flags & CLK_DUTY_CYCLE_PARENT))
+		return clk_get_duty_cycle(clk->parent, duty);
 
 	return -1;
 }
@@ -401,4 +403,13 @@ struct clk *clk_get(const struct device *dev, clk_subsys_t sys)
 	const struct clk_controller_api *api = dev->api;
 
 	return api->get(dev, sys);
+}
+
+int  clk_get_rates_steps(struct clk *clk, unsigned long *min,
+			       unsigned long *max, unsigned long *step)
+{
+	if (!clk->ops->get_rates_steps)
+		return -1;
+
+	return clk->ops->get_rates_steps(clk, min, max, step);
 }

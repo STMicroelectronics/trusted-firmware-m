@@ -22,6 +22,7 @@
 #define CLK_OPS_PARENT_ENABLE	BIT(2) /* parent need enable during re-parent */
 #define CLK_SET_RATE_PARENT	BIT(3) /* propagate rate change up one level */
 #define CLK_SET_RATE_UNGATE	BIT(4) /* clock needs to run to set rate */
+#define CLK_DUTY_CYCLE_PARENT	BIT(5) /* forward duty cycle call to parent */
 
 /**
  * struct clk - Clock structure
@@ -113,6 +114,9 @@ struct clk_ops {
 				    unsigned long parent_rate);
 	int (*determine_rate)(struct clk *clk,
 				     struct clk_rate_request *req);
+	int (*get_rates_steps)(struct clk *clk, unsigned long *min,
+			       unsigned long *max, unsigned long *step);
+
 };
 
 /**
@@ -247,12 +251,12 @@ int clk_set_parent(struct clk *clk, struct clk *parent);
 int clk_reparent(struct clk *clk, struct clk *parent);
 
 /**
- * clk_get_duty_cyle - Get clock duty cycle
+ * clk_get_duty_cycle - Get clock duty cycle
  *
  * @clk: Clock for which the duty cycle is needed
  * Returns the duty cycle structure
  */
-int clk_get_duty_cyle(struct clk *clk, struct clk_duty *duty);
+int clk_get_duty_cycle(struct clk *clk, struct clk_duty *duty);
 
 /**
  * clk_round_rate - Round the given rate for a clock
@@ -283,5 +287,16 @@ struct clk_controller_api {
  * Return Null if error else clock reference
  */
 struct clk *clk_get(const struct device *dev, clk_subsys_t sys);
+
+/**
+ * clk_get_rates_steps - Get supported rates as min/max/step triplet
+ *
+ * @clk: Clock for which the rates are requested
+ * @min: Output min supported rate in Hz
+ * @max: Output max supported rate in Hz
+ * Return a int compliant value
+ */
+int clk_get_rates_steps(struct clk *clk, unsigned long *min,
+                        unsigned long *max, unsigned long *step);
 
 #endif /* __DRIVERS_CLK_H */
