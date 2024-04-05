@@ -26,7 +26,7 @@ static int cpu1_wakeup(void)
 
 	return 0;
 }
-SYS_INIT(cpu1_wakeup, POST_CORE, 99);
+SYS_INIT(cpu1_wakeup, REST, 1);
 
 /* when copro will be used with platform service  */
 #if 0
