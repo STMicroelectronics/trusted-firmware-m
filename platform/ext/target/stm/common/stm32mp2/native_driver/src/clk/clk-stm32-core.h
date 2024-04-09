@@ -7,6 +7,7 @@
 #define CLK_STM32_CORE_H
 
 #include <clk.h>
+#include <stm32_rifsc.h>
 
 struct mux_cfg {
 	uint16_t offset;
@@ -51,6 +52,8 @@ struct stm32_rcc_config {
 	const uint32_t nkernelclk;
 	const uint32_t *flexgen;
 	const uint32_t nflexgen;
+	const struct risup_cfg *rif_cfg;
+	const int nrif_cfg;
 };
 
 struct clk_stm32_priv {

@@ -96,16 +96,29 @@
 #define RCC_4_MHZ	UL(4000000)
 #define RCC_16_MHZ	UL(16000000)
 
+#define _RCC_CIDCFGR(y)		(RCC_R0CIDCFGR + U(0x8) * (y))
+#define _RCC_SEMCR(y)		(RCC_R0SEMCR + U(0x8) * (y))
+
+#define MY_CID RIF_CID2
+
 /*
  * CIDCFGR register bitfields
  */
-#define RCC_CIDCFGR_SEMWL_MASK		GENMASK_32(23, 16)
-#define RCC_CIDCFGR_SCID_MASK		GENMASK_32(6, 4)
-#define RCC_CIDCFGR_CONF_MASK		(_CIDCFGR_CFEN |	\
-					 _CIDCFGR_SEMEN |	\
-					 RCC_CIDCFGR_SCID_MASK |\
-					 RCC_CIDCFGR_SEMWL_MASK)
+#define _RCC_CIDCFGR_CFEN_MASK		BIT(0)
+#define _RCC_CIDCFGR_CFEN_SHIFT		0
+#define _RCC_CIDCFGR_SEMEN_MASK		BIT(1)
+#define _RCC_CIDCFGR_SEMEN_SHIFT	1
+#define _RCC_CIDCFGR_SCID_MASK		GENMASK_32(6, 4)
+#define _RCC_CIDCFGR_SCID_SHIFT		4
+#define _RCC_CIDCFGR_SEMWLC_MASK	GENMASK_32(23, 16)
+#define _RCC_CIDCFGR_SEMWLC_SHIFT	16
 
+#define SEMAPHORE_IS_AVAILABLE(cid_cfgr, my_id)		\
+	(_FLD_GET(_RCC_CIDCFGR_CFEN, cid_cfgr) &&	\
+	 _FLD_GET(_RCC_CIDCFGR_SEMEN, cid_cfgr) &&	\
+	 ((_FLD_GET(_RCC_CIDCFGR_SEMWLC, cid_cfgr)) == BIT(my_id)))
+
+#define _PERIPH_IDS_PER_REG		32
 /*
  * PRIVCFGR register bitfields
  */
@@ -125,15 +138,15 @@
 /*
  * SEMCR register bitfields
  */
-#define RCC_SEMCR_SCID_MASK		GENMASK_32(6, 4)
-#define RCC_SEMCR_SCID_SHIFT		U(4)
+#define _RCC_SEMCR_MUTEX_MASK		BIT(0)
+#define _RCC_SEMCR_MUTEX_SHIFT		0
+#define _RCC_SEMCR_SCID_MASK		GENMASK_32(6, 4)
+#define _RCC_SEMCR_SCID_SHIFT		U(4)
 
 /*
  * RIF miscellaneous
  */
 #define RCC_NB_RIF_RES			U(114)
-#define RCC_NB_CONFS			((RCC_NB_RIF_RES / 32) + 1)
-
 #define RCC_NB_MAX_CID_SUPPORTED	U(7)
 
 /* Register: RCC_RxCIDCFGR */
@@ -822,14 +835,14 @@ static bool stm32_rcc_has_access_by_id(struct clk_stm32_priv *priv, uint16_t id)
 	}
 
 	if (!(cid_reg_value & RCC_CIDCFGR_CFEN) ||
-	    ((cid_reg_value & RCC_CIDCFGR_SCID_MASK) >>
+	    ((cid_reg_value & _RCC_CIDCFGR_SCID_MASK) >>
 	    RCC_CIDCFGR_SCID_SHIFT) == RIF_CID0)
 		return true;
 
 	/*
 	 * Coherency check with the CID configuration
 	 */
-	if (((cid_reg_value & RCC_CIDCFGR_SCID_MASK) >>
+	if (((cid_reg_value & _RCC_CIDCFGR_SCID_MASK) >>
 	     RCC_CIDCFGR_SCID_SHIFT) != master)
 		return false;
 
@@ -3170,7 +3183,7 @@ static struct clk *stm32mp25_clk_provided[STM32MP25_ALL_CLK_NB] = {
 	[DSIPHY]		= &ck_dsi_phy,
 };
 
-static void clk_stm32_set_flexgen_as_critical(struct clk_stm32_priv *priv)
+static void __unused clk_stm32_set_flexgen_as_critical(struct clk_stm32_priv *priv)
 {
 	uint32_t i;
 
@@ -3250,6 +3263,61 @@ static void clk_stm32_init_oscillators(struct clk_stm32_priv *priv)
 	}
 }
 
+#if (!IS_ENABLED(STM32_SEC))
+static int clk_stm32_apply_rcc_config(const struct device *dev)
+{
+	return 0;
+}
+
+static int clk_stm32_rif_init_probe(const struct device *dev)
+{
+	return 0;
+}
+
+#else
+//tfm_s
+static int stm32mp25_clk_risup_setup(const struct device *dev,
+				     const struct risup_cfg *risup);
+
+static int clk_stm32_rif_semaphore_acquire(const struct device *dev,
+					   uint32_t id)
+{
+	const struct stm32_rcc_config *drv_cfg = dev_get_config(dev);
+	uint32_t semcr;
+
+	io_setbits32(drv_cfg->base + _RCC_SEMCR(id), _RCC_SEMCR_MUTEX_MASK);
+
+	semcr = io_read32(drv_cfg->base + _RCC_SEMCR(id));
+	if (semcr != (_RCC_SEMCR_MUTEX_MASK | _FLD_PREP(_RCC_SEMCR_SCID, MY_CID)))
+		return -EPERM;
+
+	return 0;
+}
+
+static int stm32mp25_clk_rif_init(const struct device *dev)
+{
+	const struct stm32_rcc_config *drv_cfg = dev_get_config(dev);
+	struct clk_stm32_priv *priv = (struct clk_stm32_priv *)dev_get_data(dev);
+	struct risup_cfg *rcfg_elem;
+	int err = 0;
+	int i = 0;
+
+	for_each_risup_cfg(drv_cfg->rif_cfg, rcfg_elem, drv_cfg->nrif_cfg, i) {
+		err = stm32mp25_clk_risup_setup(dev, rcfg_elem);
+		if (err) {
+			EMSG("risup id:%d error", rcfg_elem->id);
+			goto out;
+		}
+	}
+
+	clk_stm32_set_flexgen_as_critical(priv);
+
+out:
+	return err;
+}
+
+#if (IS_ENABLED(STM32_M33TDCID))
+// tfm_s_cm33tdcid
 static int clk_stm32_apply_rcc_config(const struct device *dev)
 {
 	const struct stm32_rcc_config *drv_cfg = dev_get_config(dev);
@@ -3264,37 +3332,126 @@ static int clk_stm32_apply_rcc_config(const struct device *dev)
 	return 0;
 }
 
+static int clk_stm32_rif_init_probe(const struct device *dev)
+{
+	return 0;
+}
+
+static int stm32mp25_clk_risup_setup(const struct device *dev,
+				     const struct risup_cfg *risup)
+{
+	const struct stm32_rcc_config *drv_cfg = dev_get_config(dev);
+	uintptr_t offset = sizeof(uint32_t) * (risup->id / _PERIPH_IDS_PER_REG);
+	uint32_t shift = risup->id % _PERIPH_IDS_PER_REG;
+
+	io_clrsetbits32(drv_cfg->base + RCC_SECCFGR0 + offset,
+				BIT(shift), risup->sec << shift);
+
+	io_clrsetbits32(drv_cfg->base + RCC_PRIVCFGR0 + offset,
+				BIT(shift), risup->priv << shift);
+
+	io_write32(drv_cfg->base + _RCC_CIDCFGR(risup->id), risup->cid_attr);
+
+
+	if (SEMAPHORE_IS_AVAILABLE(risup->cid_attr, MY_CID))
+		return clk_stm32_rif_semaphore_acquire(dev, risup->id);
+
+	return 0;
+}
+
+static int clk_stm32_rif_init_late(void)
+{
+	const struct device *dev = DEVICE_GET(DEVICE_DT_DEV_ID(DT_DRV_INST(0)));
+	return stm32mp25_clk_rif_init(dev);
+
+}
+SYS_INIT(clk_stm32_rif_init_late, REST, 0);
+
+#else
+//tfm_s_ca35tdcid
+static int stm32mp25_clk_risup_setup(const struct device *dev,
+				     const struct risup_cfg *risup)
+{
+	const struct stm32_rcc_config *drv_cfg = dev_get_config(dev);
+	uintptr_t offset = sizeof(uint32_t) * (risup->id / _PERIPH_IDS_PER_REG);
+	uint32_t shift = risup->id % _PERIPH_IDS_PER_REG;
+	bool write_cfg = false;
+	uint32_t cidcfgr;
+	int err = 0;
+
+	/*
+	 * if not TDCID
+	 * write RCC_SECCFGR0 & RCC_PRIVCFGR0 if:
+	 *  - SEM_EN=1 && SEMWLC=MY_CID && acquire semaphore
+	 *  - SEM_EN=0 && SCID=MY_CID
+	 */
+
+	cidcfgr = io_read32(drv_cfg->base + _RCC_CIDCFGR(offset));
+
+	if (SEMAPHORE_IS_AVAILABLE(cidcfgr, MY_CID)) {
+		err = clk_stm32_rif_semaphore_acquire(dev, risup->id);
+		if (!err)
+			write_cfg = true;
+	} else if (!_FLD_GET(_RCC_CIDCFGR_SEMEN, cidcfgr) &&
+		   (_FLD_GET(_RCC_CIDCFGR_SCID, cidcfgr) == MY_CID))  {
+		write_cfg = true;
+	}
+
+	if (write_cfg) {
+		io_clrsetbits32(drv_cfg->base + RCC_SECCFGR0 + offset,
+				BIT(shift), risup->sec << shift);
+
+		io_clrsetbits32(drv_cfg->base + RCC_PRIVCFGR0 + offset,
+				BIT(shift), risup->priv << shift);
+	}
+
+	return err;
+}
+
+static int clk_stm32_apply_rcc_config(const struct device *dev)
+{
+	return 0;
+}
+
+static int clk_stm32_rif_init_probe(const struct device *dev)
+{
+	return stm32mp25_clk_rif_init(dev);
+}
+#endif
+#endif
+
 static int stm32mp25_clk_dt_init(const struct device *dev)
 {
 	struct clk_stm32_priv *priv = (struct clk_stm32_priv *)dev_get_data(dev);
-	int err;
+	int err = 0;
 
 	priv->rcc_cfg = dev_get_config(dev);
 
 	clk_stm32_init_oscillators(priv);
 
-#if defined(STM32_BL2)
-	mmio_setbits_32(clk_stm32_get_rcc_base(priv) + RCC_DDRITFCFGR,
-			RCC_DDRITFCFGR_DDRSHR);
-	/* Enable DDR clock and remove reset */
-	mmio_write_32(clk_stm32_get_rcc_base(priv) + RCC_DDRCPCFGR,
-		      RCC_DDRCPCFGR_DDRCPEN | RCC_DDRCPCFGR_DDRCPLPEN);
-#endif
+	if (IS_ENABLED(STM32_BL2)) {
+		mmio_setbits_32(clk_stm32_get_rcc_base(priv) + RCC_DDRITFCFGR,
+				RCC_DDRITFCFGR_DDRSHR);
+		/* Enable DDR clock and remove reset */
+		mmio_write_32(clk_stm32_get_rcc_base(priv) + RCC_DDRCPCFGR,
+			      RCC_DDRCPCFGR_DDRCPEN | RCC_DDRCPCFGR_DDRCPLPEN);
+	}
 
 	err = stm32mp2_init_clock_tree(priv);
-	if (err != 0)
-		return err;
+	if (err)
+		goto out;
 
-	if (IS_ENABLED(STM32_M33TDCID)) {
-		err = clk_stm32_apply_rcc_config(dev);
-		if (err)
-			return err;
-	}
+	err = clk_stm32_apply_rcc_config(dev);
+	if (err)
+		goto out;
 
 	clk_stm32_register_clocks(priv);
 
-	/* todo after rif application */
-	clk_stm32_set_flexgen_as_critical(priv);
+	err = clk_stm32_rif_init_probe(dev);
+
+out:
+	if (err)
+		panic();
 
 	return 0;
 }
@@ -3340,6 +3497,12 @@ static struct stm32_pll_dt_cfg stm32_pll[] = {
 	STM32_PLL_DEFINE_COND(pll8, PLL8_ID)
 };
 
+static const struct risup_cfg rif_cfg_rcc[] = {						\
+	COND_CODE_1(DT_INST_NODE_HAS_PROP(0, st_protreg),				\
+		    (DT_INST_FOREACH_PROP_ELEM_SEP(0, st_protreg, STM32_RIFPROT, (,))),	\
+		    ())									\
+};
+
 const struct stm32_rcc_config stm32mp25_rcc_cfg = {
 	.base = DT_INST_REG_ADDR(0),
 	.c1msrd = DT_INST_PROP_OR(0, st_c1msrd, 0),
@@ -3356,6 +3519,8 @@ const struct stm32_rcc_config stm32mp25_rcc_cfg = {
 	.nosci = ARRAY_SIZE(stm32_osci),
 	.pll = stm32_pll,
 	.npll = ARRAY_SIZE(stm32_pll),
+	.rif_cfg = rif_cfg_rcc,
+	.nrif_cfg = ARRAY_SIZE(rif_cfg_rcc),
 };
 
 static struct clk_controller_api stm32mp25_clk_api = {
@@ -3368,3 +3533,6 @@ DEVICE_DT_INST_DEFINE(0,
 		      &stm32mp25_rcc_cfg,
 		      PRE_CORE, 5,
 		      &stm32mp25_clk_api);
+
+BUILD_ASSERT(DT_INST_PROP_LEN_OR(0, st_protreg, 1) <= RCC_NB_RIF_RES,
+	     "number of rif ressource not supported");
