@@ -3205,20 +3205,20 @@ static bool clk_stm32_clock_is_critical(__maybe_unused struct clk *clk)
 {
 	struct clk *clk_criticals[] = {
 		/* Fix me: activate temporay all clock required */
-		&ck_hsi
-		, &ck_hse
-		, &ck_msi /*  critical in TF-A */
-		, &ck_lsi
-		, &ck_lse
-		, &ck_icn_p_gpiog /*  uart */
-		, &ck_icn_p_bsec /*  bsec  */
-		, &ck_icn_p_gpiod /*  octospi */
-		, &ck_icn_ddr /* switch on in TF-A before calling ddr init */
-		, &ck_icn_s_sram2 /* sram2 is used to retrieve ddr binary */
-
+		&ck_hsi,
+		&ck_hse,
+		&ck_msi,		/* critical in TF-A */
+		&ck_lsi,
+		&ck_lse,
+		&ck_icn_p_gpiog,	/* uart */
+		&ck_icn_p_bsec,		/* bsec  */
+		&ck_icn_p_gpiod,	/* octospi */
+		&ck_icn_ddr,		/* switch on in TF-A before calling ddr init */
+		&ck_icn_s_sram2,	/* sram2 is used to retrieve ddr binary */
+		&ck_icn_s_sysram,
 #if defined(STM32_SEC)
-		, &ck_icn_p_risaf4
-		, &ck_icn_p_rtc
+		&ck_icn_p_risaf4,
+		&ck_icn_p_rtc,
 #endif
 	};
 	size_t i = 0;
