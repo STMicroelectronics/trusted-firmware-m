@@ -1,22 +1,21 @@
 // SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /*
- * Copyright (C) 2022-2023, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2022-2024, STMicroelectronics - All Rights Reserved
  */
 
 /*
- * STM32MP257D/F VALID3 board configuration
+ * STM32MP25 DDR4 board configuration
  * DDR4 2x8Gbits 2x16bits 1200MHz
  *
- * References used:
- * - MT40A512M16LY-062EIT:E from MICRON
- * - NT5AD512M16C4-JRI from NANYA
- *
- * memclk	1200MHz		(2x DFI clock) + range check
- * speed_bin	Worse		from JEDEC
- * width	32		32: full width / 16: half width
- * density	8Gbits		(per 16bit device)
- * addressing	RBC		row/bank interleaving
- * RDBI		No		Read DBI
+ * version     1
+ * package     1        Package selection (14x14 and 18x18)
+ * memclk      1200MHz  (2x DFI clock) + range check
+ * Speed_Bin   Worse    from JEDEC
+ * width       32       32: full width / 16: half width
+ * ranks       1        Single or Dual rank
+ * density     8Gbits   (per 16bit device)
+ * Addressing  RBC      row/bank interleaving
+ * RDBI        No       Read DBI
  */
 
 /*
@@ -35,7 +34,7 @@
 #define DDR_MRCTRL1 0x00000000
 #define DDR_MRCTRL2 0x00000000
 #define DDR_DERATEEN 0x00000000
-#define DDR_DERATEINT 0x0124F800
+#define DDR_DERATEINT 0x00000000
 #define DDR_DERATECTL 0x00000000
 #define DDR_PWRCTL 0x00000000
 #define DDR_PWRTMG 0x00130001
@@ -64,7 +63,7 @@
 #define DDR_DRAMTMG4 0x0904050A
 #define DDR_DRAMTMG5 0x06060403
 #define DDR_DRAMTMG6 0x02020005
-#define DDR_DRAMTMG7 0x00000606
+#define DDR_DRAMTMG7 0x00000202
 #define DDR_DRAMTMG8 0x04041007
 #define DDR_DRAMTMG9 0x0002040A
 #define DDR_DRAMTMG10 0x001C180A
@@ -79,7 +78,7 @@
 #define DDR_DFITMG0 0x038F8209
 #define DDR_DFITMG1 0x00080303
 #define DDR_DFILPCFG0 0x07004111
-#define DDR_DFILPCFG1 0x000000F0
+#define DDR_DFILPCFG1 0x00000000
 #define DDR_DFIUPD0 0xC0300018
 #define DDR_DFIUPD1 0x005700B4
 #define DDR_DFIUPD2 0x80000000
@@ -90,22 +89,22 @@
 #define DDR_DFIPHYMSTR 0x80000000
 #define DDR_ADDRMAP0 0x0000001F
 #define DDR_ADDRMAP1 0x003F0909
-#define DDR_ADDRMAP2 0x00000000
+#define DDR_ADDRMAP2 0x00000700
 #define DDR_ADDRMAP3 0x00000000
 #define DDR_ADDRMAP4 0x00001F1F
 #define DDR_ADDRMAP5 0x070F0707
 #define DDR_ADDRMAP6 0x07070707
 #define DDR_ADDRMAP7 0x00000F0F
-#define DDR_ADDRMAP8 0x00003F08
+#define DDR_ADDRMAP8 0x00003F01
 #define DDR_ADDRMAP9 0x07070707
 #define DDR_ADDRMAP10 0x07070707
 #define DDR_ADDRMAP11 0x00000007
 #define DDR_ODTCFG 0x06000618
 #define DDR_ODTMAP 0x00000001
 #define DDR_SCHED 0x00000F00
-#define DDR_SCHED1 0x000000FF
+#define DDR_SCHED1 0x00000000
 #define DDR_PERFHPR1 0x0F000001
-#define DDR_PERFLPR1 0x0F00007F
+#define DDR_PERFLPR1 0x0F000080
 #define DDR_PERFWR1 0x01000200
 #define DDR_DBG0 0x00000000
 #define DDR_DBG1 0x00000000
