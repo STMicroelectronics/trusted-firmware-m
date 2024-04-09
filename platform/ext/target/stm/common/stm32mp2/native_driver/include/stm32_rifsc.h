@@ -26,6 +26,15 @@ struct risup_cfg {
 	uint32_t cid_attr;
 };
 
+/*
+ * Loop over each element of risup_cfg table
+ */
+#define for_each_risup_cfg(rcfg_table, rcfg_elem, nrcfg, i)		\
+	for (i = 0, rcfg_elem = ((struct risup_cfg *)rcfg_table);	\
+	     i < (nrcfg);						\
+	     i++, rcfg_elem++)
+
+
 int stm32_rifsc_get_access_by_id(const struct device *dev, uint32_t id);
 int stm32_set_risup(const struct device *dev, const struct risup_cfg *risup,
 		    const int nrisup);
