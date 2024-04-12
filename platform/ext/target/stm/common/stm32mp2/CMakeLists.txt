@@ -94,6 +94,7 @@ target_sources(platform_s
 		${STM_SOC_DIR}/native_driver/src/spi/stm32_omm.c
 		${STM_SOC_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c
 		${STM_SOC_DIR}/native_driver/src/mtd/nor/spi_nor.c
+		${STM_SOC_DIR}/native_driver/src/rif/stm32_rif.c
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c>

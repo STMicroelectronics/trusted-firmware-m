@@ -65,4 +65,37 @@
 #define RIF_RTC_RESOURCE(x)		(x)
 #define RIF_TAMP_RESOURCE(x)		(x)
 
+#define RIFPROT_CFEN_SHIFT		0
+#define RIFPROT_CFEN_MASK		BIT(0)
+#define RIFPROT_SEM_EN_SHIFT		1
+#define RIFPROT_SEM_EN_MASK		BIT(1)
+#define RIFPROT_SCID_SHIFT		4
+#define RIFPROT_SCID_MASK		GENMASK_32(6, 4)
+#define RIFPROT_SEC_SHIFT		8
+#define RIFPROT_SEC_MASK		BIT(8)
+#define RIFPROT_PRIV_SHIFT		9
+#define RIFPROT_PRIV_MASK		BIT(9)
+#define RIFPROT_LOCK_SHIFT		10
+#define RIFPROT_LOCK_MASK		BIT(10)
+#define RIFPROT_SEML_SHIFT		16
+#define RIFPROT_SEML_MASK		GENMASK_32(23, 16)
+#define RIFPROT_PER_ID_SHIFT		24
+#define RIFPROT_PER_ID_MASK		GENMASK_32(31, 24)
+
+#define RIFPROT_PERx_CID_SHIFT		0
+#define RIFPROT_PERx_CID_MASK		(RIFPROT_CFEN_MASK |	\
+					 RIFPROT_SEM_EN_MASK |	\
+					 RIFPROT_SCID_MASK |	\
+					 RIFPROT_SEML_MASK)
+
+#define RIFPROT(rifid, sem_list, lock, sec, priv, scid, sem_en, cfen)	\
+	(((rifid) << RIFPROT_PER_ID_SHIFT) |				\
+	 ((sem_list) << RIFPROT_SEML_SHIFT) |				\
+	 ((lock) << RIFPROT_LOCK_SHIFT) |				\
+	 ((priv) << RIFPROT_PRIV_SHIFT) |				\
+	 ((sec) << RIFPROT_SEC_SHIFT) |					\
+	 ((scid) << RIFPROT_SCID_SHIFT) |				\
+	 ((sem_en) << RIFPROT_SEM_EN_SHIFT) |				\
+	 ((cfen) << RIFPROT_CFEN_SHIFT))
+
 #endif /* _DT_BINDINGS_STM32MP25_RIF_H */
