@@ -8,6 +8,17 @@ cmake_minimum_required(VERSION 3.15)
 
 set(STM_DDR_DIR ${CMAKE_CURRENT_LIST_DIR})
 
+fetch_remote_library(
+    LIB_NAME                ddr_phy_bin
+    LIB_SOURCE_PATH_VAR     DDR_PHY_BIN_SRC_PATH
+    FETCH_CONTENT_ARGS
+        GIT_REPOSITORY      https://github.com/STMicroelectronics/stm32-ddr-phy-binary
+	GIT_TAG             ${DDR_PHY_BIN_VERSION}
+        GIT_SHALLOW         FALSE
+        GIT_PROGRESS        TRUE
+	GIT_SUBMODULES      ""
+)
+
 target_include_directories(platform_bl2
 	PUBLIC
 		${STM_DDR_DIR}/include
@@ -51,16 +62,11 @@ target_sources(platform_bl2
 
 target_compile_definitions(platform_bl2
 	PUBLIC
-		$<$<STREQUAL:${STM32_DDR_TYPE},ddr4>:STM32MP_DDR4_TYPE=1>
+		$<$<STREQUAL:${STM32_DDR_PHY_FILE},ddr4_pmu_train.bin>:STM32MP_DDR4_TYPE=1>
 )
 
-add_custom_target(ddr_fw
-	ALL
-	DEPENDS bl2 ddr4_pmu_train.bin
-)
-
-add_custom_command(OUTPUT ddr4_pmu_train.bin
-	DEPENDS ${STM_DDR_DIR}/phy/firmware/bin/ddr4_pmu_train.bin
-	COMMENT "copy ddr4 fw"
-	COMMAND cp ${STM_DDR_DIR}/phy/firmware/bin/ddr4_pmu_train.bin  $<TARGET_FILE_DIR:bl2>/ddr4_pmu_train.bin
+install(PROGRAMS
+	${DDR_PHY_BIN_SRC_PATH}/stm32mp2/${STM32_DDR_PHY_FILE}
+	DESTINATION $<TARGET_FILE_DIR:bl2>
+	RENAME ddr_phy.bin
 )
