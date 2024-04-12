@@ -36,7 +36,6 @@ target_sources(platform_bl2
 
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_c_initphyconfig.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_calcmb.c
-		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_globals.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_i_loadpieimage.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_initstruct.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_isdbytedisabled.c
@@ -47,16 +46,12 @@ target_sources(platform_bl2
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_restore_sequence.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_sequence.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_softsetmb.c
-		${STM_DDR_DIR}/phy/phyinit/usercustom/ddrphy_phyinit_usercustom_customposttrain.c
 		${STM_DDR_DIR}/phy/phyinit/usercustom/ddrphy_phyinit_usercustom_custompretrain.c
 		${STM_DDR_DIR}/phy/phyinit/usercustom/ddrphy_phyinit_usercustom_saveretregs.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_d_loadimem.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_f_loaddmem.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_g_execfw.c
-		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_h_readmsgblock.c
-		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_storemsgblk.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_writeoutmem.c
-		${STM_DDR_DIR}/phy/phyinit/usercustom/ddrphy_phyinit_usercustom_h_readmsgblock.c
 		${STM_DDR_DIR}/phy/phyinit/usercustom/ddrphy_phyinit_usercustom_g_waitfwdone.c
 )
 

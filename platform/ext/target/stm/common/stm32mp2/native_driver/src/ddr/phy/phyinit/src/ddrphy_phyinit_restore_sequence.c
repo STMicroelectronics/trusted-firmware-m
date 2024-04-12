@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2021-2024, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -39,48 +39,39 @@ int ddrphy_phyinit_restore_sequence(void)
 	 *    This step is identical to ddrphy_phyinit_usercustom_b_startclockresetphy()
 	 */
 
-	/* -# Write the MicroContMuxSel CSR to 0x0 to allow access to the internal CSRs */
-	mmio_write_16((uintptr_t)(DDRPHYC_BASE + 4 * (TAPBONLY | CSR_MICROCONTMUXSEL_ADDR)), 0x0U);
+	/* Write the MicroContMuxSel CSR to 0x0 to allow access to the internal CSRs */
+	mmio_write_16((uintptr_t)(DDRPHYC_BASE + (4U * (TAPBONLY | CSR_MICROCONTMUXSEL_ADDR))),
+		      0x0U);
 
 	/*
-	 * -# Write the UcclkHclkEnables CSR to 0x3 to enable all the clocks so the reads can
-	 *  complete
+	 * Write the UcclkHclkEnables CSR to 0x3 to enable all the clocks so the reads can
+	 * complete.
 	 */
-	mmio_write_16((uintptr_t)(DDRPHYC_BASE + 4 * (TDRTUB | CSR_UCCLKHCLKENABLES_ADDR)), 0x3U);
+	mmio_write_16((uintptr_t)(DDRPHYC_BASE + (4U * (TDRTUB | CSR_UCCLKHCLKENABLES_ADDR))),
+		      0x3U);
 
 	/*
-	 * -# Assert CalZap to force impedance calibration FSM to idle.
-	 *    de-asserted as part of dfi_init_start/complete handshake
-	 *    by the PIE when DfiClk is valid.
+	 * Assert CalZap to force impedance calibration FSM to idle.
+	 * De-asserted as part of dfi_init_start/complete handshake by the PIE when DfiClk is valid.
 	 */
-	mmio_write_16((uintptr_t)(DDRPHYC_BASE + 4 * (TMASTER | CSR_CALZAP_ADDR)), 0x1U);
+	mmio_write_16((uintptr_t)(DDRPHYC_BASE + (4U * (TMASTER | CSR_CALZAP_ADDR))), 0x1U);
 
-	/* -# Issue register writes to restore registers values. */
-	ret = ddrphy_phyinit_reginterface(RESTOREREGS, 0, 0);
+	/* Issue register writes to restore registers values */
+	ret = ddrphy_phyinit_reginterface(RESTOREREGS, 0U, 0U);
 	if (ret != 0) {
 		return ret;
 	}
 
 	/*
-	 * -# Write the UcclkHclkEnables CSR to disable the appropriate clocks after all reads done.
+	 * Write the UcclkHclkEnables CSR to disable the appropriate clocks after all reads done.
+	 * Disabling Ucclk (PMU) and Hclk (training hardware).
 	 */
-	/* Disabling Ucclk (PMU) and Hclk (training hardware) */
-	mmio_write_16((uintptr_t)(DDRPHYC_BASE + 4 * (TDRTUB | CSR_UCCLKHCLKENABLES_ADDR)), 0x0U);
+	mmio_write_16((uintptr_t)(DDRPHYC_BASE + (4U * (TDRTUB | CSR_UCCLKHCLKENABLES_ADDR))),
+		      0x0U);
 
-	/*
-	 * -# Write the MicroContMuxSel CSR to 0x1 to isolate the internal CSRs during mission mode.
-	 */
-	mmio_write_16((uintptr_t)(DDRPHYC_BASE + 4 * (TAPBONLY | CSR_MICROCONTMUXSEL_ADDR)), 0x1U);
-
-	/*
-	 * After Function Call
-	 * --------------------------------------------------------------------------
-	 * To complete the Retention Exit sequence:
-	 *
-	 * -# Initialize the PHY to Mission Mode through DFI Initialization
-	 *    You may use the same sequence implemented in
-	 *    ddrphy_phyinit_usercustom_j_entermissionmode()
-	 */
+	/* Write the MicroContMuxSel CSR to 0x1 to isolate the internal CSRs during mission mode */
+	mmio_write_16((uintptr_t)(DDRPHYC_BASE + (4U * (TAPBONLY | CSR_MICROCONTMUXSEL_ADDR))),
+		      0x1U);
 
 	DDR_VERBOSE("%s End\n", __func__);
 

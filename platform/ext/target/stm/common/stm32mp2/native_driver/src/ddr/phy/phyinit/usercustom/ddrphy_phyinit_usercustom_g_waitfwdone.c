@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2021-2024, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -12,9 +12,9 @@
 #include <ddrphy_phyinit.h>
 
 /* Firmware major messages */
-#define FW_MAJ_MSG_TRAINING_SUCCESS	0x0000007
-#define FW_MAJ_MSG_START_STREAMING	0x0000008
-#define FW_MAJ_MSG_TRAINING_FAILED	0x00000FF
+#define FW_MAJ_MSG_TRAINING_SUCCESS	0x0000007U
+#define FW_MAJ_MSG_START_STREAMING	0x0000008U
+#define FW_MAJ_MSG_TRAINING_FAILED	0x00000FFU
 
 #define PHYINIT_DELAY_1US		1U
 #define PHYINIT_DELAY_10US		10U
@@ -30,7 +30,7 @@ static int wait_uctwriteprotshadow(bool state)
 
 	do {
 		read_data = mmio_read_16((uintptr_t)(DDRPHYC_BASE +
-						     (4 * (TAPBONLY | CSR_UCTSHADOWREGS_ADDR))));
+						     (4U * (TAPBONLY | CSR_UCTSHADOWREGS_ADDR))));
 		udelay(PHYINIT_DELAY_1US);
 		if (timeout_elapsed(timeout)) {
 			return -1;
@@ -45,7 +45,7 @@ static int ack_message_receipt(void)
 	int ret;
 
 	/* Acknowledge the receipt of the message */
-	mmio_write_16((uintptr_t)(DDRPHYC_BASE + (4 * (TAPBONLY | CSR_DCTWRITEPROT_ADDR))), 0U);
+	mmio_write_16((uintptr_t)(DDRPHYC_BASE + (4U * (TAPBONLY | CSR_DCTWRITEPROT_ADDR))), 0U);
 
 	udelay(PHYINIT_DELAY_1US);
 
@@ -55,16 +55,16 @@ static int ack_message_receipt(void)
 	}
 
 	/* Complete the 4-phase protocol */
-	mmio_write_16((uintptr_t)(DDRPHYC_BASE + (4 * (TAPBONLY | CSR_DCTWRITEPROT_ADDR))), 1U);
+	mmio_write_16((uintptr_t)(DDRPHYC_BASE + (4U * (TAPBONLY | CSR_DCTWRITEPROT_ADDR))), 1U);
 
 	udelay(PHYINIT_DELAY_1US);
 
 	return 0;
 }
 
-static int get_major_message(int *msg)
+static int get_major_message(uint32_t *msg)
 {
-	int message_number;
+	uint16_t message_number;
 	int ret;
 
 	ret = wait_uctwriteprotshadow(false);
@@ -73,22 +73,23 @@ static int get_major_message(int *msg)
 	}
 
 	message_number = mmio_read_16((uintptr_t)(DDRPHYC_BASE +
-						  (4 * (TAPBONLY | CSR_UCTWRITEONLYSHADOW_ADDR))));
+							    (4U * (TAPBONLY |
+								   CSR_UCTWRITEONLYSHADOW_ADDR))));
 
 	ret = ack_message_receipt();
 	if (ret != 0) {
 		return ret;
 	}
 
-	*msg = message_number;
+	*msg = (uint32_t)message_number;
 
 	return 0;
 }
 
-static int get_streaming_message(int *msg)
+static int get_streaming_message(uint32_t *msg)
 {
-	int stream_word_lower_part;
-	int stream_word_upper_part;
+	uint16_t stream_word_lower_part;
+	uint16_t stream_word_upper_part;
 	int ret;
 
 	ret = wait_uctwriteprotshadow(false);
@@ -97,19 +98,19 @@ static int get_streaming_message(int *msg)
 	}
 
 	stream_word_lower_part = mmio_read_16((uintptr_t)(DDRPHYC_BASE +
-							  (4 * (TAPBONLY |
-								CSR_UCTWRITEONLYSHADOW_ADDR))));
+							  (4U * (TAPBONLY |
+								 CSR_UCTWRITEONLYSHADOW_ADDR))));
 
 	stream_word_upper_part = mmio_read_16((uintptr_t)(DDRPHYC_BASE +
-							  (4 * (TAPBONLY |
-								CSR_UCTDATWRITEONLYSHADOW_ADDR))));
+							  (4U * (TAPBONLY |
+								 CSR_UCTDATWRITEONLYSHADOW_ADDR))));
 
 	ret = ack_message_receipt();
 	if (ret != 0) {
 		return ret;
 	}
 
-	*msg = stream_word_lower_part | (stream_word_upper_part << 16);
+	*msg = (uint32_t)stream_word_lower_part | ((uint32_t)stream_word_upper_part << 16);
 
 	return 0;
 }
@@ -119,13 +120,11 @@ static int get_streaming_message(int *msg)
  *
  * The purpose of user this function is to wait for firmware to finish training.
  * The user can either implement a counter to wait or implement the polling
- * mechanism described in the Training Firmware App Note section "Running the
- * Firmware".  The wait time is highly dependent on the training features
- * enabled via sequencectrl input to the message block.  See Training Firmware
- * App note for details.
+ * mechanism (our choice here). The wait time is highly dependent on the training features
+ * enabled via sequencectrl input to the message block.
  *
  * The default behavior of this function is to print comments relating to this
- * process.  A function call of the same name will be printed in the output text
+ * process. A function call of the same name will be printed in the output text
  * file.
  *
  * The user can choose to leave this function as is, or implement mechanism to
@@ -135,7 +134,7 @@ static int get_streaming_message(int *msg)
  */
 int ddrphy_phyinit_usercustom_g_waitfwdone(void)
 {
-	int fw_major_message;
+	uint32_t fw_major_message;
 	int ret;
 
 	DDR_VERBOSE("%s Start\n", __func__);
@@ -149,18 +148,18 @@ int ddrphy_phyinit_usercustom_g_waitfwdone(void)
 		DDR_VERBOSE("fw_major_message = %x\n", (unsigned int)fw_major_message);
 
 		if (fw_major_message == FW_MAJ_MSG_START_STREAMING) {
-			int i;
-			int read_data;
-			int stream_len;
+			uint32_t i;
+			uint32_t read_data;
+			uint32_t stream_len;
 
 			ret = get_streaming_message(&read_data);
 			if (ret != 0) {
 				return ret;
 			}
 
-			stream_len = read_data & 0xFFFF;
+			stream_len = read_data & 0xFFFFU;
 
-			for (i = 0; i < stream_len; i++) {
+			for (i = 0U; i < stream_len; i++) {
 				ret = get_streaming_message(&read_data);
 				if (ret != 0) {
 					return ret;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2022-2024, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -39,12 +39,20 @@ void stm32mp_ddr_set_reg(const struct stm32mp_ddr_priv *priv, enum stm32mp_ddr_r
 		uintptr_t ptr = base_addr + desc[i].offset;
 
 		if (desc[i].par_offset == INVALID_OFFSET) {
-			DDR_ERROR("invalid parameter offset for %s", desc[i].name);
+			DDR_ERROR("invalid parameter offset");
 			panic();
 		} else {
+			if (desc[i].qd) {
+				stm32mp_ddr_start_sw_done(priv->ctl);
+			}
+
 			value = *((uint32_t *)((uintptr_t)param +
 					       desc[i].par_offset));
 			mmio_write_32(ptr, value);
+
+			if (desc[i].qd) {
+				stm32mp_ddr_wait_sw_done_ack(priv->ctl);
+			}
 		}
 	}
 }

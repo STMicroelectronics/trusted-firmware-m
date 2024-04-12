@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2021-2024, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -15,73 +15,70 @@
  * Helper function to determine if a given DByte is Disabled given PhyInit inputs.
  * @return 1 if disabled, 0 if enabled.
  */
-int ddrphy_phyinit_isdbytedisabled(int dbytenumber)
+int ddrphy_phyinit_isdbytedisabled(struct stm32mp_ddr_config *config,
+				   struct pmu_smb_ddr_1d *mb_ddr_1d, uint32_t dbytenumber)
 {
 	int disabledbyte;
-	int nad0 __unused;
-	int nad1 __unused;
+	uint32_t nad0 __unused;
+	uint32_t nad1 __unused;
 
 	disabledbyte = 0; /* Default assume Dbyte is Enabled */
 
 #if STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE
-	/* Implements Section 1.3 of Pub Databook */
-	disabledbyte = (dbytenumber > userinputbasic.numactivedbytedfi0 - 1) ? 1 : 0;
-#elif STM32MP_LPDDR4_TYPE
-	nad0 = userinputbasic.numactivedbytedfi0;
-	nad1 = userinputbasic.numactivedbytedfi1;
+	disabledbyte = (dbytenumber > (config->uib.numactivedbytedfi0 - 1U)) ? 1 : 0;
+#else /* STM32MP_LPDDR4_TYPE */
+	nad0 = config->uib.numactivedbytedfi0;
+	nad1 = config->uib.numactivedbytedfi1;
 
-	if (nad0 + nad1 > userinputbasic.numdbyte) {
+	if ((nad0 + nad1) > config->uib.numdbyte) {
 		DDR_ERROR("%s invalid PHY configuration:\n", __func__);
 		DDR_ERROR("numactivedbytedfi0(%d)+numactivedbytedfi1(%d)>numdbytes(%d).\n",
-		      nad0, nad1, userinputbasic.numdbyte);
+			  nad0, nad1, config->uib.numdbyte);
 	}
 
-	/* Implements Section 1.3 of Pub Databook */
-	if (userinputbasic.dfi1exists) {
-		if (userinputbasic.numactivedbytedfi1 == 0) {
+	if (config->uib.dfi1exists != 0U) {
+		if (config->uib.numactivedbytedfi1 == 0U) {
 			/* Only dfi0 (ChA) is enabled, dfi1 (ChB) disabled */
-			disabledbyte = (dbytenumber > userinputbasic.numactivedbytedfi0 - 1) ?
+			disabledbyte = (dbytenumber > (config->uib.numactivedbytedfi0 - 1U)) ?
 				       1 : 0;
 		} else {
 			/* DFI1 enabled */
-			disabledbyte = ((userinputbasic.numactivedbytedfi0 - 1 < dbytenumber) &&
-					(dbytenumber < (userinputbasic.numdbyte / 2))) ?
+			disabledbyte = (((config->uib.numactivedbytedfi0 - 1U) < dbytenumber) &&
+					(dbytenumber < (config->uib.numdbyte / 2U))) ?
 				       1 : (dbytenumber >
-					    ((userinputbasic.numdbyte / 2) +
-					     userinputbasic.numactivedbytedfi1 - 1)) ? 1 : 0;
+					    ((config->uib.numdbyte / 2U) +
+					     config->uib.numactivedbytedfi1 - 1U)) ? 1 : 0;
 		}
-	} else if (userinputbasic.dfi1exists == 0x0) {
-		disabledbyte = (dbytenumber > userinputbasic.numactivedbytedfi0 - 1) ? 1 : 0;
 	} else {
-		DDR_ERROR("%s invalid PHY configuration:dfi1exists is neither 1 or 0.\n", __func__);
+		disabledbyte = (dbytenumber > (config->uib.numactivedbytedfi0 - 1U)) ? 1 : 0;
 	}
-#endif /* STM32MP_LPDDR4_TYPE */
+#endif /* STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE */
 
 	/* Qualify results against MessageBlock */
 #if STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE
-	if (mb_ddr_1d[0].enableddqs < 1 ||
-	    mb_ddr_1d[0].enableddqs > 8 * userinputbasic.numactivedbytedfi0) {
+	if ((mb_ddr_1d->enableddqs < 1U) ||
+	    (mb_ddr_1d->enableddqs > (uint8_t)(8U * config->uib.numactivedbytedfi0))) {
 		DDR_ERROR("%s enableddqs(%d)\n", __func__, mb_ddr_1d[0].enableddqs);
-		DDR_ERROR("Value must be 0 < enableddqs < userinputbasic.numactivedbytedfi0 * 8.\n");
+		DDR_ERROR("Value must be 0 < enableddqs < config->uib.numactivedbytedfi0 * 8.\n");
 	}
 
 	if (dbytenumber < 8) {
-		disabledbyte = disabledbyte | (mb_ddr_1d[0].disableddbyte & (0x1 << dbytenumber));
+		disabledbyte |= (int)mb_ddr_1d->disableddbyte & (0x1 << dbytenumber);
 	}
-#elif STM32MP_LPDDR4_TYPE
-	if (mb_ddr_1d[0].enableddqscha < 1 ||
-	    mb_ddr_1d[0].enableddqscha > 8 * userinputbasic.numactivedbytedfi0) {
+#else /* STM32MP_LPDDR4_TYPE */
+	if ((mb_ddr_1d->enableddqscha < 1U) ||
+	    (mb_ddr_1d->enableddqscha > (uint8_t)(8U * config->uib.numactivedbytedfi0))) {
 		DDR_ERROR("%s enableddqscha(%d)\n", __func__, mb_ddr_1d[0].enableddqscha);
-		DDR_ERROR("Value must be 0 < enableddqscha < userinputbasic.numactivedbytedfi0 * 8.\n");
+		DDR_ERROR("Value must be 0 < enableddqscha < config->uib.numactivedbytedfi0 * 8.\n");
 	}
 
-	if (userinputbasic.dfi1exists && userinputbasic.numactivedbytedfi1 > 0 &&
-	    (mb_ddr_1d[0].enableddqschb < 1 ||
-	     mb_ddr_1d[0].enableddqschb > 8 * userinputbasic.numactivedbytedfi1)) {
+	if ((config->uib.dfi1exists != 0U) && (config->uib.numactivedbytedfi1 > 0U) &&
+	    ((mb_ddr_1d->enableddqschb < 1U) ||
+	     (mb_ddr_1d->enableddqschb > (uint8_t)(8U * config->uib.numactivedbytedfi1)))) {
 		DDR_ERROR("%s enableddqschb(%d)\n", __func__, mb_ddr_1d[0].enableddqschb);
-		DDR_ERROR("Value must be 0 < enableddqschb < userinputbasic.numactivedbytedfi1 * 8.\n");
+		DDR_ERROR("Value must be 0 < enableddqschb < config->uib.numactivedbytedfi1 * 8.\n");
 	}
-#endif /* STM32MP_LPDDR4_TYPE */
+#endif /* STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE */
 
 	return disabledbyte;
 }

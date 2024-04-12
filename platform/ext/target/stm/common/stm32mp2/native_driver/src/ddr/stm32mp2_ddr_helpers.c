@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023, STMicroelectronics - All Rights Reserved
+ * Copyright (c) 2021-2024, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -18,7 +18,7 @@
 #include <stm32mp2_pwr.h>
 
 /* HW idle period (unit: Multiples of 32 DFI clock cycles) */
-#define HW_IDLE_PERIOD			0x3
+#define HW_IDLE_PERIOD			0x3U
 
 static enum stm32mp2_ddr_sr_mode saved_ddr_sr_mode;
 
@@ -73,7 +73,7 @@ static void disable_dfi_low_power_interface(struct stm32mp_ddrctl *ctl)
 			panic();
 		}
 	} while (((dfistat & DDRCTRL_DFISTAT_DFI_LP_ACK) != 0U) ||
-		((stat & DDRCTRL_STAT_OPERATING_MODE_MASK) == DDRCTRL_STAT_OPERATING_MODE_SR));
+		 ((stat & DDRCTRL_STAT_OPERATING_MODE_MASK) == DDRCTRL_STAT_OPERATING_MODE_SR));
 
 	DDR_VERBOSE("[0x%lx] dfistat = 0x%x\n", (uintptr_t)&ctl->dfistat, dfistat);
 	DDR_VERBOSE("[0x%lx] stat = 0x%x\n", (uintptr_t)&ctl->stat, stat);
@@ -116,13 +116,13 @@ void ddr_activate_controller(struct stm32mp_ddrctl *ctl, bool sr_entry)
 static void disable_phy_ddc(void)
 {
 	/* Enable APB access to internal CSR registers */
-	mmio_write_32(stm32mp_ddrphyc_base() + DDRPHY_APBONLY0_MICROCONTMUXSEL, 0);
+	mmio_write_32(stm32mp_ddrphyc_base() + DDRPHY_APBONLY0_MICROCONTMUXSEL, 0U);
 	mmio_write_32(stm32mp_ddrphyc_base() + DDRPHY_DRTUB0_UCCLKHCLKENABLES,
 		      DDRPHY_DRTUB0_UCCLKHCLKENABLES_UCCLKEN |
 		      DDRPHY_DRTUB0_UCCLKHCLKENABLES_HCLKEN);
 
 	/* Disable DRAM drift compensation */
-	mmio_write_32(stm32mp_ddrphyc_base() + DDRPHY_INITENG0_P0_SEQ0BDISABLEFLAG6, 0xFFFF);
+	mmio_write_32(stm32mp_ddrphyc_base() + DDRPHY_INITENG0_P0_SEQ0BDISABLEFLAG6, 0xFFFFU);
 
 	/* Disable APB access to internal CSR registers */
 	mmio_write_32(stm32mp_ddrphyc_base() + DDRPHY_DRTUB0_UCCLKHCLKENABLES,
@@ -138,7 +138,7 @@ void ddr_wait_lp3_mode(bool sr_entry)
 	bool repeat_loop = false;
 
 	/* Enable APB access to internal CSR registers */
-	mmio_write_32(stm32mp_ddrphyc_base() + DDRPHY_APBONLY0_MICROCONTMUXSEL, 0);
+	mmio_write_32(stm32mp_ddrphyc_base() + DDRPHY_APBONLY0_MICROCONTMUXSEL, 0U);
 	mmio_write_32(stm32mp_ddrphyc_base() + DDRPHY_DRTUB0_UCCLKHCLKENABLES,
 		      DDRPHY_DRTUB0_UCCLKHCLKENABLES_UCCLKEN |
 		      DDRPHY_DRTUB0_UCCLKHCLKENABLES_HCLKEN);
@@ -155,17 +155,17 @@ void ddr_wait_lp3_mode(bool sr_entry)
 		if (sr_entry) {
 			repeat_loop = (phyinlpx & DDRPHY_INITENG0_P0_PHYINLPX_PHYINLP3) == 0U;
 		} else {
-			repeat_loop = ((phyinlpx & DDRPHY_INITENG0_P0_PHYINLPX_PHYINLP3) != 0U);
+			repeat_loop = (phyinlpx & DDRPHY_INITENG0_P0_PHYINLPX_PHYINLP3) != 0U;
 		}
 	} while (repeat_loop);
 
 	/* Disable APB access to internal CSR registers */
 #if STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE
-	mmio_write_32(stm32mp_ddrphyc_base() + DDRPHY_DRTUB0_UCCLKHCLKENABLES, 0);
-#elif STM32MP_LPDDR4_TYPE
+	mmio_write_32(stm32mp_ddrphyc_base() + DDRPHY_DRTUB0_UCCLKHCLKENABLES, 0U);
+#else /* STM32MP_LPDDR4_TYPE */
 	mmio_write_32(stm32mp_ddrphyc_base() + DDRPHY_DRTUB0_UCCLKHCLKENABLES,
 		      DDRPHY_DRTUB0_UCCLKHCLKENABLES_HCLKEN);
-#endif /* STM32MP_LPDDR4_TYPE */
+#endif /* STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE */
 	mmio_write_32(stm32mp_ddrphyc_base() + DDRPHY_APBONLY0_MICROCONTMUXSEL,
 		      DDRPHY_APBONLY0_MICROCONTMUXSEL_MICROCONTMUXSEL);
 }
@@ -183,10 +183,10 @@ static int sr_loop(bool is_entry)
 	 */
 	do {
 		type = mmio_read_32(stm32mp_ddrctrl_base() + DDRCTRL_STAT) &
-				    DDRCTRL_STAT_SELFREF_TYPE_MASK;
+		       DDRCTRL_STAT_SELFREF_TYPE_MASK;
 #if STM32MP_LPDDR4_TYPE
 		state = mmio_read_32(stm32mp_ddrctrl_base() + DDRCTRL_STAT) &
-				    DDRCTRL_STAT_SELFREF_STATE_MASK;
+		       DDRCTRL_STAT_SELFREF_STATE_MASK;
 #endif /* STM32MP_LPDDR4_TYPE */
 
 		if (timeout_elapsed(timeout)) {
@@ -195,15 +195,15 @@ static int sr_loop(bool is_entry)
 
 		if (is_entry) {
 #if STM32MP_LPDDR4_TYPE
-			repeat_loop = (type == 0x0) || (state != DDRCTRL_STAT_SELFREF_STATE_SRPD);
-#else /* STM32MP_LPDDR4_TYPE */
-			repeat_loop = (type == 0x0);
+			repeat_loop = (type == 0x0U) || (state != DDRCTRL_STAT_SELFREF_STATE_SRPD);
+#else /* !STM32MP_LPDDR4_TYPE */
+			repeat_loop = (type == 0x0U);
 #endif /* STM32MP_LPDDR4_TYPE */
 		} else {
 #if STM32MP_LPDDR4_TYPE
-			repeat_loop = (type != 0x0) || (state != 0x0);
-#else /* STM32MP_LPDDR4_TYPE */
-			repeat_loop = (type != 0x0);
+			repeat_loop = (type != 0x0U) || (state != 0x0U);
+#else /* !STM32MP_LPDDR4_TYPE */
+			repeat_loop = (type != 0x0U);
 #endif /* STM32MP_LPDDR4_TYPE */
 		}
 	} while (repeat_loop);
@@ -219,6 +219,22 @@ static int sr_entry_loop(void)
 int ddr_sr_exit_loop(void)
 {
 	return sr_loop(false);
+}
+
+bool is_ddr_cid_filtering_enabled(void)
+{
+	return (mmio_read_32(stm32mp_rcc_base() + RCC_R104CIDCFGR) & RCC_RxCIDCFGR_CFEN) ==
+	       RCC_RxCIDCFGR_CFEN;
+}
+
+void ddr_enable_cid_filtering(void)
+{
+	mmio_setbits_32(stm32mp_rcc_base() + RCC_R104CIDCFGR, RCC_RxCIDCFGR_CFEN);
+}
+
+void ddr_disable_cid_filtering(void)
+{
+	mmio_clrbits_32(stm32mp_rcc_base() + RCC_R104CIDCFGR, RCC_RxCIDCFGR_CFEN);
 }
 
 static int sr_ssr_set(void)
@@ -274,7 +290,15 @@ static int sr_ssr_entry(bool standby)
 	ddr_wait_lp3_mode(true);
 
 	if (standby) {
+		bool cid_filtering = is_ddr_cid_filtering_enabled();
+
+		if (cid_filtering) {
+			ddr_disable_cid_filtering();
+		}
 		mmio_clrbits_32(stm32mp_pwr_base() + _PWR_CR11, _PWR_CR11_DDRRETDIS);
+		if (cid_filtering) {
+			ddr_enable_cid_filtering();
+		}
 	}
 
 	mmio_clrsetbits_32(rcc_base + RCC_DDRCPCFGR, RCC_DDRCPCFGR_DDRCPLPEN,
@@ -362,7 +386,7 @@ static int sr_hsr_exit(void)
 
 static int sr_asr_set(void)
 {
-	mmio_write_32(stm32_ddrdbg_get_base() + DDRDBG_LP_DISABLE, 0);
+	mmio_write_32(stm32_ddrdbg_get_base() + DDRDBG_LP_DISABLE, 0U);
 
 	return 0;
 }
@@ -492,4 +516,35 @@ void ddr_save_sr_mode(void)
 void ddr_restore_sr_mode(void)
 {
 	ddr_set_sr_mode(saved_ddr_sr_mode);
+}
+
+void ddr_sub_system_clk_init(void)
+{
+	mmio_write_32(stm32mp_rcc_base() + RCC_DDRCPCFGR,
+		      RCC_DDRCPCFGR_DDRCPEN | RCC_DDRCPCFGR_DDRCPLPEN);
+}
+
+void ddr_sub_system_clk_off(void)
+{
+	uintptr_t rcc_base = stm32mp_rcc_base();
+	bool cid_filtering = is_ddr_cid_filtering_enabled();
+
+	/* Clear DDR IO retention */
+	if (cid_filtering) {
+		ddr_disable_cid_filtering();
+	}
+	mmio_clrbits_32(stm32mp_pwr_base() + _PWR_CR11, _PWR_CR11_DDRRETDIS);
+	if (cid_filtering) {
+		ddr_enable_cid_filtering();
+	}
+
+	/* Reset DDR sub system */
+	mmio_write_32(rcc_base + RCC_DDRCPCFGR, RCC_DDRCPCFGR_DDRCPRST);
+	mmio_write_32(rcc_base + RCC_DDRITFCFGR, RCC_DDRITFCFGR_DDRRST);
+	mmio_write_32(rcc_base + RCC_DDRPHYCAPBCFGR, RCC_DDRPHYCAPBCFGR_DDRPHYCAPBRST);
+	mmio_write_32(rcc_base + RCC_DDRCAPBCFGR, RCC_DDRCAPBCFGR_DDRCAPBRST);
+
+	/* Deactivate clocks and PLL2 */
+	mmio_clrbits_32(rcc_base + RCC_DDRPHYCCFGR, RCC_DDRPHYCCFGR_DDRPHYCEN);
+	mmio_clrbits_32(rcc_base + RCC_PLL2CFGR1, RCC_PLL2CFGR1_PLLEN);
 }

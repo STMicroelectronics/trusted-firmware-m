@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023, STMicroelectronics - All Rights Reserved
+ * Copyright (c) 2022-2024, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
  */
@@ -52,7 +52,7 @@ struct stm32mp_ddrctl {
 	uint32_t rankctl;	/* 0xf4 Rank Control */
 #if CONFIG_STM32MP25X_REVA
 	uint8_t reserved0f8[0x100 - 0xf8];
-#else /* CONFIG_STM32MP25X_REVA */
+#else /* !CONFIG_STM32MP25X_REVA */
 	uint32_t rankctl1;	/* 0xf8 Rank Control 1 */
 	uint8_t reserved0fc[0x100 - 0xfc];
 #endif /* CONFIG_STM32MP25X_REVA */
@@ -118,7 +118,7 @@ struct stm32mp_ddrctl {
 	uint32_t perfwr1;	/* 0x26c Write CAM 1 */
 #if CONFIG_STM32MP25X_REVA
 	uint8_t reserved270[0x300 - 0x270];
-#else /* CONFIG_STM32MP25X_REVA */
+#else /* !CONFIG_STM32MP25X_REVA */
 	uint32_t sched3;	/* 0x270 Scheduler Control 3 */
 	uint32_t sched4;	/* 0x274 Scheduler Control 4 */
 	uint8_t reserved278[0x300 - 0x278];
@@ -133,7 +133,7 @@ struct stm32mp_ddrctl {
 	uint32_t swstat;	/* 0x324 Software Programming Control Status */
 #if CONFIG_STM32MP25X_REVA
 	uint8_t reserved328[0x36c - 0x328];
-#else /* CONFIG_STM32MP25X_REVA */
+#else /* !CONFIG_STM32MP25X_REVA */
 	uint32_t swctlstatic;	/* 0x328 Statics Write Enable */
 	uint8_t reserved32c[0x36c - 0x32c];
 #endif /* CONFIG_STM32MP25X_REVA */
@@ -168,7 +168,7 @@ struct stm32mp_ddrctl {
 	uint32_t pcfgqos1_1;	/* 0x548 Read QoS Configuration 1 */
 	uint32_t pcfgwqos0_1;	/* 0x54c Write QoS Configuration 0 */
 	uint32_t pcfgwqos1_1;	/* 0x550 Write QoS Configuration 1 */
-#endif
+#endif /* STM32MP_DDR_DUAL_AXI_PORT */
 
 	uint8_t reserved554[0xff0 - 0x554];
 	uint32_t umctl2_ver_number;	/* 0xff0 UMCTL2 Version Number */
@@ -197,7 +197,7 @@ struct stm32mp_ddrctl {
 #define DDRCTRL_PCTRL_0				0x490
 #if STM32MP_DDR_DUAL_AXI_PORT
 #define DDRCTRL_PCTRL_1				0x540
-#endif
+#endif /* STM32MP_DDR_DUAL_AXI_PORT */
 
 /* DDR Controller Register fields */
 #define DDRCTRL_MSTR_DDR3			BIT(0)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2021-2024, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -18,8 +18,7 @@
  * user_input_advanced. user changes in these files takes precedence
  * over this function call.
  *
- * MessageBlock fields set ::
- *
+ * MessageBlock fields set :
  *  - dramtype
  *  - pstate
  *  - dramfreq
@@ -38,181 +37,173 @@
  *
  * \return 0 on success.
  */
-int ddrphy_phyinit_calcmb(void)
+int ddrphy_phyinit_calcmb(struct stm32mp_ddr_config *config, struct pmu_smb_ddr_1d *mb_ddr_1d)
 {
-	int myps = 0;
-	int nad0 = userinputbasic.numactivedbytedfi0;
-	int nad1 = 0;
+	uint32_t nad0 = config->uib.numactivedbytedfi0;
+	uint32_t nad1 = 0;
 	uint16_t mr4 __unused;
+	uint16_t disableddbyte __unused;
+	uint32_t dbyte __unused;
+	int ret;
 
 	DDR_VERBOSE("%s Start\n", __func__);
 
 #if STM32MP_LPDDR4_TYPE
-	nad1 = userinputbasic.numactivedbytedfi1;
+	nad1 = config->uib.numactivedbytedfi1;
 #endif /* STM32MP_LPDDR4_TYPE */
 
 	/* A few checks to make sure valid programming */
-	if (nad0 <= 0 || nad1 < 0 || userinputbasic.numdbyte <= 0) {
+	if ((nad0 <= 0U) || (nad1 < 0U) || (config->uib.numdbyte <= 0U)) {
 		DDR_ERROR("%s numactivedbytedfi0, numactivedbytedfi0, NumByte out of range.\n",
 		      __func__);
 		return -1;
 	}
 
-	if ((nad0 + nad1) > userinputbasic.numdbyte) {
+	if ((nad0 + nad1) > config->uib.numdbyte) {
 		DDR_ERROR("%s numactivedbytedfi0+numactivedbytedfi1 is larger than numdbyteDfi0\n",
 		      __func__);
 		return -1;
 	}
 
-	if (userinputbasic.dfi1exists == 0 && nad1 != 0) {
+	if ((config->uib.dfi1exists == 0U) && (nad1 != 0U)) {
 		DDR_ERROR("%s dfi1exists==0 but numdbyteDfi0 != 0\n", __func__);
 		return -1;
 	}
 
 #if STM32MP_DDR4_TYPE
 	/* OR all mr4 masked values, to help check in next loop */
-	mr4 = 0;
-	for (myps = 0; myps < userinputbasic.numpstates; myps++) {
-		mr4 |= mb_ddr_1d[myps].mr4 & 0x1C0U;
+	mr4 = mb_ddr_1d->mr4 & 0x1C0U;
+
+	/* 1D message block defaults */
+	if (mr4 != 0x0U) {
+		DDR_ERROR("mr4 != 0x0\n");
+		DDR_VERBOSE("%s Setting DRAM CAL mode is not supported by the PHY.\n", __func__);
+		DDR_VERBOSE("Memory controller may set CAL mode after PHY has entered mission\n");
+		DDR_VERBOSE("mode. Please check value programmed in mb_ddr_1d[*].mr4\n");
+		DDR_VERBOSE("and unset A8:6\n");
+		return -1;
 	}
 #endif /* STM32MP_DDR4_TYPE */
 
-	/* 1D message block defaults */
-	for (myps = 0; myps < userinputbasic.numpstates; myps++) {
-		uint16_t disableddbyte __unused;
-		int dbyte __unused;
-		int ret;
-
-#if STM32MP_DDR4_TYPE
-		if (mr4 != 0x0) {
-			DDR_ERROR("%s Setting DRAM CAL mode is not supported by the PHY.\n", __func__);
-			DDR_ERROR("Memory controller may set CAL mode after PHY has entered mission\n");
-			DDR_ERROR("mode. Please check value programmed in mb_ddr_1d[*].mr4\n");
-			DDR_ERROR("and unset A8:6\n");
-			return -1;
-		}
-#endif /* STM32MP_DDR4_TYPE */
-
 #if STM32MP_DDR3_TYPE
-		if (userinputbasic.dimmtype == NODIMM) {
-			ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_DRAMTYPE, 0x1);
-			if (ret != 0) {
-				return ret;
-			}
+	if (config->uib.dimmtype == DDR_DIMMTYPE_NODIMM) {
+		ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_DRAMTYPE, 0x1U);
+		if (ret != 0) {
+			return ret;
 		}
+	}
 #elif STM32MP_DDR4_TYPE
-		if (userinputbasic.dimmtype == NODIMM) {
-			ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_DRAMTYPE, 0x2);
-			if (ret != 0) {
-				return ret;
-			}
-		}
-#endif /* STM32MP_DDR4_TYPE */
-
-		ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_PSTATE, myps);
+	if (config->uib.dimmtype == DDR_DIMMTYPE_NODIMM) {
+		ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_DRAMTYPE, 0x2U);
 		if (ret != 0) {
 			return ret;
 		}
+	}
+#else /* STM32MP_LPDDR4_TYPE */
+	/* Nothing to do */
+#endif /* STM32MP_DDR3_TYPE */
 
-		ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_DRAMFREQ,
-					       userinputbasic.frequency[myps] * 2);
+	ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_PSTATE, 0U);
+	if (ret != 0) {
+		return ret;
+	}
+
+	ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_DRAMFREQ, config->uib.frequency * 2U);
+	if (ret != 0) {
+		return ret;
+	}
+
+	ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_PLLBYPASSEN, config->uib.pllbypass);
+	if (ret != 0) {
+		return ret;
+	}
+
+	if (config->uib.dfifreqratio == 1U) {
+		ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_DFIFREQRATIO, 0x2U);
 		if (ret != 0) {
 			return ret;
 		}
+	}
 
-		ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_PLLBYPASSEN,
-					       userinputbasic.pllbypass[myps]);
-		if (ret != 0) {
-			return ret;
-		}
+	ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_PHYODTIMPEDANCE, 0U);
+	if (ret != 0) {
+		return ret;
+	}
 
-		if (userinputbasic.dfifreqratio[myps] == 1) {
-			ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_DFIFREQRATIO, 0x2);
-			if (ret != 0) {
-				return ret;
-			}
-		}
+	ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_PHYDRVIMPEDANCE, 0U);
+	if (ret != 0) {
+		return ret;
+	}
 
-		ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_PHYODTIMPEDANCE, 0);
-		if (ret != 0) {
-			return ret;
-		}
-
-		ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_PHYDRVIMPEDANCE, 0);
-		if (ret != 0) {
-			return ret;
-		}
-
-		ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_BPZNRESVAL, 0);
-		if (ret != 0) {
-			return ret;
-		}
+	ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_BPZNRESVAL, 0U);
+	if (ret != 0) {
+		return ret;
+	}
 
 #if STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE
-		ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_ENABLEDDQS, nad0 * 8);
-		if (ret != 0) {
-			return ret;
-		}
+	ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_ENABLEDDQS, nad0 * 8U);
+	if (ret != 0) {
+		return ret;
+	}
 
-		disableddbyte = 0x0U;
+	disableddbyte = 0x0U;
 
-		for (dbyte = 0; dbyte < userinputbasic.numdbyte && dbyte < 8; dbyte++) {
-			disableddbyte |= (ddrphy_phyinit_isdbytedisabled(dbyte) ?
-									(0x1U << dbyte) : 0x0U);
+	for (dbyte = 0U; (dbyte < config->uib.numdbyte) && (dbyte < 8U); dbyte++) {
+		if (ddrphy_phyinit_isdbytedisabled(config, mb_ddr_1d, dbyte) != 0) {
+			disableddbyte |= 0x1U << dbyte;
 		}
+	}
 
-		ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_DISABLEDDBYTE, disableddbyte);
-		if (ret != 0) {
-			return ret;
-		}
+	ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_DISABLEDDBYTE, disableddbyte);
+	if (ret != 0) {
+		return ret;
+	}
 
 #if STM32MP_DDR3_TYPE
-		ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_PHYCFG,
-					       userinputadvanced.is2ttiming[myps]);
-		if (ret != 0) {
-			return ret;
-		}
-#else
-		ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_PHYCFG,
-					       (mb_ddr_1d[myps].mr3 & 0x8U) ?
-					       0 : userinputadvanced.is2ttiming[myps]);
-		if (ret != 0) {
-			return ret;
-		}
+	ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_PHYCFG, config->uia.is2ttiming);
+	if (ret != 0) {
+		return ret;
+	}
+#else /* STM32MP_DDR4_TYPE */
+	ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_PHYCFG,
+				       ((mb_ddr_1d->mr3 & 0x8U) != 0U) ?
+				       0U : config->uia.is2ttiming);
+	if (ret != 0) {
+		return ret;
+	}
 
-		ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_X16PRESENT,
-					       (0x10 == userinputbasic.dramdatawidth) ?
-					       mb_ddr_1d[myps].cspresent : 0x0);
-		if (ret != 0) {
-			return ret;
-		}
+	ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_X16PRESENT,
+				       (0x10U == config->uib.dramdatawidth) ?
+				       mb_ddr_1d->cspresent : 0x0U);
+	if (ret != 0) {
+		return ret;
+	}
 #endif /* STM32MP_DDR3_TYPE */
-#elif STM32MP_LPDDR4_TYPE
-		ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_ENABLEDDQSCHA, nad0 * 8);
-		if (ret != 0) {
-			return ret;
-		}
+#else /* STM32MP_LPDDR4_TYPE */
+	ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_ENABLEDDQSCHA, nad0 * 8U);
+	if (ret != 0) {
+		return ret;
+	}
 
-		ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_CSPRESENTCHA,
-					       (2 == userinputbasic.numrank_dfi0) ?
-					       0x3 : userinputbasic.numrank_dfi0);
-		if (ret != 0) {
-			return ret;
-		}
+	ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_CSPRESENTCHA,
+				       (2U == config->uib.numrank_dfi0) ?
+				       0x3U : config->uib.numrank_dfi0);
+	if (ret != 0) {
+		return ret;
+	}
 
-		ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_ENABLEDDQSCHB, nad1 * 8);
-		if (ret != 0) {
-			return ret;
-		}
+	ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_ENABLEDDQSCHB, nad1 * 8U);
+	if (ret != 0) {
+		return ret;
+	}
 
-		ret = ddrphy_phyinit_softsetmb(myps, MB_FIELD_CSPRESENTCHB,
-					       (2 == userinputbasic.numrank_dfi1) ?
-					       0x3 : userinputbasic.numrank_dfi1);
-		if (ret != 0) {
-			return ret;
-		}
-#endif /* STM32MP_LPDDR4_TYPE */
-	} /* myps */
+	ret = ddrphy_phyinit_softsetmb(mb_ddr_1d, MB_FIELD_CSPRESENTCHB,
+				       (2U == config->uib.numrank_dfi1) ?
+				       0x3U : config->uib.numrank_dfi1);
+	if (ret != 0) {
+		return ret;
+	}
+#endif /* STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE */
 
 	DDR_VERBOSE("%s End\n", __func__);
 

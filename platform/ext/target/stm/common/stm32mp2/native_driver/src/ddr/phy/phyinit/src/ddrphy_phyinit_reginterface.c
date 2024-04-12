@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2021-2024, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -8,7 +8,7 @@
  * This file provides a group of functions that are used to track PHY register
  * writes by intercepting io_write16 function calls.  Once the registers are
  * tracked, their value can be saved at a given time spot, and restored later
- * as required.  This implementation is useful to capture any PHY register
+ * as required. This implementation is useful to capture any PHY register
  * programing in any function during PHY initialization.
  */
 
@@ -20,7 +20,7 @@
 #include <ddrphy_phyinit.h>
 
 /*
- * MAX_NUM_RET_REGS default Max number of retention registers
+ * MAX_NUM_RET_REGS default Max number of retention registers.
  *
  * This define is only used by the PhyInit Register interface to define the max
  * amount of registered that can be saved. The user may increase this variable
@@ -28,16 +28,16 @@
  */
 #if STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE
 #define MAX_NUM_RET_REGS	129
-#elif STM32MP_LPDDR4_TYPE
+#else /* STM32MP_LPDDR4_TYPE */
 #define MAX_NUM_RET_REGS	283
-#endif /* STM32MP_LPDDR4_TYPE */
+#endif /* STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE */
 
 /*
  * Array of Address/value pairs used to store register values for the purpose
  * of retention restore.
  */
-#define RETREG_AREA	((MAX_NUM_RET_REGS + 1) * sizeof(struct reg_addr_val))
-#define RETREG_BASE	(RETRAM_BASE + RETRAM_SIZE - RETREG_AREA)
+#define RETREG_AREA	(MAX_NUM_RET_REGS + 1) * sizeof(struct reg_addr_val)
+#define RETREG_BASE	RETRAM_BASE + RETRAM_SIZE - RETREG_AREA
 
 static int *retregsize = (int *)(RETREG_BASE);
 static struct reg_addr_val *retreglist = (struct reg_addr_val *)(RETREG_BASE + sizeof(int));
@@ -47,11 +47,11 @@ static int tracken = 1; /* Enabled tracking of registers */
 
 /*
  * Tags a register if tracking is enabled in the register
- * interface
+ * interface.
  *
- * during PhyInit registers writes, keeps track of address
+ * During PhyInit registers writes, keeps track of address
  * for the purpose of restoring the PHY register state during PHY
- * retention exit process.  Tracking can be turned on/off via the
+ * retention exit process. Tracking can be turned on/off via the
  * ddrphy_phyinit_reginterface STARTTRACK, STOPTRACK instructions. By
  * default tracking is always turned on.
  *
@@ -74,7 +74,7 @@ int ddrphy_phyinit_trackreg(uint32_t adr)
 		}
 	}
 
-	/* Register not found, so add it. */
+	/* Register not found, so add it */
 	if (numregsaved > MAX_NUM_RET_REGS) {
 		DDR_ERROR("[ddrphy_phyinit_reginterface:ddrphy_phyinit_trackreg]\n");
 		DDR_ERROR("Max Number of Restore Registers reached: %d.\n", numregsaved);
@@ -98,7 +98,7 @@ int ddrphy_phyinit_trackreg(uint32_t adr)
  *  ddrphy_phyinit_reginterface(STARTTRACK,0,0);
  *  \endcode
  *
- * from this point on any call to ddrphy_phyinit_usercustom_io_write16() in
+ * from this point on any call to mmio_write_16() in
  * return will be capture by the register interface via a call to
  * ddrphy_phyinit_trackreg(). Tracking is disabled by calling:
  *
@@ -106,11 +106,10 @@ int ddrphy_phyinit_trackreg(uint32_t adr)
  *  ddrphy_phyinit_reginterface(STOPTRACK,0,0);
  *  \endcode
  *
- * On calling this function, register write via
- * ddrphy_phyinit_usercustom_io_write16 are no longer tracked until a
- * STARTTRACK call is made.  Once all the register write are complete, SAVEREGS
+ * On calling this function, register write via mmio_write_16 are no longer tracked until a
+ * STARTTRACK call is made. Once all the register write are complete, SAVEREGS
  * command can be issue to save register values into the internal data array of
- * the register interface.  Upon retention exit RESTOREREGS are command can be
+ * the register interface. Upon retention exit RESTOREREGS are command can be
  * used to issue register write commands to the PHY based on values stored in
  * the array.
  *  \code
@@ -125,14 +124,14 @@ int ddrphy_phyinit_reginterface(enum reginstr myreginstr, uint32_t adr, uint16_t
 		int regindx;
 
 		/*
-		 * go through all the tracked registers, issue a register read and place
+		 * Go through all the tracked registers, issue a register read and place
 		 * the result in the data structure for future recovery.
 		 */
 		for (regindx = 0; regindx < numregsaved; regindx++) {
 			uint16_t data;
 
 			data = mmio_read_16((uintptr_t)(DDRPHYC_BASE +
-							(4 * retreglist[regindx].address)));
+							(4U * retreglist[regindx].address)));
 			retreglist[regindx].value = data;
 		}
 
@@ -143,29 +142,25 @@ int ddrphy_phyinit_reginterface(enum reginstr myreginstr, uint32_t adr, uint16_t
 		int regindx;
 
 		/*
-		 * write PHY registers based on Address, Data value pairs stores in
-		 * retreglist
+		 * Write PHY registers based on Address, Data value pairs stores in
+		 * retreglist.
 		 */
 		for (regindx = 0; regindx < *retregsize; regindx++) {
-			mmio_write_16((uintptr_t)(DDRPHYC_BASE + 4 * retreglist[regindx].address),
+			mmio_write_16((uintptr_t)
+				      (DDRPHYC_BASE + (4U * retreglist[regindx].address)),
 				      retreglist[regindx].value);
 		}
 
 		return 0;
-	} else if (myreginstr == STARTTRACK) { /* Enable tracking */
+	} else if (myreginstr == STARTTRACK) {
+		/* Enable tracking */
 		tracken = 1;
 		return 0;
-	} else if (myreginstr == STOPTRACK) { /* Disable tracking */
+	} else if (myreginstr == STOPTRACK) {
+		/* Disable tracking */
 		tracken = 0;
 		return 0;
-	} else if (myreginstr == DUMPREGS) { /* Dump restore state to file. */
-		/* TBD */
-		return 0;
-	} else if (myreginstr == IMPORTREGS) { /* import register state from file. */
-		/* TBD */
-		return 0;
 	} else {
-		/* future instructions. */
 		return -1;
 	}
 }

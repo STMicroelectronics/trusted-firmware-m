@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2021-2024, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
  */
@@ -10,6 +10,8 @@
 #include <stdbool.h>
 
 #include <stm32mp_ddr.h>
+
+#include <ddrphy_phyinit_struct.h>
 
 /* Return the base address of the DDR controller */
 uintptr_t stm32mp_ddrctrl_base(void);
@@ -140,7 +142,7 @@ struct stm32mp2_ddrctrl_perf {
 	uint32_t pcfgqos1_1;
 	uint32_t pcfgwqos0_1;
 	uint32_t pcfgwqos1_1;
-#endif
+#endif /* STM32MP_DDR_DUAL_AXI_PORT */
 };
 
 struct stm32mp_ddr_config {
@@ -151,6 +153,10 @@ struct stm32mp_ddr_config {
 	struct stm32mp2_ddrctrl_perf c_perf;
 	bool self_refresh;
 	uint32_t zdata;
+	struct user_input_basic uib;
+	struct user_input_advanced uia;
+	struct user_input_mode_register uim;
+	struct user_input_swizzle uis;
 };
 
 void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv, struct stm32mp_ddr_config *config);

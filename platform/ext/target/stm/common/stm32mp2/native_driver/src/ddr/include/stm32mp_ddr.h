@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2022-2024, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
  */
@@ -7,6 +7,7 @@
 #ifndef STM32MP_DDR_H
 #define STM32MP_DDR_H
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 enum stm32mp_ddr_base_type {
@@ -34,9 +35,9 @@ enum ddr_type {
 #endif
 
 struct stm32mp_ddr_reg_desc {
-	const char *name;
 	uint16_t offset;	/* Offset for base address */
 	uint8_t par_offset;	/* Offset for parameter array */
+	bool qd;		/* Quasi-dynamic register if true */
 };
 
 struct stm32mp_ddr_reg_info {

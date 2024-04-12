@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2021-2024, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -58,7 +58,7 @@ static const uint16_t prodcode_data[PRODCODE_SIZE] = {
 	0x0109U, 0x0000U, 0x0400U, 0x0106U, 0x0400U, 0x0000U, 0x002CU,
 	};
 
-#elif STM32MP_LPDDR4_TYPE
+#else /* STM32MP_LPDDR4_TYPE */
 #define PRODCODE_SIZE		481
 
 static const uint32_t prodcode_addr[PRODCODE_SIZE] = {
@@ -169,7 +169,7 @@ static const uint16_t prodcode_data[PRODCODE_SIZE] = {
 	0x002BU, 0x0069U, 0x0000U, 0x0101U, 0x0105U, 0x0107U, 0x010FU, 0x0202U, 0x020AU, 0x020BU,
 	0x0002U,
 	};
-#endif /* STM32MP_LPDDR4_TYPE */
+#endif /* STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE */
 
 /*
  * Loads PIE instruction sequence PHY registers
@@ -180,6 +180,7 @@ void ddrphy_phyinit_loadpieprodcode(void)
 	int i;
 
 	for (i = 0; i < PRODCODE_SIZE; i++) {
-		mmio_write_16((uintptr_t)(DDRPHYC_BASE + 4 * prodcode_addr[i]), prodcode_data[i]);
+		mmio_write_16((uintptr_t)(DDRPHYC_BASE + (4U * prodcode_addr[i])),
+			      prodcode_data[i]);
 	}
 }

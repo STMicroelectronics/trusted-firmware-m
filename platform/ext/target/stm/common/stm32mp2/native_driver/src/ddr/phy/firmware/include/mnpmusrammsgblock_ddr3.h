@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2021-2024, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -312,9 +312,6 @@ struct pmu_smb_ddr_1d {
 					 *   0xC8 = Stage completion
 					 *   0xC9 = Assertion messages
 					 *   0xFF = Firmware completion messages only
-					 *
-					 * See Training App Note for more detailed information on
-					 * what messages are included for each threshold.
 					 */
 	uint8_t reserved19;		/* Byte offset 0x19, CSR Addr 0x5400c, Direction=N/A */
 	uint8_t reserved1a;		/* Byte offset 0x1a, CSR Addr 0x5400d, Direction=N/A */
@@ -412,400 +409,331 @@ struct pmu_smb_ddr_1d {
 					 * Byte offset 0x24, CSR Addr 0x54012, Direction=In
 					 * Margin added to smallest passing trained DFI Max Read
 					 * Latency value, in units of DFI clocks. Recommended to be
-					 * >= 1. See the Training App Note for more details on the
-					 * training process and the use of this value.
+					 * >= 1.
 					 */
 	int8_t cdd_rr_3_2;		/*
 					 * Byte offset 0x25, CSR Addr 0x54012, Direction=Out
 					 * This is a signed integer value.
-					 * Read to read critical delay difference from cs 3 to cs 2
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to read critical delay difference from cs 3 to cs 2.
 					 */
 	int8_t cdd_rr_3_1;		/*
 					 * Byte offset 0x26, CSR Addr 0x54013, Direction=Out
 					 * This is a signed integer value.
-					 * Read to read critical delay difference from cs 3 to cs 1
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to read critical delay difference from cs 3 to cs 1.
 					 */
 	int8_t cdd_rr_3_0;		/*
 					 * Byte offset 0x27, CSR Addr 0x54013, Direction=Out
 					 * This is a signed integer value.
-					 * Read to read critical delay difference from cs 3 to cs 0
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to read critical delay difference from cs 3 to cs 0.
 					 */
 	int8_t cdd_rr_2_3;		/*
 					 * Byte offset 0x28, CSR Addr 0x54014, Direction=Out
 					 * This is a signed integer value.
-					 * Read to read critical delay difference from cs 2 to cs 3
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to read critical delay difference from cs 2 to cs 3.
 					 */
 	int8_t cdd_rr_2_1;		/*
 					 * Byte offset 0x29, CSR Addr 0x54014, Direction=Out
 					 * This is a signed integer value.
-					 * Read to read critical delay difference from cs 2 to cs 1
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to read critical delay difference from cs 2 to cs 1.
 					 */
 	int8_t cdd_rr_2_0;		/*
 					 * Byte offset 0x2a, CSR Addr 0x54015, Direction=Out
 					 * This is a signed integer value.
-					 * Read to read critical delay difference from cs 2 to cs 0
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to read critical delay difference from cs 2 to cs 0.
 					 */
 	int8_t cdd_rr_1_3;		/*
 					 * Byte offset 0x2b, CSR Addr 0x54015, Direction=Out
 					 * This is a signed integer value.
-					 * Read to read critical delay difference from cs 1 to cs 3
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to read critical delay difference from cs 1 to cs 3.
 					 */
 	int8_t cdd_rr_1_2;		/*
 					 * Byte offset 0x2c, CSR Addr 0x54016, Direction=Out
 					 * This is a signed integer value.
-					 * Read to read critical delay difference from cs 1 to cs 2
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to read critical delay difference from cs 1 to cs 2.
 					 */
 	int8_t cdd_rr_1_0;		/*
 					 * Byte offset 0x2d, CSR Addr 0x54016, Direction=Out
 					 * This is a signed integer value.
-					 * Read to read critical delay difference from cs 1 to cs 0
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to read critical delay difference from cs 1 to cs 0.
 					 */
 	int8_t cdd_rr_0_3;		/*
 					 * Byte offset 0x2e, CSR Addr 0x54017, Direction=Out
 					 * This is a signed integer value.
-					 * Read to read critical delay difference from cs 0 to cs 3
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to read critical delay difference from cs 0 to cs 3.
 					 */
 	int8_t cdd_rr_0_2;		/*
 					 * Byte offset 0x2f, CSR Addr 0x54017, Direction=Out
 					 * This is a signed integer value.
-					 * Read to read critical delay difference from cs 0 to cs 2
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to read critical delay difference from cs 0 to cs 2.
 					 */
 	int8_t cdd_rr_0_1;		/*
 					 * Byte offset 0x30, CSR Addr 0x54018, Direction=Out
 					 * This is a signed integer value.
-					 * Read to read critical delay difference from cs 0 to cs 1
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to read critical delay difference from cs 0 to cs 1.
 					 */
 	int8_t cdd_ww_3_2;		/*
 					 * Byte offset 0x31, CSR Addr 0x54018, Direction=Out
 					 * This is a signed integer value.
 					 * Write to write critical delay difference from cs 3 to cs
-					 * 2. See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * 2.
 					 */
 	int8_t cdd_ww_3_1;		/*
 					 * Byte offset 0x32, CSR Addr 0x54019, Direction=Out
 					 * This is a signed integer value.
 					 * Write to write critical delay difference from cs 3 to cs
-					 * 1. See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * 1.
 					 */
 	int8_t cdd_ww_3_0;		/*
 					 * Byte offset 0x33, CSR Addr 0x54019, Direction=Out
 					 * This is a signed integer value.
 					 * Write to write critical delay difference from cs 3 to cs
-					 * 0. See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * 0.
 					 */
 	int8_t cdd_ww_2_3;		/*
 					 * Byte offset 0x34, CSR Addr 0x5401a, Direction=Out
 					 * This is a signed integer value.
 					 * Write to write critical delay difference from cs 2 to cs
-					 * 3. See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * 3.
 					 */
 	int8_t cdd_ww_2_1;		/*
 					 * Byte offset 0x35, CSR Addr 0x5401a, Direction=Out
 					 * This is a signed integer value.
 					 * Write to write critical delay difference from cs 2 to cs
-					 * 1. See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * 1.
 					 */
 	int8_t cdd_ww_2_0;		/*
 					 * Byte offset 0x36, CSR Addr 0x5401b, Direction=Out
 					 * This is a signed integer value.
 					 * Write to write critical delay difference from cs 2 to cs
-					 * 0. See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * 0.
 					 */
 	int8_t cdd_ww_1_3;		/*
 					 * Byte offset 0x37, CSR Addr 0x5401b, Direction=Out
 					 * This is a signed integer value.
 					 * Write to write critical delay difference from cs 1 to cs
-					 * 3. See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * 3.
 					 */
 	int8_t cdd_ww_1_2;		/*
 					 * Byte offset 0x38, CSR Addr 0x5401c, Direction=Out
 					 * This is a signed integer value.
 					 * Write to write critical delay difference from cs 1 to cs
-					 * 2. See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * 2.
 					 */
 	int8_t cdd_ww_1_0;		/*
 					 * Byte offset 0x39, CSR Addr 0x5401c, Direction=Out
 					 * This is a signed integer value.
 					 * Write to write critical delay difference from cs 1 to cs
-					 * 0. See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * 0.
 					 */
 	int8_t cdd_ww_0_3;		/*
 					 * Byte offset 0x3a, CSR Addr 0x5401d, Direction=Out
 					 * This is a signed integer value.
 					 * Write to write critical delay difference from cs 0 to cs
-					 * 3. See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * 3.
 					 */
 	int8_t cdd_ww_0_2;		/*
 					 * Byte offset 0x3b, CSR Addr 0x5401d, Direction=Out
 					 * This is a signed integer value.
 					 * Write to write critical delay difference from cs 0 to cs
-					 * 2. See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * 2.
 					 */
 	int8_t cdd_ww_0_1;		/*
 					 * Byte offset 0x3c, CSR Addr 0x5401e, Direction=Out
 					 * This is a signed integer value.
 					 * Write to write critical delay difference from cs 0 to cs
-					 * 1. See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * 1.
 					 */
 	int8_t cdd_rw_3_3;		/*
 					 * Byte offset 0x3d, CSR Addr 0x5401e, Direction=Out
 					 * This is a signed integer value.
-					 * Read to write critical delay difference from cs 3 to cs 3
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to write critical delay difference from cs 3 to
+					 * cs 3.
 					 */
 	int8_t cdd_rw_3_2;		/*
 					 * Byte offset 0x3e, CSR Addr 0x5401f, Direction=Out
 					 * This is a signed integer value.
-					 * Read to write critical delay difference from cs 3 to cs 2
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to write critical delay difference from cs 3 to
+					 * cs 2.
 					 */
 	int8_t cdd_rw_3_1;		/*
 					 * Byte offset 0x3f, CSR Addr 0x5401f, Direction=Out
 					 * This is a signed integer value.
-					 * Read to write critical delay difference from cs 3 to cs 1
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to write critical delay difference from cs 3 to
+					 * cs 1.
 					 */
 	int8_t cdd_rw_3_0;		/*
 					 * Byte offset 0x40, CSR Addr 0x54020, Direction=Out
 					 * This is a signed integer value.
-					 * Read to write critical delay difference from cs 3 to cs 0
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to write critical delay difference from cs 3 to
+					 * cs 0.
 					 */
 	int8_t cdd_rw_2_3;		/*
 					 * Byte offset 0x41, CSR Addr 0x54020, Direction=Out
 					 * This is a signed integer value.
-					 * Read to write critical delay difference from cs 2 to cs 3
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to write critical delay difference from cs 2 to
+					 * cs 3.
 					 */
 	int8_t cdd_rw_2_2;		/*
 					 * Byte offset 0x42, CSR Addr 0x54021, Direction=Out
 					 * This is a signed integer value.
-					 * Read to write critical delay difference from cs 2 to cs 2
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to write critical delay difference from cs 2 to
+					 * cs 2.
 					 */
 	int8_t cdd_rw_2_1;		/*
 					 * Byte offset 0x43, CSR Addr 0x54021, Direction=Out
 					 * This is a signed integer value.
-					 * Read to write critical delay difference from cs 2 to cs 1
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to write critical delay difference from cs 2 to
+					 * cs 1.
 					 */
 	int8_t cdd_rw_2_0;		/*
 					 * Byte offset 0x44, CSR Addr 0x54022, Direction=Out
 					 * This is a signed integer value.
-					 * Read to write critical delay difference from cs 2 to cs 0
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to write critical delay difference from cs 2 to
+					 * cs 0.
 					 */
 	int8_t cdd_rw_1_3;		/*
 					 * Byte offset 0x45, CSR Addr 0x54022, Direction=Out
 					 * This is a signed integer value.
-					 * Read to write critical delay difference from cs 1 to cs 3
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to write critical delay difference from cs 1 to
+					 * cs 3.
 					 */
 	int8_t cdd_rw_1_2;		/*
 					 * Byte offset 0x46, CSR Addr 0x54023, Direction=Out
 					 * This is a signed integer value.
-					 * Read to write critical delay difference from cs 1 to cs 2
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to write critical delay difference from cs 1 to
+					 * cs 2.
 					 */
 	int8_t cdd_rw_1_1;		/*
 					 * Byte offset 0x47, CSR Addr 0x54023, Direction=Out
 					 * This is a signed integer value.
-					 * Read to write critical delay difference from cs 1 to cs 1
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to write critical delay difference from cs 1 to
+					 * cs 1.
 					 */
 	int8_t cdd_rw_1_0;		/*
 					 * Byte offset 0x48, CSR Addr 0x54024, Direction=Out
 					 * This is a signed integer value.
-					 * Read to write critical delay difference from cs 1 to cs 0
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to write critical delay difference from cs 1 to
+					 * cs 0.
 					 */
 	int8_t cdd_rw_0_3;		/*
 					 * Byte offset 0x49, CSR Addr 0x54024, Direction=Out
 					 * This is a signed integer value.
-					 * Read to write critical delay difference from cs 0 to cs 3
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to write critical delay difference from cs 0 to
+					 * cs 3.
 					 */
 	int8_t cdd_rw_0_2;		/*
 					 * Byte offset 0x4a, CSR Addr 0x54025, Direction=Out
 					 * This is a signed integer value.
-					 * Read to write critical delay difference from cs 0 to cs 2
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to write critical delay difference from cs 0 to
+					 * cs 2.
 					 */
 	int8_t cdd_rw_0_1;		/*
 					 * Byte offset 0x4b, CSR Addr 0x54025, Direction=Out
 					 * This is a signed integer value.
-					 * Read to write critical delay difference from cs 0 to cs 1
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to write critical delay difference from cs 0 to
+					 * cs 1.
 					 */
 	int8_t cdd_rw_0_0;		/*
 					 * Byte offset 0x4c, CSR Addr 0x54026, Direction=Out
 					 * This is a signed integer value.
-					 * Read to write critical delay difference from cs 0 to cs 0
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Read to write critical delay difference from cs 0 to
+					 * cs 0.
 					 */
 	int8_t cdd_wr_3_3;		/*
 					 * Byte offset 0x4d, CSR Addr 0x54026, Direction=Out
 					 * This is a signed integer value.
-					 * Write to read critical delay difference from cs 3 to cs 3
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Write to read critical delay difference from cs 3 to
+					 * cs 3.
 					 */
 	int8_t cdd_wr_3_2;		/*
 					 * Byte offset 0x4e, CSR Addr 0x54027, Direction=Out
 					 * This is a signed integer value.
-					 * Write to read critical delay difference from cs 3 to cs 2
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Write to read critical delay difference from cs 3 to
+					 * cs 2.
 					 */
 	int8_t cdd_wr_3_1;		/*
 					 * Byte offset 0x4f, CSR Addr 0x54027, Direction=Out
 					 * This is a signed integer value.
-					 * Write to read critical delay difference from cs 3 to cs 1
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Write to read critical delay difference from cs 3 to
+					 * cs 1.
 					 */
 	int8_t cdd_wr_3_0;		/*
 					 * Byte offset 0x50, CSR Addr 0x54028, Direction=Out
 					 * This is a signed integer value.
-					 * Write to read critical delay difference from cs 3 to cs 0
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Write to read critical delay difference from cs 3 to
+					 * cs 0.
 					 */
 	int8_t cdd_wr_2_3;		/*
 					 * Byte offset 0x51, CSR Addr 0x54028, Direction=Out
 					 * This is a signed integer value.
-					 * Write to read critical delay difference from cs 2 to cs 3
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Write to read critical delay difference from cs 2 to
+					 * cs 3.
 					 */
 	int8_t cdd_wr_2_2;		/*
 					 * Byte offset 0x52, CSR Addr 0x54029, Direction=Out
 					 * This is a signed integer value.
-					 * Write to read critical delay difference from cs 2 to cs 2
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Write to read critical delay difference from cs 2 to
+					 * cs 2.
 					 */
 	int8_t cdd_wr_2_1;		/*
 					 * Byte offset 0x53, CSR Addr 0x54029, Direction=Out
 					 * This is a signed integer value.
-					 * Write to read critical delay difference from cs 2 to cs 1
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Write to read critical delay difference from cs 2 to
+					 * cs 1.
 					 */
 	int8_t cdd_wr_2_0;		/*
 					 * Byte offset 0x54, CSR Addr 0x5402a, Direction=Out
 					 * This is a signed integer value.
-					 * Write to read critical delay difference from cs 2 to cs 0
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Write to read critical delay difference from cs 2 to
+					 * cs 0.
 					 */
 	int8_t cdd_wr_1_3;		/*
 					 * Byte offset 0x55, CSR Addr 0x5402a, Direction=Out
 					 * This is a signed integer value.
-					 * Write to read critical delay difference from cs 1 to cs 3
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Write to read critical delay difference from cs 1 to
+					 * cs 3.
 					 */
 	int8_t cdd_wr_1_2;		/*
 					 * Byte offset 0x56, CSR Addr 0x5402b, Direction=Out
 					 * This is a signed integer value.
-					 * Write to read critical delay difference from cs 1 to cs 2
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Write to read critical delay difference from cs 1 to
+					 * cs 2.
 					 */
 	int8_t cdd_wr_1_1;		/*
 					 * Byte offset 0x57, CSR Addr 0x5402b, Direction=Out
 					 * This is a signed integer value.
-					 * Write to read critical delay difference from cs 1 to cs 1
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Write to read critical delay difference from cs 1 to
+					 * cs 1.
 					 */
 	int8_t cdd_wr_1_0;		/*
 					 * Byte offset 0x58, CSR Addr 0x5402c, Direction=Out
 					 * This is a signed integer value.
-					 * Write to read critical delay difference from cs 1 to cs 0
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Write to read critical delay difference from cs 1 to
+					 * cs 0.
 					 */
 	int8_t cdd_wr_0_3;		/*
 					 * Byte offset 0x59, CSR Addr 0x5402c, Direction=Out
 					 * This is a signed integer value.
-					 * Write to read critical delay difference from cs 0 to cs 3
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Write to read critical delay difference from cs 0 to
+					 * cs 3.
 					 */
 	int8_t cdd_wr_0_2;		/*
 					 * Byte offset 0x5a, CSR Addr 0x5402d, Direction=Out
 					 * This is a signed integer value.
-					 * Write to read critical delay difference from cs 0 to cs 2
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Write to read critical delay difference from cs 0 to
+					 * cs 2.
 					 */
 	int8_t cdd_wr_0_1;		/*
 					 * Byte offset 0x5b, CSR Addr 0x5402d, Direction=Out
 					 * This is a signed integer value.
-					 * Write to read critical delay difference from cs 0 to cs 1
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Write to read critical delay difference from cs 0 to
+					 * cs 1.
 					 */
 	int8_t cdd_wr_0_0;		/*
 					 * Byte offset 0x5c, CSR Addr 0x5402e, Direction=Out
 					 * This is a signed integer value.
-					 * Write to read critical delay difference from cs 0 to cs 0
-					 * See PUB Databook section 8.2 for details on use of CDD
-					 * values.
+					 * Write to read critical delay difference from cs 0 to
+					 * cs 0.
 					 */
 	uint8_t reserved5d;		/*
 					 * Byte offset 0x5d, CSR Addr 0x5402e, Direction=In
@@ -819,17 +747,17 @@ struct pmu_smb_ddr_1d {
 	uint16_t mr0;			/*
 					 * Byte offset 0x5e, CSR Addr 0x5402f, Direction=In
 					 * Value of DDR mode register mr0 for all ranks for current
-					 * pstate
+					 * pstate.
 					 */
 	uint16_t mr1;			/*
 					 * Byte offset 0x60, CSR Addr 0x54030, Direction=In
 					 * Value of DDR mode register mr1 for all ranks for current
-					 * pstate
+					 * pstate.
 					 */
 	uint16_t mr2;			/*
 					 * Byte offset 0x62, CSR Addr 0x54031, Direction=In
 					 * Value of DDR mode register mr2 for all ranks for current
-					 * pstate
+					 * pstate.
 					 */
 	uint8_t reserved64;		/*
 					 * Byte offset 0x64, CSR Addr 0x54032, Direction=In

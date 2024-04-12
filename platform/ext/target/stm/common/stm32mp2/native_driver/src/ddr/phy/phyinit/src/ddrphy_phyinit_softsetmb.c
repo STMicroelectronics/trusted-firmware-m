@@ -1,9 +1,10 @@
 /*
- * Copyright (C) 2021-2022, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2021-2024, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#include <debug.h>
 #include <string.h>
 
 #include <stm32mp_ddr_debug.h>
@@ -16,7 +17,6 @@
  * This function is used by ddrphy_phyinit_calcmb() to set calculated
  * messageBlock variables only when the user has not directly programmed them.
  *
- * @param[in]   ps      integer between 0-3. Specifies the PState for which the messageBlock field should be set.
  * @param[in]   field   A string representing the messageBlock field to be programed.
  * @param[in]   value   filed value
  *
@@ -24,102 +24,74 @@
  * On error  returns the following values based on error:
  * - -1 : message block field specified by the input \c field string is not
  * found in the message block data structure.
- * - -2 : when dramtype does not support 2D training but a 2D training field is
- * programmed.
  */
-int ddrphy_phyinit_softsetmb(int ps, enum message_block_field field, int value)
+int ddrphy_phyinit_softsetmb(struct pmu_smb_ddr_1d *mb_ddr_1d, enum message_block_field field,
+			     uint32_t value)
 {
 	int ret = 0;
 
+	if (field == MB_FIELD_DRAMFREQ) {
+		_ASSERT(value <= UINT16_MAX);
+	} else {
+		_ASSERT(value <= UINT8_MAX);
+	}
+
 	switch (field) {
 	case MB_FIELD_PSTATE:
-		if (shdw_ddr_1d[ps].pstate == 0) {
-			mb_ddr_1d[ps].pstate = value;
-		}
+		mb_ddr_1d->pstate = (uint8_t)value;
 		break;
 	case MB_FIELD_PLLBYPASSEN:
-		if (shdw_ddr_1d[ps].pllbypassen == 0) {
-			mb_ddr_1d[ps].pllbypassen = value;
-		}
+		mb_ddr_1d->pllbypassen = (uint8_t)value;
 		break;
 	case MB_FIELD_DRAMFREQ:
-		if (shdw_ddr_1d[ps].dramfreq == 0) {
-			mb_ddr_1d[ps].dramfreq = value;
-		}
+		mb_ddr_1d->dramfreq = (uint16_t)value;
 		break;
 	case MB_FIELD_DFIFREQRATIO:
-		if (shdw_ddr_1d[ps].dfifreqratio == 0) {
-			mb_ddr_1d[ps].dfifreqratio = value;
-		}
+		mb_ddr_1d->dfifreqratio = (uint8_t)value;
 		break;
 	case MB_FIELD_BPZNRESVAL:
-		if (shdw_ddr_1d[ps].bpznresval == 0) {
-			mb_ddr_1d[ps].bpznresval = value;
-		}
+		mb_ddr_1d->bpznresval = (uint8_t)value;
 		break;
 	case MB_FIELD_PHYODTIMPEDANCE:
-		if (shdw_ddr_1d[ps].phyodtimpedance == 0) {
-			mb_ddr_1d[ps].phyodtimpedance = value;
-		}
+		mb_ddr_1d->phyodtimpedance = (uint8_t)value;
 		break;
 	case MB_FIELD_PHYDRVIMPEDANCE:
-		if (shdw_ddr_1d[ps].phydrvimpedance == 0) {
-			mb_ddr_1d[ps].phydrvimpedance = value;
-		}
+		mb_ddr_1d->phydrvimpedance = (uint8_t)value;
 		break;
 #if STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE
 	case MB_FIELD_DRAMTYPE:
-		if (shdw_ddr_1d[ps].dramtype == 0) {
-			mb_ddr_1d[ps].dramtype = value;
-		}
+		mb_ddr_1d->dramtype = (uint8_t)value;
 		break;
 	case MB_FIELD_DISABLEDDBYTE:
-		if (shdw_ddr_1d[ps].disableddbyte == 0) {
-			mb_ddr_1d[ps].disableddbyte = value;
-		}
+		mb_ddr_1d->disableddbyte = (uint8_t)value;
 		break;
 	case MB_FIELD_ENABLEDDQS:
-		if (shdw_ddr_1d[ps].enableddqs == 0) {
-			mb_ddr_1d[ps].enableddqs = value;
-		}
+		mb_ddr_1d->enableddqs = (uint8_t)value;
 		break;
 	case MB_FIELD_PHYCFG:
-		if (shdw_ddr_1d[ps].phycfg == 0) {
-			mb_ddr_1d[ps].phycfg = value;
-		}
+		mb_ddr_1d->phycfg = (uint8_t)value;
 		break;
-#endif /* STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE */
 #if STM32MP_DDR4_TYPE
 	case MB_FIELD_X16PRESENT:
-		if (shdw_ddr_1d[ps].x16present == 0) {
-			mb_ddr_1d[ps].x16present = value;
-		}
+		mb_ddr_1d->x16present = (uint8_t)value;
 		break;
 #endif /* STM32MP_DDR4_TYPE */
-#if STM32MP_LPDDR4_TYPE
+#else /* STM32MP_LPDDR4_TYPE */
 	case MB_FIELD_ENABLEDDQSCHA:
-		if (shdw_ddr_1d[ps].enableddqscha == 0) {
-			mb_ddr_1d[ps].enableddqscha = value;
-		}
+		mb_ddr_1d->enableddqscha = (uint8_t)value;
 		break;
 	case MB_FIELD_CSPRESENTCHA:
-		if (shdw_ddr_1d[ps].cspresentcha == 0) {
-			mb_ddr_1d[ps].cspresentcha = value;
-		}
+		mb_ddr_1d->cspresentcha = (uint8_t)value;
 		break;
 	case MB_FIELD_ENABLEDDQSCHB:
-		if (shdw_ddr_1d[ps].enableddqschb == 0) {
-			mb_ddr_1d[ps].enableddqschb = value;
-		}
+		mb_ddr_1d->enableddqschb = (uint8_t)value;
 		break;
 	case MB_FIELD_CSPRESENTCHB:
-		if (shdw_ddr_1d[ps].cspresentchb == 0) {
-			mb_ddr_1d[ps].cspresentchb = value;
-		}
+		mb_ddr_1d->cspresentchb = (uint8_t)value;
 		break;
-#endif /* STM32MP_LPDDR4_TYPE */
+#endif /* STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE */
 	default:
-		ERROR("unknown message block field %u\n", field);
+		DDR_ERROR("unknown message block field %u\n", field);
 		ret = -1;
 		break;
 	}

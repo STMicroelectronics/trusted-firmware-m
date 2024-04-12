@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2021-2024, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -9,7 +9,6 @@
 #include <stm32mp_ddr_debug.h>
 #include <lib/delay.h>
 #include <stm32mp_ddr.h>
-#include <stm32mp2_ddr.h>
 #include <stm32mp2_ddr_helpers.h>
 #include <stm32mp2_ddr_regs.h>
 #include <lib/mmio.h>
@@ -20,18 +19,11 @@
 
 #define DDRDBG_FRAC_PLL_LOCK	U(0x10)
 
-#define DDRCTL_REG(x, y)					\
+#define DDRCTL_REG(x, y, z)					\
 	{							\
-		.name = #x,					\
 		.offset = offsetof(struct stm32mp_ddrctl, x),	\
-		.par_offset = offsetof(struct y, x)		\
-	}
-
-#define DDRPHY_REG(x, y)					\
-	{							\
-		.name = #x,					\
-		.offset = offsetof(struct stm32mp_ddrphy, x),	\
-		.par_offset = offsetof(struct y, x)		\
+		.par_offset = offsetof(struct y, x),		\
+		.qd = z						\
 	}
 
 /*
@@ -41,7 +33,7 @@
  */
 #if CONFIG_STM32MP25X_REVA
 #define DDRCTL_REG_REG_SIZE	46	/* st,ctl-reg */
-#else /* CONFIG_STM32MP25X_REVA */
+#else /* !CONFIG_STM32MP25X_REVA */
 #define DDRCTL_REG_REG_SIZE	48	/* st,ctl-reg */
 #endif /* CONFIG_STM32MP25X_REVA */
 #define DDRCTL_REG_TIMING_SIZE	20	/* st,ctl-timing */
@@ -49,101 +41,101 @@
 #if CONFIG_STM32MP25X_REVA
 #if STM32MP_DDR_DUAL_AXI_PORT
 #define DDRCTL_REG_PERF_SIZE	19	/* st,ctl-perf */
-#else
+#else /* !STM32MP_DDR_DUAL_AXI_PORT */
 #define DDRCTL_REG_PERF_SIZE	12	/* st,ctl-perf */
-#endif
-#else /* CONFIG_STM32MP25X_REVA */
+#endif /* STM32MP_DDR_DUAL_AXI_PORT */
+#else /* !CONFIG_STM32MP25X_REVA */
 #if STM32MP_DDR_DUAL_AXI_PORT
 #define DDRCTL_REG_PERF_SIZE	21	/* st,ctl-perf */
-#else
+#else /* !STM32MP_DDR_DUAL_AXI_PORT */
 #define DDRCTL_REG_PERF_SIZE	14	/* st,ctl-perf */
-#endif
+#endif /* STM32MP_DDR_DUAL_AXI_PORT */
 #endif /* CONFIG_STM32MP25X_REVA */
 
 #define DDRPHY_REG_REG_SIZE	0	/* st,phy-reg */
 #define	DDRPHY_REG_TIMING_SIZE	0	/* st,phy-timing */
 
-#define DDRCTL_REG_REG(x)	DDRCTL_REG(x, stm32mp2_ddrctrl_reg)
+#define DDRCTL_REG_REG(x, z)	DDRCTL_REG(x, stm32mp2_ddrctrl_reg, z)
 static const struct stm32mp_ddr_reg_desc ddr_reg[DDRCTL_REG_REG_SIZE] = {
-	DDRCTL_REG_REG(mstr),
-	DDRCTL_REG_REG(mrctrl0),
-	DDRCTL_REG_REG(mrctrl1),
-	DDRCTL_REG_REG(mrctrl2),
-	DDRCTL_REG_REG(derateen),
-	DDRCTL_REG_REG(derateint),
-	DDRCTL_REG_REG(deratectl),
-	DDRCTL_REG_REG(pwrctl),
-	DDRCTL_REG_REG(pwrtmg),
-	DDRCTL_REG_REG(hwlpctl),
-	DDRCTL_REG_REG(rfshctl0),
-	DDRCTL_REG_REG(rfshctl1),
-	DDRCTL_REG_REG(rfshctl3),
-	DDRCTL_REG_REG(crcparctl0),
-	DDRCTL_REG_REG(crcparctl1),
-	DDRCTL_REG_REG(init0),
-	DDRCTL_REG_REG(init1),
-	DDRCTL_REG_REG(init2),
-	DDRCTL_REG_REG(init3),
-	DDRCTL_REG_REG(init4),
-	DDRCTL_REG_REG(init5),
-	DDRCTL_REG_REG(init6),
-	DDRCTL_REG_REG(init7),
-	DDRCTL_REG_REG(dimmctl),
-	DDRCTL_REG_REG(rankctl),
+	DDRCTL_REG_REG(mstr, true),
+	DDRCTL_REG_REG(mrctrl0, false),
+	DDRCTL_REG_REG(mrctrl1, false),
+	DDRCTL_REG_REG(mrctrl2, false),
+	DDRCTL_REG_REG(derateen, true),
+	DDRCTL_REG_REG(derateint, false),
+	DDRCTL_REG_REG(deratectl, false),
+	DDRCTL_REG_REG(pwrctl, false),
+	DDRCTL_REG_REG(pwrtmg, true),
+	DDRCTL_REG_REG(hwlpctl, true),
+	DDRCTL_REG_REG(rfshctl0, false),
+	DDRCTL_REG_REG(rfshctl1, false),
+	DDRCTL_REG_REG(rfshctl3, true),
+	DDRCTL_REG_REG(crcparctl0, false),
+	DDRCTL_REG_REG(crcparctl1, false),
+	DDRCTL_REG_REG(init0, true),
+	DDRCTL_REG_REG(init1, false),
+	DDRCTL_REG_REG(init2, false),
+	DDRCTL_REG_REG(init3, true),
+	DDRCTL_REG_REG(init4, true),
+	DDRCTL_REG_REG(init5, false),
+	DDRCTL_REG_REG(init6, true),
+	DDRCTL_REG_REG(init7, true),
+	DDRCTL_REG_REG(dimmctl, false),
+	DDRCTL_REG_REG(rankctl, true),
 #if !CONFIG_STM32MP25X_REVA
-	DDRCTL_REG_REG(rankctl1),
+	DDRCTL_REG_REG(rankctl1, true),
 #endif /* !CONFIG_STM32MP25X_REVA */
-	DDRCTL_REG_REG(zqctl0),
-	DDRCTL_REG_REG(zqctl1),
-	DDRCTL_REG_REG(zqctl2),
-	DDRCTL_REG_REG(dfitmg0),
-	DDRCTL_REG_REG(dfitmg1),
-	DDRCTL_REG_REG(dfilpcfg0),
-	DDRCTL_REG_REG(dfilpcfg1),
-	DDRCTL_REG_REG(dfiupd0),
-	DDRCTL_REG_REG(dfiupd1),
-	DDRCTL_REG_REG(dfiupd2),
-	DDRCTL_REG_REG(dfimisc),
-	DDRCTL_REG_REG(dfitmg2),
-	DDRCTL_REG_REG(dfitmg3),
-	DDRCTL_REG_REG(dbictl),
-	DDRCTL_REG_REG(dfiphymstr),
-	DDRCTL_REG_REG(dbg0),
-	DDRCTL_REG_REG(dbg1),
-	DDRCTL_REG_REG(dbgcmd),
-	DDRCTL_REG_REG(swctl),
+	DDRCTL_REG_REG(zqctl0, true),
+	DDRCTL_REG_REG(zqctl1, false),
+	DDRCTL_REG_REG(zqctl2, false),
+	DDRCTL_REG_REG(dfitmg0, true),
+	DDRCTL_REG_REG(dfitmg1, true),
+	DDRCTL_REG_REG(dfilpcfg0, false),
+	DDRCTL_REG_REG(dfilpcfg1, false),
+	DDRCTL_REG_REG(dfiupd0, true),
+	DDRCTL_REG_REG(dfiupd1, false),
+	DDRCTL_REG_REG(dfiupd2, false),
+	DDRCTL_REG_REG(dfimisc, true),
+	DDRCTL_REG_REG(dfitmg2, true),
+	DDRCTL_REG_REG(dfitmg3, false),
+	DDRCTL_REG_REG(dbictl, true),
+	DDRCTL_REG_REG(dfiphymstr, false),
+	DDRCTL_REG_REG(dbg0, false),
+	DDRCTL_REG_REG(dbg1, false),
+	DDRCTL_REG_REG(dbgcmd, false),
+	DDRCTL_REG_REG(swctl, false), /* forced qd value */
 #if !CONFIG_STM32MP25X_REVA
-	DDRCTL_REG_REG(swctlstatic),
+	DDRCTL_REG_REG(swctlstatic, false),
 #endif /* !CONFIG_STM32MP25X_REVA */
-	DDRCTL_REG_REG(poisoncfg),
-	DDRCTL_REG_REG(pccfg),
+	DDRCTL_REG_REG(poisoncfg, false),
+	DDRCTL_REG_REG(pccfg, false),
 };
 
-#define DDRCTL_REG_TIMING(x)	DDRCTL_REG(x, stm32mp2_ddrctrl_timing)
+#define DDRCTL_REG_TIMING(x, z)	DDRCTL_REG(x, stm32mp2_ddrctrl_timing, z)
 static const struct stm32mp_ddr_reg_desc ddr_timing[DDRCTL_REG_TIMING_SIZE] = {
-	DDRCTL_REG_TIMING(rfshtmg),
-	DDRCTL_REG_TIMING(rfshtmg1),
-	DDRCTL_REG_TIMING(dramtmg0),
-	DDRCTL_REG_TIMING(dramtmg1),
-	DDRCTL_REG_TIMING(dramtmg2),
-	DDRCTL_REG_TIMING(dramtmg3),
-	DDRCTL_REG_TIMING(dramtmg4),
-	DDRCTL_REG_TIMING(dramtmg5),
-	DDRCTL_REG_TIMING(dramtmg6),
-	DDRCTL_REG_TIMING(dramtmg7),
-	DDRCTL_REG_TIMING(dramtmg8),
-	DDRCTL_REG_TIMING(dramtmg9),
-	DDRCTL_REG_TIMING(dramtmg10),
-	DDRCTL_REG_TIMING(dramtmg11),
-	DDRCTL_REG_TIMING(dramtmg12),
-	DDRCTL_REG_TIMING(dramtmg13),
-	DDRCTL_REG_TIMING(dramtmg14),
-	DDRCTL_REG_TIMING(dramtmg15),
-	DDRCTL_REG_TIMING(odtcfg),
-	DDRCTL_REG_TIMING(odtmap),
+	DDRCTL_REG_TIMING(rfshtmg, false),
+	DDRCTL_REG_TIMING(rfshtmg1, false),
+	DDRCTL_REG_TIMING(dramtmg0, true),
+	DDRCTL_REG_TIMING(dramtmg1, true),
+	DDRCTL_REG_TIMING(dramtmg2, true),
+	DDRCTL_REG_TIMING(dramtmg3, true),
+	DDRCTL_REG_TIMING(dramtmg4, true),
+	DDRCTL_REG_TIMING(dramtmg5, true),
+	DDRCTL_REG_TIMING(dramtmg6, true),
+	DDRCTL_REG_TIMING(dramtmg7, true),
+	DDRCTL_REG_TIMING(dramtmg8, true),
+	DDRCTL_REG_TIMING(dramtmg9, true),
+	DDRCTL_REG_TIMING(dramtmg10, true),
+	DDRCTL_REG_TIMING(dramtmg11, true),
+	DDRCTL_REG_TIMING(dramtmg12, true),
+	DDRCTL_REG_TIMING(dramtmg13, true),
+	DDRCTL_REG_TIMING(dramtmg14, true),
+	DDRCTL_REG_TIMING(dramtmg15, true),
+	DDRCTL_REG_TIMING(odtcfg, true),
+	DDRCTL_REG_TIMING(odtmap, false),
 };
 
-#define DDRCTL_REG_MAP(x)	DDRCTL_REG(x, stm32mp2_ddrctrl_map)
+#define DDRCTL_REG_MAP(x)	DDRCTL_REG(x, stm32mp2_ddrctrl_map, false)
 static const struct stm32mp_ddr_reg_desc ddr_map[DDRCTL_REG_MAP_SIZE] = {
 	DDRCTL_REG_MAP(addrmap0),
 	DDRCTL_REG_MAP(addrmap1),
@@ -159,33 +151,33 @@ static const struct stm32mp_ddr_reg_desc ddr_map[DDRCTL_REG_MAP_SIZE] = {
 	DDRCTL_REG_MAP(addrmap11),
 };
 
-#define DDRCTL_REG_PERF(x)	DDRCTL_REG(x, stm32mp2_ddrctrl_perf)
+#define DDRCTL_REG_PERF(x, z)	DDRCTL_REG(x, stm32mp2_ddrctrl_perf, z)
 static const struct stm32mp_ddr_reg_desc ddr_perf[DDRCTL_REG_PERF_SIZE] = {
-	DDRCTL_REG_PERF(sched),
-	DDRCTL_REG_PERF(sched1),
-	DDRCTL_REG_PERF(perfhpr1),
-	DDRCTL_REG_PERF(perflpr1),
-	DDRCTL_REG_PERF(perfwr1),
+	DDRCTL_REG_PERF(sched, true),
+	DDRCTL_REG_PERF(sched1, false),
+	DDRCTL_REG_PERF(perfhpr1, true),
+	DDRCTL_REG_PERF(perflpr1, true),
+	DDRCTL_REG_PERF(perfwr1, true),
 #if !CONFIG_STM32MP25X_REVA
-	DDRCTL_REG_PERF(sched3),
-	DDRCTL_REG_PERF(sched4),
+	DDRCTL_REG_PERF(sched3, false),
+	DDRCTL_REG_PERF(sched4, false),
 #endif /* !CONFIG_STM32MP25X_REVA */
-	DDRCTL_REG_PERF(pcfgr_0),
-	DDRCTL_REG_PERF(pcfgw_0),
-	DDRCTL_REG_PERF(pctrl_0),
-	DDRCTL_REG_PERF(pcfgqos0_0),
-	DDRCTL_REG_PERF(pcfgqos1_0),
-	DDRCTL_REG_PERF(pcfgwqos0_0),
-	DDRCTL_REG_PERF(pcfgwqos1_0),
+	DDRCTL_REG_PERF(pcfgr_0, false),
+	DDRCTL_REG_PERF(pcfgw_0, false),
+	DDRCTL_REG_PERF(pctrl_0, false),
+	DDRCTL_REG_PERF(pcfgqos0_0, true),
+	DDRCTL_REG_PERF(pcfgqos1_0, true),
+	DDRCTL_REG_PERF(pcfgwqos0_0, true),
+	DDRCTL_REG_PERF(pcfgwqos1_0, true),
 #if STM32MP_DDR_DUAL_AXI_PORT
-	DDRCTL_REG_PERF(pcfgr_1),
-	DDRCTL_REG_PERF(pcfgw_1),
-	DDRCTL_REG_PERF(pctrl_1),
-	DDRCTL_REG_PERF(pcfgqos0_1),
-	DDRCTL_REG_PERF(pcfgqos1_1),
-	DDRCTL_REG_PERF(pcfgwqos0_1),
-	DDRCTL_REG_PERF(pcfgwqos1_1),
-#endif
+	DDRCTL_REG_PERF(pcfgr_1, false),
+	DDRCTL_REG_PERF(pcfgw_1, false),
+	DDRCTL_REG_PERF(pctrl_1, false),
+	DDRCTL_REG_PERF(pcfgqos0_1, true),
+	DDRCTL_REG_PERF(pcfgqos1_1, true),
+	DDRCTL_REG_PERF(pcfgwqos0_1, true),
+	DDRCTL_REG_PERF(pcfgwqos1_1, true),
+#endif /* STM32MP_DDR_DUAL_AXI_PORT */
 };
 
 static const struct stm32mp_ddr_reg_desc ddrphy_reg[DDRPHY_REG_REG_SIZE] = {};
@@ -295,13 +287,14 @@ static void ddr_standby_reset_release(struct stm32mp_ddr_priv *priv)
 	udelay(DDR_DELAY_1US);
 }
 
-static void ddr_sysconf_configuration(struct stm32mp_ddr_priv *priv)
+static void ddr_sysconf_configuration(struct stm32mp_ddr_priv *priv,
+				      struct stm32mp_ddr_config *config)
 {
 	mmio_write_32(stm32_ddrdbg_get_base() + DDRDBG_LP_DISABLE,
 		      _DDRDBG_LP_DISABLE_LPI_XPI_DISABLE | _DDRDBG_LP_DISABLE_LPI_DDRC_DISABLE);
 
 	mmio_write_32(stm32_ddrdbg_get_base() + DDRDBG_BYPASS_PCLKEN,
-		      (uint32_t)ddrphy_phyinit_get_user_input_basic_pllbypass_0());
+		      (uint32_t)config->uib.pllbypass);
 
 	mmio_write_32(priv->rcc + RCC_DDRPHYCCFGR, RCC_DDRPHYCCFGR_DDRPHYCEN);
 	mmio_setbits_32(priv->rcc + RCC_DDRITFCFGR, RCC_DDRITFCFGR_DDRRST);
@@ -385,18 +378,17 @@ void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv,
 {
 	int ret = -EINVAL;
 	uint32_t ddr_retdis;
+	enum ddr_type ddr_type;
+	bool cid_filtering = is_ddr_cid_filtering_enabled();
 
 	if ((config->c_reg.mstr & DDRCTRL_MSTR_DDR3) != 0U) {
-		ret = stm32mp_board_ddr_power_init(STM32MP_DDR3);
+		ddr_type = STM32MP_DDR3;
 	} else if ((config->c_reg.mstr & DDRCTRL_MSTR_DDR4) != 0U) {
-		ret = stm32mp_board_ddr_power_init(STM32MP_DDR4);
+		ddr_type = STM32MP_DDR4;
 	} else if ((config->c_reg.mstr & DDRCTRL_MSTR_LPDDR4) != 0U) {
-		ret = stm32mp_board_ddr_power_init(STM32MP_LPDDR4);
+		ddr_type = STM32MP_LPDDR4;
 	} else {
 		DDR_ERROR("DDR type not supported\n");
-	}
-
-	if (ret != 0) {
 		panic();
 	}
 
@@ -408,7 +400,14 @@ void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv,
 	}
 
 	/* Check DDR PHY pads retention */
+	if (cid_filtering) {
+		ddr_disable_cid_filtering();
+	}
 	ddr_retdis = mmio_read_32(priv->pwr + _PWR_CR11) & _PWR_CR11_DDRRETDIS;
+	if (cid_filtering) {
+		ddr_enable_cid_filtering();
+	}
+
 	if (config->self_refresh) {
 		if (ddr_retdis == _PWR_CR11_DDRRETDIS) {
 			DDR_VERBOSE("self-refresh aborted: no retention\n");
@@ -420,7 +419,13 @@ void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv,
 		ddr_standby_reset(priv);
 
 		DDR_VERBOSE("disable DDR PHY retention\n");
+		if (cid_filtering) {
+			ddr_disable_cid_filtering();
+		}
 		mmio_setbits_32(priv->pwr + _PWR_CR11, _PWR_CR11_DDRRETDIS);
+		if (cid_filtering) {
+			ddr_enable_cid_filtering();
+		}
 
 		udelay(DDR_DELAY_1US);
 
@@ -429,12 +434,23 @@ void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv,
 		udelay(DDR_DELAY_1US);
 
 	} else {
+		if (stm32mp_board_ddr_power_init(ddr_type) != 0) {
+			DDR_ERROR("DDR power init failed\n");
+			panic();
+		}
+
 		DDR_VERBOSE("disable DDR PHY retention\n");
+		if (cid_filtering) {
+			ddr_disable_cid_filtering();
+		}
 		mmio_setbits_32(priv->pwr + _PWR_CR11, _PWR_CR11_DDRRETDIS);
+		if (cid_filtering) {
+			ddr_enable_cid_filtering();
+		}
 
 		ddr_reset(priv);
 
-		ddr_sysconf_configuration(priv);
+		ddr_sysconf_configuration(priv, config);
 	}
 
 #if STM32MP_LPDDR4_TYPE
@@ -461,7 +477,7 @@ void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv,
 		ddr_standby_reset_release(priv);
 
 		/* Initialize DDR by skipping training and disabling result saving */
-		ret = ddrphy_phyinit_sequence(true, false);
+		ret = ddrphy_phyinit_sequence(config, true, false);
 
 		if (ret == 0) {
 			ret = ddrphy_phyinit_restore_sequence();
@@ -471,7 +487,7 @@ void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv,
 		ddr_wait_lp3_mode(false);
 	} else {
 		/* Initialize DDR including training and result saving */
-		ret = ddrphy_phyinit_sequence(false, true);
+		ret = ddrphy_phyinit_sequence(config, false, true);
 	}
 
 	if (ret != 0) {

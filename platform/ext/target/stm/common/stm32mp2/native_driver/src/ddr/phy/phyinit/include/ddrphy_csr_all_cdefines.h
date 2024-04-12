@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2021-2024, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -6731,8 +6731,13 @@
 
 
 /* Fields brought to you by the letter B */
-#define BB_MIN						0
-#define BB_MAX						15
+#define B_MIN						0U
+#define B_MAX						1U
+#define B0						0x0U
+#define B1						0x100U
+#define BBRD						0xF00U
+#define BB_MIN						0U
+#define BB_MAX						15U
 #define BB0						0x0U
 #define BB1						0x1000U
 #define BB2						0x2000U
@@ -6750,17 +6755,55 @@
 #define BB14						0xE000U
 #define BB15						0xF000U
 #define BBBRD						0xF000U
+/* Fields brought to you by the letter C */
+#define C_MIN						0U
+#define C_MAX						15U
+#define C0						0x0U
+#define C1						0x1000U
+#define C2						0x2000U
+#define C3						0x3000U
+#define C4						0x4000U
+#define C5						0x5000U
+#define C6						0x6000U
+#define C7						0x7000U
+#define C8						0x8000U
+#define C9						0x9000U
+#define C10						0xA000U
+#define C11						0xB000U
+#define C12						0xC000U
+#define C13						0xD000U
+#define C14						0xE000U
+#define C15						0xF000U
+#define CBRD						0xF000U
 /* Fields brought to you by the letter D */
-#define D_MIN						0
-#define D_MAX						3
+#define D_MIN						0U
+#define D_MAX						3U
 #define D0						0x0U
 #define D1						0x100U
 #define D2						0x200U
 #define D3						0x300U
 #define DBRD						0xF00U
+/* Fields brought to you by the letter I */
+#define I_MIN						0U
+#define I_MAX						8U
+#define I0						0x0U
+#define I1						0x100U
+#define I2						0x200U
+#define I3						0x300U
+#define I4						0x400U
+#define I5						0x500U
+#define I6						0x600U
+#define I7						0x700U
+#define I8						0x800U
+#define IBRD						0xF00U
+/* Fields brought to you by the letter J */
+#define J_MIN						0U
+#define J_MAX						0U
+#define J0						0x0U
+#define JBRD						0xF00U
 /* Fields brought to you by the letter L */
-#define L_MIN						0
-#define L_MAX						13
+#define L_MIN						0U
+#define L_MAX						13U
 #define L0						0x0U
 #define L1						0x100U
 #define L2						0x200U
@@ -6776,9 +6819,22 @@
 #define L12						0xC00U
 #define L13						0xD00U
 #define LBRD						0xF00U
+/* Fields brought to you by the letter M */
+#define M_MIN						0U
+#define M_MAX						8U
+#define M0						0x0U
+#define M1						0x100U
+#define M2						0x200U
+#define M3						0x300U
+#define M4						0x400U
+#define M5						0x500U
+#define M6						0x600U
+#define M7						0x700U
+#define M8						0x800U
+#define MBRD						0xF00U
 /* Fields brought to you by the letter N */
-#define N_MIN						0
-#define N_MAX						15
+#define N_MIN						0U
+#define N_MAX						15U
 #define N0						0x0U
 #define N1						0x100U
 #define N2						0x200U
@@ -6797,94 +6853,31 @@
 #define N15						0xF00U
 #define NBRD						0xF00U
 /* Fields brought to you by the letter P */
-#define PP_MIN						0
-#define PP_MAX						3
+#define P_MIN						0U
+#define P_MAX						3U
+#define P0						0x0U
+#define P1						0x100000U
+#define P2						0x200000U
+#define P3						0x300000U
+#define PBRD						0x700000U
+#define PP_MIN						0U
+#define PP_MAX						3U
 #define PP0						0x0U
 #define PP1						0x100000U
 #define PP2						0x200000U
 #define PP3						0x300000U
 #define PPBRD						0x700000U
 /* Fields brought to you by the letter Q */
-#define Q_MIN						0
-#define Q_MAX						3
+#define Q_MIN						0U
+#define Q_MAX						3U
 #define Q0						0x0U
 #define Q1						0x100000U
 #define Q2						0x200000U
 #define Q3						0x300000U
 #define QBRD						0x700000U
-/* Fields brought to you by the letter Y */
-#define Y_MIN						0
-#define Y_MAX						0
-#define Y0						0x0U
-#define YBRD						0xF000000U
-/* Fields brought to you by the letter b */
-#define B_MIN						0
-#define B_MAX						1
-#define B0						0x0U
-#define B1						0x100U
-#define BBRD						0xF00U
-/* Fields brought to you by the letter c */
-#define C_MIN						0
-#define C_MAX						15
-#define C0						0x0U
-#define C1						0x1000U
-#define C2						0x2000U
-#define C3						0x3000U
-#define C4						0x4000U
-#define C5						0x5000U
-#define C6						0x6000U
-#define C7						0x7000U
-#define C8						0x8000U
-#define C9						0x9000U
-#define C10						0xA000U
-#define C11						0xB000U
-#define C12						0xC000U
-#define C13						0xD000U
-#define C14						0xE000U
-#define C15						0xF000U
-#define CBRD						0xF000U
-/* Fields brought to you by the letter i */
-#define I_MIN						0
-#define I_MAX						8
-#define I0						0x0U
-#define I1						0x100U
-#define I2						0x200U
-#define I3						0x300U
-#define I4						0x400U
-#define I5						0x500U
-#define I6						0x600U
-#define I7						0x700U
-#define I8						0x800U
-#define IBRD						0xF00U
-/* Fields brought to you by the letter j */
-#define J_MIN						0
-#define J_MAX						0
-#define J0						0x0U
-#define JBRD						0xF00U
-/* Fields brought to you by the letter m */
-#define M_MIN						0
-#define M_MAX						8
-#define M0						0x0U
-#define M1						0x100U
-#define M2						0x200U
-#define M3						0x300U
-#define M4						0x400U
-#define M5						0x500U
-#define M6						0x600U
-#define M7						0x700U
-#define M8						0x800U
-#define MBRD						0xF00U
-/* Fields brought to you by the letter p */
-#define P_MIN						0
-#define P_MAX						3
-#define P0						0x0U
-#define P1						0x100000U
-#define P2						0x200000U
-#define P3						0x300000U
-#define PBRD						0x700000U
-/* Fields brought to you by the letter r */
-#define R_MIN						0
-#define R_MAX						8
+/* Fields brought to you by the letter R */
+#define R_MIN						0U
+#define R_MAX						8U
 #define R0						0x0U
 #define R1						0x100U
 #define R2						0x200U
@@ -6895,9 +6888,9 @@
 #define R7						0x700U
 #define R8						0x800U
 #define RBRD						0xF00U
-/* Fields brought to you by the letter t */
-#define T_MIN						0
-#define T_MAX						15
+/* Fields brought to you by the letter T */
+#define T_MIN						0U
+#define T_MAX						15U
 #define T0						0x0U
 #define T1						0x10000U
 #define T2						0x20000U
@@ -6915,12 +6908,17 @@
 #define T14						0xE0000U
 #define T15						0xF0000U
 #define TBRD						0xF0000U
-/* Fields brought to you by the letter u */
-#define U_MIN						0
-#define U_MAX						1
+/* Fields brought to you by the letter U */
+#define U_MIN						0U
+#define U_MAX						1U
 #define U0						0x0U
 #define U1						0x100U
 #define UBRD						0xF00U
+/* Fields brought to you by the letter Y */
+#define Y_MIN						0U
+#define Y_MAX						0U
+#define Y0						0x0U
+#define YBRD						0xF000000U
 
 #define TACSM						0x40000U
 #define TACSMBRD					0x4F000U
@@ -6943,7 +6941,7 @@
 #define TUCTL_MEM					0x50000U
 #define TUCTL_MEMBRD					0x5F000U
 
-#define DBYTE_NUM					9
-#define ANIB_NUM					12
+#define DBYTE_NUM					9U
+#define ANIB_NUM					12U
 
 #endif /* DDRPHY_PHYINIT_CSR_ALL_DEFINES_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2021-2024, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
  */
@@ -119,8 +119,12 @@ static int stm32mp2_ddr_dt_init(void)
 		},
 		.c_reg = DT_INST_PROP(0, st_ctl_reg),
 		.c_timing = DT_INST_PROP(0, st_ctl_timing),
-		.c_map = DT_INST_PROP(0,  st_ctl_map),
+		.c_map = DT_INST_PROP(0, st_ctl_map),
 		.c_perf = DT_INST_PROP(0, st_ctl_perf),
+		.uib = DT_INST_PROP(0, st_phy_basic),
+		.uia = DT_INST_PROP(0, st_phy_advanced),
+		.uim = DT_INST_PROP(0, st_phy_mr),
+		.uis = DT_INST_PROP(0, st_phy_swizzle),
 	};
 
 	struct stm32mp_ddr_priv drv_data = {
@@ -133,17 +137,6 @@ static int stm32mp2_ddr_dt_init(void)
 		.pwr = DT_REG_ADDR(DT_NODELABEL(pwr)),
 		.rcc = DT_REG_ADDR(DT_NODELABEL(rcc)),
 	};
-
-	uint32_t basic[DT_INST_PROP_LEN(0, st_phy_basic)] = DT_INST_PROP(0, st_phy_basic);
-	uint32_t advanced[DT_INST_PROP_LEN(0, st_phy_advanced)] = DT_INST_PROP(0, st_phy_advanced);
-	uint32_t mr[DT_INST_PROP_LEN(0, st_phy_mr)] = DT_INST_PROP(0, st_phy_mr);
-	uint32_t swizzle[DT_INST_PROP_LEN(0, st_phy_swizzle)] = DT_INST_PROP(0, st_phy_swizzle);
-
-	/* these structures are composed of int and int[] */
-	memcpy((void *)&userinputbasic, basic, sizeof(userinputbasic));
-	memcpy((void *)&userinputadvanced, advanced, sizeof(userinputadvanced));
-	memcpy((void *)&userinputmoderegister, mr, sizeof(userinputmoderegister));
-	memcpy((void *)&userinputswizzle, swizzle, sizeof(userinputswizzle));
 
 	drv_cfg.self_refresh = false;
 
@@ -164,7 +157,7 @@ static int stm32mp2_ddr_dt_init(void)
 	if (drv_cfg.self_refresh) {
 		ret = stm32mp_ddr_test_rw_access(&drv_data.info);
 		if (ret != 0UL) {
-			DDR_ERROR("DDR rw test: Can't access memory @ %#lx\n", ret);
+			DDR_ERROR("DDR rw test: can't access memory @ %#lx\n", ret);
 			panic();
 		}
 
