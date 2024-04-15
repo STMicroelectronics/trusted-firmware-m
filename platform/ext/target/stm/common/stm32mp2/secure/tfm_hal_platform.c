@@ -63,6 +63,7 @@ enum tfm_hal_status_t tfm_hal_platform_init(void)
 	}
 
 	sys_init_run_level(INIT_LEVEL_POST_CORE);
+	sys_init_run_level(INIT_LEVEL_REST);
 
 	return TFM_HAL_SUCCESS;
 }
