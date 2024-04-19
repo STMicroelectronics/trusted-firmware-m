@@ -15,7 +15,7 @@
 #include <clk.h>
 #include <pinctrl.h>
 #include <reset.h>
-#include <stm32_rifsc.h>
+#include <stm32_rif.h>
 #include <syscon.h>
 
 /*
@@ -71,15 +71,15 @@ struct stm32_omm_cfg {
 	const struct device *clk_dev;
 	const clk_subsys_t clk_subsys;
 	const struct pinctrl_dev_config *pcfg;
-	const struct device *rifsc_dev;
+	const struct rifprot_controller *rif_ctrl;
+	const struct rifprot_config *rif_cfg;
+	int n_rif_cfg;
 	const struct device *amcr_dev;
 	uint16_t amcr_base;
 	uint8_t amcr_mask;
 	uint8_t mux;
 	uint32_t req2ack;
 	uint8_t cssel_ovr;
-	const struct risup_cfg *risup;
-	int n_risup;
 	const struct stm32_ospi_cfg *ospi_cfg;
 	int n_ospi_cfg;
 };
@@ -286,7 +286,8 @@ int stm32_omm_init(const struct device *dev)
 		return ret;
 	}
 
-	return stm32_set_risup(drv_cfg->rifsc_dev, drv_cfg->risup, drv_cfg->n_risup);
+	return stm32_rifprot_set_config(drv_cfg->rif_ctrl,
+					drv_cfg->rif_cfg, drv_cfg->n_rif_cfg);
 }
 
 #define DT_GET_MM_BASE_BY_NAME_OR(n, name)							\
@@ -309,15 +310,12 @@ int stm32_omm_init(const struct device *dev)
 												\
 PINCTRL_DT_INST_DEFINE(n);									\
 												\
-static const struct risup_cfg stm32_risup_cfg_##n[] = {						\
-	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, st_protreg),					\
-		    (DT_INST_FOREACH_PROP_ELEM_SEP(n, st_protreg, STM32_RIFPROT, (,))),		\
-		    ())										\
-};												\
-												\
 static const struct stm32_ospi_cfg stm32_ospi_cfg_##n[] = {					\
 	DT_INST_FOREACH_CHILD(n, STM32_OSPI_CHILD_DEFINE)					\
 };												\
+												\
+DT_RIFPROT_CTRL_EXTERN(DT_NODELABEL(rifsc));							\
+DT_INST_RIFPROT_CONFIG_DEFINE(n);								\
 												\
 static const struct stm32_omm_cfg stm32_omm_cfg_##n = {						\
 	.base = DT_INST_REG_ADDR_BY_NAME(n, omm),						\
@@ -330,15 +328,15 @@ static const struct stm32_omm_cfg stm32_omm_cfg_##n = {						\
 	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),					\
 	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),				\
 	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(n),						\
-	.rifsc_dev = DEVICE_DT_GET(DT_NODELABEL(rifsc)),					\
+	.rif_ctrl = DT_RIFPROT_CTRL_GET(DT_NODELABEL(rifsc)),					\
+	.rif_cfg = DT_INST_RIFPROT_CONFIG_GET(n),						\
+	.n_rif_cfg = ARRAY_SIZE(DT_INST_RIFPROT_CONFIG_GET(n)),					\
 	.amcr_dev = DEVICE_DT_GET(DT_INST_PHANDLE(n, st_syscfg_amcr)),				\
 	.amcr_base = DT_INST_PHA(n, st_syscfg_amcr, offset),					\
 	.amcr_mask = DT_INST_PHA(n, st_syscfg_amcr, mask),					\
 	.mux = DT_INST_PROP_OR(n, st_omm_mux, 0),						\
 	.req2ack = DT_INST_PROP_OR(n, st_omm_req2ack_ns, 0),					\
 	.cssel_ovr = DT_INST_PROP_OR(n, st_omm_cssel_ovr, 0xf),					\
-	.risup = stm32_risup_cfg_##n,								\
-	.n_risup = ARRAY_SIZE(stm32_risup_cfg_##n),						\
 	.ospi_cfg = stm32_ospi_cfg_##n,								\
 	.n_ospi_cfg = ARRAY_SIZE(stm32_ospi_cfg_##n),						\
 };												\
