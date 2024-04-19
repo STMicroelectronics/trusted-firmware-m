@@ -15,12 +15,17 @@
 #include <errno.h>
 
 #include <device.h>
+#include <stm32_rif.h>
 #include <stm32_rifsc.h>
 
+#include <dt-bindings/rif/stm32mp25-rifsc.h>
+
 /* RIFSC offset register */
-#define _RIFSC_RISC_SECCFGR0		U(0x10)
-#define _RIFSC_RISC_PRIVCFGR0		U(0x30)
-#define _RIFSC_RISC_PERX_CIDCFGR	U(0x100)
+#define _RIFSC_SECCFGR0			U(0x10)
+#define _RIFSC_PRIVCFGR0		U(0x30)
+#define _RIFSC_PERX_CIDCFGR		U(0x100)
+#define _RIFSC_PERX_SEMCR		U(0x104)
+
 #define _RIFSC_RIMC_ATTR0		U(0xC10)
 
 #define _RIFSC_HWCFGR3			U(0xFE8)
@@ -70,23 +75,9 @@
 #define _PERIPH_IDS_PER_REG		32
 #define _OFST_PERX_CIDCFGR		U(0x8)
 
-#define RIFSC_RIMC_MODE_MASK		BIT(2)
-#define RIFSC_RIMC_MCID_MASK		GENMASK_32(6, 4)
-#define RIFSC_RIMC_MSEC_MASK		BIT(8)
-#define RIFSC_RIMC_MPRIV_MASK		BIT(9)
-#define RIFSC_RIMC_M_ID_MASK		GENMASK_32(23, 16)
-
-#define RIFSC_RIMC_ATTRx_MASK		(RIFSC_RIMC_MODE_MASK | \
-					 RIFSC_RIMC_MCID_MASK | \
-					 RIFSC_RIMC_MSEC_MASK | \
-					 RIFSC_RIMC_MPRIV_MASK)
-
 /* max entries */
 #define MAX_RIMU	16
 #define MAX_RISUP	128
-
-#define _RIF_FLD_PREP(field, value)	(((uint32_t)(value) << (field ## _SHIFT)) & (field ## _MASK))
-#define _RIF_FLD_GET(field, value)	(((uint32_t)(value) & (field ## _MASK)) >> (field ## _SHIFT))
 
 /* RIF miscellaneous */
 /* Compartiment IDs */
@@ -102,8 +93,7 @@ struct rimu_cfg {
 
 struct stm32_rifsc_config {
 	uintptr_t base;
-	const struct risup_cfg *risup;
-	const int nrisup;
+	const struct rifprot_controller *risup_ctl;
 	const struct rimu_cfg *rimu;
 	const int nrimu;
 };
@@ -125,7 +115,7 @@ struct rifsc_driver_data {
 int stm32_rifsc_get_access_by_id(const struct device *dev, uint32_t id)
 {
 	const struct stm32_rifsc_config *dev_cfg = dev_get_config(dev);
-	uintptr_t x_offset = _RIFSC_RISC_PERX_CIDCFGR + _OFST_PERX_CIDCFGR * id;
+	uintptr_t x_offset = _RIFSC_PERX_CIDCFGR + _OFST_PERX_CIDCFGR * id;
 	unsigned int master = RIF_CID2;
 	uint32_t cid_cfgr = 0;
 
@@ -147,40 +137,13 @@ int stm32_rifsc_get_access_by_id(const struct device *dev, uint32_t id)
 		}
 	}
 
-	if (!(_RIF_FLD_GET(_RIFSC_CIDCFGR_CFEN, cid_cfgr)) ||
-	    _RIF_FLD_GET(_RIFSC_CIDCFGR_SCID, cid_cfgr) == RIF_CID0)
+	if (!(_FLD_GET(_RIFSC_CIDCFGR_CFEN, cid_cfgr)) ||
+	    _FLD_GET(_RIFSC_CIDCFGR_SCID, cid_cfgr) == RIF_CID0)
 		return 0;
 
 	/* Coherency check with the CID configuration */
-	if (_RIF_FLD_GET(_RIFSC_CIDCFGR_SCID, cid_cfgr) != master)
+	if (_FLD_GET(_RIFSC_CIDCFGR_SCID, cid_cfgr) != master)
 		return -1;
-
-	return 0;
-}
-
-static int stm32_risup_cfg(const struct device *dev, const struct risup_cfg *risup)
-{
-	const struct stm32_rifsc_config *dev_cfg = dev_get_config(dev);
-	struct rifsc_driver_data *drv_data = dev_get_data(dev);
-	uintptr_t offset = sizeof(uint32_t) * (risup->id / _PERIPH_IDS_PER_REG);
-	uint32_t shift = risup->id % _PERIPH_IDS_PER_REG;
-
-	if (!risup || risup->id >= drv_data->nb_risup)
-		return -EINVAL;
-
-	if (drv_data->sec_en)
-		io_clrsetbits32(dev_cfg->base + _RIFSC_RISC_SECCFGR0 + offset,
-				BIT(shift), risup->sec << shift);
-
-	if (drv_data->priv_en)
-		io_clrsetbits32(dev_cfg->base + _RIFSC_RISC_PRIVCFGR0 + offset,
-				BIT(shift), risup->priv << shift);
-
-	if (drv_data->rif_en) {
-		offset = _OFST_PERX_CIDCFGR * risup->id;
-		io_write32(dev_cfg->base + _RIFSC_RISC_PERX_CIDCFGR + offset,
-			   risup->cid_attr);
-	}
 
 	return 0;
 }
@@ -189,45 +152,6 @@ static int stm32_risup_cfg(const struct device *dev, const struct risup_cfg *ris
  * Must be rework
  * - a firewall framework must be created
  */
-int stm32_set_risup(const struct device *dev, const struct risup_cfg *risups,
-		    const int nrisups)
-{
-	struct rifsc_driver_data *drv_data = dev_get_data(dev);
-	int i = 0;
-	int err = 0;
-
-	for (i = 0; i < nrisups && i < drv_data->nb_risup; i++) {
-		const struct risup_cfg *risup = risups + i;
-
-		err = stm32_risup_cfg(dev, risup);
-		if (err) {
-			EMSG("risup cfg(%d/%d) error", i + 1, nrisups);
-			return err;
-		}
-	}
-
-	return 0;
-}
-
-static int stm32_risup_setup(const struct device *dev)
-{
-	const struct stm32_rifsc_config *dev_cfg = dev_get_config(dev);
-	struct rifsc_driver_data *drv_data = dev_get_data(dev);
-	int i = 0;
-	int err = 0;
-
-	for (i = 0; i < dev_cfg->nrisup && i < drv_data->nb_risup; i++) {
-		const struct risup_cfg *risup = dev_cfg->risup + i;
-
-		err = stm32_risup_cfg(dev, risup);
-		if (err) {
-			EMSG("risup cfg(%d/%d) error", i + 1, dev_cfg->nrisup);
-			return err;
-		}
-	}
-
-	return 0;
-}
 
 static int stm32_rimu_cfg(const struct device *dev, const struct rimu_cfg *rimu)
 {
@@ -271,20 +195,20 @@ static void stm32_rifsc_set_drvdata(const struct device *dev)
 	uint32_t regval = 0;
 
 	regval = io_read32(rifsc_cfg->base + _RIFSC_HWCFGR1);
-	rifsc_drvdata->rif_en = _RIF_FLD_GET(_RIFSC_HWCFGR1_CFG1, regval) != 0;
-	rifsc_drvdata->sec_en = _RIF_FLD_GET(_RIFSC_HWCFGR1_CFG2, regval) != 0;
-	rifsc_drvdata->priv_en = _RIF_FLD_GET(_RIFSC_HWCFGR1_CFG3, regval) != 0;
+	rifsc_drvdata->rif_en = _FLD_GET(_RIFSC_HWCFGR1_CFG1, regval) != 0;
+	rifsc_drvdata->sec_en = _FLD_GET(_RIFSC_HWCFGR1_CFG2, regval) != 0;
+	rifsc_drvdata->priv_en = _FLD_GET(_RIFSC_HWCFGR1_CFG3, regval) != 0;
 
 	regval = io_read32(rifsc_cfg->base + _RIFSC_HWCFGR2);
-	rifsc_drvdata->nb_risup = _RIF_FLD_GET(_RIFSC_HWCFGR2_CFG1, regval);
-	rifsc_drvdata->nb_rimu = _RIF_FLD_GET(_RIFSC_HWCFGR2_CFG2, regval);
-	rifsc_drvdata->nb_risal = _RIF_FLD_GET(_RIFSC_HWCFGR2_CFG3, regval);
+	rifsc_drvdata->nb_risup = _FLD_GET(_RIFSC_HWCFGR2_CFG1, regval);
+	rifsc_drvdata->nb_rimu = _FLD_GET(_RIFSC_HWCFGR2_CFG2, regval);
+	rifsc_drvdata->nb_risal = _FLD_GET(_RIFSC_HWCFGR2_CFG3, regval);
 
 	regval = io_read8(rifsc_cfg->base + _RIFSC_VERR);
 
 	DMSG("RIFSC version %"PRIu32".%"PRIu32,
-	     _RIF_FLD_GET(_RIFSC_VERR_MAJREV, regval),
-	     _RIF_FLD_GET(_RIFSC_VERR_MINREV, regval));
+	     _FLD_GET(_RIFSC_VERR_MAJREV, regval),
+	     _FLD_GET(_RIFSC_VERR_MINREV, regval));
 
 	DMSG("HW cap: enabled[rif:sec:priv]:[%s:%s:%s] nb[risup|rimu|risal]:[%"PRIu8",%"PRIu8",%"PRIu8"]",
 	     rifsc_drvdata->rif_en ? "true" : "false",
@@ -306,7 +230,10 @@ static int stm32_rifsc_init(const struct device *dev)
 
 	stm32_rifsc_set_drvdata(dev);
 
-	err = stm32_risup_setup(dev);
+	if (rifsc_cfg->risup_ctl->nrifprot >= rifsc_data->nb_risup)
+		return -EINVAL;
+
+	err = stm32_rifprot_init(rifsc_cfg->risup_ctl);
 	if (err)
 		return err;
 
@@ -319,33 +246,33 @@ static int stm32_rifsc_init(const struct device *dev)
 		.attr = RIFPROT_FLD(RIFSC_RIMC_ATTRx, _node_id, _prop, _idx),	\
 	}
 
-#define STM32_RIFSC_INIT(n)									\
-												\
-static const struct rimu_cfg rimu_config_##n[] = {						\
-	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, st_rimu),						\
-		    (DT_INST_FOREACH_PROP_ELEM_SEP(n, st_rimu, STM32_RIMU, (,))),		\
-		    ())										\
-};												\
-												\
-static const struct risup_cfg risup_config_##n[] = {						\
-	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, st_protreg),					\
-		    (DT_INST_FOREACH_PROP_ELEM_SEP(n, st_protreg, STM32_RIFPROT, (,))),		\
-		    ())										\
-};												\
-												\
-static const struct stm32_rifsc_config stm32_rifsc_cfg_##n = {					\
-	.base = DT_INST_REG_ADDR(n),								\
-	.risup = risup_config_##n,								\
-	.nrisup = ARRAY_SIZE(risup_config_##n),							\
-	.rimu = rimu_config_##n,								\
-	.nrimu = ARRAY_SIZE(rimu_config_##n),							\
-};												\
-												\
-static struct rifsc_driver_data stm32_rifsc_data_##n = {};					\
-												\
-DEVICE_DT_INST_DEFINE(n, &stm32_rifsc_init,							\
-		      &stm32_rifsc_data_##n, &stm32_rifsc_cfg_##n,				\
-		      PRE_CORE, 0,								\
+#define STM32_RIFSC_INIT(n)								\
+											\
+static const struct rimu_cfg rimu_config_##n[] = {					\
+	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, st_rimu),					\
+		    (DT_INST_FOREACH_PROP_ELEM_SEP(n, st_rimu, STM32_RIMU, (,))),	\
+		    ())									\
+};											\
+											\
+DT_INST_RIFPROT_CTRL_DEFINE(n,								\
+			    DT_INST_REG_ADDR(n) + _RIFSC_SECCFGR0,			\
+			    DT_INST_REG_ADDR(n) + _RIFSC_PRIVCFGR0,			\
+			    DT_INST_REG_ADDR(n) + _RIFSC_PERX_CIDCFGR,			\
+			    DT_INST_REG_ADDR(n) + _RIFSC_PERX_SEMCR,			\
+			    MAX_RISUP);							\
+											\
+static const struct stm32_rifsc_config stm32_rifsc_cfg_##n = {				\
+	.base = DT_INST_REG_ADDR(n),							\
+	.rimu = rimu_config_##n,							\
+	.nrimu = ARRAY_SIZE(rimu_config_##n),						\
+	.risup_ctl = DT_INST_RIFPROT_CTRL_GET(n),					\
+};											\
+											\
+static struct rifsc_driver_data stm32_rifsc_data_##n = {};				\
+											\
+DEVICE_DT_INST_DEFINE(n, &stm32_rifsc_init,						\
+		      &stm32_rifsc_data_##n, &stm32_rifsc_cfg_##n,			\
+		      PRE_CORE, 0,							\
 		      NULL);
 
 DT_INST_FOREACH_STATUS_OKAY(STM32_RIFSC_INIT)

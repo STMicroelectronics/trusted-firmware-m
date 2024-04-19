@@ -124,42 +124,9 @@
 #define STM32MP25_RIFSC_OTFDEC2_ID		126
 #define STM32MP25_RIFSC_IAC_ID			127
 
-#define RIFSC_RISC_CFEN_SHIFT			0
-#define RIFSC_RISC_CFEN_MASK			BIT(0)
-#define RIFSC_RISC_SEM_EN_SHIFT			1
-#define RIFSC_RISC_SEM_EN_MASK			BIT(1)
-#define RIFSC_RISC_SCID_SHIFT			4
-#define RIFSC_RISC_SCID_MASK			GENMASK_32(6, 4)
-#define RIFSC_RISC_SEC_SHIFT			8
-#define RIFSC_RISC_SEC_MASK			BIT(8)
-#define RIFSC_RISC_PRIV_SHIFT			9
-#define RIFSC_RISC_PRIV_MASK			BIT(9)
-#define RIFSC_RISC_LOCK_SHIFT			10
-#define RIFSC_RISC_LOCK_MASK			BIT(10)
-#define RIFSC_RISC_SEML_SHIFT			16
-#define RIFSC_RISC_SEML_MASK			GENMASK_32(23, 16)
-#define RIFSC_RISC_PER_ID_SHIFT			24
-#define RIFSC_RISC_PER_ID_MASK			GENMASK_32(31, 24)
-
-#define RIFSC_RISC_PERx_CID_SHIFT		0
-#define RIFSC_RISC_PERx_CID_MASK		(RIFSC_RISC_CFEN_MASK | \
-						 RIFSC_RISC_SEM_EN_MASK | \
-						 RIFSC_RISC_SCID_MASK | \
-						 RIFSC_RISC_SEML_MASK)
-
 /* Global lock bindings */
 #define RIFSC_RIMU_GLOCK			1
 #define RIFSC_RISUP_GLOCK			2
-
-#define RIFPROT(rifid, sem_list, lock, sec, priv, scid, sem_en, cfen) \
-	(((rifid) << RIFSC_RISC_PER_ID_SHIFT) | \
-	 ((sem_list) << RIFSC_RISC_SEML_SHIFT) | \
-	 ((lock) << RIFSC_RISC_LOCK_SHIFT) | \
-	 ((priv) << RIFSC_RISC_PRIV_SHIFT) | \
-	 ((sec) << RIFSC_RISC_SEC_SHIFT) | \
-	 ((scid) << RIFSC_RISC_SCID_SHIFT) | \
-	 ((sem_en) << RIFSC_RISC_SEM_EN_SHIFT) | \
-	 ((cfen) << RIFSC_RISC_CFEN_SHIFT))
 
 /* masters ID */
 #define RIMU_ID(idx)		(idx)
@@ -169,11 +136,21 @@
 #define RIF_CIDSEL_M	0x1 /* config from RIMU */
 
 #define RIFSC_RIMC_MODE_SHIFT		2
+#define RIFSC_RIMC_MODE_MASK		BIT(2)
 #define RIFSC_RIMC_MCID_SHIFT		4
+#define RIFSC_RIMC_MCID_MASK		GENMASK_32(6, 4)
 #define RIFSC_RIMC_MSEC_SHIFT		8
+#define RIFSC_RIMC_MSEC_MASK		BIT(8)
 #define RIFSC_RIMC_MPRIV_SHIFT		9
+#define RIFSC_RIMC_MPRIV_MASK		BIT(9)
 #define RIFSC_RIMC_M_ID_SHIFT		16
+#define RIFSC_RIMC_M_ID_MASK		GENMASK_32(23, 16)
+
 #define RIFSC_RIMC_ATTRx_SHIFT		0
+#define RIFSC_RIMC_ATTRx_MASK		(RIFSC_RIMC_MODE_MASK | \
+					 RIFSC_RIMC_MCID_MASK | \
+					 RIFSC_RIMC_MSEC_MASK | \
+					 RIFSC_RIMC_MPRIV_MASK)
 
 #define RIMUPROT(rimuid, mcid, msec, mpriv, mode) \
 	(((rimuid) << RIFSC_RIMC_M_ID_SHIFT) | \
