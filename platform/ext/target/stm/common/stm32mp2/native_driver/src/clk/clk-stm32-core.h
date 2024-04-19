@@ -52,8 +52,7 @@ struct stm32_rcc_config {
 	const uint32_t nkernelclk;
 	const uint32_t *flexgen;
 	const uint32_t nflexgen;
-	const struct risup_cfg *rif_cfg;
-	const int nrif_cfg;
+	const struct rifprot_controller *rif_ctl;
 };
 
 struct clk_stm32_priv {
