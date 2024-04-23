@@ -269,8 +269,8 @@
 
 /* define for st,drive */
 #define LSEDRV_LOWEST		0
-#define LSEDRV_MEDIUM_LOW	1
-#define LSEDRV_MEDIUM_HIGH	2
+#define LSEDRV_MEDIUM_LOW	2
+#define LSEDRV_MEDIUM_HIGH	1
 #define LSEDRV_HIGHEST		3
 
 #endif /* _DT_BINDINGS_CLOCK_STM32MP2_CLKSRC_H_ */
