@@ -52,13 +52,18 @@
  * _IDX_<i>: logical index into property
  * _IDX_<i>_EXISTS: logical index into property is defined
  * _IDX_<i>_PH: phandle array's phandle by index (or phandle, phandles)
+ * _IDX_<i>_ARRAY: phandle array's array by index i
+ * _IDX_<i>_ARRAY_IDX_<j>: array element at index j of phandle array by index i
  * _IDX_<i>_STRING_TOKEN: string array element value as a token
  * _IDX_<i>_STRING_UPPER_TOKEN: string array element value as a uppercased token
  * _IDX <i>_STRING_UNQUOTED: string array element value as a sequence of tokens, with no quotes
  * _IDX_<i>_VAL_<val>: phandle array's specifier value by index
  * _IDX_<i>_VAL_<val>_EXISTS: cell value exists, by index
  * _LEN: property logical length
+ * _ARRAY_LEN: array length of phandle array
  * _NAME_<name>_PH: phandle array's phandle by name
+ * _NAME_<name>_ARRAY: phandle array's array by name
+ * _NAME_<name>_ARRAY_IDX_<j>: array element at index j of phandle array by name
  * _NAME_<name>_VAL_<val>: phandle array's property specifier by name
  * _NAME_<name>_VAL_<val>_EXISTS: cell value exists, by name
  * _STRING_TOKEN: string property's value as a token
@@ -1991,6 +1996,119 @@
 /**
  * @}
  */
+
+
+/**
+ * @defgroup devicetree-phandle-array-prop array elements
+ * @ingroup devicetree
+ * @{
+ */
+#define DT_PHA_HAS_ARRAY_BY_IDX(node_id, pha, idx) \
+	IS_ENABLED(DT_CAT6(node_id, _P_, pha, _IDX_, idx, _ARRAY_EXISTS))
+
+#define DT_INST_PHA_HAS_ARRAY_BY_IDX(inst, pha, idx) \
+	DT_PHA_HAS_ARRAY_BY_IDX(DT_DRV_INST(inst), pha, idx)
+
+#define DT_PHA_ARRAY_LEN_BY_IDX(node_id, pha, idx) \
+	DT_CAT6(node_id, _P_, pha, _IDX_, idx, _ARRAY_LEN)
+
+#define DT_INST_PHA_ARRAY_LEN_BY_IDX(inst, pha, idx) \
+	DT_PHA_ARRAY_LEN_BY_IDX(DT_DRV_INST(inst), pha, idx)
+
+#define DT_PHA_ARRAY_BY_IDX(node_id, pha, idx) \
+	DT_CAT6(node_id, _P_, pha, _IDX_, idx, _ARRAY)
+
+#define DT_INST_PHA_ARRAY_BY_IDX(inst, pha, idx) \
+	DT_PHA_ARRAY_BY_IDX(DT_DRV_INST(inst), pha, idx)
+
+#define DT_PHA_ARRAY_ELEM_BY_IDX(node_id, pha, idx, elem_id) \
+	DT_CAT8(node_id, _P_, pha, _IDX_, idx, _ARRAY_, _IDX_, elem_id)
+
+#define DT_INST_PHA_ARRAY_ELEM_BY_IDX(inst, pha, idx, elem_id) \
+	DT_PHA_ARRAY_ELEM_BY_IDX(DT_DRV_INST(inst), pha, idx, elem_id)
+
+#define DT_PHA_FOREACH_ARRAY_ELEM_BY_IDX(node_id, pha, idx, fn) \
+	DT_CAT4(node_id, _P_, pha, _IDX_, idx, _FOREACH_ARRAY_ELEM)(fn)
+
+#define DT_INST_PHA_FOREACH_ARRAY_ELEM_BY_IDX(node_id, pha, idx, fn) \
+	DT_PHA_FOREACH_ARRAY_ELEM_BY_IDX(DT_DRV_INST(inst), pha, idx)
+
+#define DT_PHA_FOREACH_ARRAY_ELEM_SEP_BY_IDX(node_id, pha, idx, fn, sep) \
+	DT_CAT4(node_id, _P_, pha, _IDX_, idx, _FOREACH_ARRAY_ELEM_SEP)(fn, sep)
+
+#define DT_INST_PHA_FOREACH_ARRAY_ELEM_SEP_BY_IDX(inst, pha, idx, fn, sep) \
+	DT_PHA_FOREACH_ARRAY_ELEM_SEP_BY_IDX(DT_DRV_INST(inst), pha, idx, fn, sep)
+
+#define DT_PHA_FOREACH_ARRAY_ELEM_VARGS_BY_IDX(node_id, pha, idx, fn, ...) \
+	DT_CAT4(node_id, _P_, pha, _IDX_, idx, _FOREACH_ARRAY_ELEM_VARGS)(fn, __VA_ARGS__)
+
+#define DT_INST_PHA_FOREACH_ARRAY_ELEM_VARGS_BY_IDX(inst, pha, idx, fn, ...) \
+	DT_PHA_FOREACH_ARRAY_ELEM_VARGS_BY_IDX(DT_DRV_INST(inst), pha, idx, fn, __VA_ARGS__)
+
+#define DT_PHA_FOREACH_ARRAY_ELEM_SEP_VARGS_BY_IDX(node_id, pha, idx, fn, sep, ...) \
+	DT_CAT4(node_id, _P_, pha, _IDX_, idx, _FOREACH_ARRAY_ELEM_SEP_VARGS) \
+	(fn, sep, __VA_ARGS__)
+
+#define DT_INST_PHA_FOREACH_ARRAY_ELEM_SEP_VARGS_BY_IDX(node_id, pha, idx, fn, sep, ...) \
+	DT_PHA_FOREACH_ARRAY_ELEM_SEP_VARGS_BY_IDX(DT_DRV_INST(inst), pha, idx, fn, sep, __VA_ARGS__)
+
+ /* by name */
+#define DT_PHA_IDX_BY_NAME(node_id, pha, name) \
+	DT_CAT6(node_id, _P_, pha, _NAME_, name, _IDX)
+
+#define DT_PHA_HAS_ARRAY_BY_NAME(node_id, pha, name) \
+	IS_ENABLED(DT_CAT6(node_id, _P_, pha, _NAME_, name, _ARRAY_EXISTS))
+
+#define DT_INST_PHA_HAS_ARRAY_BY_NAME(inst, pha, name) \
+	DT_PHA_HAS_ARRAY_BY_NAME(DT_DRV_INST(inst), pha, name)
+
+#define DT_PHA_ARRAY_LEN_BY_NAME(node_id, pha, name) \
+	DT_CAT6(node_id, _P_, pha, _NAME_, name, _ARRAY_LEN)
+
+#define DT_INST_PHA_ARRAY_LEN_BY_NAME(inst, pha, name) \
+	DT_PHA_ARRAY_LEN_BY_NAME(DT_DRV_INST(inst), pha, name)
+
+#define DT_PHA_ARRAY_BY_NAME(node_id, pha, name) \
+	DT_CAT6(node_id, _P_, pha, _NAME_, name, _ARRAY)
+
+#define DT_INST_PHA_ARRAY_BY_NAME(inst, pha, name) \
+	DT_PHA_ARRAY_BY_NAME(DT_DRV_INST(inst), pha, name)
+
+#define DT_PHA_ARRAY_ELEM_BY_NAME(node_id, pha, name, elem_id) \
+	DT_CAT8(node_id, _P_, pha, _NAME_, name, _ARRAY_, _IDX_, elem_id)
+
+#define DT_INST_PHA_ARRAY_ELEM_BY_NAME(inst, pha, name, elem_id) \
+	DT_PHA_ARRAY_ELEM_BY_NAME(DT_DRV_INST(inst), pha, name, elem_id)
+
+#define DT_PHA_FOREACH_ARRAY_ELEM_BY_NAME(node_id, pha, name, fn) \
+	DT_CAT4(node_id, _P_, pha, _IDX_, name, _FOREACH_ARRAY_ELEM)(fn)
+
+#define DT_INST_PHA_FOREACH_ARRAY_ELEM_BY_NAME(node_id, pha, name, fn) \
+	DT_PHA_FOREACH_ARRAY_ELEM_BY_NAME(DT_DRV_INST(inst), pha, name)
+
+#define DT_PHA_FOREACH_ARRAY_ELEM_SEP_BY_NAME(node_id, pha, name, fn, sep) \
+	DT_CAT4(node_id, _P_, pha, _IDX_, name, _FOREACH_ARRAY_ELEM_SEP)(fn, sep)
+
+#define DT_INST_PHA_FOREACH_ARRAY_ELEM_SEP_BY_NAME(inst, pha, name, fn, sep) \
+	DT_PHA_FOREACH_ARRAY_ELEM_SEP_BY_NAME(DT_DRV_INST(inst), pha, name, fn, sep)
+
+#define DT_PHA_FOREACH_ARRAY_ELEM_VARGS_BY_NAME(node_id, pha, name, fn, ...) \
+	DT_CAT4(node_id, _P_, pha, _IDX_, name, _FOREACH_ARRAY_ELEM_VARGS)(fn, __VA_ARGS__)
+
+#define DT_INST_PHA_FOREACH_ARRAY_ELEM_VARGS_BY_NAME(inst, pha, name, fn, ...) \
+	DT_PHA_FOREACH_ARRAY_ELEM_VARGS_BY_NAME(DT_DRV_INST(inst), pha, name, fn, __VA_ARGS__)
+
+#define DT_PHA_FOREACH_ARRAY_ELEM_SEP_VARGS_BY_NAME(node_id, pha, name, fn, sep, ...) \
+	DT_CAT4(node_id, _P_, pha, _IDX_, name, _FOREACH_ARRAY_ELEM_SEP_VARGS) \
+	(fn, sep, __VA_ARGS__)
+
+#define DT_INST_PHA_FOREACH_ARRAY_ELEM_SEP_VARGS_BY_NAME(node_id, pha, name, fn, sep, ...) \
+	DT_PHA_FOREACH_ARRAY_ELEM_SEP_VARGS_BY_NAME(DT_DRV_INST(inst), pha, name, fn, sep, __VA_ARGS__)
+
+/**
+ * @}
+ */
+
 
 /**
  * @defgroup devicetree-generic-vendor Vendor and model name helpers

@@ -855,6 +855,96 @@ def phandle_macros(prop, macro):
 
     return ret
 
+def phandle_data_array(entry, i, macro):
+    ret = {}
+    data = entry.data
+    array = list2init(f"{val} /* {hex(val)} */" for val in data.values())
+
+    if len(data) == 0:
+        # DT_N_<node-id>_P_<prop-id>_IDX_<i>_ARRAY_EXISTS
+        ret[f"{macro}_IDX_{i}_ARRAY_EXISTS"] = 0
+        if entry.name:
+            ret[f"{macro}_NAME_{str2ident(entry.name)}_ARRAY_EXISTS"] = 0
+        return ret
+
+    # DT_N_<node-id>_P_<prop-id>_IDX_<i>_ARRAY_EXISTS
+    ret[f"{macro}_IDX_{i}_ARRAY_EXISTS"] = 1
+        # DT_N_<node-id>_P_<prop-id>_IDX_<i>_ARRAY_LEN
+    ret[f"{macro}_IDX_{i}_ARRAY_LEN"] = len(data)
+    # DT_N_<node-id>_P_<prop-id>_IDX_<i>_ARRAY
+    ret[f"{macro}_IDX_{i}_ARRAY"] = array
+
+    for j, cell in enumerate(data):
+        val = data[cell]
+        ret[f"{macro}_IDX_{i}_ARRAY_IDX_{j}"] = val
+
+    # DT_N_<node-id>_P_<prop-id>_IDX_<i>_FOREACH_ARRAY_ELEM
+    ret[f"{macro}_IDX_{i}_FOREACH_ARRAY_ELEM(fn)"] = \
+        ' \\\n\t'.join(
+            f'fn(DT_{macro}_IDX_{i}, {j})'
+            for j, cell in enumerate(data))
+
+    # DT_N_<node-id>_P_<prop-id>_IDX_<i>_FOREACH_ARRAY_ELEM_SEP
+    ret[f"{macro}_IDX_{i}_FOREACH_ARRAY_ELEM_SEP(fn, sep)"] = \
+        ' DT_DEBRACKET_INTERNAL sep \\\n\t'.join(
+            f'fn(DT_{macro}_IDX_{i}, {j})'
+            for j, cell in enumerate(data))
+
+    # DT_N_<node-id>_P_<prop-id>_IDX_<i>_FOREACH_ARRAY_ELEM_VARGS
+    ret[f"{macro}_IDX_{i}_FOREACH_ARRAY_ELEM_VARGS(fn, ...)"] = \
+        ' \\\n\t'.join(
+            f'fn(DT_{macro}_IDX_{i}, {j}, __VA_ARGS__)'
+            for j, cell in enumerate(data))
+
+    # DT_N_<node-id>_P_<prop-id>_IDX_<i>_FOREACH_ARRAY_ELEM_SEP_VARGS
+    ret[f"{macro}_IDX_{i}_FOREACH_ARRAY_ELEM_SEP_VARGS(fn, sep, ...)"] = \
+        ' DT_DEBRACKET_INTERNAL sep \\\n\t'.join(
+            f'fn(DT_{macro}_IDX_{i}, {j}, __VA_ARGS__)'
+            for j, cell in enumerate(data))
+
+    if not entry.name:
+        return ret
+
+    name = str2ident(entry.name)
+
+    # DT_N_<node-id>_P_<prop-id>_NAME_<name>_IDX
+    ret[f"{macro}_NAME_{name}_IDX"] = i
+    # DT_N_<node-id>_P_<prop-id>_NAME_<name>_ARRAY_EXISTS
+    ret[f"{macro}_NAME_{name}_ARRAY_EXISTS"] = 1
+    # DT_N_<node-id>_P_<prop-id>_NAME_<NAME>_ARRAY_LEN
+    ret[f"{macro}_NAME_{name}_ARRAY_LEN"] = len(data)
+    # DT_N_<node-id>_P_<prop-id>_NAME_<NAME>_ARRAY
+    ret[f"{macro}_NAME_{name}_ARRAY"] = array
+
+    for j, cell in enumerate(data):
+        val = data[cell]
+        ret[f"{macro}_NAME_{name}_ARRAY_IDX_{j}"] = val
+
+    # DT_N_<node-id>_P_<prop-id>_NAME_<name>_FOREACH_ARRAY_ELEM
+    ret[f"{macro}_NAME_{name}_FOREACH_ARRAY_ELEM(fn)"] = \
+        ' \\\n\t'.join(
+            f'fn(DT_{macro}_IDX_{i}, {j})'
+            for j, cell in enumerate(data))
+
+    # DT_N_<node-id>_P_<prop-id>_NAME_<name>_FOREACH_ARRAY_ELEM_SEP
+    ret[f"{macro}_NAME_{name}_FOREACH_ARRAY_ELEM_SEP(fn, sep)"] = \
+        ' DT_DEBRACKET_INTERNAL sep \\\n\t'.join(
+            f'fn(DT_{macro}_IDX_{i}, {j})'
+            for j, cell in enumerate(data))
+
+    # DT_N_<node-id>_P_<prop-id>_NAME_<name>_FOREACH_ARRAY_ELEM_VARGS
+    ret[f"{macro}_NAME_{name}_FOREACH_ARRAY_ELEM_VARGS(fn, ...)"] = \
+        ' \\\n\t'.join(
+            f'fn(DT_{macro}_IDX_{i}, {j}, __VA_ARGS__)'
+            for j, cell in enumerate(data))
+
+    # DT_N_<node-id>_P_<prop-id>_NAME_<name>_FOREACH_ARRAY_ELEM_SEP_VARGS
+    ret[f"{macro}_NAME_{name}_FOREACH_ARRAY_ELEM_SEP_VARGS(fn, sep, ...)"] = \
+        ' DT_DEBRACKET_INTERNAL sep \\\n\t'.join(
+            f'fn(DT_{macro}_IDX_{i}, {j}, __VA_ARGS__)'
+            for j, cell in enumerate(data))
+
+    return ret
 
 def controller_and_data_macros(entry, i, macro):
     # Helper procedure used by phandle_macros().
@@ -870,23 +960,25 @@ def controller_and_data_macros(entry, i, macro):
     ret[f"{macro}_IDX_{i}_EXISTS"] = 1
     # DT_N_<node-id>_P_<prop-id>_IDX_<i>_PH
     ret[f"{macro}_IDX_{i}_PH"] = f"DT_{entry.controller.z_path_id}"
+
     # DT_N_<node-id>_P_<prop-id>_IDX_<i>_VAL_<VAL>
     for cell, val in data.items():
         ret[f"{macro}_IDX_{i}_VAL_{str2ident(cell)}"] = val
         ret[f"{macro}_IDX_{i}_VAL_{str2ident(cell)}_EXISTS"] = 1
 
+    ret.update(phandle_data_array(entry, i, macro))
+
     if not entry.name:
         return ret
 
     name = str2ident(entry.name)
-    # DT_N_<node-id>_P_<prop-id>_IDX_<i>_EXISTS
-    ret[f"{macro}_IDX_{i}_EXISTS"] = 1
     # DT_N_<node-id>_P_<prop-id>_IDX_<i>_NAME
     ret[f"{macro}_IDX_{i}_NAME"] = quote_str(entry.name)
     # DT_N_<node-id>_P_<prop-id>_NAME_<NAME>_PH
     ret[f"{macro}_NAME_{name}_PH"] = f"DT_{entry.controller.z_path_id}"
     # DT_N_<node-id>_P_<prop-id>_NAME_<NAME>_EXISTS
     ret[f"{macro}_NAME_{name}_EXISTS"] = 1
+
     # DT_N_<node-id>_P_<prop-id>_NAME_<NAME>_VAL_<VAL>
     for cell, val in data.items():
         cell_ident = str2ident(cell)
@@ -895,7 +987,6 @@ def controller_and_data_macros(entry, i, macro):
         ret[f"{macro}_NAME_{name}_VAL_{cell_ident}_EXISTS"] = 1
 
     return ret
-
 
 def write_chosen(edt):
     # Tree-wide information such as chosen nodes is printed here.
