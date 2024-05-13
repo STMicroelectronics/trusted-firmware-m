@@ -374,10 +374,13 @@ static inline int regulator_parent_ship_mode(const struct device *dev)
  *
  * @param node_id node identifier
  * @param name lowercase-and-underscores name of a name-supply property
- * @return reference on regulator device
+ * @return reference on regulator device or 0 if optional
  */
 #define DT_DEV_REGULATOR_SUPPLY(node_id, name)				\
-	DEVICE_DT_GET(DT_PHANDLE(node_id, DT_CAT(name, _supply)))
+	COND_CODE_1(DT_NODE_HAS_PROP(node_id, DT_CAT(name, _supply)),	\
+		    (DEVICE_DT_GET(DT_PHANDLE(node_id,			\
+					      DT_CAT(name, _supply)))),	\
+		    (0))
 
 /**
  * @brief Get a DT_DRV_COMPAT instance's name-supply device regulator
