@@ -1996,7 +1996,7 @@ static void clk_stm32_flexgen_disable(struct clk *clk)
 	uint8_t channel = cfg->flex_id;
 
 	if (!stm32_rcc_has_access_by_id(priv, cfg->flex_id))
-		return 0;
+		return;
 
 	io_clrbits32(rcc_base + RCC_FINDIV0CFGR + (0x4 * channel),
 		     RCC_FINDIVxCFGR_FINDIVxEN);
