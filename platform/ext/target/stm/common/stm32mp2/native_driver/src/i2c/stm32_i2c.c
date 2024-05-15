@@ -344,8 +344,6 @@ static void _stm32_i2c_msg_init(const struct device *dev, struct i2c_msg *msg,
 	set_value |= _FLD_PREP(_I2C_CR2_NBYTES, msg->len);
 
 	mmio_clrsetbits_32(drv_cfg->base + _I2C_CR2, clr_value, set_value);
-
-	return 0;
 }
 
 static int _stm32_i2c_msg_done(const struct device *dev, struct i2c_msg *msg)
