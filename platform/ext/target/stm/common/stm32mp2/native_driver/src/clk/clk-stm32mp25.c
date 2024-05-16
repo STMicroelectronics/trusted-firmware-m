@@ -420,7 +420,6 @@ enum enum_gate_cfg {
 	GATE_IWDG5,
 	GATE_WWDG1,
 	GATE_WWDG2,
-	GATE_BUSPERFM,
 	GATE_VREF,
 	GATE_DTS,
 	GATE_CRC,
@@ -647,7 +646,6 @@ static const struct gate_cfg gates_mp25[GATE_NB] = {
 	GATE_CFG(GATE_IWDG5,		RCC_IWDG5CFGR,		1,	0),
 	GATE_CFG(GATE_WWDG1,		RCC_WWDG1CFGR,		1,	0),
 	GATE_CFG(GATE_WWDG2,		RCC_WWDG2CFGR,		1,	0),
-	GATE_CFG(GATE_BUSPERFM,		RCC_BUSPERFMCFGR,	1,	0),
 	GATE_CFG(GATE_VREF,		RCC_VREFCFGR,		1,	0),
 	GATE_CFG(GATE_DTS,		RCC_DTSCFGR,		1,	0),
 	GATE_CFG(GATE_CRC,		RCC_CRCCFGR,		1,	0),
@@ -2679,7 +2677,6 @@ static STM32_GATE(ck_icn_p_dcmipp, &ck_icn_apb4, 0, GATE_DCMIPP);
 static STM32_GATE(ck_icn_p_lvds, &ck_icn_apb4, 0, GATE_LVDS);
 static STM32_GATE(ck_icn_p_gicv2m, &ck_icn_apb4, 0, GATE_GICV2M);
 static STM32_GATE(ck_icn_p_usbtc, &ck_icn_apb4, 0, GATE_USBTC);
-static STM32_GATE(ck_icn_p_busperfm, &ck_icn_apb4, 0, GATE_BUSPERFM);
 static STM32_GATE(ck_icn_p_usb3pciephy, &ck_icn_apb4, 0, GATE_USB3PCIEPHY);
 static STM32_GATE(ck_icn_p_stgen, &ck_icn_apb4, 0, GATE_STGEN);
 static STM32_GATE(ck_icn_p_vdec, &ck_icn_apb4, 0, GATE_VDEC);
@@ -2965,7 +2962,7 @@ static struct clk *stm32mp25_clk_provided[STM32MP25_ALL_CLK_NB] = {
 	[CK_BUS_RTC]		= &ck_icn_p_rtc,
 	[CK_BUS_IWDG5]		= &ck_icn_p_iwdg5,
 	[CK_BUS_WWDG2]		= &ck_icn_p_wwdg2,
-	[CK_BUS_STM500]		= &ck_icn_s_stm500,
+	[CK_BUS_STM]		= &ck_icn_s_stm500,
 	[CK_BUS_FMC]		= &ck_icn_p_fmc,
 	[CK_BUS_ETH1]		= &ck_icn_p_eth1,
 	[CK_BUS_ETHSW]		= &ck_icn_p_ethsw,
@@ -2987,7 +2984,7 @@ static struct clk *stm32mp25_clk_provided[STM32MP25_ALL_CLK_NB] = {
 	[CK_BUS_DDR]		= &ck_icn_s_ddr,
 	[CK_BUS_USB2OHCI]	= &ck_icn_m_usb2ohci,
 	[CK_BUS_USB2EHCI]	= &ck_icn_m_usb2ehci,
-	[CK_BUS_USB3DRD]	= &ck_icn_m_usb3drd,
+	[CK_BUS_USB3DR] 	= &ck_icn_m_usb3drd,
 	[CK_BUS_TIM2]		= &ck_icn_p_tim2,
 	[CK_BUS_TIM3]		= &ck_icn_p_tim3,
 	[CK_BUS_TIM4]		= &ck_icn_p_tim4,
@@ -3060,7 +3057,6 @@ static struct clk *stm32mp25_clk_provided[STM32MP25_ALL_CLK_NB] = {
 	[CK_BUS_LVDS]		= &ck_icn_p_lvds,
 	[CK_BUS_GICV2M]		= &ck_icn_p_gicv2m,
 	[CK_BUS_USBTC]		= &ck_icn_p_usbtc,
-	[CK_BUS_BUSPERFM]	= &ck_icn_p_busperfm,
 	[CK_BUS_USB3PCIEPHY]	= &ck_icn_p_usb3pciephy,
 	[CK_BUS_STGEN]		= &ck_icn_p_stgen,
 	[CK_BUS_VDEC]		= &ck_icn_p_vdec,
