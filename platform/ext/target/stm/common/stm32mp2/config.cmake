@@ -13,6 +13,8 @@ set(STM32_IPC				OFF			CACHE BOOL      "Use IPC (rpmsg) to communicate with main
 set(STM32_PROV_FAKE			OFF                     CACHE BOOL      "Provisioning with dummy values. NOT to be used in production")
 set(STM32_STM32MP2_SOC_REV		"revB"			CACHE STRING	"Set soc revision: revA, revB")
 set(STM32_M33TDCID			OFF			CACHE BOOL	"Define M33 like Trusted Domain Compartiment ID")
+set(STM32_DTS_DIR			"arm/stm"		CACHE STRING	"Define relative path of stm32 dts")
+set(DTS_EXT_DIR				""			CACHE STRING	"Define external dts directory")
 
 ## platform
 set(PLATFORM_DEFAULT_UART_STDOUT        OFF			CACHE BOOL      "Use default uart stdout implementation.")

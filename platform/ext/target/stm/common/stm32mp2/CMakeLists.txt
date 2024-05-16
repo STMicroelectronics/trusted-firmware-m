@@ -46,7 +46,7 @@ target_add_scatter_file(tfm_s
 
 add_devicetree_target(TARGET platform_s
 	DTS_BOARD ${DTS_BOARD_S}
-	DTS_DIR ${DTS_EXT_DIR}
+	DTS_DIR ${DTS_EXT_DIR} ${DT_DTS_DIR}/${STM32_DTS_DIR}
 )
 add_dependencies(tfm_s_scatter dt_platform_s_gen_h)
 target_link_libraries(tfm_s_scatter
@@ -173,7 +173,7 @@ if(NS)
 
 	add_devicetree_target(TARGET platform_ns
 		DTS_BOARD ${DTS_BOARD_NS}
-		DTS_DIR ${DTS_EXT_DIR}
+		DTS_DIR ${DTS_EXT_DIR} ${DT_DTS_DIR}/${STM32_DTS_DIR}
 		DTC_FLAGS "-Wno-simple_bus_reg"
 	)
 	add_dependencies(tfm_ns_scatter dt_platform_ns_gen_h)
@@ -241,7 +241,7 @@ if(BL2)
 
 	add_devicetree_target(TARGET platform_bl2
 		DTS_BOARD ${DTS_BOARD_BL2}
-		DTS_DIR ${DTS_EXT_DIR}
+		DTS_DIR ${DTS_EXT_DIR} ${DT_DTS_DIR}/${STM32_DTS_DIR}
 	)
 	add_dependencies(bl2_scatter dt_platform_bl2_gen_h)
 	target_link_libraries(bl2_scatter
