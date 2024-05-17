@@ -38,6 +38,7 @@ if (STM32_M33TDCID)
 	set(TFM_PARTITION_SCP           ON                      CACHE BOOL      "Use System Control Processor library in partition")
 else()
 	set(BL2                         OFF                     CACHE BOOL     "Whether to build BL2" FORCE)
+	set(TFM_PARTITION_SCP           OFF                     CACHE BOOL     "Use System Control Processor library in partition")
 endif()
 
 if (STM32_STM32MP2_SOC_REV STREQUAL "revA")
@@ -48,6 +49,10 @@ elseif(STM32_STM32MP2_SOC_REV STREQUAL "revB")
 	set(STM32_HEADER_MINOR_VER 2)
 else()
 	message(FATAL_ERROR "SoC Revision not supported")
+endif()
+
+if (TFM_PARTITION_SCP)
+	list(APPEND MANIFEST_LISTS ${CMAKE_CURRENT_LIST_DIR}/manifest/tfm_manifest_list.yaml)
 endif()
 
 set(SCP_FW_VERSION                      "32006b16e589a2904b6e5b60cf8428"   CACHE STRING    "The version of SCP-firmware to use")

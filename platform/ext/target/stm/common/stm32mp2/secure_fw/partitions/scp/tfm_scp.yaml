@@ -1,0 +1,23 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2024, STMicroelectronics. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+#-------------------------------------------------------------------------------
+
+{
+  "psa_framework_version": 1.1,
+  "name": "TFM_SP_SCP",
+  "type": "PSA-ROT",
+  "priority": "NORMAL",
+  "model": "SFN",
+  "entry_init": "tfm_scp_entry",
+  "stack_size": "SCP_STACK_SIZE",
+  "irqs": [
+    {
+      "source": "MAILBOX_IRQ",
+      "name": "MAILBOX",
+      "handling": "SLIH"
+    }
+  ],
+  }

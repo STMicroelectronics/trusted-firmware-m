@@ -1,0 +1,39 @@
+#-------------------------------------------------------------------------------
+# Copyright (C) 2024, STMicroelectronics - All Rights Reserved
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+#-------------------------------------------------------------------------------
+
+# The "manifest" field must be relative path to this file or absolute path.
+#
+# Files per Secure Partition are generated to:
+#   - "output_path", if it is a absolute path - not recommended
+#   - generated_file_root/"output_path", if "output_path" is relative path
+#   - generated_file_root/, if "output_path" is not specified
+#       * generated_file_root is the path passed to tfm_parse_manifest_list.py
+#         by -o/--outdir
+
+{
+  "description": "TF-M secure partition manifests",
+  "type": "manifest_list",
+  "version_major": 0,
+  "version_minor": 1,
+  "manifest_list": [
+    {
+      "description": "TFM SCP Firmware Partition",
+      "manifest": "../secure_fw/partitions/scp/tfm_scp.yaml",
+      "output_path": "secure_fw/partitions/scp",
+      "conditional": "TFM_PARTITION_SCP",
+      "version_major": 0,
+      "version_minor": 1,
+      "pid": 271,
+      "linker_pattern": {
+        "library_list": [
+          "*tfm_*partition_scp*"
+         ]
+      }
+    },
+
+  ]
+}

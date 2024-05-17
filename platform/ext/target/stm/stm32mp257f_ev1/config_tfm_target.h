@@ -20,4 +20,6 @@
 #undef STM32MP_DDR4_TYPE
 #define STM32MP_DDR4_TYPE 1
 
+#define SCP_STACK_SIZE 0x2000
+
 #endif /* __CONFIG_TFM_TARGET_H__ */

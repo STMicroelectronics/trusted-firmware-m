@@ -145,6 +145,7 @@ endif()
 
 if (TFM_PARTITION_SCP)
 	add_subdirectory(${STM_SOC_DIR}/lib/SCP-firmware SCP-firmware)
+	add_subdirectory(${STM_SOC_DIR}/secure_fw/partitions/scp scp)
 endif()
 
 # GNU ld has some strange behaviour to do with weak functions, and does not deal
