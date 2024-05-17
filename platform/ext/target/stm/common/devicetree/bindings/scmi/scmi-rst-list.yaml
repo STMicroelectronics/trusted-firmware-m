@@ -1,0 +1,11 @@
+# Copyright (c) 2024, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+# Scmi clk list
+properties:
+  rst-list:
+    type: phandles
+    description: List of rst scmi phandles
+  rst-id-max:
+    type: int
+    description: highest id in rst list

@@ -1,0 +1,40 @@
+# Copyright (c) 2024 STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  STM32 SCMI configuration server
+
+compatible: "st,stm32mp2-scmi"
+
+include:
+  - base.yaml
+  - scmi-agent.yaml
+  - scmi-rst-list.yaml
+  - scmi-clk-list.yaml
+  - scmi-regu-list.yaml
+
+properties:
+
+  agent-id:
+    required: true
+
+  agent-name:
+    required: true
+
+  rst-list:
+    required: true
+
+  rst-id-max:
+    required: true
+
+  clk-list:
+    required: true
+
+  clk-id-max:
+    required: true
+
+  regu-list:
+    required: true
+
+  regu-id-max:
+    required: true
