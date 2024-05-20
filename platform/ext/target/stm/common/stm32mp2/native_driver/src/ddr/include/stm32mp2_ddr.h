@@ -50,9 +50,7 @@ struct stm32mp2_ddrctrl_reg {
 	uint32_t init7;
 	uint32_t dimmctl;
 	uint32_t rankctl;
-#if !CONFIG_STM32MP25X_REVA
 	uint32_t rankctl1;
-#endif /* !CONFIG_STM32MP25X_REVA */
 	uint32_t zqctl0;
 	uint32_t zqctl1;
 	uint32_t zqctl2;
@@ -72,9 +70,7 @@ struct stm32mp2_ddrctrl_reg {
 	uint32_t dbg1;
 	uint32_t dbgcmd;
 	uint32_t swctl;
-#if !CONFIG_STM32MP25X_REVA
 	uint32_t swctlstatic;
-#endif /* !CONFIG_STM32MP25X_REVA */
 	uint32_t poisoncfg;
 	uint32_t pccfg;
 };
@@ -123,10 +119,8 @@ struct stm32mp2_ddrctrl_perf {
 	uint32_t perfhpr1;
 	uint32_t perflpr1;
 	uint32_t perfwr1;
-#if !CONFIG_STM32MP25X_REVA
 	uint32_t sched3;
 	uint32_t sched4;
-#endif /* !CONFIG_STM32MP25X_REVA */
 	uint32_t pcfgr_0;
 	uint32_t pcfgw_0;
 	uint32_t pctrl_0;

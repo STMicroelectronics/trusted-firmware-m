@@ -31,26 +31,14 @@
  *             size / order need to be aligned with binding
  *             modification NOT ALLOWED !!!
  */
-#if CONFIG_STM32MP25X_REVA
-#define DDRCTL_REG_REG_SIZE	46	/* st,ctl-reg */
-#else /* !CONFIG_STM32MP25X_REVA */
 #define DDRCTL_REG_REG_SIZE	48	/* st,ctl-reg */
-#endif /* CONFIG_STM32MP25X_REVA */
 #define DDRCTL_REG_TIMING_SIZE	20	/* st,ctl-timing */
 #define DDRCTL_REG_MAP_SIZE	12	/* st,ctl-map */
-#if CONFIG_STM32MP25X_REVA
-#if STM32MP_DDR_DUAL_AXI_PORT
-#define DDRCTL_REG_PERF_SIZE	19	/* st,ctl-perf */
-#else /* !STM32MP_DDR_DUAL_AXI_PORT */
-#define DDRCTL_REG_PERF_SIZE	12	/* st,ctl-perf */
-#endif /* STM32MP_DDR_DUAL_AXI_PORT */
-#else /* !CONFIG_STM32MP25X_REVA */
 #if STM32MP_DDR_DUAL_AXI_PORT
 #define DDRCTL_REG_PERF_SIZE	21	/* st,ctl-perf */
 #else /* !STM32MP_DDR_DUAL_AXI_PORT */
 #define DDRCTL_REG_PERF_SIZE	14	/* st,ctl-perf */
 #endif /* STM32MP_DDR_DUAL_AXI_PORT */
-#endif /* CONFIG_STM32MP25X_REVA */
 
 #define DDRPHY_REG_REG_SIZE	0	/* st,phy-reg */
 #define	DDRPHY_REG_TIMING_SIZE	0	/* st,phy-timing */
@@ -82,9 +70,7 @@ static const struct stm32mp_ddr_reg_desc ddr_reg[DDRCTL_REG_REG_SIZE] = {
 	DDRCTL_REG_REG(init7, true),
 	DDRCTL_REG_REG(dimmctl, false),
 	DDRCTL_REG_REG(rankctl, true),
-#if !CONFIG_STM32MP25X_REVA
 	DDRCTL_REG_REG(rankctl1, true),
-#endif /* !CONFIG_STM32MP25X_REVA */
 	DDRCTL_REG_REG(zqctl0, true),
 	DDRCTL_REG_REG(zqctl1, false),
 	DDRCTL_REG_REG(zqctl2, false),
@@ -104,9 +90,7 @@ static const struct stm32mp_ddr_reg_desc ddr_reg[DDRCTL_REG_REG_SIZE] = {
 	DDRCTL_REG_REG(dbg1, false),
 	DDRCTL_REG_REG(dbgcmd, false),
 	DDRCTL_REG_REG(swctl, false), /* forced qd value */
-#if !CONFIG_STM32MP25X_REVA
 	DDRCTL_REG_REG(swctlstatic, false),
-#endif /* !CONFIG_STM32MP25X_REVA */
 	DDRCTL_REG_REG(poisoncfg, false),
 	DDRCTL_REG_REG(pccfg, false),
 };
@@ -158,10 +142,8 @@ static const struct stm32mp_ddr_reg_desc ddr_perf[DDRCTL_REG_PERF_SIZE] = {
 	DDRCTL_REG_PERF(perfhpr1, true),
 	DDRCTL_REG_PERF(perflpr1, true),
 	DDRCTL_REG_PERF(perfwr1, true),
-#if !CONFIG_STM32MP25X_REVA
 	DDRCTL_REG_PERF(sched3, false),
 	DDRCTL_REG_PERF(sched4, false),
-#endif /* !CONFIG_STM32MP25X_REVA */
 	DDRCTL_REG_PERF(pcfgr_0, false),
 	DDRCTL_REG_PERF(pcfgw_0, false),
 	DDRCTL_REG_PERF(pctrl_0, false),

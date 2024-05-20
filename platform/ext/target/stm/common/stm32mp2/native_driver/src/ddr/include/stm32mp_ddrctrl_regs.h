@@ -50,12 +50,8 @@ struct stm32mp_ddrctl {
 	uint32_t init7;		/* 0xec SDRAM Initialization 7 */
 	uint32_t dimmctl;	/* 0xf0 DIMM Control */
 	uint32_t rankctl;	/* 0xf4 Rank Control */
-#if CONFIG_STM32MP25X_REVA
-	uint8_t reserved0f8[0x100 - 0xf8];
-#else /* !CONFIG_STM32MP25X_REVA */
 	uint32_t rankctl1;	/* 0xf8 Rank Control 1 */
 	uint8_t reserved0fc[0x100 - 0xfc];
-#endif /* CONFIG_STM32MP25X_REVA */
 	uint32_t dramtmg0;	/* 0x100 SDRAM Timing 0 */
 	uint32_t dramtmg1;	/* 0x104 SDRAM Timing 1 */
 	uint32_t dramtmg2;	/* 0x108 SDRAM Timing 2 */
@@ -116,13 +112,9 @@ struct stm32mp_ddrctl {
 	uint32_t perflpr1;	/* 0x264 Low Priority Read CAM 1 */
 	uint32_t reserved268;
 	uint32_t perfwr1;	/* 0x26c Write CAM 1 */
-#if CONFIG_STM32MP25X_REVA
-	uint8_t reserved270[0x300 - 0x270];
-#else /* !CONFIG_STM32MP25X_REVA */
 	uint32_t sched3;	/* 0x270 Scheduler Control 3 */
 	uint32_t sched4;	/* 0x274 Scheduler Control 4 */
 	uint8_t reserved278[0x300 - 0x278];
-#endif /* CONFIG_STM32MP25X_REVA */
 	uint32_t dbg0;		/* 0x300 Debug 0 */
 	uint32_t dbg1;		/* 0x304 Debug 1 */
 	uint32_t dbgcam;	/* 0x308 CAM Debug */
@@ -131,12 +123,8 @@ struct stm32mp_ddrctl {
 	uint8_t reserved314[0x320 - 0x314];
 	uint32_t swctl;		/* 0x320 Software Programming Control Enable */
 	uint32_t swstat;	/* 0x324 Software Programming Control Status */
-#if CONFIG_STM32MP25X_REVA
-	uint8_t reserved328[0x36c - 0x328];
-#else /* !CONFIG_STM32MP25X_REVA */
 	uint32_t swctlstatic;	/* 0x328 Statics Write Enable */
 	uint8_t reserved32c[0x36c - 0x32c];
-#endif /* CONFIG_STM32MP25X_REVA */
 	uint32_t poisoncfg;	/* 0x36c AXI Poison Configuration Register */
 	uint32_t poisonstat;	/* 0x370 AXI Poison Status Register */
 	uint8_t reserved374[0x3f0 - 0x374];
