@@ -23,6 +23,50 @@ set(DT_PYTHON_DEVICETREE_SRC ${DEVICETREE_DIR}/python-devicetree/src)
 # output variables
 set(GENERATED_DT_DIR ${CMAKE_BINARY_DIR}/generated/devicetree)
 
+# toolchain_parse_make_rule: is a function that parses the output of
+# 'gcc -M'.
+#
+# input_file: is in input parameter with the path to the file with
+# the dependency information.
+#
+# include_files: is an output parameter with the result of parsing
+# the include files.
+function(toolchain_parse_make_rule input_file include_files)
+	file(STRINGS ${input_file} input)
+
+	# The file is formatted like this:
+	# empty_file.o: misc/empty_file.c \
+	# <dts file> \
+	# <dtsi file> \
+	# <h file> \
+
+	# The dep file will contain `\` for line continuation.
+	# This results in `\;` which is then treated a the char `;` instead of
+	# the element separator, so let's get the pure `;` back.
+	string(REPLACE "\;" ";" input_as_list ${input})
+
+	# Pop the first line and treat it specially
+	list(POP_FRONT input_as_list first_input_line)
+	string(FIND ${first_input_line} ": " index)
+	math(EXPR j "${index} + 2")
+	string(SUBSTRING ${first_input_line} ${j} -1 first_include_file)
+
+	# Remove whitespace before and after filename and convert to CMake path.
+	string(STRIP "${first_include_file}" first_include_file)
+	file(TO_CMAKE_PATH "${first_include_file}" first_include_file)
+	set(result "${first_include_file}")
+
+	# Remove whitespace before and after filename and convert to CMake path.
+	foreach(file ${input_as_list})
+		string(STRIP "${file}" file)
+		file(TO_CMAKE_PATH "${file}" file)
+		list(APPEND result "${file}")
+	endforeach()
+
+	set(${include_files} ${result} PARENT_SCOPE)
+
+endfunction()
+
 function(dt_preprocess)
     set(req_single_args "OUT_FILE")
     set(single_args "DEPS_FILE;WORKING_DIRECTORY")
@@ -75,64 +119,68 @@ function(dt_preprocess)
 	${DEVICETREE_DIR}/misc/empty_file.c
 	${workdir_opts})
 
-    execute_process(COMMAND ${preprocess_cmd} COMMAND_ECHO STDOUT ECHO_OUTPUT_VARIABLE ECHO_ERROR_VARIABLE RESULT_VARIABLE ret)
+    unset(ret)
+
+    #for debug add COMMAND_ECHO STDOUT ECHO_OUTPUT_VARIABLE
+    execute_process(COMMAND ${preprocess_cmd} ECHO_ERROR_VARIABLE RESULT_VARIABLE ret)
     if(NOT "${ret}" STREQUAL "0")
 	    message(FATAL_ERROR "failed to preprocess devicetree files (error code: ${ret})")
     endif()
 
 endfunction()
 
-function(gen_devicetree DTS_DIR DTS_BOARD OUT_DIR)
+macro(gen_devicetree_h)
 	# Parse arguments
 	set(options "")
-	set(oneValueArgs DTS_DIR DTS_BOARD OUT_DIR)
-	set(multiValueArgs DTC_FLAGS)
-	cmake_parse_arguments(PARSE_ARGV 0 ARG "${options}" "${oneValueArgs}" "${multiValueArgs}")
+	set(oneValueArgs TARGET DT_OUT_DIR DTS_BOARD)
+	set(multiValueArgs DTS_DIR DTC_FLAGS)
+	cmake_parse_arguments(A "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-	set(DTS_FILE ${ARG_DTS_DIR}/${ARG_DTS_BOARD})
+	#prepare
+	file(REMOVE ${A_DT_OUT_DIR})
+	file(MAKE_DIRECTORY ${A_DT_OUT_DIR})
+	get_filename_component(${A_TARGET}_DTS_FILENAME "${A_DTS_BOARD}" NAME)
+	set(${A_TARGET}_DTS_POST_CPP ${A_DT_OUT_DIR}/${${A_TARGET}_DTS_FILENAME}.pre.tmp)
+	set(${A_TARGET}_DTS_DEPS ${A_DT_OUT_DIR}/${${A_TARGET}_DTS_FILENAME}.pre.d)
 
-	if(NOT EXISTS ${DTS_FILE})
-		message(FATAL_ERROR "dts:${DTS_FILE} not found")
-	endif()
-
-	set(OUT_DTS_POST_CPP ${ARG_OUT_DIR}/${ARG_DTS_BOARD}.pre.tmp)
-	set(OUT_DTS_DEPS ${ARG_OUT_DIR}/${ARG_DTS_BOARD}.pre.d)
-
-	get_filename_component(DTS_FILENAME "${ARG_DTS_BOARD}" NAME)
-	get_filename_component(DTS_DIRNAME "${ARG_DTS_BOARD}" DIRECTORY)
-
-	execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${ARG_OUT_DIR}/${DTS_DIRNAME})
-
-	list(APPEND DTS_INC ${ARG_DTS_DIR} ${ARG_DTS_DIR}/${DTS_DIRNAME} ${DT_INCLUDE_DIR})
-	if(EXISTS ${DT_VENDOR_PREFIXES})
-		list(APPEND EXTRA_GEN_DEFINES_ARGS --vendor-prefixes ${DT_VENDOR_PREFIXES})
-	endif()
-
+	#preprocess
 	dt_preprocess(
-		SOURCE_FILES ${DTS_FILE}
-		OUT_FILE ${OUT_DTS_POST_CPP}
-		DEPS_FILE ${OUT_DTS_DEPS}
+		SOURCE_FILES ${A_DTS_BOARD}
+		OUT_FILE ${${A_TARGET}_DTS_POST_CPP}
+		DEPS_FILE ${${A_TARGET}_DTS_DEPS}
 		EXTRA_CPPFLAGS ${DTS_EXTRA_CPPFLAGS}
-		INCLUDE_DIRECTORIES ${DTS_INC}
-		WORKING_DIRECTORY ${ARG_OUT_DIR})
+		INCLUDE_DIRECTORIES ${A_DTS_DIR}
+		WORKING_DIRECTORY ${A_DT_OUT_DIR})
+
+	# Parse the generated dependency file to find the DT sources that
+	# were included, including any transitive includes.
+	toolchain_parse_make_rule(${${A_TARGET}_DTS_DEPS} ${A_TARGET}_DTS_INCLUDE_FILES)
 
 	set(ENV{PYTHONPATH} ${DT_PYTHON_DEVICETREE_SRC})
 
-	set(CMD_GEN_DEFINES ${Python3_EXECUTABLE} ${DT_GEN_DEFINES_SCRIPT}
-		--dts ${OUT_DTS_POST_CPP}
-		--dtc-flags '${ARG_DTC_FLAGS}'
+	set(${A_TARGET}_CMD_GEN_DEFINES ${Python3_EXECUTABLE} ${DT_GEN_DEFINES_SCRIPT}
+		--dts ${${A_TARGET}_DTS_POST_CPP}
+		--dtc-flags '${A_DTC_FLAGS}'
 		--bindings-dirs ${DT_BINDINGS_DIR}
-		--header-out ${ARG_OUT_DIR}/devicetree_generated.h
-		--dts-out ${ARG_OUT_DIR}/out.dts # for debugging and dtc
-		--edt-pickle-out ${ARG_OUT_DIR}/edt.pickle
-		${EXTRA_GEN_DEFINES_ARGS})
+		--header-out ${A_DT_OUT_DIR}/devicetree_generated.h
+		--dts-out ${A_DT_OUT_DIR}/out.dts # for debugging and dtc
+		--edt-pickle-out ${A_DT_OUT_DIR}/edt.pickle
+		--vendor-prefixes ${DT_VENDOR_PREFIXES})
 
-	execute_process(COMMAND ${CMD_GEN_DEFINES} COMMAND_ECHO STDOUT ECHO_OUTPUT_VARIABLE ECHO_ERROR_VARIABLE RESULT_VARIABLE ret)
+	#for debug add COMMAND_ECHO STDOUT ECHO_OUTPUT_VARIABLE
+	execute_process(COMMAND ${${A_TARGET}_CMD_GEN_DEFINES} ECHO_ERROR_VARIABLE RESULT_VARIABLE ret)
 	if(NOT "${ret}" STREQUAL "0")
 		message(FATAL_ERROR "failed to generated define files (error code: ${ret})")
 	endif()
 
-endfunction()
+	if (EXISTS ${A_DT_OUT_DIR}/devicetree_generated.h)
+		message(STATUS "DEVICETREE: ${ARG_TARGET}: generation done")
+	else()
+		message(FATAL_ERROR "DEVICETREE: ${ARG_TARGET}: fail")
+	endif()
+
+endmacro()
+
 
 macro(add_devicetree_target)
 	# Parse arguments
@@ -141,40 +189,64 @@ macro(add_devicetree_target)
 	set(multiValueArgs DTS_DIR DTC_FLAGS)
 	cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-	if (NOT EXISTS ${ARG_DTS_DIR})
-		set(ARG_DTS_DIR ${DT_DTS_DIR})
+	#check device tree source directory
+	list(APPEND ${ARG_TARGET}_DTS_DIR ${DT_DTS_DIR} ${DT_INCLUDE_DIR})
+
+	foreach(dir ${ARG_DTS_DIR})
+		file(REAL_PATH ${dir} ${ARG_TARGET}_EXTRA_DIR EXPAND_TILDE)
+		if (EXISTS ${${ARG_TARGET}_EXTRA_DIR})
+			list(APPEND ${ARG_TARGET}_DTS_DIR ${${ARG_TARGET}_EXTRA_DIR})
+		endif()
+	endforeach()
+
+	#check board file
+	find_file(${ARG_TARGET}_DTS_BOARD NAME ${ARG_DTS_BOARD} PATHS ${${ARG_TARGET}_DTS_DIR})
+	if(${ARG_TARGET}_DTS_BOARD STREQUAL ${ARG_TARGET}_DTS_BOARD-NOTFOUND)
+		message(FATAL_ERROR "devicetree: board ${ARG_DTS_BOARD} not found in:\n ${${ARG_TARGET}_DTS_DIR}")
 	endif()
 
-	set(DTS_FILE ${ARG_DTS_DIR}/${ARG_DTS_BOARD})
+	#prepare flags
+	set(${ARG_TARGET}_DTC_FLAGS "")
+	foreach(flags ${ARG_DTC_FLAGS})
+		list(APPEND ${ARG_TARGET}_DTC_FLAGS ${flags})
+	endforeach()
 
-	if ((NOT EXISTS ${DTS_FILE}) OR (IS_DIRECTORY ${DTS_FILE}))
-		message(FATAL_ERROR "devicetree: board ${DTS_FILE} not exist")
-	endif()
+	#prepare out
+	set(${ARG_TARGET}_DT_OUT_DIR ${GENERATED_DT_DIR}/${ARG_TARGET})
+	set(${ARG_TARGET}_DT_GEN_H ${${ARG_TARGET}_DT_OUT_DIR}/devicetree_generated.h)
 
-	set(GEN_DT_OUT_DIR ${GENERATED_DT_DIR}/${ARG_TARGET})
+	gen_devicetree_h(
+		TARGET ${ARG_TARGET}
+		DTS_BOARD ${${ARG_TARGET}_DTS_BOARD}
+		DTS_DIR ${${ARG_TARGET}_DTS_DIR}
+		DTC_FLAGS ${${ARG_TARGET}_DTC_FLAGS}
+		DT_OUT_DIR ${${ARG_TARGET}_DT_OUT_DIR}
+	)
 
 	set(GEN_DT_OPT
-		-DDTS_DIR=${ARG_DTS_DIR}
-		-DDTS_BOARD=${ARG_DTS_BOARD}
-		-DOUT_DIR=${GEN_DT_OUT_DIR}
-		-DDTC_FLAGS=${ARG_DTC_FLAGS}
+		-DTARGET=${ARG_TARGET}
+		-DDTS_BOARD=${${ARG_TARGET}_DTS_BOARD}
+		-DDTS_DIR:STRING="${${ARG_TARGET}_DTS_DIR}"
+		-DDTC_FLAGS:STRING="${${ARG_TARGET}_DTC_FLAGS}"
+		-DDT_OUT_DIR=${${ARG_TARGET}_DT_OUT_DIR}
 	)
 
 	add_custom_command(
-		OUTPUT ${GEN_DT_OUT_DIR}/devicetree_generated.h
-		COMMENT "DEVICETREE: ${ARG_TARGET}: preprocess and header generation"
+		OUTPUT ${${ARG_TARGET}_DT_GEN_H}
+		DEPENDS ${${ARG_TARGET}_DTS_INCLUDE_FILES}		
+		COMMENT "DEVICETREE: ${ARG_TARGET}: preprocess and header re-generation"
 		COMMAND ${CMAKE_COMMAND} ${GEN_DT_OPT} -P ${DEVICETREE_DIR}/gen_dt.cmake
 	)
 
-	add_custom_target(dt_${ARG_TARGET}_gen_h
-		DEPENDS ${GENERATED_DT_DIR}/${ARG_TARGET}/devicetree_generated.h
+	add_custom_target(dt_${ARG_TARGET}_gen_h DEPENDS
+		${${ARG_TARGET}_DT_GEN_H}
 	)
 
 	add_library(dt_${ARG_TARGET}_defs INTERFACE)
 	target_include_directories(dt_${ARG_TARGET}_defs
 		INTERFACE
 			${DT_INCLUDE_DIR}
-			${GEN_DT_OUT_DIR}
+			${${ARG_TARGET}_DT_OUT_DIR}
 	)
 
 	# allow to add devicetree include directory at target with
@@ -187,14 +259,16 @@ macro(add_devicetree_target)
 	add_dependencies(${ARG_TARGET} dt_${ARG_TARGET}_gen_h)
 endmacro()
 
-if(DEFINED DTS_BOARD AND DEFINED OUT_DIR)
-	if (NOT EXISTS ${DTS_DIR})
-		set(DTS_DIR ${DT_DTS_DIR})
-	endif()
+if(DEFINED TARGET)
+	string(REPLACE " " ";" LIST_DTS_DIR "${DTS_DIR}")
+	string(REPLACE " " ";" LIST_DTC_FLAGS "${DTC_FLAGS}")
 
-	gen_devicetree(
-		DTS_DIR ${DTS_DIR}
+	gen_devicetree_h(
+		TARGET ${TARGET}
 		DTS_BOARD ${DTS_BOARD}
-		OUT_DIR ${OUT_DIR}
-		DTC_FLAGS ${DTC_FLAGS})
+		DTS_DIR ${LIST_DTS_DIR}
+		DTC_FLAGS ${LIST_DTC_FLAGS}
+		DT_OUT_DIR ${DT_OUT_DIR}
+	)
+
 endif()
