@@ -1,0 +1,260 @@
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
+/*
+ * Copyright (C) STMicroelectronics 2023 - All Rights Reserved
+ */
+#include <dt-bindings/clock/stm32mp25-clksrc.h>
+#include <dt-bindings/reset/stm32mp25-resets.h>
+#include <dt-bindings/regulator/stm32mp25-regulator.h>
+/ {
+	stm32mp25-scmi-rst {
+		scmi_rst_fmc: scmi_rst_fmc@0 {
+			compatible = "st,stm32mp25-scmi-rst";
+			resets = <&rctl FMC_R>;
+			reset-names = "fmc";
+			scmi-id = <RST_SCMI_FMC>;
+		};
+		scmi_rst_pcie: scmi_rst_pcie@0 {
+			compatible = "st,stm32mp25-scmi-rst";
+			resets = <&rctl PCIE_R>;
+			reset-names = "pcie";
+			scmi-id = <RST_SCMI_PCIE>;
+		};
+	};
+
+	stm32mp25-scmi-clk {
+		scmi_clk_icn_display: scmi_clk_icn_display@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_ICN_DISPLAY>;
+			scmi-id = <CK_SCMI_ICN_DISPLAY>;
+		};
+		scmi_clk_icn_sdmmc: scmi_clk_icn_sdmmc@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_ICN_SDMMC>;
+			scmi-id = <CK_SCMI_ICN_SDMMC>;
+		};
+		scmi_clk_icn_gpioa: scmi_clk_icn_gpioa@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_BUS_GPIOA>;
+			scmi-id = <CK_SCMI_GPIOA>;
+		};
+		scmi_clk_icn_gpiob: scmi_clk_icn_gpiob@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_BUS_GPIOB>;
+			scmi-id = <CK_SCMI_GPIOB>;
+		};
+		scmi_clk_icn_gpioc: scmi_clk_icn_gpioc@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_BUS_GPIOC>;
+			scmi-id = <CK_SCMI_GPIOC>;
+		};
+		scmi_clk_icn_gpiod: scmi_clk_icn_gpiod@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_BUS_GPIOD>;
+			scmi-id = <CK_SCMI_GPIOD>;
+		};
+		scmi_clk_icn_gpioe: scmi_clk_icn_gpioe@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_BUS_GPIOE>;
+			scmi-id = <CK_SCMI_GPIOE>;
+		};
+		scmi_clk_icn_gpiof: scmi_clk_icn_gpiof@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_BUS_GPIOF>;
+			scmi-id = <CK_SCMI_GPIOF>;
+		};
+		scmi_clk_icn_gpiog: scmi_clk_icn_gpiog@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_BUS_GPIOG>;
+			scmi-id = <CK_SCMI_GPIOG>;
+		};
+		scmi_clk_icn_gpioh: scmi_clk_icn_gpioh@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_BUS_GPIOH>;
+			scmi-id = <CK_SCMI_GPIOH>;
+		};
+		scmi_clk_icn_gpioi: scmi_clk_icn_gpioi@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_BUS_GPIOI>;
+			scmi-id = <CK_SCMI_GPIOI>;
+		};
+		scmi_clk_icn_gpioj: scmi_clk_icn_gpioj@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_BUS_GPIOJ>;
+			scmi-id = <CK_SCMI_GPIOJ>;
+		};
+		scmi_clk_icn_gpiok: scmi_clk_icn_gpiok@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_BUS_GPIOK>;
+			scmi-id = <CK_SCMI_GPIOK>;
+		};
+		 scmi_clk_icn_gpioz: scmi_clk_icn_gpioz@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_BUS_GPIOZ>;
+			scmi-id = <CK_SCMI_GPIOZ>;
+		};
+		scmi_clk_icn_flexgen_07:scmi_clk_icn_flexgen_07@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_07>;
+			scmi-id = <CK_SCMI_FLEXGEN_07>;
+		};
+		scmi_clk_icn_flexgen_08:scmi_clk_icn_flexgen_08@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_08>;
+			scmi-id = <CK_SCMI_FLEXGEN_08>;
+		};
+		scmi_clk_icn_flexgen_09:scmi_clk_icn_flexgen_09@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_09>;
+			scmi-id = <CK_SCMI_FLEXGEN_09>;
+		};
+		scmi_clk_icn_flexgen_10:scmi_clk_icn_flexgen_10@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_10>;
+			scmi-id = <CK_SCMI_FLEXGEN_10>;
+			rate;
+		};
+		scmi_clk_icn_flexgen_11:scmi_clk_icn_flexgen_11@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_11>;
+			scmi-id = <CK_SCMI_FLEXGEN_11>;
+		};
+		scmi_clk_icn_flexgen_12:scmi_clk_icn_flexgen_12@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_12>;
+			scmi-id = <CK_SCMI_FLEXGEN_12>;
+		};
+		scmi_clk_icn_flexgen_13:scmi_clk_icn_flexgen_13@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_13>;
+			scmi-id = <CK_SCMI_FLEXGEN_13>;
+		};
+		scmi_clk_icn_flexgen_14:scmi_clk_icn_flexgen_14@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_14>;
+			scmi-id = <CK_SCMI_FLEXGEN_14>;
+		};
+		scmi_clk_icn_flexgen_15:scmi_clk_icn_flexgen_15@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_15>;
+			scmi-id = <CK_SCMI_FLEXGEN_15>;
+		};
+		scmi_clk_icn_flexgen_16:scmi_clk_icn_flexgen_16@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_16>;
+			scmi-id = <CK_SCMI_FLEXGEN_16>;
+			rate;
+		};
+		scmi_clk_icn_flexgen_17:scmi_clk_icn_flexgen_17@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_17>;
+			scmi-id = <CK_SCMI_FLEXGEN_17>;
+		};
+		scmi_clk_icn_flexgen_18:scmi_clk_icn_flexgen_18@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_18>;
+			scmi-id = <CK_SCMI_FLEXGEN_18>;
+		};
+		scmi_clk_icn_flexgen_19:scmi_clk_icn_flexgen_19@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_19>;
+			scmi-id = <CK_SCMI_FLEXGEN_19>;
+		};
+		scmi_clk_icn_flexgen_20:scmi_clk_icn_flexgen_20@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_20>;
+			scmi-id = <CK_SCMI_FLEXGEN_20>;
+		};
+		scmi_clk_icn_flexgen_21:scmi_clk_icn_flexgen_21@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_21>;
+			scmi-id = <CK_SCMI_FLEXGEN_21>;
+		};
+		scmi_clk_icn_flexgen_22:scmi_clk_icn_flexgen_22@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_22>;
+			scmi-id = <CK_SCMI_FLEXGEN_22>;
+		};
+		scmi_clk_icn_flexgen_23:scmi_clk_icn_flexgen_23@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_23>;
+			scmi-id = <CK_SCMI_FLEXGEN_23>;
+			rate;
+		};
+		scmi_clk_icn_flexgen_24:scmi_clk_icn_flexgen_24@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_24>;
+			scmi-id = <CK_SCMI_FLEXGEN_24>;
+			rate;
+		};
+		scmi_clk_icn_flexgen_25:scmi_clk_icn_flexgen_25@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_25>;
+			scmi-id = <CK_SCMI_FLEXGEN_25>;
+			rate;
+		};
+		scmi_clk_icn_flexgen_26:scmi_clk_icn_flexgen_26@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_26>;
+			scmi-id = <CK_SCMI_FLEXGEN_26>;
+		};
+		scmi_clk_icn_flexgen_27:scmi_clk_icn_flexgen_27@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_27>;
+			scmi-id = <CK_SCMI_FLEXGEN_27>;
+			rate;
+		};
+		scmi_clk_icn_flexgen_28:scmi_clk_icn_flexgen_28@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_28>;
+			scmi-id = <CK_SCMI_FLEXGEN_28>;
+		};
+		scmi_clk_icn_flexgen_29:scmi_clk_icn_flexgen_29@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_29>;
+			scmi-id = <CK_SCMI_FLEXGEN_29>;
+		};
+		scmi_clk_icn_flexgen_30:scmi_clk_icn_flexgen_30@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_30>;
+			scmi-id = <CK_SCMI_FLEXGEN_30>;
+		};
+		scmi_clk_icn_flexgen_31:scmi_clk_icn_flexgen_31@0 {
+			compatible = "st,stm32mp25-scmi-clk";
+			clocks = <&rcc CK_FLEXGEN_31>;
+			scmi-id = <CK_SCMI_FLEXGEN_31>;
+		};
+	};
+
+	stm32mp25-scmi-regu {
+		scmi_regu_vddcore: scmi_regu_vddcore@0 {
+			compatible = "st,stm32mp25-scmi-regu";
+			regu = <&vddcore>;
+			scmi-id = <VOLTD_SCMI_STPMIC2_BUCK2>;
+		};
+		scmi_regu_v1v8: scmi_regu_v1v8@0 {
+			compatible = "st,stm32mp25-scmi-regu";
+			regu = <&v1v8>;
+			scmi-id = <VOLTD_SCMI_STPMIC2_BUCK5>;
+		};
+		scmi_regu_v3v3: scmi_regu_v3v3@0 {
+			compatible = "st,stm32mp25-scmi-regu";
+			regu = <&v3v3>;
+			scmi-id = <VOLTD_SCMI_STPMIC2_BUCK5>;
+		};
+		scmi_regu_vdd_emmc: scmi_regu_vdd_emmc@0{
+			compatible = "st,stm32mp25-scmi-regu";
+			regu = <&vdd_emmc>;
+			scmi-id = <VOLTD_SCMI_STPMIC2_BUCK7>;
+		};
+		 scmi_regu_vdd3v3_usb: scmi_regu_vdd_3v3usb@0 {
+			compatible = "st,stm32mp25-scmi-regu";
+			regu = <&vdd3v3_usb>;
+			scmi-id = <VOLTD_SCMI_STPMIC2_LDO2>;
+		};
+		scmi_regu_vdd_sdcard: scmi_regu_vdd_sdcard@0 {
+			compatible = "st,stm32mp25-scmi-regu";
+			regu = <&vdd_sdcard>;
+			scmi-id = < VOLTD_SCMI_STPMIC2_LDO7>;
+		};
+	};
+};

@@ -4,6 +4,7 @@
  */
 #include <dt-bindings/clock/stm32mp25-clks.h>
 #include <dt-bindings/reset/stm32mp25-resets.h>
+#include <dt-bindings/scmi/stm32mp25-agents.h>
 
 / {
 	#address-cells = <1>;
@@ -118,6 +119,20 @@
 			      <0x58050000 0x10000>;
 			reg-names = "ctrl", "phy", "dbg";
 			clocks = <&rcc CK_BUS_DDR>;
+			status = "disabled";
+		};
+
+		scmi_ca35: scmi-srv-ca35@0 {
+			compatible = "st,stm32mp2-scmi";
+			agent-id = <STM32MP25_AGENT_ID_CA35>;
+			agent-name = "agent ca35";
+			status = "disabled";
+		};
+
+		scmi_m33: scmi-srv-m33@0 {
+			compatible = "st,stm32mp2-scmi";
+			agent-id = <STM32MP25_AGENT_ID_M33_NS>;
+			agent-name = "agent m33";
 			status = "disabled";
 		};
 
