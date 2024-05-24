@@ -161,6 +161,24 @@
 				i2c-analog-filter;
 				status = "disabled";
 			};
+
+			sdmmc1: mmc@58220000 {
+				compatible = "st,stm32mp25-sdmmc2";
+				reg = <0x58220000 0x400>;
+				clocks = <&rcc CK_KER_SDMMC1>;
+				resets = <&rctl SDMMC1_R>;
+				max-frequency = <120000000>;
+				status = "disabled";
+			};
+
+			sdmmc2: mmc@58230000 {
+				compatible = "st,stm32mp25-sdmmc2";
+				reg = <0x58230000 0x400>;
+				clocks = <&rcc CK_KER_SDMMC2>;
+				resets = <&rctl SDMMC2_R>;
+				max-frequency = <120000000>;
+				status = "disabled";
+			};
 		};
 
 		iac: iac@52090000 {
