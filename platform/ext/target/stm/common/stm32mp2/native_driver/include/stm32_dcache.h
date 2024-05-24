@@ -39,9 +39,15 @@ int stm32_dcache_enable(bool monitor, bool inv);
 #define DCACHE_CMD_INV		0x2
 #define DCACHE_CMD_CLRINV	0x3
 
+#ifdef STM32_DDR_CACHED
 #define stm32_dcache_clean(s, e)	stm32_dcache_maintenance(DCACHE_CMD_CLR, s, e)
 #define stm32_dcache_inv(s, e)		stm32_dcache_maintenance(DCACHE_CMD_INV, s, e)
 #define stm32_dcache_clean_inv(s, e)	stm32_dcache_maintenance(DCACHE_CMD_CLRINV, s, e)
+#else
+#define stm32_dcache_clean(s, e)
+#define stm32_dcache_inv(s, e)
+#define stm32_dcache_clean_inv(s, e)
+#endif
 
 int stm32_dcache_get_platdata(struct stm32_dcache_platdata *pdata);
 int stm32_dcache_init(void);
