@@ -17,6 +17,7 @@
 #include <device.h>
 #include <stm32_rif.h>
 #include <stm32_rifsc.h>
+#include <firewall.h>
 
 #include <dt-bindings/rif/stm32mp25-rifsc.h>
 
@@ -219,6 +220,18 @@ static void stm32_rifsc_set_drvdata(const struct device *dev)
 	     rifsc_drvdata->nb_risal);
 }
 
+static int stm32_rifsc_firewall_set_conf(const struct firewall_spec *spec)
+{
+	const struct stm32_rifsc_config *rifsc_cfg = dev_get_config(spec->dev);
+	struct rifprot_config rifprot_cfg = RIFPROT_CFG(spec->args[0]);
+
+	return stm32_rifprot_set_conf(rifsc_cfg->risup_ctl, &rifprot_cfg);
+}
+
+static const struct firewall_controller_api stm32_rifsc_firewall_api = {
+	.set_conf = stm32_rifsc_firewall_set_conf,
+};
+
 static int stm32_rifsc_init(const struct device *dev)
 {
 	const struct stm32_rifsc_config *rifsc_cfg = dev_get_config(dev);
@@ -275,6 +288,6 @@ static struct rifsc_driver_data stm32_rifsc_data_##n = {};				\
 DEVICE_DT_INST_DEFINE(n, &stm32_rifsc_init,						\
 		      &stm32_rifsc_data_##n, &stm32_rifsc_cfg_##n,			\
 		      PRE_CORE, 0,							\
-		      NULL);
+		      &stm32_rifsc_firewall_api);
 
 DT_INST_FOREACH_STATUS_OKAY(STM32_RIFSC_INIT)
