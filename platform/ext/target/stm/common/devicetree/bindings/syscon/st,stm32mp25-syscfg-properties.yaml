@@ -27,3 +27,8 @@ properties:
       to split the 256MB memory map area shared between the 2 OSPI
       Memory Interface (OMI). The Octo Memory Manager sets the AMCR
       depending of the memory-region configuration.
+
+  st,syscfg-vddio:
+    type: phandle-array
+    specifier-space: syscfg-reg
+    description: Use to enable / disable IO compensation for vddio's.
