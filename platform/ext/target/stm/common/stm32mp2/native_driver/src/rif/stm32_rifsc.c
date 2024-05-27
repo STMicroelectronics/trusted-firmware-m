@@ -254,12 +254,14 @@ static const struct rimu_cfg rimu_config_##n[] = {					\
 		    ())									\
 };											\
 											\
-DT_INST_RIFPROT_CTRL_DEFINE(n,								\
-			    DT_INST_REG_ADDR(n) + _RIFSC_SECCFGR0,			\
-			    DT_INST_REG_ADDR(n) + _RIFSC_PRIVCFGR0,			\
-			    DT_INST_REG_ADDR(n) + _RIFSC_PERX_CIDCFGR,			\
-			    DT_INST_REG_ADDR(n) + _RIFSC_PERX_SEMCR,			\
-			    MAX_RISUP);							\
+static __unused const struct rif_base rbase_##n = {					\
+	.sec = DT_INST_REG_ADDR(n) + _RIFSC_SECCFGR0,					\
+	.priv = DT_INST_REG_ADDR(n) + _RIFSC_PRIVCFGR0,					\
+	.cid = DT_INST_REG_ADDR(n) + _RIFSC_PERX_CIDCFGR,				\
+	.sem = DT_INST_REG_ADDR(n) + _RIFSC_PERX_SEMCR,					\
+};											\
+											\
+DT_INST_RIFPROT_CTRL_DEFINE(n, &rbase_##n, NULL, MAX_RISUP);				\
 											\
 static const struct stm32_rifsc_config stm32_rifsc_cfg_##n = {				\
 	.base = DT_INST_REG_ADDR(n),							\

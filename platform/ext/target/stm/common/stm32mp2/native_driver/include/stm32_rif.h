@@ -13,7 +13,7 @@
 #define RIFPROT_FLD(_field, _node_id, _prop, _idx) \
 	_FLD_GET(_field, DT_PROP_BY_IDX(_node_id, _prop, _idx))
 
-#define STM32_RIFPROT(_node_id, _prop, _idx)			\
+#define DT_RIFPROT_CFG(_node_id, _prop, _idx)			\
 	{							\
 		.id = RIFPROT_FLD(RIFPROT_PER_ID,		\
 				  _node_id, _prop, _idx),	\
@@ -21,14 +21,27 @@
 				   _node_id, _prop, _idx),	\
 		.priv = RIFPROT_FLD(RIFPROT_PRIV,		\
 				    _node_id, _prop, _idx),	\
+		.lock = RIFPROT_FLD(RIFPROT_LOCK,		\
+				    _node_id, _prop, _idx),	\
 		.cid_attr = RIFPROT_FLD(RIFPROT_PERx_CID,	\
 					_node_id, _prop, _idx),	\
 	}
+
+#define RIFPROT_CFG(arg)					\
+	{							\
+		.id = _FLD_GET(RIFPROT_PER_ID, arg),		\
+		.sec = _FLD_GET(RIFPROT_SEC, arg),		\
+		.priv = _FLD_GET(RIFPROT_PRIV, arg),		\
+		.cid_attr = _FLD_GET(RIFPROT_PERx_CID, arg),	\
+	}
+
+struct rifprot_controller;
 
 struct rifprot_config {
 	uint32_t id;
 	bool sec;
 	bool priv;
+	bool lock;
 	uint32_t cid_attr;
 };
 
@@ -40,12 +53,13 @@ struct rifprot_config {
 	     i < (nrcfg);						\
 	     i++, rcfg_elem++)
 
-#define RIFPROT_BASE(_sec, _priv, _cid, _sem)				\
+#define RIFPROT_BASE(_sec, _priv, _cid, _sem, _lock)			\
 	{								\
 		.sec = _sec,						\
 		.priv = _priv,						\
 		.cid = _cid,						\
 		.sem = _sem,						\
+		.lock = _lock,						\
 	}
 
 struct rif_base {
@@ -53,10 +67,28 @@ struct rif_base {
 	uintptr_t priv;
 	uintptr_t cid;
 	uintptr_t sem;
+	uintptr_t lock;
+};
+
+typedef int (*_rifprot_init_t)(const struct rifprot_controller *ctl);
+typedef int (*_rifprot_set_conf_t)(const struct rifprot_controller *ctl,
+				   struct rifprot_config *cfg);
+typedef int (*_rifprot_sem_t)(const struct rifprot_controller *ctl,
+				  uint32_t id);
+typedef int (*_rifprot_rel_sem_t)(const struct rifprot_controller *ctl,
+				  uint32_t id);
+
+struct rif_ops {
+	_rifprot_init_t init;
+	_rifprot_set_conf_t set_conf;
+	_rifprot_sem_t acquire_sem;
+	_rifprot_sem_t release_sem;
 };
 
 struct rifprot_controller {
-        struct rif_base rbase;
+	const struct device *dev;
+        const struct rif_base *rbase;
+	const struct rif_ops *ops;
 	int nperipherals;
         const struct rifprot_config *rifprot_cfg;
         const int nrifprot;
@@ -82,7 +114,7 @@ struct rifprot_controller {
 
 #define RIFPROT_CONFIG_INIT(node_id)								\
 	COND_CODE_1(DT_NODE_HAS_PROP(node_id, st_protreg),					\
-		    (DT_FOREACH_PROP_ELEM_SEP(node_id, st_protreg, STM32_RIFPROT, (,))),	\
+		    (DT_FOREACH_PROP_ELEM_SEP(node_id, st_protreg, DT_RIFPROT_CFG, (,))),	\
 		    ())
 
 /**
@@ -121,46 +153,46 @@ struct rifprot_controller {
  * @brief Helper macro to define rifprot controller for a given node identifier.
  *
  * @param node_id Node identifier.
- * @param _sec Adresse base of secure configuration register
- * @param _priv Adresse base of privileged configuration register
- * @param _cid Adresse base of CID configuration register
- * @param _sem Adresse base of semaphore control register
+ * @param _rbase reference on register adresses (sec, priv, cid, sem)
+ * @param _ops reference on specific operating functions,
+ * if NULL the default functions are used.
  * @param _nper number of peripherals managed by controller.
  */
-#define DT_RIFPROT_CTRL_DEFINE(node_id, _sec, _priv, _cid, _sem, _nper)		\
+#define DT_RIFPROT_CTRL_DEFINE(node_id, _rbase, _ops, _nper)			\
+	COND_CODE_1(DT_NODE_HAS_PROP(node_id, st_protreg),(			\
 	DT_RIFPROT_CONFIG_DEFINE(node_id);					\
 	extern const struct rifprot_controller RIFPROT_CTRL_NAME(node_id);	\
 	const struct rifprot_controller RIFPROT_CTRL_NAME(node_id) = {		\
-		.rbase = RIFPROT_BASE(_sec, _priv, _cid, _sem),			\
+		.dev = DEVICE_DT_GET_OR_NULL(node_id),				\
+		.rbase = _rbase,						\
+		.ops = _ops,							\
 		.nperipherals = _nper,						\
 		.rifprot_cfg = DT_RIFPROT_CONFIG_GET(node_id),			\
 		.nrifprot = ARRAY_SIZE(DT_RIFPROT_CONFIG_GET(node_id)),		\
-	}
+	}),())
 
 /**
  * @brief Helper macro to define rifprot controller for a  given current
  * compatible instance number.
  *
  * @param inst Instance number.
- * @param _sec Adresse base of secure configuration register
- * @param _priv Adresse base of privileged configuration register
- * @param _cid Adresse base of CID configuration register
- * @param _sem Adresse base of semaphore control register
- * @param _nper number of peripherals managed by controller.
- *
  * @see #DT_RIFPROT_CTRL_DEFINE
  */
-#define DT_INST_RIFPROT_CTRL_DEFINE(inst, _sec, _priv, _cid, _sem, _nper)	\
-	DT_RIFPROT_CTRL_DEFINE(DT_DRV_INST(inst),				\
-			       _sec, _priv, _cid, _sem, _nper)
+#define DT_INST_RIFPROT_CTRL_DEFINE(inst, _rbase, _ops, _nper) \
+	DT_RIFPROT_CTRL_DEFINE(DT_DRV_INST(inst), _rbase, _ops, _nper)
 
 /**
  * @brief Obtain a reference to the rifprot controller given a node
  * identifier.
  *
  * @param node_id Node identifier.
+ *
+ * @return a @ref on rifprot controller if exist else `NULL`.
+ *
  */
-#define DT_RIFPROT_CTRL_GET(node_id) &RIFPROT_CTRL_NAME(node_id)
+#define DT_RIFPROT_CTRL_GET(node_id)				\
+	COND_CODE_1(DT_NODE_HAS_PROP(node_id, st_protreg),	\
+		    (&RIFPROT_CTRL_NAME(node_id)), (NULL))
 
 /**
  * @brief Obtain a reference to the rifprot controller given current
@@ -191,23 +223,65 @@ struct rifprot_controller {
 #define DT_INST_RIFPROT_CTRL_EXTERN(inst) \
 	DT_RIFPROT_CTRL_EXTERN(DT_DRV_INST(inst))
 
-#if (IS_ENABLED(STM32_SEC))
-int stm32_rifprot_set_config(const struct rifprot_controller *rifprot_ctl,
-			     const struct rifprot_config *rifprot_cfg,
-			     int ncfg);
-int stm32_rifprot_init(const struct rifprot_controller *rifprot_ctl);
+#if (IS_ENABLED(STM32_NSEC))
+inline int stm32_rifprot_init(const struct rifprot_controller *ctl)
+{
+	return 0;
+}
+
+inline int stm32_rifprot_set_conf(const struct rifprot_controller *ctl,
+				  struct rifprot_config *cfg)
+{
+	return 0;
+}
+
 #else
-int inline stm32_rifprot_set_config(const struct rifprot_controller *rifprot_ctl,
-				    const struct rifprot_config *rifprot_cfg,
-				    int ncfg)
-{
-	return 0;
-}
+/**
+ * @brief Initialize the rif controller
+ *
+ * On success, all the configurations found in st,protreg are applied
+ *
+ * @param ctl reference on rifprot controller.
+ * @return 0 on success, negative errno on failure.
+ */
+int stm32_rifprot_init(const struct rifprot_controller *ctl);
 
-int inline stm32_rifprot_init(const struct rifprot_controller *rifprot_ctl)
-{
-	return 0;
-}
+/**
+ * @brief Set one config of rif controller
+ *
+ * On success, the access is set and ready when this function
+ * returns.
+ *
+ * @param ctl reference on rif controller.
+ * @param cfg reference on rif config to set
+ * @return 0 on success, negative errno on failure.
+ */
+int stm32_rifprot_set_conf(const struct rifprot_controller *ctl,
+			   struct rifprot_config *cfg);
+
+/**
+ * @brief Acquire semaphore id of rif controller
+ *
+ * On success, the semaphore is taken.
+ *
+ * @param ctl reference on rif controller.
+ * @param id resource id of controller.
+ * @return 0 on success, negative errno on failure.
+ */
+int stm32_rifprot_acquire_sem(const struct rifprot_controller *ctl,
+			      uint32_t id);
+
+/**
+ * @brief Release semaphore id of rif controller
+ *
+ * On success, the semaphore is release.
+ *
+ * @param ctl reference on rif controller.
+ * @param id resource id of controller.
+ * @return 0 on success, negative errno on failure.
+ */
+int stm32_rifprot_release_sem(const struct rifprot_controller *ctl,
+			      uint32_t id);
+
 #endif
-
 #endif /* __STM32_RIF_H */

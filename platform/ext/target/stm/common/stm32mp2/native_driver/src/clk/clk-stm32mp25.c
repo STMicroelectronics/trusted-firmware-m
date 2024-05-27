@@ -3278,6 +3278,9 @@ static int stm32mp25_clk_rif_init(const struct device *dev)
 	struct clk_stm32_priv *priv = (struct clk_stm32_priv *)dev_get_data(dev);
 	int err;
 
+	if (!drv_cfg->rif_ctl)
+		return 0;
+
 	err = stm32_rifprot_init(drv_cfg->rif_ctl);
 	if (err)
 		goto out;
@@ -3289,7 +3292,7 @@ out:
 }
 
 #if (IS_ENABLED(STM32_M33TDCID))
-// tfm_s_cm33tdcid:  
+//tfm_s_cm33tdcid:
 static int clk_stm32_apply_rcc_config(const struct device *dev)
 {
 	const struct stm32_rcc_config *drv_cfg = dev_get_config(dev);
@@ -3408,11 +3411,14 @@ static struct stm32_pll_dt_cfg stm32_pll[] = {
 	STM32_PLL_DEFINE_COND(pll8, PLL8_ID)
 };
 
-DT_INST_RIFPROT_CTRL_DEFINE(0,
-			    DT_INST_REG_ADDR(0) + RCC_SECCFGR0,
-			    DT_INST_REG_ADDR(0) + RCC_PRIVCFGR0,
-			    DT_INST_REG_ADDR(0) + RCC_R0CIDCFGR,
-			    DT_INST_REG_ADDR(0) + RCC_R0SEMCR, RCC_NB_RIF_RES);
+static __unused const struct rif_base rif_rbase = {
+	.sec = DT_INST_REG_ADDR(0) + RCC_SECCFGR0,
+	.priv = DT_INST_REG_ADDR(0) + RCC_PRIVCFGR0,
+	.cid = DT_INST_REG_ADDR(0) + RCC_R0CIDCFGR,
+	.sem = DT_INST_REG_ADDR(0) + RCC_R0SEMCR,
+};
+
+DT_INST_RIFPROT_CTRL_DEFINE(0, &rif_rbase, NULL, RCC_NB_RIF_RES);
 
 const struct stm32_rcc_config stm32mp25_rcc_cfg = {
 	.base = DT_INST_REG_ADDR(0),

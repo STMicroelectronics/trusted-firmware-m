@@ -17,6 +17,8 @@
 
 #include <dt-bindings/rif/stm32mp25-rif.h>
 
+#if (!IS_ENABLED(STM32_NSEC))
+
 #define _PERIPH_IDS_PER_REG	32
 #define SEC_PRIV_X_OFFSET(_id)	(U(0x4) * (_id / _PERIPH_IDS_PER_REG))
 #define SEC_PRIV_X_SHIFT(_id)	(_id % _PERIPH_IDS_PER_REG)
@@ -35,7 +37,7 @@
 #define SEMAPHORE_IS_AVAILABLE(cid_cfgr, my_id)			\
 	(_FLD_GET(_CIDCFGR_CFEN, cid_cfgr) &&			\
 	 _FLD_GET(_CIDCFGR_SEMEN, cid_cfgr) &&			\
-	 ((_FLD_GET(_CIDCFGR_SEMWLC, cid_cfgr)) == BIT(my_id)))
+	 ((_FLD_GET(_CIDCFGR_SEMWLC, cid_cfgr)) & BIT(my_id)))
 
 // SEMCR register bitfields
 #define _SEMCR_MUTEX_MASK	BIT(0)
@@ -45,104 +47,83 @@
 
 #define MY_CID RIF_CID2
 
-#if (IS_ENABLED(STM32_SEC))
-// tfm_s
-int stm32_rifprot_setup(const struct rifprot_controller *rifprot_ctl,
-			struct rifprot_config *rifprot_cfg);
-
-static int stm32_rifprot_semaphore_acquire(const struct rifprot_controller *rifprot_ctl,
-					   uint32_t id)
+static int _rifprot_semaphore_acquire(const struct rifprot_controller *ctl,
+				      uint32_t id)
 {
 	uint32_t semcr;
 
-	io_setbits32(rifprot_ctl->rbase.sem + CID_SEM_X_OFFSET(id), _SEMCR_MUTEX_MASK);
+	io_setbits32(ctl->rbase->sem + CID_SEM_X_OFFSET(id), _SEMCR_MUTEX_MASK);
 
-	semcr = io_read32(rifprot_ctl->rbase.sem + CID_SEM_X_OFFSET(id));
+	semcr = io_read32(ctl->rbase->sem + CID_SEM_X_OFFSET(id));
 	if (semcr != (_SEMCR_MUTEX_MASK | _FLD_PREP(_SEMCR_SCID, MY_CID)))
 		return -EPERM;
 
 	return 0;
 }
 
-int stm32_rifprot_set_config(const struct rifprot_controller *rifprot_ctl,
-			     const struct rifprot_config *rifprot_cfg, int ncfg)
+static int _rifprot_semaphore_release(const struct rifprot_controller *ctl,
+				      uint32_t id)
 {
-	int nelem = rifprot_ctl->nrifprot;
-	struct rifprot_config *rcfg_elem;
-	int i = 0;
-	int err;
+	uint32_t semcr;
 
-	for_each_rifprot_cfg(rifprot_cfg, rcfg_elem, ncfg, i) {
-		err = stm32_rifprot_setup(rifprot_ctl, rcfg_elem);
-		if (err) {
-			EMSG("rifprot id:%d setup fail",
-			     rcfg_elem->id, nelem);
-			return err;
-		}
-	}
+	semcr = io_read32(ctl->rbase->sem + CID_SEM_X_OFFSET(id));
+	/* if no semaphore */
+	if (!(semcr & _SEMCR_MUTEX_MASK))
+		return 0;
+
+	/* if semaphore taken but not my cid */
+	if (semcr != (_SEMCR_MUTEX_MASK | _FLD_PREP(_SEMCR_SCID, MY_CID)))
+		return -EPERM;
+
+	io_clrbits32(ctl->rbase->sem + CID_SEM_X_OFFSET(id), _SEMCR_MUTEX_MASK);
 
 	return 0;
 }
 
-int stm32_rifprot_init(const struct rifprot_controller *rifprot_ctl)
-{
-	return stm32_rifprot_set_config(rifprot_ctl, rifprot_ctl->rifprot_cfg,
-					rifprot_ctl->nrifprot);
-}
-
 #if (IS_ENABLED(STM32_M33TDCID))
-// tfm_s_cm33tdcid
-int stm32_rifprot_setup(const struct rifprot_controller *rifprot_ctl,
-			struct rifprot_config *rifprot_cfg)
+static int _rifprot_set_conf(const struct rifprot_controller *ctl,
+			     struct rifprot_config *cfg)
 {
-	uintptr_t offset = SEC_PRIV_X_OFFSET(rifprot_cfg->id);
-	uint32_t shift = SEC_PRIV_X_SHIFT(rifprot_cfg->id);
+	uintptr_t offset = SEC_PRIV_X_OFFSET(cfg->id);
+	uint32_t shift = SEC_PRIV_X_SHIFT(cfg->id);
 
-	if (rifprot_cfg->id >= rifprot_ctl->nperipherals)
-		return -EINVAL;
+	/* disable filtering befor write sec and priv cfgr */
+	io_clrbits32(ctl->rbase->cid + CID_SEM_X_OFFSET(cfg->id), _CIDCFGR_CFEN_MASK);
 
-	io_clrsetbits32(rifprot_ctl->rbase.sec + offset, BIT(shift),
-			rifprot_cfg->sec << shift);
+	io_clrsetbits32(ctl->rbase->sec + offset, BIT(shift), cfg->sec << shift);
+	io_clrsetbits32(ctl->rbase->priv + offset, BIT(shift), cfg->priv << shift);
 
-	io_clrsetbits32(rifprot_ctl->rbase.priv + offset, BIT(shift),
-			rifprot_cfg->priv << shift);
+	io_write32(ctl->rbase->cid + CID_SEM_X_OFFSET(cfg->id), cfg->cid_attr);
 
-	io_write32(rifprot_ctl->rbase.cid + CID_SEM_X_OFFSET(rifprot_cfg->id),
-		   rifprot_cfg->cid_attr);
-
-	if (rifprot_ctl->rbase.sem &&
-	    SEMAPHORE_IS_AVAILABLE(rifprot_cfg->cid_attr, MY_CID))
-		return stm32_rifprot_semaphore_acquire(rifprot_ctl,
-						       rifprot_cfg->id);
+	if (ctl->rbase->sem &&
+	    SEMAPHORE_IS_AVAILABLE(cfg->cid_attr, MY_CID))
+		return stm32_rifprot_acquire_sem(ctl, cfg->id);
 
 	return 0;
 }
 
 #else
-//tfm_s_ca35tdcid
-int stm32_rifprot_setup(const struct rifprot_controller *rifprot_ctl,
-			struct rifprot_config *rifprot_cfg)
+static int _rifprot_set_conf(const struct rifprot_controller *ctl,
+			     struct rifprot_config *cfg)
 {
-	uintptr_t offset = SEC_PRIV_X_OFFSET(rifprot_cfg->id);
-	uint32_t shift = SEC_PRIV_X_SHIFT(rifprot_cfg->id);
+	uintptr_t offset = SEC_PRIV_X_OFFSET(cfg->id);
+	uint32_t shift = SEC_PRIV_X_SHIFT(cfg->id);
 	bool write_cfg = false;
 	uint32_t cidcfgr;
 	int err = 0;
 
 	/*
 	 * if not TDCID
-	 * write RCC_SECCFGR0 & RCC_PRIVCFGR0 if:
+	 * write SECCFGR0 & PRIVCFGR0 if:
 	 *  - SEM_EN=1 && SEMWLC=MY_CID && acquire semaphore
 	 *  - SEM_EN=0 && SCID=MY_CID
 	 */
 
-	cidcfgr = io_read32(rifprot_ctl->rbase.cid +
-			    CID_SEM_X_OFFSET(rifprot_cfg->id));
+	cidcfgr = io_read32(ctl->rbase->cid + CID_SEM_X_OFFSET(cfg->id));
 
-	if (rifprot_ctl->rbase.sem &&
+	if (ctl->rbase->sem &&
 	    SEMAPHORE_IS_AVAILABLE(cidcfgr, MY_CID)) {
-		err = stm32_rifprot_semaphore_acquire(rifprot_ctl,
-						      rifprot_cfg->id);
+		err = stm32_rifprot_acquire_sem(ctl, cfg->id);
 		if (!err)
 			write_cfg = true;
 	} else if (!_FLD_GET(_CIDCFGR_SEMEN, cidcfgr) &&
@@ -151,14 +132,84 @@ int stm32_rifprot_setup(const struct rifprot_controller *rifprot_ctl,
 	}
 
 	if (write_cfg) {
-		io_clrsetbits32(rifprot_ctl->rbase.sec + offset,
-				BIT(shift), rifprot_cfg->sec << shift);
-
-		io_clrsetbits32(rifprot_ctl->rbase.priv + offset,
-				BIT(shift), rifprot_cfg->priv << shift);
+		io_clrsetbits32(ctl->rbase->sec + offset, BIT(shift),
+				cfg->sec << shift);
+		io_clrsetbits32(ctl->rbase->priv + offset, BIT(shift),
+				cfg->priv << shift);
 	}
 
 	return err;
+
 }
 #endif
+
+int stm32_rifprot_acquire_sem(const struct rifprot_controller *ctl, uint32_t id)
+{
+	if (!ctl)
+		return -ENODEV;
+
+	if (id >= ctl->nperipherals)
+		return -EINVAL;
+
+	if (ctl->ops && ctl->ops->acquire_sem)
+		return ctl->ops->acquire_sem(ctl, id);
+
+	return _rifprot_semaphore_acquire(ctl, id);
+}
+
+int stm32_rifprot_release_sem(const struct rifprot_controller *ctl, uint32_t id)
+{
+	if (!ctl)
+		return -ENODEV;
+
+	if (id >= ctl->nperipherals)
+		return -EINVAL;
+
+	if (ctl->ops && ctl->ops->release_sem)
+		return ctl->ops->release_sem(ctl, id);
+
+	return _rifprot_semaphore_release(ctl, id);
+}
+
+int stm32_rifprot_set_conf(const struct rifprot_controller *ctl,
+			   struct rifprot_config *cfg)
+{
+	if (!ctl || !cfg)
+		return -ENODEV;
+
+	if (cfg->id >= ctl->nperipherals)
+		return -EINVAL;
+
+	if (ctl->ops && ctl->ops->set_conf)
+		return ctl->ops->set_conf(ctl, cfg);
+
+	return _rifprot_set_conf(ctl, cfg);
+}
+
+static int _rifprot_init(const struct rifprot_controller *ctl)
+{
+	struct rifprot_config *rcfg_elem;
+	int err, i = 0;
+
+	for_each_rifprot_cfg(ctl->rifprot_cfg, rcfg_elem, ctl->nrifprot, i) {
+		err = stm32_rifprot_set_conf(ctl, rcfg_elem);
+		if (err) {
+			EMSG("rifprot id:%d setup fail", rcfg_elem->id);
+			return err;
+		}
+	}
+
+	return 0;
+}
+
+int stm32_rifprot_init(const struct rifprot_controller *ctl)
+{
+	if (!ctl || !ctl->dev)
+		return -ENODEV;
+
+	if (ctl->ops && ctl->ops->init)
+		return ctl->ops->init(ctl);
+
+	return _rifprot_init(ctl);
+}
 #endif

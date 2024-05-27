@@ -152,11 +152,14 @@ static int stm32_gpio_init(const struct device *dev)
 
 #define STM32_GPIO_INIT(n)								\
 											\
-DT_INST_RIFPROT_CTRL_DEFINE(n,								\
-			    DT_INST_REG_ADDR(n) + GPIO_SECR_OFFSET,			\
-			    DT_INST_REG_ADDR(n) + GPIO_PRIVCFGR_OFFSET,			\
-			    DT_INST_REG_ADDR(n) + GPIO_CIDCFGR_OFFSET,			\
-			    DT_INST_REG_ADDR(n) + GPIO_SEMCR_OFFSET, GPIO_RIF_RES);	\
+static __unused const struct rif_base rbase_##n = {					\
+	.sec = DT_INST_REG_ADDR(n) + GPIO_SECR_OFFSET,					\
+	.priv = DT_INST_REG_ADDR(n) + GPIO_PRIVCFGR_OFFSET,				\
+	.cid = DT_INST_REG_ADDR(n) + GPIO_CIDCFGR_OFFSET,				\
+	.sem = DT_INST_REG_ADDR(n) + GPIO_SEMCR_OFFSET,					\
+};											\
+											\
+DT_INST_RIFPROT_CTRL_DEFINE(n, &rbase_##n, NULL, GPIO_RIF_RES);				\
 											\
 static const struct stm32_gpio_config stm32_gpio_cfg_##n = {				\
 	.base = DT_INST_REG_ADDR(n),							\

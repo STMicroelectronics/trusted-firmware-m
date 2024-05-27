@@ -296,6 +296,7 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/spi/stm32_omm.c
 			${STM_SOC_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c
 			${STM_SOC_DIR}/native_driver/src/mtd/nor/spi_nor.c
+			${STM_SOC_DIR}/native_driver/src/rif/stm32_rif.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c
@@ -343,6 +344,7 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/regulator/stm32mp25_pwr_regul.c
 			${STM_SOC_DIR}/native_driver/src/ddr/stm32mp2_ram.c
 			${STM_SOC_DIR}/native_driver/src/power/stm32mp2_pwr.c
+			${STM_SOC_DIR}/native_driver/src/rif/stm32_rif.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c
