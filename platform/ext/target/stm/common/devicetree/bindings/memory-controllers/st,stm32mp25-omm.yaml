@@ -13,6 +13,7 @@ include:
   - base.yaml
   - pinctrl-device.yaml
   - reset-device.yaml
+  - access-device.yaml
   - memory-region.yaml
   - st,stm32mp25-rif.yaml
   - name: st,stm32mp25-syscfg-properties.yaml
