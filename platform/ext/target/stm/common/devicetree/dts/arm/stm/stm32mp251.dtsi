@@ -278,7 +278,59 @@
 			compatible = "st,stm32mp25-pwr";
 			reg = <0x54210000 0x400>;
 			resets = <&rctl VSW_R>;
+
+			st,syscfg-vddio = <&syscfg 0x4000>;
+
 			status = "disabled";
+
+			vdd33ucpd: vdd33ucpd {
+				compatible = "st,stm32mp25-pwr-regu";
+				regulator-name = "vdd33ucpd";
+				status = "disabled";
+			};
+
+			vdda18adc: vdda18adc {
+				compatible = "st,stm32mp25-pwr-regu";
+				regulator-name = "vdda18adc";
+				status = "disabled";
+			};
+
+			vddgpu: vddgpu {
+				compatible = "st,stm32mp25-pwr-regu";
+				regulator-name = "vddgpu";
+				status = "disabled";
+			};
+
+			vddio1: vddio1 {
+				compatible = "st,stm32mp25-pwr-regu";
+				regulator-name = "vddio1";
+				status = "disabled";
+			};
+
+			vddio2: vddio2 {
+				compatible = "st,stm32mp25-pwr-regu";
+				regulator-name = "vddio2";
+				status = "disabled";
+			};
+
+			vddio3: vddio3 {
+				compatible = "st,stm32mp25-pwr-regu";
+				regulator-name = "vddio3";
+				status = "disabled";
+			};
+
+			vddio4: vddio4 {
+				compatible = "st,stm32mp25-pwr-regu";
+				regulator-name = "vddio4";
+				status = "disabled";
+			};
+
+			vddio: vddio {
+				compatible = "st,stm32mp25-pwr-regu";
+				regulator-name = "vddio";
+				regulator-always-on;
+				status = "disabled";
+			};
 		};
 
 		pinctrl: pinctrl@54240000 {

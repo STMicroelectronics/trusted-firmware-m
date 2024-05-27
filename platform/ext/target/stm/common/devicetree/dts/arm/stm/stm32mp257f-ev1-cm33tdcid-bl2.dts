@@ -231,4 +231,55 @@
 
 &pwr {
 	status = "okay";
+
+	vdd33ucpd: vdd33ucpd {
+		status = "okay";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		vin-supply = <&vdd3v3_usb>;
+		regulator-always-on;
+	};
+
+	vdda18adc: vdda18adc {
+		status = "okay";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		vin-supply = <&v1v8>;
+		regulator-always-on;
+	};
+
+	vddgpu: vddgpu {
+		status = "okay";
+		vin-supply = <&vddgpu_pmic>;
+	};
+
+	vddio1: vddio1 {
+		status = "okay";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <3300000>;
+		vin-supply = <&vddio_sdcard>;
+	};
+
+	vddio2: vddio2 {
+		status = "okay";
+		vin-supply = <&v1v8>;
+		regulator-always-on;
+	};
+
+	vddio3: vddio3 {
+		status = "okay";
+		vin-supply = <&vddio_pmic>;
+		regulator-always-on;
+	};
+
+	vddio4: vddio4 {
+		status = "okay";
+		vin-supply = <&vddio_pmic>;
+		regulator-always-on;
+	};
+
+	vddio: vddio {
+		status = "okay";
+		vin-supply = <&vddio_pmic>;
+	};
 };
