@@ -509,5 +509,13 @@
 				status = "disabled";
 			};
 		};
+
+		rtc: rtc@56000000 {
+			compatible = "st,stm32mp25-rtc";
+			reg = <0x56000000 0x400>;
+			clocks = <&rcc CK_BUS_RTC>, <&rcc RTC_CK>;
+			clock-names = "pclk", "rtc_ck";
+			status = "disabled";
+		};
 	};
 };
