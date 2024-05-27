@@ -1,5 +1,5 @@
 # Copyright (c) 2023, STMicroelectronics
-# SPDX -License-Identifier: Apache-2.0
+# SPDX-License-Identifier: Apache-2.0
 
 description: |
   Resource isolation framework (RIF) is a comprehensive set of hardware blocks
@@ -25,13 +25,20 @@ compatible: "st,stm32mp25-rifsc"
 
 include:
   - base.yaml
+  - access-controller.yaml
   - st,stm32mp25-rif.yaml
 
 properties:
   reg:
     required: true
 
+  "#access-controller-cells":
+    const: 1
+
   st,rimu:
     type: array
     description:
       protection value of rif master port, each entry is defined by a 32 bit.
+
+access-controller-cells:
+  - protreg
