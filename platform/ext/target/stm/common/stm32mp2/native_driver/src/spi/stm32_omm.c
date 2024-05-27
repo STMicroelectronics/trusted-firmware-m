@@ -16,7 +16,9 @@
 #include <pinctrl.h>
 #include <reset.h>
 #include <stm32_rif.h>
+#include <firewall.h>
 #include <syscon.h>
+#include <debug.h>
 
 /*
  * OCTOSPIM registers
@@ -71,9 +73,8 @@ struct stm32_omm_cfg {
 	const struct device *clk_dev;
 	const clk_subsys_t clk_subsys;
 	const struct pinctrl_dev_config *pcfg;
-	const struct rifprot_controller *rif_ctrl;
-	const struct rifprot_config *rif_cfg;
-	int n_rif_cfg;
+	const struct firewall_spec *firewall_ctrls;
+	const int n_firewall_ctrls;
 	const struct device *amcr_dev;
 	uint16_t amcr_base;
 	uint8_t amcr_mask;
@@ -269,7 +270,8 @@ static int stm32_omm_configure(const struct device *dev)
 int stm32_omm_init(const struct device *dev)
 {
 	const struct stm32_omm_cfg *drv_cfg = dev_get_config(dev);
-	int ret;
+	struct firewall_spec *firewall;
+	int i, ret;
 
 	ret = stm32_omm_set_mm(dev);
 	if (ret != 0) {
@@ -286,8 +288,16 @@ int stm32_omm_init(const struct device *dev)
 		return ret;
 	}
 
-	return stm32_rifprot_set_config(drv_cfg->rif_ctrl,
-					drv_cfg->rif_cfg, drv_cfg->n_rif_cfg);
+	if (IS_ENABLED(STM32_SEC)) {
+		for_each_firewall(drv_cfg->firewall_ctrls, firewall,
+				  drv_cfg->n_firewall_ctrls, i) {
+			ret = firewall_set_configuration(firewall);
+			if (ret != 0)
+				break;
+		}
+	}
+
+	return ret;
 }
 
 #define DT_GET_MM_BASE_BY_NAME_OR(n, name)							\
@@ -309,13 +319,11 @@ int stm32_omm_init(const struct device *dev)
 #define STM32_OMM_INIT(n)									\
 												\
 PINCTRL_DT_INST_DEFINE(n);									\
+DT_INST_ACCESS_CTRLS_DEFINE(n);									\
 												\
 static const struct stm32_ospi_cfg stm32_ospi_cfg_##n[] = {					\
 	DT_INST_FOREACH_CHILD(n, STM32_OSPI_CHILD_DEFINE)					\
 };												\
-												\
-DT_RIFPROT_CTRL_EXTERN(DT_NODELABEL(rifsc));							\
-DT_INST_RIFPROT_CONFIG_DEFINE(n);								\
 												\
 static const struct stm32_omm_cfg stm32_omm_cfg_##n = {						\
 	.base = DT_INST_REG_ADDR_BY_NAME(n, omm),						\
@@ -328,9 +336,8 @@ static const struct stm32_omm_cfg stm32_omm_cfg_##n = {						\
 	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),					\
 	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),				\
 	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(n),						\
-	.rif_ctrl = DT_RIFPROT_CTRL_GET(DT_NODELABEL(rifsc)),					\
-	.rif_cfg = DT_INST_RIFPROT_CONFIG_GET(n),						\
-	.n_rif_cfg = ARRAY_SIZE(DT_INST_RIFPROT_CONFIG_GET(n)),					\
+	.firewall_ctrls = DT_INST_ACCESS_CTRLS_GET(n),						\
+	.n_firewall_ctrls = DT_INST_ACCESS_CTRLS_NUM(n),					\
 	.amcr_dev = DEVICE_DT_GET(DT_INST_PHANDLE(n, st_syscfg_amcr)),				\
 	.amcr_base = DT_INST_PHA(n, st_syscfg_amcr, offset),					\
 	.amcr_mask = DT_INST_PHA(n, st_syscfg_amcr, mask),					\
