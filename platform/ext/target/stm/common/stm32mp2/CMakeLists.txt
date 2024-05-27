@@ -102,6 +102,7 @@ target_sources(platform_s
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_serc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/regulator/regulator_common.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/regulator/stm32mp2_pmic.c>
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/regulator/stm32mp25_pwr_regul.c>
 		$<$<BOOL:${STM32_DDR_CACHED}>:${STM_SOC_DIR}/native_driver/src/core/stm32_icache.c>
 		$<$<BOOL:${STM32_DDR_CACHED}>:${STM_SOC_DIR}/native_driver/src/core/stm32_dcache.c>
 		${STM_SOC_DIR}/native_driver/src/i2c/stm32_i2c.c
@@ -157,6 +158,7 @@ target_sources(tfm_s
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/regulator/stm32mp2_pmic.c>
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/regulator/stm32mp25_pwr_regul.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/secure/services/src/stm32_copro.c>
 )
 
@@ -294,6 +296,7 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/i2c/stm32_i2c.c
 			${STM_SOC_DIR}/native_driver/src/regulator/regulator_common.c
 			${STM_SOC_DIR}/native_driver/src/regulator/stm32mp2_pmic.c
+			${STM_SOC_DIR}/native_driver/src/regulator/stm32mp25_pwr_regul.c
 			$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${STM_SOC_DIR}/secure/nv_counters.c>
 			$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_OTP}>>:${STM_SOC_DIR}/secure/otp.c>
 			${STM_SOC_DIR}/secure/provisioning.c
@@ -330,6 +333,7 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/bsec/stm32_bsec3.c
 			${STM_SOC_DIR}/native_driver/src/i2c/stm32_i2c.c
 			${STM_SOC_DIR}/native_driver/src/regulator/stm32mp2_pmic.c
+			${STM_SOC_DIR}/native_driver/src/regulator/stm32mp25_pwr_regul.c
 			${STM_SOC_DIR}/native_driver/src/ddr/stm32mp2_ram.c
 			${STM_SOC_DIR}/native_driver/src/power/stm32mp2_pwr.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c
