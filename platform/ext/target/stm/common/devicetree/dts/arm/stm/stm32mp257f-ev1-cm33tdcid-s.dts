@@ -292,3 +292,7 @@
 		      <&scmi_clk_icn_flexgen_09>, <&scmi_clk_icn_flexgen_10>;
 	clk-id-max = <STM32MP25_CK_SCMI_MAX>;
 };
+
+&rtc {
+	status = "okay";
+};
