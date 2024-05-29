@@ -517,5 +517,13 @@
 			clock-names = "pclk", "rtc_ck";
 			status = "disabled";
 		};
+
+		fmc: memory-controller@58200000 {
+			compatible = "st,stm32mp25-fmc2-ebi";
+			reg = <0x58200000 0x400>;
+			clocks = <&rcc CK_KER_FMC>;
+			resets = <&rctl FMC_R>;
+			status = "disabled";
+		};
 	};
 };
