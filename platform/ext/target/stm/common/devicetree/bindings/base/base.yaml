@@ -65,3 +65,12 @@ properties:
   "#size-cells":
     type: int
     description: number of size cells in reg property
+
+  mboxes:
+    type: phandle-array
+    description: mailbox / IPM channels specifiers
+    specifier-space: mbox
+
+  mbox-names:
+    type: string-array
+    description: Provided names of mailbox channel specifiers
