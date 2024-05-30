@@ -55,5 +55,5 @@ if (TFM_PARTITION_SCP)
 	list(APPEND MANIFEST_LISTS ${CMAKE_CURRENT_LIST_DIR}/manifest/tfm_manifest_list.yaml)
 endif()
 
-set(SCP_FW_VERSION                      "32006b16e589a2904b6e5b60cf8428"   CACHE STRING    "The version of SCP-firmware to use")
-set(SCP_FW_PATH                         "DOWNLOAD"  CACHE PATH      "Path to SCP-firmware (or DOWNLOAD to fetch automatically")
+set(SCP_FW_VERSION                      "495730d17e745e1b74ad4" CACHE STRING   "The version of SCP-firmware to use")
+set(SCP_FW_PATH                         "DOWNLOAD"              CACHE PATH     "Path to SCP-firmware (or DOWNLOAD to fetch automatically")
