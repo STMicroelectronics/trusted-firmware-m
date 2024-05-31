@@ -525,5 +525,32 @@
 			resets = <&rctl FMC_R>;
 			status = "disabled";
 		};
+
+		hpdma1: dma-controller@50400000 {
+			compatible = "st,stm32-dma3";
+			reg = <0x50400000 0x1000>;
+			clocks = <&rcc CK_BUS_HPDMA1>;
+			resets = <&rctl HPDMA1_R>;
+			#dma-cells = <4>;
+			status = "disabled";
+		};
+
+		hpdma2: dma-controller@50410000 {
+			compatible = "st,stm32-dma3";
+			reg = <0x50410000 0x1000>;
+			clocks = <&rcc CK_BUS_HPDMA2>;
+			resets = <&rctl HPDMA2_R>;
+			#dma-cells = <4>;
+			status = "disabled";
+		};
+
+		hpdma3: dma-controller@50420000 {
+			compatible = "st,stm32-dma3";
+			reg = <0x50420000 0x1000>;
+			clocks = <&rcc CK_BUS_HPDMA3>;
+			resets = <&rctl HPDMA3_R>;
+			#dma-cells = <4>;
+			status = "disabled";
+		};
 	};
 };
