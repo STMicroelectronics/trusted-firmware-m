@@ -136,9 +136,10 @@
 			status = "disabled";
 		};
 
-		rifsc: rifsc@52080000 {
+		rifsc: access-controller@52080000 {
 			compatible = "st,stm32mp25-rifsc";
 			reg = <0x52080000 0x1000>;
+			#access-controller-cells = <1>;
 			#address-cells = <1>;
 			#size-cells = <1>;
 			status = "disabled";
