@@ -308,3 +308,11 @@
 &hpdma3 {
 	status = "okay";
 };
+
+&exti1 {
+	status = "okay";
+};
+
+&exti2 {
+	status = "okay";
+};
