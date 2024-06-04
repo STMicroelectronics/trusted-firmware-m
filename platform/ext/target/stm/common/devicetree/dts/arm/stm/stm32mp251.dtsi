@@ -552,5 +552,23 @@
 			#dma-cells = <4>;
 			status = "disabled";
 		};
+
+		exti1: interrupt-controller@54220000 {
+			compatible = "st,stm32mp1-exti", "syscon";
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			#address-cells = <0>;
+			reg = <0x54220000 0x400>;
+			status = "disabled";
+		};
+
+		exti2: interrupt-controller@56230000 {
+			compatible = "st,stm32mp1-exti", "syscon";
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			#address-cells = <0>;
+			reg = <0x56230000 0x400>;
+			status = "disabled";
+		};
 	};
 };
