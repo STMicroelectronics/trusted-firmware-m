@@ -188,6 +188,23 @@
 			status = "disabled";
 		};
 
+		ipcc1: mbox-controller@50490000 {
+			compatible = "st,stm32mp25-ipcc";
+			reg = <0x50490000 0x400>;
+			interrupts = <173 0>;
+			clocks = <&rcc CK_BUS_IPCC1>;
+			#mbox-cells = <1>;
+			status = "disabled";
+		};
+
+		ipcc2: mailbox@56250000 {
+			compatible = "st,stm32mp25-ipcc";
+			reg = <0x56250000 0x400>;
+			clocks = <&rcc CK_BUS_IPCC2>;
+			#mbox-cells = <1>;
+			status = "disabled";
+		};
+
 		risab1: risab@520f0000 {
 			compatible = "st,stm32mp25-risab";
 			reg = <0x520f0000 0x1000>, <0xe000000 0x20000>;
