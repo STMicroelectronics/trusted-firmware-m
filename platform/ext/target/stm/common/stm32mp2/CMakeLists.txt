@@ -108,6 +108,7 @@ target_sources(platform_s
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/memc/stm32_fmc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/dma/stm32_hpdma.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/interrupt-controller/stm32_exti.c>
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/tamper/stm32_tamp.c>
 		$<$<BOOL:${STM32_DDR_CACHED}>:${STM_SOC_DIR}/native_driver/src/core/stm32_icache.c>
 		$<$<BOOL:${STM32_DDR_CACHED}>:${STM_SOC_DIR}/native_driver/src/core/stm32_dcache.c>
 		${STM_SOC_DIR}/native_driver/src/i2c/stm32_i2c.c
@@ -175,6 +176,7 @@ target_sources(tfm_s
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/memc/stm32_fmc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/dma/stm32_hpdma.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/interrupt-controller/stm32_exti.c>
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/tamper/stm32_tamp.c>
 )
 
 #========================= Platform Non-Secure ================================#
