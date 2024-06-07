@@ -17,10 +17,24 @@
 
 #define __HAL_RCC_CPU1_BOOT_ENABLE()        SET_BIT(RCC->CPUBOOTCR, RCC_CPUBOOTCR_BOOT_CPU1)
 
+/*
+ * the cortexA is in WFI and all exti are masked.
+ * so before send event we must:
+ * - unmask cpu2_sev (exti1 64) of cortexA (C1)
+ * - apply rif access on exti (exti driver)
+ * - send event by exti software interrupt
+ */
+static int cpu1_prepare(void)
+{
+	EXTI1->C1IMR3 |= 1;
+
+	return 0;
+}
+/* this function must be call before exti driver init */
+SYS_INIT(cpu1_prepare, CORE, 9);
+
 static int cpu1_wakeup(void)
 {
-	/* Use C2SEV */
-	EXTI1->C1IMR3 |= 1 ;
 	__HAL_RCC_CPU1_BOOT_ENABLE();
 	EXTI1->SWIER3 |=1;
 
