@@ -570,5 +570,16 @@
 			reg = <0x56230000 0x400>;
 			status = "disabled";
 		};
+
+		tamp: tamp@56010000 {
+			compatible = "st,stm32mp25-tamp";
+			reg = <0x56010000 0x400>;
+			clocks = <&rcc CK_BUS_RTC>;
+			interrupts = <14 0>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges;
+			status = "disabled";
+		};
 	};
 };
