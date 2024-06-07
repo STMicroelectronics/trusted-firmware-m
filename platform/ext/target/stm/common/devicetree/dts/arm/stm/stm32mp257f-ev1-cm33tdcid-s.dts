@@ -316,3 +316,7 @@
 &exti2 {
 	status = "okay";
 };
+
+&tamp {
+	status = "okay";
+};
