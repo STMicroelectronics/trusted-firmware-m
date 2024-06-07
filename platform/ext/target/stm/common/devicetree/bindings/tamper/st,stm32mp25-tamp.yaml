@@ -1,0 +1,22 @@
+# Copyright (c) 2024, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  The anti-tamper detection circuit is used to protect sensitive data from
+  external attacks. 128 32-bit backup registers are retained in all low-power
+  modes and also in V BAT mode.
+
+compatible: "st,stm32mp25-tamp"
+
+include:
+  - st,stm32-tamp.yaml
+  - st,stm32mp25-rif.yaml
+
+properties:
+  st,backup-zones:
+    type: array
+    required: true
+    description: |
+      Defines the topology of the backup registers zones
+      For STM32MP2x platforms, it corresponds to
+      <zone1-rif1 zone1-rif2 zone2-rif1 zone2-rif2 zone3-rif1 zone3-rif0 zone3-rif2>;
