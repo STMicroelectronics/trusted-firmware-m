@@ -88,18 +88,10 @@
 
 /* OTP18 = BOOTROM_CONFIG_0-3: Security life-cycle word 2 */
 #define _OTP_SECURE_BOOT		18U
-#ifdef CONFIG_STM32MP25X_REVA
-#define _OTP_CLOSED_SECURE		BIT(0)
-#else
 #define _OTP_CLOSED_SECURE		GENMASK_32(3, 0)
-#endif
 
 /* OEM Keys are stored from _OEM_KEY_FIRST_OTP to OTP bsec_dev.max_id (367) */
-#ifdef CONFIG_STM32MP25X_REVA
-#define _OEM_KEY_FIRST_OTP		364
-#else
 #define _OEM_KEY_FIRST_OTP		360
-#endif /* CONFIG_STM32MP25X_REVA */
 
 struct bsec_shadow {
 	uint32_t magic;
