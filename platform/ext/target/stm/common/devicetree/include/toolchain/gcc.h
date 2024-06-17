@@ -1,9 +1,12 @@
 /*
+ * Copyright (C) 2020, Intel Corporation
+ * Copyright (C) 2023, Nordic Semiconductor ASA
  * Copyright (c) 2010-2014,2017 Wind River Systems, Inc.
  * Copyright (C) 2023 STMicroelectronics.
  *
  * SPDX-License-Identifier: Apache-2.0
- * fork from zephyr
+ *
+ * fork from zephyr: iterable_sections.h, gcc.h
 */
 
 #ifndef INCLUDE_TOOLCHAIN_GCC_H_

@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2020 STMicroelectronics.
+ * Copyright (c) 2022 Arm Limited. All rights reserved.
+ * Copyright (c) 2023 STMicroelectronics. All Rights Reserved
  *
  * SPDX-License-Identifier: Apache-2.0
  *

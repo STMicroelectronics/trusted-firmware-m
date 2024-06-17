@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2019, Arm Limited
  * Copyright (C) 2020, STMicroelectronics
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

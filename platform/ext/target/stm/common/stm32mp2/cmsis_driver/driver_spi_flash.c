@@ -1,10 +1,9 @@
 /*
+ * Copyright (c) 2020, Arm Limited. All rights reserved.
  * Copyright (c) 2023, STMicroelectronics - All Rights Reserved
- * Author(s): Ludovic Barre, <ludovic.barre@st.com> for STMicroelectronics.
  *
- * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: Apache-2.0
  */
-
 #include <stdbool.h>
 #include <Driver_Flash.h>
 #include <flash_layout.h>

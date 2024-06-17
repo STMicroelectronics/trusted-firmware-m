@@ -1,7 +1,11 @@
 /*
- * Copyright (c) 2023, STMicroelectronics - All Rights Reserved
+ * Copyright (c) 2018-2019 Nordic Semiconductor ASA
+ * Copyright (c) 2015 Wind River Systems, Inc.
+ * Copyright (c) 2023 STMicroelectronics
  *
- * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * fork of zephyr
  */
 
 #ifndef  __UART_H__
