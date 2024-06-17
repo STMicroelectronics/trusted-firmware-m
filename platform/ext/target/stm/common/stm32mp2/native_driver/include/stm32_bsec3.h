@@ -42,10 +42,10 @@
 
 void stm32_bsec_write_debug_conf(uint32_t val);
 
-int stm32_bsec_otp_size(enum tfm_otp_element_id_t id, size_t *size);
-int stm32_bsec_otp_read(enum tfm_otp_element_id_t id,
+int stm32_bsec_otp_size_by_id(enum tfm_otp_element_id_t id, size_t *size);
+int stm32_bsec_otp_read_by_id(enum tfm_otp_element_id_t id,
 			size_t out_len, uint8_t *out);
-int stm32_bsec_otp_write(enum tfm_otp_element_id_t id,
+int stm32_bsec_otp_write_by_id(enum tfm_otp_element_id_t id,
 			 size_t in_len, const uint8_t *in);
 int stm32_bsec_dummy_switch(void);
 bool stm32_bsec_is_valid(void);

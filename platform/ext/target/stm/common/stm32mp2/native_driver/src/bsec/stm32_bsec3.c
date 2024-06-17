@@ -330,8 +330,8 @@ static int __maybe_unused _otp_write_lcs(uint32_t in_len, const uint8_t *in)
 /*
  * Interface with TFM
  */
-int stm32_bsec_otp_read(enum tfm_otp_element_id_t id,
-			size_t out_len, uint8_t *out)
+int stm32_bsec_otp_read_by_id(enum tfm_otp_element_id_t id, size_t out_len,
+			      uint8_t *out)
 {
 	switch (id) {
 	case PLAT_OTP_ID_LCS:
@@ -362,7 +362,7 @@ int stm32_bsec_otp_read(enum tfm_otp_element_id_t id,
 	return 0;
 }
 
-int stm32_bsec_otp_size(enum tfm_otp_element_id_t id, size_t *size)
+int stm32_bsec_otp_size_by_id(enum tfm_otp_element_id_t id, size_t *size)
 {
 	switch (id) {
 	case PLAT_OTP_ID_LCS:
@@ -393,8 +393,8 @@ int stm32_bsec_otp_size(enum tfm_otp_element_id_t id, size_t *size)
 }
 
 #ifdef TFM_DUMMY_PROVISIONING
-int stm32_bsec_otp_write(enum tfm_otp_element_id_t id,
-			 size_t in_len, const uint8_t *in)
+int stm32_bsec_otp_write_by_id(enum tfm_otp_element_id_t id, size_t in_len,
+			       const uint8_t *in)
 {
 	switch (id) {
 	case PLAT_OTP_ID_LCS:
@@ -431,8 +431,8 @@ int stm32_bsec_dummy_switch(void)
 	return 0;
 }
 #else
-int stm32_bsec_otp_write(enum tfm_otp_element_id_t id,
-			 size_t in_len, const uint8_t *in)
+int stm32_bsec_otp_write_by_id(enum tfm_otp_element_id_t id, size_t in_len,
+			       const uint8_t *in)
 {
 	return -ENOTSUP;
 }

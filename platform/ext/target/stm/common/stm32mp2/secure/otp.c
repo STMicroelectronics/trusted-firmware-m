@@ -116,7 +116,7 @@ enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
 	case PLAT_OTP_ID_IAK_LEN:
 	case PLAT_OTP_ID_IMPLEMENTATION_ID:
 	case PLAT_OTP_ID_ENTROPY_SEED:
-		err = stm32_bsec_otp_read(id, out_len, out);
+		err = stm32_bsec_otp_read_by_id(id, out_len, out);
 		break;
 	case PLAT_OTP_ID_IAK_TYPE:
 		err = otp_fake_read(FAKE_OFFSET(iak_type),
@@ -163,7 +163,7 @@ enum tfm_plat_err_t tfm_plat_otp_get_size(enum tfm_otp_element_id_t id,
 	case PLAT_OTP_ID_IAK:
 	case PLAT_OTP_ID_IMPLEMENTATION_ID:
 	case PLAT_OTP_ID_ENTROPY_SEED:
-		err = stm32_bsec_otp_size(id, size);
+		err = stm32_bsec_otp_size_by_id(id, size);
 		break;
 	case PLAT_OTP_ID_IAK_LEN:
 		*size = sizeof(uint32_t);
@@ -222,7 +222,7 @@ enum tfm_plat_err_t tfm_plat_otp_write(enum tfm_otp_element_id_t id,
 	case PLAT_OTP_ID_IMPLEMENTATION_ID:
 	case PLAT_OTP_ID_ENTROPY_SEED:
 	case PLAT_OTP_ID_IAK:
-		err = stm32_bsec_otp_write(id, in_len, in);
+		err = stm32_bsec_otp_write_by_id(id, in_len, in);
 		break;
 	default:
 		return TFM_PLAT_ERR_UNSUPPORTED;
