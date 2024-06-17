@@ -565,8 +565,6 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 	uint32_t srlock[_OTP_ACCESS_SIZE] = { 0U };
 	uint32_t swlock[_OTP_ACCESS_SIZE] = { 0U };
 	uint32_t splock[_OTP_ACCESS_SIZE] = { 0U };
-	uint32_t sfsr[_OTP_ACCESS_SIZE] = { 0U };
-	uint32_t otpvldr[_OTP_ACCESS_SIZE] = { 0U };
 	uint32_t mask = 0U;
 	unsigned int max_id = drv_data->variant->max_id;
 
@@ -590,8 +588,6 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 		srlock[bank] = io_read32(drv_cfg->base + _BSEC_SRLOCK(bank));
 		swlock[bank] = io_read32(drv_cfg->base + _BSEC_SWLOCK(bank));
 		splock[bank] = io_read32(drv_cfg->base + _BSEC_SPLOCK(bank));
-		sfsr[bank] = io_read32(drv_cfg->base + _BSEC_SFSR(bank));
-		otpvldr[bank] = io_read32(drv_cfg->base + _BSEC_OTPVLDR(bank));
 	}
 
 	for (otp = 0U; otp <= max_id ; otp++) {
@@ -617,9 +613,8 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 			continue;
 		}
 
-		/* request shadow if not yet done or not valid */
-		if (!(sfsr[bank] & mask) || !(otpvldr[bank] & mask))
-			shadow_otp(dev, otp);
+		/* reload shadow to read Permanent Programing Lock Flag */
+		shadow_otp(dev, otp);
 
 		drv_data->p_shadow->value[otp] = io_read32(drv_cfg->base +
 							   _BSEC_FVR(otp));
