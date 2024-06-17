@@ -1,7 +1,10 @@
 /*
- * Copyright (C) 2022, STMicroelectronics
+ * Copyright (c) 2022 Andrei-Edward Popa <andrei.popa105@yahoo.com>
+ * Copyright (C) 2023 STMicroelectronics
  *
- * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * fork of zephyr
  */
 #ifndef INCLUDE_RESET_H_
 #define INCLUDE_RESET_H_

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020, STMicroelectronics
+ * Copyright (c) 2017-2019, Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */

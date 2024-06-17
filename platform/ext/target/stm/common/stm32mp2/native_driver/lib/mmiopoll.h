@@ -1,9 +1,9 @@
 /*
+ * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
  * Copyright (c) 2020, STMicroelectronics - All Rights Reserved
  *
- * SPDX-License-Identifier: BSD-3-Clause
+ * SPDX-License-Identifier: GPL-2.0-only
  */
-
 #ifndef  __MMIOPOLL_H__
 #define  __MMIOPOLL_H__
 
