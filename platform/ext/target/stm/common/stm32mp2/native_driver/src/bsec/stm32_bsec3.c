@@ -677,7 +677,7 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 	//bsec_unlock(exceptions);
 }
 
-static void stm32_bsec_shadow_init(const struct device *dev, bool force_load)
+static void stm32_bsec_mirror_init(const struct device *dev, bool force_load)
 {
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(dev);
 	struct stm32_bsec_data *drv_data = dev_get_data(dev);
@@ -708,7 +708,7 @@ static int stm32_bsec_dt_init(const struct device *dev)
 	drv_data->p_shadow = (struct bsec_shadow *)drv_cfg->mirror_addr;
 
 	if (IS_ENABLED(STM32_BL2))
-		stm32_bsec_shadow_init(dev, true);
+		stm32_bsec_mirror_init(dev, true);
 
 	if (drv_data->p_shadow->magic != BSEC_MAGIC)
 		return -ENOSYS;
