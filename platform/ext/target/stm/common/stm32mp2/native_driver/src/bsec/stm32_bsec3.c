@@ -699,6 +699,58 @@ static void stm32_bsec_mirror_init(const struct device *dev, bool force_load)
 	}
 }
 
+static int stm32_bsec_shadow_init(const struct device *dev)
+{
+	const struct stm32_bsec_config *drv_cfg = dev_get_config(dev);
+	const struct nvmem_cell *cell = NULL;
+	bool sw_lock;
+	int i, j, ret;
+
+	for (i = 0; i < drv_cfg->n_otp_cell; i++) {
+		cell = &drv_cfg->otp_cell[i];
+
+		if(cell->n_shadow_value == 0)
+			continue;
+
+		/*
+		 * The shadow_value array must have a value for all
+		 * the OTP of the section.
+		 */
+		if(cell->n_shadow_value != cell->n_otp){
+			EMSG("size of shadow-provisionning not equal to size of"
+			     " reg for node otp : %d",
+			     cell->otp_id);
+			return -EINVAL;
+		}
+
+		for (j = 0; j < cell->n_otp; j++) {
+
+			/* no shadow value to provision, skip OTP */
+			if (cell->shadow_value[j] == 0)
+				continue;
+
+			/* ensure shadow write is allowed */
+			ret = stm32_bsec_read_sw_lock(cell->otp_id + j,
+						      &sw_lock);
+			if (ret)
+				return ret;
+
+			if (sw_lock)
+				return -EACCES;
+
+			stm32_bsec_write(cell->otp_id + j,
+					 cell->shadow_value[j]);
+
+			/* update bsec mirror */
+			_otp_write(cell->otp_id, cell->n_otp * sizeof(uint32_t),
+				   cell->n_shadow_value,
+				   (uint8_t*)cell->shadow_value);
+		}
+	}
+
+	return 0;
+}
+
 static int stm32_bsec_dt_init(const struct device *dev)
 {
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(dev);
@@ -716,7 +768,7 @@ static int stm32_bsec_dt_init(const struct device *dev)
 	if (drv_data->p_shadow->state & BSEC_HARDWARE_KEY)
 		drv_data->hw_key_valid = true;
 
-	return 0;
+	return stm32_bsec_shadow_init(dev);
 }
 
 #if DT_HAS_COMPAT_STATUS_OKAY(st_stm32mp25_bsec)
