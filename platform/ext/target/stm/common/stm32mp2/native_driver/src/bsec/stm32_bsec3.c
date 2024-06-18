@@ -328,6 +328,51 @@ static int __maybe_unused _otp_write_lcs(uint32_t in_len, const uint8_t *in)
 }
 
 /*
+ * STM32 driver Interface
+ */
+int stm32_bsec_read_sw_lock(uint32_t otp, bool *value)
+{
+	const struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
+
+	if (!value)
+		return -EINVAL;
+
+	if (otp > drv_data->variant->max_id)
+		return -EINVAL;
+
+	*value = !!(drv_data->p_shadow->status[otp] & LOCK_SHADOW_W);
+
+	return 0;
+}
+
+int stm32_bsec_write(uint32_t otp, uint32_t value)
+{
+	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
+	const struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
+	bool sw_lock = false;
+
+	if (otp > drv_data->variant->max_id)
+		return -EINVAL;
+
+	if (is_bsec_write_locked())
+		return -EINVAL;
+
+	/* for HW shadowed OTP, update value in FVR register */
+	stm32_bsec_read_sw_lock(otp, &sw_lock);
+	if (sw_lock) {
+		DMSG("BSEC: OTP %d is write locked, write ignored", otp);
+		return -EACCES;
+	}
+
+	mmio_write_32(drv_cfg->base + _BSEC_FVR(otp), value);
+
+	/* update bsec mirror */
+	drv_data->p_shadow->value[otp] = value;
+
+	return 0;
+}
+
+/*
  * Interface with TFM
  */
 int stm32_bsec_otp_read_by_id(enum tfm_otp_element_id_t id, size_t out_len,

@@ -42,6 +42,16 @@
 
 void stm32_bsec_write_debug_conf(uint32_t val);
 
+/*
+ * STM32 driver Interface
+ */
+int stm32_bsec_read_sw_lock(uint32_t otp, bool *value);
+
+int stm32_bsec_write(uint32_t otp_num, uint32_t otp_val);
+
+/*
+ * Interface with TFM
+ */
 int stm32_bsec_otp_size_by_id(enum tfm_otp_element_id_t id, size_t *size);
 int stm32_bsec_otp_read_by_id(enum tfm_otp_element_id_t id,
 			size_t out_len, uint8_t *out);
