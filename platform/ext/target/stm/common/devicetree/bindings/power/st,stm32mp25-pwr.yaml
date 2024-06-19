@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: (GPL-2.0 OR BSD-2-Clause)
-# Copyright (c) 2023, STMicroelectronics
+# Copyright (c) 2024, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
 
 description: |
   STMicroelectronics power control (PWR) provides an overview of the supply
@@ -11,6 +11,7 @@ compatible: "st,stm32mp25-pwr"
 include:
   - base.yaml
   - reset-device.yaml
+  - st,stm32mp25-rif.yaml
   - name: st,stm32mp25-syscfg-properties.yaml
     property-allowlist:
       - st,syscfg-vddio
