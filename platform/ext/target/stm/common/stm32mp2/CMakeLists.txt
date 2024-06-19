@@ -214,7 +214,6 @@ if(NS)
 		PRIVATE
 			${DEVICETREE_DIR}/initlevel.c
 			${STM_SOC_DIR}/device/source/system_stm32mp2xx_m33.c
-			${STM_SOC_DIR}/native_driver/src/power/stm32mp2_pwr.c
 			${STM_SOC_DIR}/native_driver/src/clk/clk.c
 			${STM_SOC_DIR}/native_driver/src/clk/clk-stm32-core.c
 			${STM_SOC_DIR}/native_driver/src/clk/clk-stm32mp25.c
