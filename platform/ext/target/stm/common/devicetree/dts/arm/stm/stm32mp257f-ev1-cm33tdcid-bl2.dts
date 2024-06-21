@@ -287,3 +287,24 @@
 &hconf1_otp {
 	shadow-provisionning = <0x00018000>;
 };
+
+&sdmmc1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&sdmmc1_b4_pins_a>;
+	st,neg-edge;
+	no-mmc;
+	bus-width = <4>;
+	vmmc-supply = <&vdd_sdcard>;
+	vqmmc-supply = <&vddio1>;
+	status = "okay";
+};
+
+&sdmmc2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&sdmmc2_b4_pins_a &sdmmc2_d47_pins_a>;
+	st,neg-edge;
+	bus-width = <8>;
+	vmmc-supply = <&vdd_emmc>;
+	vqmmc-supply = <&vddio2>;
+	status = "okay";
+};
