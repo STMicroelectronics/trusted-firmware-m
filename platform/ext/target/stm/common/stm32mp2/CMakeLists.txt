@@ -20,6 +20,8 @@ target_compile_definitions(platform_region_defs
 		$<$<STREQUAL:${STM32_STM32MP2_SOC_REV},revA>:CONFIG_STM32MP25X_REVA=1>
 		$<$<STREQUAL:${STM32_STM32MP2_SOC_REV},revB>:CONFIG_STM32MP25X_REVB=1>
 		$<$<STREQUAL:${STM32_BOOT_DEV},ospi>:STM32_BOOT_DEV_OSPI>
+		$<$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>:STM32_BOOT_DEV_SDMMC1>
+		$<$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>:STM32_BOOT_DEV_SDMMC2>
 		$<$<STREQUAL:${STM32_BOOT_DEV},ddr>:STM32_BOOT_DEV_DDR>
 		$<$<BOOL:${STM32_M33TDCID}>:STM32_M33TDCID>
 		# this flag is not defined in tfm_s and needed by stm32_bsec3
@@ -283,8 +285,9 @@ if(BL2)
 		PRIVATE
 			${DEVICETREE_DIR}/initlevel.c
 			${STM_SOC_DIR}/device/source/system_stm32mp2xx_m33.c
+			$<$<STREQUAL:${STM32_BOOT_DEV},ospi>:${STM_SOC_DIR}/cmsis_driver/driver_spi_flash.c>
+			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_SOC_DIR}/cmsis_driver/driver_mmc_flash.c>
 			${STM_SOC_DIR}/bl2/boot_hal.c
-			${STM_SOC_DIR}/cmsis_driver/driver_spi_flash.c
 			${STM_SOC_DIR}/cmsis_driver/driver_flash_mm.c
 			${STM_SOC_DIR}/native_driver/src/core/mpu_armv8m_drv.c
 			${STM_SOC_DIR}/native_driver/src/power/stm32mp2_pwr.c
@@ -301,14 +304,18 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/pinctrl/stm32_pinctrl.c
 			${STM_SOC_DIR}/native_driver/src/uart/console.c
 			${STM_SOC_DIR}/native_driver/src/uart/stm32_uart.c
-			${STM_SOC_DIR}/native_driver/src/spi/stm32_ospi.c
-			${STM_SOC_DIR}/native_driver/src/spi/stm32_omm.c
-			${STM_SOC_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c
-			${STM_SOC_DIR}/native_driver/src/mtd/nor/spi_nor.c
+			$<$<STREQUAL:${STM32_BOOT_DEV},ospi>:${STM_SOC_DIR}/native_driver/src/spi/stm32_ospi.c>
+			$<$<STREQUAL:${STM32_BOOT_DEV},ospi>:${STM_SOC_DIR}/native_driver/src/spi/stm32_omm.c>
+			$<$<STREQUAL:${STM32_BOOT_DEV},ospi>:${STM_SOC_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c>
+			$<$<STREQUAL:${STM32_BOOT_DEV},ospi>:${STM_SOC_DIR}/native_driver/src/mtd/nor/spi_nor.c>
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_rif.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c
+			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_SOC_DIR}/native_driver/src/mmc/mmc.c>
+			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_SOC_DIR}/native_driver/src/mmc/stm32_sdmmc2.c>
+			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_SOC_DIR}/native_driver/src/mmc/soft_crc.c>
+			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_SOC_DIR}/native_driver/src/mmc/partition.c>
 			$<$<BOOL:${STM32_DDR_CACHED}>:${STM_SOC_DIR}/native_driver/src/core/stm32_icache.c>
 			${STM_SOC_DIR}/native_driver/src/i2c/stm32_i2c.c
 			${STM_SOC_DIR}/native_driver/src/regulator/regulator_common.c
@@ -357,7 +364,8 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c
-			${STM_SOC_DIR}/native_driver/src/spi/stm32_omm.c
+			$<$<STREQUAL:${STM32_BOOT_DEV},ospi>:${STM_SOC_DIR}/native_driver/src/spi/stm32_omm.c>
+			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_SOC_DIR}/native_driver/src/mmc/stm32_sdmmc2>
 	)
 
 	add_custom_target(bl2_stm32
