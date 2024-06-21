@@ -19,6 +19,8 @@
 #include <bootutil/bootutil_log.h>
 #include <init.h>
 #include <debug.h>
+#include <partition.h>
+#include "flash_map/flash_map.h"
 
 #include <stm32_icache.h>
 #include <stm32_bsec3.h>
@@ -84,6 +86,7 @@ int stm32mp2_init_debug(void)
 }
 SYS_INIT(stm32mp2_init_debug, CORE, 11);
 
+#ifdef STM32_BOOT_DEV_OSPI
 static int stm32mp2_prepare_ddr_fw(void)
 {
 	int err, count;
@@ -108,6 +111,53 @@ error:
 	return err;
 }
 SYS_INIT(stm32mp2_prepare_ddr_fw, CORE, 15);
+#endif
+
+#if defined(STM32_BOOT_DEV_SDMMC1) || defined(STM32_BOOT_DEV_SDMMC2)
+extern struct flash_area flash_map[];
+extern ARM_DRIVER_FLASH FLASH_DEV_NAME;
+
+static int stm32mp2_prepare_fw(void)
+{
+	int count;
+	const partition_entry_t *tfm_entry;
+
+        tfm_entry = get_partition_entry("m33-fwa");
+	if (tfm_entry == NULL) {
+		BOOT_LOG_ERR("Could not find partition tfm primary partition");
+		return -EINVAL;
+	}
+
+	flash_map[0].fa_off = tfm_entry->start;
+	flash_map[0].fa_size = tfm_entry->length;
+
+	tfm_entry = get_partition_entry("m33-fwb");
+	if (tfm_entry == NULL) {
+		BOOT_LOG_ERR("Could not find partition tfm secondary partition");
+		return -EINVAL;
+	}
+
+	flash_map[1].fa_off = tfm_entry->start;
+	flash_map[1].fa_size = tfm_entry->length;
+
+	tfm_entry = get_partition_entry("m33-ddra");
+	if (tfm_entry == NULL) {
+		BOOT_LOG_ERR("Could not find partition ddr fw primary partition");
+		return -EINVAL;
+	}
+
+	count = FLASH_DEV_NAME.ReadData(tfm_entry->start,
+					(void*) DDR_FW_DEST_ADDR,
+					DDR_FW_SIZE);
+	if (count != DDR_FW_SIZE) {
+		BOOT_LOG_ERR("Failed to load ddr fw primary partition");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+SYS_INIT(stm32mp2_prepare_fw, CORE, 15);
+#endif
 
 /**
   * @brief  Platform init
