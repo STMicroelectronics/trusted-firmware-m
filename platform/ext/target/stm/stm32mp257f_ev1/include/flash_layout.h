@@ -229,23 +229,49 @@
 					 SPI_NOR_FLASH_SECTOR_SIZE)
 
 #if !defined(MCUBOOT_IMAGE_NUMBER) || (MCUBOOT_IMAGE_NUMBER == 1)
+#if STM32_BL2
+
+#define FLASH_AREA_0_ID			(1)
+#define FLASH_DEVICE_ID_0		100
+#define FLASH_AREA_2_ID			(FLASH_AREA_0_ID + 1)
+#define FLASH_DEVICE_ID_2		102
 
 #ifdef STM32_BOOT_DEV_OSPI
 #define FLASH_DEV_NAME			FLASH_DEV_NAME_0
 /* Secure + Non-secure image primary slot */
-#define FLASH_AREA_0_ID			(1)
-#define FLASH_DEVICE_ID_0		100
 #define FLASH_DEV_NAME_0		DT_CMSIS_FIXED_PARTITIONS_DRIVER_BY_LABEL(tfm_primary_partition)
 #define FLASH_AREA_0_OFFSET		DT_CMSIS_FIXED_PARTITIONS_ADDR_BY_LABEL(tfm_primary_partition)
 #define FLASH_AREA_0_SIZE		DT_CMSIS_FIXED_PARTITIONS_SIZE_BY_LABEL(tfm_primary_partition)
 /* Secure + Non-secure secondary slot */
-#define FLASH_AREA_2_ID			(FLASH_AREA_0_ID + 1)
-#define FLASH_DEVICE_ID_2		102
 #define FLASH_DEV_NAME_2		DT_CMSIS_FIXED_PARTITIONS_DRIVER_BY_LABEL(tfm_secondary_partition)
 #define FLASH_AREA_2_OFFSET		DT_CMSIS_FIXED_PARTITIONS_ADDR_BY_LABEL(tfm_secondary_partition)
 #define FLASH_AREA_2_SIZE		DT_CMSIS_FIXED_PARTITIONS_SIZE_BY_LABEL(tfm_secondary_partition)
 #define TFM_HAL_FLASH_PROGRAM_UNIT	SPI_NOR_FLASH_PAGE_SIZE
 #define DDR_RAM_OFFSET			0x0
+#endif
+
+#ifdef STM32_BOOT_DEV_SDMMC1
+#define STM32_FLASH_SDMMC1
+#define FLASH_DEV_NAME			Driver_sdmmc1
+#endif
+
+#ifdef STM32_BOOT_DEV_SDMMC2
+#define STM32_FLASH_SDMMC2
+#define FLASH_DEV_NAME			Driver_sdmmc2
+#endif
+
+#if defined(STM32_BOOT_DEV_SDMMC1) || defined(STM32_BOOT_DEV_SDMMC2)
+#define IMAGE_S_CODE_SIZE		DT_REG_SIZE(DT_NODELABEL(tfm_code))
+#define IMAGE_NS_CODE_SIZE		DT_REG_SIZE(DT_NODELABEL(cm33_cube_fw))
+#define IMAGE_EXECUTABLE_RAM_SIZE	(IMAGE_S_CODE_SIZE + IMAGE_NS_CODE_SIZE)
+#define FLASH_DEV_NAME_0		FLASH_DEV_NAME
+#define FLASH_AREA_0_OFFSET		0
+#define FLASH_AREA_0_SIZE		IMAGE_EXECUTABLE_RAM_SIZE
+/* Secure + Non-secure secondary slot */
+#define FLASH_DEV_NAME_2		FLASH_DEV_NAME
+#define FLASH_AREA_2_OFFSET		0
+#define FLASH_AREA_2_SIZE		IMAGE_EXECUTABLE_RAM_SIZE
+#define TFM_HAL_FLASH_PROGRAM_UNIT	512
 #endif
 
 /*
@@ -266,6 +292,8 @@
 #define FLASH_DEV_FW_DDR_NAME		DT_CMSIS_FIXED_PARTITIONS_DRIVER_BY_LABEL(ddr_fw_primary_partition)
 #define FLASH_DEV_FW_DDR_OFFSET		DT_CMSIS_FIXED_PARTITIONS_ADDR_BY_LABEL(ddr_fw_primary_partition)
 #define FLASH_DEV_FW_DDR_SIZE		DT_CMSIS_FIXED_PARTITIONS_SIZE_BY_LABEL(ddr_fw_primary_partition)
+
+#endif /* STM32_BL2 */
 
 #else /* MCUBOOT_IMAGE_NUMBER > 1 */
 #error "Only MCUBOOT_IMAGE_NUMBER 1 is supported!"
