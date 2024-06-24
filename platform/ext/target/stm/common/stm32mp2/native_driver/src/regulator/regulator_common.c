@@ -125,8 +125,8 @@ int regulator_disable(const struct device *dev)
 	struct regulator_common_data *data = dev->data;
 	int ret = 0;
 
-	/* disable not supported (always on) */
-	if (api->disable == NULL) {
+	/* disable not supported (always on) or not previously enabled */
+	if ((api->disable == NULL) || (data->refcnt == 0)) {
 		return 0;
 	}
 
