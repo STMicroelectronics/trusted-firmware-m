@@ -456,7 +456,7 @@ static int stm32_pwr_regulator_init(const struct device *dev)
 	};											\
 												\
 	DEVICE_DT_DEFINE(node_id, &stm32_pwr_regulator_init, &stm32_data_##id, &stm32_cfg_##id,	\
-			 CORE, 6, &ops);
+			 CORE, 7, &ops);
 
 #define REGULATOR_PWR_DEFINE_COND(inst, child, macro_desc, name, reg)				\
 	COND_CODE_1(DT_NODE_HAS_STATUS(DT_INST_CHILD(inst, child), okay),			\
