@@ -283,3 +283,7 @@
 		vin-supply = <&vddio_pmic>;
 	};
 };
+
+&hconf1_otp {
+	shadow-provisionning = <0x00018000>;
+};
