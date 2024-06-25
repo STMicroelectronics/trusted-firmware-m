@@ -16,3 +16,24 @@ properties:
 
   memory-region:
     required: true
+
+child-binding:
+  description: |
+    Each child node describes an OTP area.
+    The area can look like this :
+
+      hconf1_otp: otp124@1f0 {
+        reg = <0x1f0 0x4>;
+      };
+
+  properties:
+    reg:
+      type: array
+      description: |
+        This follow the format <OFFSET SIZE> with OFFSET and SIZE in bytes.
+      required: true
+
+    shadow-provisionning:
+      type: array
+      description: |
+        Value to provision in the shadow of the OTP.
