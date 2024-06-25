@@ -254,6 +254,12 @@
 			compatible = "st,stm32mp25-bsec";
 			reg = <0x54000000 0x1000>;
 			status = "disabled";
+
+			#address-cells = <1>;
+			#size-cells = <1>;
+			hconf1_otp: otp124@1f0 {
+				reg = <0x1f0 0x4>;
+			};
 		};
 
 		serc: serc@54080000 {
