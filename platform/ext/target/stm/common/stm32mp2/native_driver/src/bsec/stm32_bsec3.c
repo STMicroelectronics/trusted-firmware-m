@@ -93,6 +93,13 @@
 /* OEM Keys are stored from _OEM_KEY_FIRST_OTP to OTP bsec_dev.max_id (367) */
 #define _OEM_KEY_FIRST_OTP		360
 
+struct nvmem_cell {
+	uint32_t otp_id;
+	uint32_t n_otp;
+	const uint32_t *shadow_value;
+	uint32_t n_shadow_value;
+};
+
 struct bsec_shadow {
 	uint32_t magic;
 	uint32_t state;
@@ -104,6 +111,8 @@ struct stm32_bsec_config {
 	uintptr_t base;
 	uintptr_t mirror_addr;
 	size_t mirror_size;
+	const struct nvmem_cell *otp_cell;
+	int n_otp_cell;
 };
 
 struct stm32_bsec_variant {
@@ -717,12 +726,33 @@ static struct stm32_bsec_variant variant_stm32mp25 = {
 };
 #endif
 
+#define NVMEM_CELL_CHILD_DEFINE(node_id)					\
+static const uint32_t shadow_value_##node_id[] = 				\
+	DT_PROP_OR(node_id, shadow_provisionning, {}); 				\
+										\
+static const struct nvmem_cell stm32_otp_cell_##node_id = {			\
+	.otp_id = (DT_REG_ADDR(node_id) / 4),					\
+	.n_otp = (DT_REG_SIZE(node_id) / 4), 					\
+	.shadow_value = shadow_value_##node_id,					\
+	.n_shadow_value = DT_PROP_LEN_OR(node_id, shadow_provisionning, 0)	\
+};
+
+#define NVMEM_CELL_CHILD_GET(node_id) stm32_otp_cell_##node_id,
+
 #define STM32_BSEC3_INIT(node_id, _variant)					\
+										\
+DT_FOREACH_CHILD(node_id, NVMEM_CELL_CHILD_DEFINE)				\
+										\
+static const struct nvmem_cell stm32_otp_cells_##node_id [] = {			\
+	DT_FOREACH_CHILD(node_id, NVMEM_CELL_CHILD_GET)				\
+};										\
 										\
 static const struct stm32_bsec_config stm32_bsec3_cfg_ ## node_id = {		\
 	.base = DT_REG_ADDR(node_id),						\
 	.mirror_addr = DT_REG_ADDR(DT_PHANDLE(node_id, memory_region)),		\
 	.mirror_size = DT_REG_SIZE(DT_PHANDLE(node_id, memory_region)),		\
+	.otp_cell = stm32_otp_cells_##node_id,					\
+	.n_otp_cell = ARRAY_SIZE(stm32_otp_cells_##node_id),			\
 };										\
 										\
 static struct stm32_bsec_data stm32_bsec3_data_ ## node_id = {			\
@@ -732,7 +762,7 @@ static struct stm32_bsec_data stm32_bsec3_data_ ## node_id = {			\
 DEVICE_DT_DEFINE(node_id, &stm32_bsec_dt_init,					\
 		 &stm32_bsec3_data_##node_id,					\
 		 &stm32_bsec3_cfg_##node_id,					\
-		 CORE, 10,							\
+		 CORE, 5,							\
 		 NULL);
 
 DT_FOREACH_STATUS_OKAY_VARGS(st_stm32mp25_bsec, STM32_BSEC3_INIT,
