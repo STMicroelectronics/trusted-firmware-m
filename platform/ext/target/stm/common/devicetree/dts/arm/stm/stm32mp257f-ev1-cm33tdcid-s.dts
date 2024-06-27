@@ -296,3 +296,15 @@
 &rtc {
 	status = "okay";
 };
+
+&hpdma1 {
+	status = "okay";
+};
+
+&hpdma2 {
+	status = "okay";
+};
+
+&hpdma3 {
+	status = "okay";
+};
