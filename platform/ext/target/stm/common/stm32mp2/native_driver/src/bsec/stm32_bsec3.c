@@ -672,21 +672,21 @@ static struct stm32_bsec_variant variant_stm32mp25 = {
 };
 #endif
 
-#define STM32_BSEC3_INIT(n, _variant)						\
+#define STM32_BSEC3_INIT(node_id, _variant)					\
 										\
-static const struct stm32_bsec_config stm32_bsec3_cfg_ ## n = {			\
-	.base = DT_REG_ADDR(n),							\
-	.mirror_addr = DT_REG_ADDR(DT_PHANDLE(n, memory_region)),		\
-	.mirror_size = DT_REG_SIZE(DT_PHANDLE(n, memory_region)),		\
+static const struct stm32_bsec_config stm32_bsec3_cfg_ ## node_id = {		\
+	.base = DT_REG_ADDR(node_id),						\
+	.mirror_addr = DT_REG_ADDR(DT_PHANDLE(node_id, memory_region)),		\
+	.mirror_size = DT_REG_SIZE(DT_PHANDLE(node_id, memory_region)),		\
 };										\
 										\
-static struct stm32_bsec_data stm32_bsec3_data_ ## n = {			\
+static struct stm32_bsec_data stm32_bsec3_data_ ## node_id = {			\
 	.variant = _variant,							\
 };										\
 										\
-DEVICE_DT_DEFINE(n, &stm32_bsec_dt_init,					\
-		 &stm32_bsec3_data_##n,						\
-		 &stm32_bsec3_cfg_##n,						\
+DEVICE_DT_DEFINE(node_id, &stm32_bsec_dt_init,					\
+		 &stm32_bsec3_data_##node_id,					\
+		 &stm32_bsec3_cfg_##node_id,					\
 		 CORE, 10,							\
 		 NULL);
 
