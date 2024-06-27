@@ -29,7 +29,7 @@
 };
 
 &rcc {
-	pll1: st,pll@0 {
+	pll1: st,pll-1 {
 		st,pll = <&pll1_cfg_1200Mhz>;
 
 		pll1_cfg_1200Mhz: pll1-cfg-1200Mhz {
@@ -44,7 +44,7 @@
 	};
 
 	/* DRAM clock = 2 * PLL2 clock */
-	pll2: st,pll@1 {
+	pll2: st,pll-2 {
 		st,pll = <&pll2_cfg_600Mhz>;
 
 		pll2_cfg_600Mhz: pll2-cfg-600Mhz {
@@ -54,7 +54,7 @@
 		};
 	};
 
-	pll3: st,pll@2 {
+	pll3: st,pll-3 {
 		st,pll = <&pll3_cfg_800Mhz>;
 
 		pll3_cfg_800Mhz: pll3-cfg-800Mhz {
@@ -68,7 +68,7 @@
 		};
 	};
 
-	pll4: st,pll@3 {
+	pll4: st,pll-4 {
 		st,pll = <&pll4_cfg_1200Mhz>;
 
 		pll4_cfg_1200Mhz: pll4-cfg-1200Mhz {
@@ -77,7 +77,7 @@
 		};
 	};
 
-	pll5: st,pll@4 {
+	pll5: st,pll-5 {
 		st,pll = <&pll5_cfg_532Mhz>;
 
 		pll5_cfg_532Mhz: pll5-cfg-532Mhz {
@@ -86,7 +86,7 @@
 		};
 	};
 
-	pll6: st,pll@5 {
+	pll6: st,pll-6 {
 		st,pll = <&pll6_cfg_500Mhz>;
 
 		pll6_cfg_500Mhz: pll6-cfg-500Mhz {
@@ -95,7 +95,7 @@
 		};
 	};
 
-	pll7: st,pll@6 {
+	pll7: st,pll-7 {
 		st,pll = <&pll7_cfg_835_51172Mhz>;
 
 		pll7_cfg_835_51172Mhz: pll7-cfg-835-51172Mhz {
@@ -105,7 +105,7 @@
 		};
 	};
 
-	pll8: st,pll@7 {
+	pll8: st,pll-8 {
 		st,pll = <&pll8_cfg_594Mhz>;
 
 		pll8_cfg_594Mhz: pll8-cfg-594Mhz {
