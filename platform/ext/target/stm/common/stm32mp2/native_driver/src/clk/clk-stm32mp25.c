@@ -3401,14 +3401,14 @@ static const struct stm32_osci_dt_cfg stm32_osci[] = {
 		    ())
 
 static struct stm32_pll_dt_cfg stm32_pll[] = {
-	STM32_PLL_DEFINE_COND(pll1, PLL1_ID)
-	STM32_PLL_DEFINE_COND(pll2, PLL2_ID)
-	STM32_PLL_DEFINE_COND(pll3, PLL3_ID)
-	STM32_PLL_DEFINE_COND(pll4, PLL4_ID)
-	STM32_PLL_DEFINE_COND(pll5, PLL5_ID)
-	STM32_PLL_DEFINE_COND(pll6, PLL6_ID)
-	STM32_PLL_DEFINE_COND(pll7, PLL7_ID)
-	STM32_PLL_DEFINE_COND(pll8, PLL8_ID)
+	STM32_PLL_DEFINE_COND(st_pll_1, PLL1_ID)
+	STM32_PLL_DEFINE_COND(st_pll_2, PLL2_ID)
+	STM32_PLL_DEFINE_COND(st_pll_3, PLL3_ID)
+	STM32_PLL_DEFINE_COND(st_pll_4, PLL4_ID)
+	STM32_PLL_DEFINE_COND(st_pll_5, PLL5_ID)
+	STM32_PLL_DEFINE_COND(st_pll_6, PLL6_ID)
+	STM32_PLL_DEFINE_COND(st_pll_7, PLL7_ID)
+	STM32_PLL_DEFINE_COND(st_pll_8, PLL8_ID)
 };
 
 static __unused const struct rif_base rif_rbase = {
