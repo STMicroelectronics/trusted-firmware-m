@@ -282,7 +282,7 @@ static int stm32_risaf_init(const struct device *dev)
 #define STM32_RISAF_X_INIT(n, variant)							\
 											\
 static const struct risaf_dt_region risaf_dt_regions_##variant####n[] = {		\
-	DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(0, memory_region, RISAF_REGION, (), n)	\
+	DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, memory_region, RISAF_REGION, (), n)	\
 };											\
 											\
 static const struct stm32_risaf_config stm32_risaf_cfg_##variant####n = {		\
