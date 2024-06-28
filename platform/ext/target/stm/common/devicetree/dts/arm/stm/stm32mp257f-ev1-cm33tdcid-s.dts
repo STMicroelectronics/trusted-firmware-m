@@ -166,6 +166,10 @@
 	};
 };
 
+&ipcc1 {
+	status = "okay";
+};
+
 &ommanager {
 	pinctrl-names = "default";
 	pinctrl-0 = <&ospi_port1_clk_pins_a
