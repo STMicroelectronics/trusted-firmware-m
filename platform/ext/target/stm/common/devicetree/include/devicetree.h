@@ -4300,5 +4300,6 @@
 #include <devicetree/pinctrl.h>
 #include <devicetree/gpio.h>
 #include <devicetree/reset.h>
+#include <devicetree/mbox.h>
 
 #endif /* DEVICETREE_H */
