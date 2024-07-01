@@ -320,3 +320,7 @@
 &tamp {
 	status = "okay";
 };
+
+&hconf1_otp {
+	shadow-provisionning = <0x00018db6>;
+};
