@@ -34,6 +34,13 @@
 			#memory-region-cells = <0>;
 		};
 
+		scmi_cid1_ns: scmi_cid1_s@e042000 {
+			compatible = "reserved-memory";
+			reg = <0x0 0xe042000 0x0 0x1000>;
+			#memory-region-cells = <0>;
+		};
+		/*end of areas not used in bl2 */
+
 		tfm_shared_data: tfm_shared_data@e05f000 {
 			compatible = "reserved-memory";
 			reg = <0x0 0xe05f000 0x0 0x1000>;
@@ -118,7 +125,7 @@
 
 		spare1: spare1@81300000 {
 			compatible = "reserved-memory";
-			reg = <0x0 0x81300000 0x0 0xcc0000>;
+			reg = <0x0 0x81300000 0x0 0xc00000>;
 			#memory-region-cells = <0>;
 		};
 
