@@ -396,8 +396,7 @@ static int stm32_pwr_regulator_init(const struct device *dev)
 			res = stm32_pwr_set_low_volt(drv_cfg, true);
 			if (res) {
 				EMSG("%s: set VRSEL failed", dev->name);
-				/* TODO LATER waiting st,provisioning */
-				// return res;
+				return res;
 			}
 		}
 	}
