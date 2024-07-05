@@ -3215,6 +3215,39 @@ static bool clk_stm32_clock_is_critical(__maybe_unused struct clk *clk)
 #if defined(STM32_SEC)
 		&ck_icn_p_risaf4,
 		&ck_icn_p_rtc,
+#if defined(STM32_M33TDCID)
+		&ck_sys_dbg,
+		&ck_icn_p_syscpu1,
+		&ck_icn_s_ddr,
+		&ck_icn_p_ddrc,
+		&ck_icn_p_ddrcfg,
+		&ck_icn_p_ddrphyc,
+		&ck_icn_s_sysram,
+		&ck_icn_s_bkpsram,
+		&ck_ker_fmc,
+		&ck_ker_ospi1,
+		&ck_ker_ospi2,
+		&ck_icn_s_vderam,
+		&ck_icn_s_lpsram1,
+		&ck_icn_s_lpsram2,
+		&ck_icn_s_lpsram3,
+		&ck_icn_p_hpdma1,
+		&ck_icn_p_hpdma2,
+		&ck_icn_p_hpdma3,
+		&ck_icn_m_sdmmc1,
+		&ck_icn_m_sdmmc2,
+		&ck_icn_p_ipcc1,
+		&ck_icn_p_ipcc2,
+		&ck_icn_p_usart2,
+		&ck_icn_p_gpioa, /* 90 */
+		&ck_icn_p_gpiob,
+		&ck_icn_p_gpioc,
+		&ck_icn_p_gpioe,
+		&ck_icn_p_gpiof,
+		&ck_icn_p_gpiog,
+		&ck_icn_p_gpioh,
+		&ck_icn_p_bsec,
+#endif
 #endif
 	};
 	size_t i = 0;
