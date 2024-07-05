@@ -98,6 +98,7 @@
 
 #define _RCC_CIDCFGR(y)		(RCC_R0CIDCFGR + U(0x8) * (y))
 #define _RCC_SEMCR(y)		(RCC_R0SEMCR + U(0x8) * (y))
+#define _RCC_SECCFGR(y)		(RCC_SECCFGR0 + U(0x4) * (y >> 5))
 
 #define MY_CID RIF_CID2
 
@@ -817,6 +818,11 @@ static bool stm32_rcc_has_access_by_id(struct clk_stm32_priv *priv, uint16_t id)
 	uintptr_t rcc_base = clk_stm32_get_rcc_base(priv);
 	unsigned int master = RIF_CID2;
 	uint32_t cid_reg_value = 0;
+#if (!IS_ENABLED(STM32_SEC))
+	uint32_t s_reg_value = io_read32(rcc_base +_RCC_SECCFGR(id));
+	if (s_reg_value & BIT(id % 32))
+		return false;
+#endif
 
 	cid_reg_value = io_read32(rcc_base + RCC_R0CIDCFGR + 0x8 * id);
 
