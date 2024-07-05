@@ -271,29 +271,92 @@
 
 &scmi_ca35 {
 	status = "okay";
-	regu-list = <&scmi_regu_vddcore>, <&scmi_regu_v1v8>, <&scmi_regu_v3v3> , <&scmi_regu_vdd_emmc>,
-		     <&scmi_regu_vdd3v3_usb>, <&scmi_regu_vdd_sdcard>;
+	regu-list = <&scmi_vddcore>, <&scmi_v1v8>, <&scmi_v3v3> , <&scmi_vdd_emmc>,
+		     <&scmi_vdd3v3_usb>, <&scmi_vdd_sdcard>, <&scmi_vddio1>,
+         <&scmi_vddio2>, <&scmi_vddio3>,  <&scmi_vddio4>,
+         <&scmi_vdd33ucpd>, <&scmi_vdda18adc>, <&scmi_vddgpu>;
 	regu-id-max = <STMP25_VOLTD_SCMI_MAX>;
 
 	rst-list = <&scmi_rst_fmc>, <&scmi_rst_pcie>;
 	rst-id-max = <STM32MP25_RST_SCMI_MAX>;
-	clk-list = <&scmi_clk_icn_display>, <&scmi_clk_icn_gpioa>, <&scmi_clk_icn_flexgen_25>,
-		     <&scmi_clk_icn_flexgen_07>, <&scmi_clk_icn_flexgen_08>,
-		     <&scmi_clk_icn_flexgen_09>, <&scmi_clk_icn_flexgen_10>;
+	clk-list = <&scmi_clk_icn_sdmmc>, <&scmi_clk_icn_ddr>,
+         <&scmi_clk_icn_display>, <&scmi_clk_icn_hsl>,
+         <&scmi_clk_icn_nic>, <&scmi_clk_icn_vid>,
+         <&scmi_clk_flexgen_07>, <&scmi_clk_flexgen_08>,
+	 <&scmi_clk_flexgen_09>, <&scmi_clk_flexgen_10>,
+         <&scmi_clk_flexgen_11>, <&scmi_clk_flexgen_12>,
+         <&scmi_clk_flexgen_13>, <&scmi_clk_flexgen_14>,
+         <&scmi_clk_flexgen_15>, <&scmi_clk_flexgen_16>,
+         <&scmi_clk_flexgen_17>, <&scmi_clk_flexgen_18>,
+         <&scmi_clk_flexgen_19>, <&scmi_clk_flexgen_20>,
+         <&scmi_clk_flexgen_21>, <&scmi_clk_flexgen_22>,
+         <&scmi_clk_flexgen_23>, <&scmi_clk_flexgen_24>,
+         <&scmi_clk_flexgen_25>, <&scmi_clk_flexgen_26>,
+         <&scmi_clk_flexgen_27>, <&scmi_clk_flexgen_28>,
+         <&scmi_clk_flexgen_29>, <&scmi_clk_flexgen_30>,
+         <&scmi_clk_flexgen_31>, <&scmi_clk_flexgen_32>,
+         <&scmi_clk_flexgen_33>, <&scmi_clk_flexgen_34>,
+         <&scmi_clk_flexgen_35>, <&scmi_clk_flexgen_36>,
+         <&scmi_clk_flexgen_37>, <&scmi_clk_flexgen_38>,
+         <&scmi_clk_flexgen_39>, <&scmi_clk_flexgen_40>,
+         <&scmi_clk_flexgen_41>, <&scmi_clk_flexgen_42>,
+         <&scmi_clk_flexgen_43>, <&scmi_clk_flexgen_44>,
+         <&scmi_clk_flexgen_45>, <&scmi_clk_flexgen_46>,
+         <&scmi_clk_flexgen_47>, <&scmi_clk_flexgen_48>,
+         <&scmi_clk_flexgen_49>, <&scmi_clk_flexgen_50>,
+         <&scmi_clk_flexgen_51>, <&scmi_clk_flexgen_52>,
+         <&scmi_clk_flexgen_53>, <&scmi_clk_flexgen_54>,
+         <&scmi_clk_flexgen_55>, <&scmi_clk_flexgen_56>,
+         <&scmi_clk_flexgen_57>, <&scmi_clk_flexgen_58>,
+         <&scmi_clk_flexgen_59>, <&scmi_clk_flexgen_60>,
+         <&scmi_clk_flexgen_61>, <&scmi_clk_flexgen_62>,
+         <&scmi_clk_flexgen_63>,
+
+         <&scmi_clk_gpioa>, <&scmi_clk_gpiob>,
+         <&scmi_clk_gpioc>, <&scmi_clk_gpiod>,
+         <&scmi_clk_gpioe>, <&scmi_clk_gpiof>,
+         <&scmi_clk_gpiog>, <&scmi_clk_gpioh>,
+         <&scmi_clk_gpioi>, <&scmi_clk_gpioj>,
+         <&scmi_clk_gpiok>, <&scmi_clk_gpioz>,
+
+         <&scmi_clk_icn_ls_mcu>, <&scmi_clk_hse>,
+         <&scmi_clk_lse>, <&scmi_clk_hsi>, <&scmi_clk_lsi>,
+         <&scmi_clk_msi>, <&scmi_clk_rtcck>,
+         <&scmi_clk_icn_apb1>, <&scmi_clk_icn_apb2>,
+         <&scmi_clk_icn_apb3>, <&scmi_clk_icn_apb4>,
+         <&scmi_clk_icn_apbdbg>, <&scmi_clk_timg1>,
+         <&scmi_clk_timg2>, <&scmi_clk_bkpsram>,
+         <&scmi_clk_bsec>, <&scmi_clk_bus_etr>,
+         <&scmi_clk_fmc>, <&scmi_clk_hpdma1>,
+         <&scmi_clk_hpdma2>, <&scmi_clk_hpdma3>, <&scmi_clk_hsem>,
+         <&scmi_clk_ipcc1>, <&scmi_clk_ipcc2>,
+         <&scmi_clk_lpdma>, <&scmi_clk_retram>,
+         <&scmi_clk_rtc>, <&scmi_clk_sram1>,
+         <&scmi_clk_sram2>, <&scmi_clk_syscpu1>,
+         <&scmi_clk_cpu1>, <&scmi_clk_hse_div2>,
+         <&scmi_clk_pll2>, <&scmi_clk_pll3>,
+         <&scmi_clk_lpsram1>, <&scmi_clk_lpsram2>,
+         <&scmi_clk_lpsram3>, <&scmi_clk_vderam>,
+         <&scmi_clk_sysram>, <&scmi_clk_ospi1>,
+         <&scmi_clk_ospi2>, <&scmi_clk_tpiu>,
+         <&scmi_clk_sysdbg>, <&scmi_clk_sysatb>,
+         <&scmi_clk_tsdbg>, <&scmi_clk_etr>,
+         <&scmi_clk_bus_stm>;
+
 	clk-id-max = <STM32MP25_CK_SCMI_MAX>;
 };
 
 &scmi_m33 {
 	status = "okay";
-	regu-list = <&scmi_regu_vddcore>, <&scmi_regu_v1v8>, <&scmi_regu_v3v3>,
-		      <&scmi_regu_vdd3v3_usb>;
+	regu-list = <&scmi_vddcore>, <&scmi_v1v8>, <&scmi_v3v3>,
+		      <&scmi_vdd3v3_usb>;
 	regu-id-max = <STMP25_VOLTD_SCMI_MAX>;
 
 	rst-list = <&scmi_rst_fmc>, <&scmi_rst_pcie>;
 	rst-id-max = <STM32MP25_RST_SCMI_MAX>;
-	clk-list = <&scmi_clk_icn_display>, <&scmi_clk_icn_gpiob>, <&scmi_clk_icn_flexgen_27>,
-		      <&scmi_clk_icn_flexgen_07>, <&scmi_clk_icn_flexgen_08>,
-		      <&scmi_clk_icn_flexgen_09>, <&scmi_clk_icn_flexgen_10>;
+	clk-list = <&scmi_clk_icn_display>, <&scmi_clk_gpiob>, <&scmi_clk_flexgen_27>,
+		      <&scmi_clk_flexgen_07>, <&scmi_clk_flexgen_08>,
+		      <&scmi_clk_flexgen_09>, <&scmi_clk_flexgen_10>;
 	clk-id-max = <STM32MP25_CK_SCMI_MAX>;
 };
 
