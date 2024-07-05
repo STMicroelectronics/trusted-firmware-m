@@ -47,7 +47,11 @@ void sys_init_run_level(enum init_level level)
 		 * Mark device initialized. If initialization
 		 * failed, record the error condition.
 		 */
-		if (entry->init_fn.dev != NULL) {
+		if (!entry->init_fn.dev) {
+			// device has no init func but is ready
+			dev->state->init_res = 0;
+			dev->state->initialized = true;
+		} else {
 			dev->state->init_res = entry->init_fn.dev(dev);
 			dev->state->initialized = true;
 			if (dev->state->init_res)
