@@ -255,5 +255,5 @@ static const struct stm32_reset_config stm32_reset_cfg = {
 DEVICE_DT_INST_DEFINE(0,
 		      NULL,
 		      NULL, &stm32_reset_cfg,
-		      PRE_CORE, 6,
+		      PRE_CORE, 0,
 		      &stm32_reset_com_api);
