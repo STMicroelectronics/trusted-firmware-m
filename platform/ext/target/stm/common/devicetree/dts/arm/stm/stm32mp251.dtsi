@@ -136,6 +136,11 @@
 			status = "disabled";
 		};
 
+		scp_mbox: scp-mbox@0 {
+			compatible = "st,scp-mbox";
+			status = "disabled";
+		};
+
 		rifsc: access-controller@52080000 {
 			compatible = "st,stm32mp25-rifsc";
 			reg = <0x52080000 0x1000>;
