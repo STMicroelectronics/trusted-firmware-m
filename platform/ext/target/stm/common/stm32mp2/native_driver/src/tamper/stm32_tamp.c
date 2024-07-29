@@ -22,7 +22,8 @@
 #define _TAMP_BKPRIFR1			U(0x70)
 #define _TAMP_BKPRIFR2			U(0x74)
 #define _TAMP_BKPRIFR3			U(0x78)
-#define _TAMP_CIDCFGR			U(0x80)
+#define _TAMP_RxCIDCFGR(x)		(U(0x80) + (0x4 * (x)))
+#define _TAMP_BKPxR(x)			(U(0x100) + (0x4 * (x)))
 #define _TAMP_HWCFGR1			U(0x3F0)
 
 /* _TAMP_SECCFGR bit fields */
@@ -77,6 +78,13 @@
 #define _CID_X_OFFSET(_id)		(U(0x4) * (_id))
 #define TAMP_RIF_RES			U(3)
 #define MAX_DT_BKP_ZONES		7
+#define BKP_ZONE_LEN			0
+#define MP25_BKP_ZONE_LEN		7
+
+struct stm32_tamp_variant {
+	int (*pre_init_fn)(const struct device *dev);
+	int (*init_bkpr_fn)(const struct device *dev);
+};
 
 struct stm32_tamp_config {
 	uintptr_t base;
@@ -84,11 +92,10 @@ struct stm32_tamp_config {
 	const clk_subsys_t clk_subsys;
 	const struct rifprot_controller *rif_ctl;
 	const uint32_t bkp_zones[MAX_DT_BKP_ZONES];
-	const uint8_t n_bkp_zones;
-	int (*init_bkpr_fn)(const struct device *dev);
 };
 
 struct stm32_tamp_data {
+	const struct stm32_tamp_variant *variant;
 	uint8_t hw_nb_bkp_reg;
 };
 
@@ -142,7 +149,7 @@ int stm32_tamp_rif_set_conf(const struct rifprot_controller *ctl,
 	return 0;
 }
 
-static __unused int _st_stm32mp25_tamp_init_bkpr(const struct device *dev)
+static __unused int _stm32mp25_tamp_init_bkpr(const struct device *dev)
 {
 	const struct stm32_tamp_config *cfg = dev_get_config(dev);
 	struct stm32_tamp_data *dev_data = dev_get_data(dev);
@@ -174,6 +181,52 @@ static __unused int _st_stm32mp25_tamp_init_bkpr(const struct device *dev)
 	return 0;
 }
 
+/*
+ * Errata: This errata avoid a corteA stuck after reset.
+ * When restarting after M33 TDCID, the ROM code read the bkpr11 and if it's valide
+ * jump in stop2 mode.
+ * To avoid this, M33 bl2 must clear the bkpr11 register before wakeup the cortexA.
+ *
+ * Warning:
+ * The three TAMP_R0CIDCFGR.CFEN, TAMP_R1CIDCFGR.CFEN, TAMP_R2CIDCFGR.CFEN bits could
+ * be set after initialization sequence to protect backup registers with CID filtering.
+ * It is not allowed to configure some of the bits to 1 and some others to 0
+ * (in this case the protection would behave as if all these bits were 1).
+ */
+#define CLEAR_PATTERN 0x55
+
+static __unused int _stm32mp25_bkpr11_errata(const struct device *dev)
+{
+	const struct stm32_tamp_config *cfg = dev_get_config(dev);
+	uint32_t r0cid_cfgr, r1cid_cfgr, r2cid_cfgr, bkpr11;
+	bool protected;
+
+	r0cid_cfgr = io_read32(cfg->base + _TAMP_RxCIDCFGR(0));
+	r1cid_cfgr = io_read32(cfg->base + _TAMP_RxCIDCFGR(1));
+	r2cid_cfgr = io_read32(cfg->base + _TAMP_RxCIDCFGR(2));
+	protected = !!((r0cid_cfgr | r1cid_cfgr | r2cid_cfgr) & _CIDCFGR_CFEN_MASK);
+
+	if (protected) {
+		io_write32(cfg->base + _TAMP_RxCIDCFGR(0), r0cid_cfgr & ~_CIDCFGR_CFEN_MASK);
+		io_write32(cfg->base + _TAMP_RxCIDCFGR(1), r1cid_cfgr & ~_CIDCFGR_CFEN_MASK);
+		io_write32(cfg->base + _TAMP_RxCIDCFGR(2), r2cid_cfgr & ~_CIDCFGR_CFEN_MASK);
+	}
+
+	io_write32(cfg->base + _TAMP_BKPxR(11), CLEAR_PATTERN);
+	bkpr11 = io_read32(cfg->base + _TAMP_BKPxR(11));
+
+	if (bkpr11 != CLEAR_PATTERN)
+		EMSG("tamp: errata: issue not fixed");
+
+	if (protected) {
+		io_write32(cfg->base + _TAMP_RxCIDCFGR(0), r0cid_cfgr);
+		io_write32(cfg->base + _TAMP_RxCIDCFGR(1), r1cid_cfgr);
+		io_write32(cfg->base + _TAMP_RxCIDCFGR(2), r2cid_cfgr);
+	}
+
+	return 0;
+}
+
 static void stm32_tamp_get_hwconfig(const struct device *dev)
 {
 	const struct stm32_tamp_config *dev_cfg = dev_get_config(dev);
@@ -187,6 +240,7 @@ static void stm32_tamp_get_hwconfig(const struct device *dev)
 static __unused int stm32_tamp_init(const struct device *dev)
 {
 	const struct stm32_tamp_config *cfg = dev_get_config(dev);
+	struct stm32_tamp_data *data = dev_get_data(dev);
 	struct clk *clk;
 	int err;
 
@@ -203,14 +257,20 @@ static __unused int stm32_tamp_init(const struct device *dev)
 
 	stm32_tamp_get_hwconfig(dev);
 
-	if (cfg->rif_ctl) {
-		err = stm32_rifprot_init(cfg->rif_ctl);
+	if (data->variant->pre_init_fn) {
+		err = data->variant->pre_init_fn(dev);
 		if (err)
 			goto out;
 	}
 
-	if (cfg->init_bkpr_fn)
-		err = cfg->init_bkpr_fn(dev);
+	if (data->variant->init_bkpr_fn) {
+		err = data->variant->init_bkpr_fn(dev);
+		if (err)
+			goto out;
+	}
+
+	if (cfg->rif_ctl)
+		err = stm32_rifprot_init(cfg->rif_ctl);
 
 out:
 	clk_disable(clk);
@@ -218,55 +278,59 @@ out:
 	return err;
 }
 
-#define TAMP_GET_BKPR_FN(n, variant)				\
-	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, st_backup_zones),	\
-		    (&_##variant##_init_bkpr), (NULL))
+static __unused const struct  stm32_tamp_variant stm32_variant = {};
 
-#define STM32_TAMP_INIT(n, variant, bkp_zone_len)				\
-										\
-BUILD_ASSERT(DT_INST_PROP_LEN_OR(n, st_backup_zones, 0) == bkp_zone_len,	\
-	    "Incorrect bkp zone property");					\
-										\
-static __unused const struct rif_base _##variant##_rbase##n = {			\
-	.sec = DT_INST_REG_ADDR(n) + _TAMP_SECCFGR,				\
-	.priv = DT_INST_REG_ADDR(n) + _TAMP_PRIVCFGR,				\
-	.cid = DT_INST_REG_ADDR(n) + _TAMP_CIDCFGR,				\
-	.sem = 0,								\
-};										\
-										\
-struct __unused rif_ops _##variant##_rops##n = {				\
-	.set_conf = stm32_tamp_rif_set_conf,					\
-};										\
-										\
-DT_INST_RIFPROT_CTRL_DEFINE(n, &_##variant##_rbase##n,				\
-			    &_##variant##_rops##n, TAMP_RIF_RES);		\
-										\
-static const struct stm32_tamp_config _##variant##_cfg##n = {			\
-	.base = DT_INST_REG_ADDR(n),						\
-	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),			\
-	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),		\
-	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),					\
-	.bkp_zones = DT_INST_PROP_OR(n, st_backup_zones, {}),			\
-	.n_bkp_zones = bkp_zone_len,						\
-	.init_bkpr_fn = TAMP_GET_BKPR_FN(n, variant),				\
-};										\
-										\
-static struct stm32_tamp_data _##variant##_data##n = {};			\
-										\
-DEVICE_DT_INST_DEFINE(n, &stm32_tamp_init,					\
-		      &_##variant##_data##n, &_##variant##_cfg##n,		\
+static __unused const struct stm32_tamp_variant stm32mp25_variant = {
+#if defined(STM32_BL2)
+	.pre_init_fn = &_stm32mp25_bkpr11_errata,
+#endif
+	.init_bkpr_fn = &_stm32mp25_tamp_init_bkpr,
+
+};
+
+#define STM32_TAMP_INIT(n, name, _variant, bkp_zone_len)				\
+											\
+BUILD_ASSERT(DT_INST_PROP_LEN_OR(n, st_backup_zones, 0) == bkp_zone_len,		\
+	    "Incorrect bkp zone property");						\
+											\
+static __unused const struct rif_base _##name##_rbase##n = {				\
+	.sec = DT_INST_REG_ADDR(n) + _TAMP_SECCFGR,					\
+	.priv = DT_INST_REG_ADDR(n) + _TAMP_PRIVCFGR,					\
+	.cid = DT_INST_REG_ADDR(n) + _TAMP_RxCIDCFGR(0),				\
+	.sem = 0,									\
+};											\
+											\
+struct __unused rif_ops _##name##_rops##n = {						\
+	.set_conf = stm32_tamp_rif_set_conf,						\
+};											\
+											\
+DT_INST_RIFPROT_CTRL_DEFINE(n, &_##name##_rbase##n,					\
+			    &_##name##_rops##n, TAMP_RIF_RES);				\
+											\
+static const struct stm32_tamp_config _##name##_cfg##n = {				\
+	.base = DT_INST_REG_ADDR(n),							\
+	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),				\
+	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),			\
+	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),						\
+	.bkp_zones = DT_INST_PROP_OR(n, st_backup_zones, {}),				\
+};											\
+											\
+static struct stm32_tamp_data _##name##_data##n = {					\
+	.variant = &_variant,								\
+};											\
+											\
+DEVICE_DT_INST_DEFINE(n, &stm32_tamp_init,						\
+		      &_##name##_data##n, &_##name##_cfg##n,				\
 		      CORE, 10, NULL);
 
 #undef DT_DRV_COMPAT
 #define DT_DRV_COMPAT		st_stm32_tamp
-#define DT_BKP_ZONE_LEN		0
 
 DT_INST_FOREACH_STATUS_OKAY_VARGS(STM32_TAMP_INIT, DT_DRV_COMPAT,
-				  DT_BKP_ZONE_LEN)
+				  stm32_variant, BKP_ZONE_LEN)
 
 #undef DT_DRV_COMPAT
 #define DT_DRV_COMPAT		st_stm32mp25_tamp
-#define MP25_DT_BKP_ZONE_LEN	7
 
 DT_INST_FOREACH_STATUS_OKAY_VARGS(STM32_TAMP_INIT, DT_DRV_COMPAT,
-				  MP25_DT_BKP_ZONE_LEN)
+				  stm32mp25_variant, MP25_BKP_ZONE_LEN)

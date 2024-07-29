@@ -312,6 +312,7 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c
+			${STM_SOC_DIR}/native_driver/src/tamper/stm32_tamp.c
 			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_SOC_DIR}/native_driver/src/mmc/mmc.c>
 			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_SOC_DIR}/native_driver/src/mmc/stm32_sdmmc2.c>
 			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_SOC_DIR}/native_driver/src/mmc/soft_crc.c>
@@ -364,6 +365,7 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c
+			${STM_SOC_DIR}/native_driver/src/tamper/stm32_tamp.c
 			$<$<STREQUAL:${STM32_BOOT_DEV},ospi>:${STM_SOC_DIR}/native_driver/src/spi/stm32_omm.c>
 			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_SOC_DIR}/native_driver/src/mmc/stm32_sdmmc2>
 	)
