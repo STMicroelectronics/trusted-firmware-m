@@ -308,3 +308,7 @@
 	vqmmc-supply = <&vddio2>;
 	status = "okay";
 };
+
+&tamp {
+	status = "okay";
+};

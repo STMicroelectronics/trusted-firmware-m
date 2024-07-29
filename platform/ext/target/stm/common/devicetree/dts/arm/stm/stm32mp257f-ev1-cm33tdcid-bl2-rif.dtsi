@@ -34,6 +34,10 @@
 	>;
 };
 
+&tamp {
+	st,backup-zones = <24 24 24 24 12 12 8>;
+};
+
 &gpiod {
 	st,protreg = <
 		RIFPROT(RIF_IOPORT_PIN(0), RIF_UNUSED, RIF_UNLOCK, RIF_SEC, RIF_PRIV, RIF_CID2, RIF_SEM_DIS, RIF_CFEN)
