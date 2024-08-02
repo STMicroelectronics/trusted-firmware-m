@@ -18,7 +18,7 @@ description: |
   RCC reset cells are available in
   include/dt-bindings/reset/stm32{soc_family}_resets.h header files.
 
-compatible: "st,stm32-rcc-rctl"
+compatible: "st,stm32-rcc-reset"
 
 include: [reset-controller.yaml, base.yaml]
 
