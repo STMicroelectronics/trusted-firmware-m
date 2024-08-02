@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#define DT_DRV_COMPAT st_stm32mp25_rcc_rctl
+#define DT_DRV_COMPAT st_stm32mp25_rcc_reset
 
 #include <errno.h>
 #include <stdint.h>
