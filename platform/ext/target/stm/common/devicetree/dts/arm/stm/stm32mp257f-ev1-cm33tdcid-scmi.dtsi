@@ -9,13 +9,13 @@
 	stm32mp25-scmi-rst {
 		scmi_rst_fmc:scmi_rst_fmc {
 			compatible = "st,stm32mp25-scmi-rst";
-			resets = <&rctl FMC_R>;
+			resets = <&rcc_reset FMC_R>;
 			reset-names = "fmc";
 			scmi-id = <RST_SCMI_FMC>;
 		};
 		scmi_rst_pcie:scmi_rst_pcie {
 			compatible = "st,stm32mp25-scmi-rst";
-			resets = <&rctl PCIE_R>;
+			resets = <&rcc_reset PCIE_R>;
 			reset-names = "pcie";
 			scmi-id = <RST_SCMI_PCIE>;
 		};

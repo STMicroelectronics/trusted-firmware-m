@@ -87,7 +87,7 @@
 			ranges = <0 0 0x50430000 0x400>,
 				 <1 0 0x50440000 0x400>;
 			clocks = <&rcc CK_BUS_OSPIIOM>;
-			resets = <&rctl OSPIIOM_R>;
+			resets = <&rcc_reset OSPIIOM_R>;
 			st,syscfg-amcr = <&syscfg 0x2c00 0x7>;
 			status = "disabled";
 			#address-cells = <2>;
@@ -97,7 +97,7 @@
 				compatible = "st,stm32mp25-omi";
 				reg = <0 0 0x400>;
 				clocks = <&rcc CK_KER_OSPI1>;
-				resets = <&rctl OSPI1_R>, <&rctl OSPI1DLL_R>;
+				resets = <&rcc_reset OSPI1_R>, <&rcc_reset OSPI1DLL_R>;
 				st,syscfg-dlyb = <&syscfg 0x1000>;
 				status = "disabled";
 			};
@@ -106,7 +106,7 @@
 				compatible = "st,stm32mp25-omi";
 				reg = <1 0 0x400>;
 				clocks = <&rcc CK_KER_OSPI2>;
-				resets = <&rctl OSPI2_R>, <&rctl OSPI2DLL_R>;
+				resets = <&rcc_reset OSPI2_R>, <&rcc_reset OSPI2DLL_R>;
 				st,syscfg-dlyb = <&syscfg 0x1400>;
 				status = "disabled";
 			};
@@ -160,7 +160,7 @@
 				compatible = "st,stm32mp25-i2c";
 				reg = <0x50180000 0x400>;
 				clocks = <&rcc CK_KER_I2C7>;
-				resets = <&rctl I2C7_R>;
+				resets = <&rcc_reset I2C7_R>;
 				#address-cells = <1>;
 				#size-cells = <0>;
 				i2c-analog-filter;
@@ -171,7 +171,7 @@
 				compatible = "st,stm32mp25-sdmmc2";
 				reg = <0x58220000 0x400>;
 				clocks = <&rcc CK_KER_SDMMC1>;
-				resets = <&rctl SDMMC1_R>;
+				resets = <&rcc_reset SDMMC1_R>;
 				max-frequency = <120000000>;
 				status = "disabled";
 			};
@@ -180,7 +180,7 @@
 				compatible = "st,stm32mp25-sdmmc2";
 				reg = <0x58230000 0x400>;
 				clocks = <&rcc CK_KER_SDMMC2>;
-				resets = <&rctl SDMMC2_R>;
+				resets = <&rcc_reset SDMMC2_R>;
 				max-frequency = <120000000>;
 				status = "disabled";
 			};
@@ -331,8 +331,8 @@
 			clock-names = "clk-hse", "clk-hsi", "clk-lse",
 				      "clk-lsi", "clk-msi", "clk-i2sin";
 
-			rctl: reset-controller {
-				compatible = "st,stm32mp25-rcc-rctl";
+			rcc_reset: reset-controller {
+				compatible = "st,stm32mp25-rcc-reset";
 				#reset-cells = <1>;
 			};
 		};
@@ -347,7 +347,7 @@
 		pwr: pwr@54210000 {
 			compatible = "st,stm32mp25-pwr";
 			reg = <0x54210000 0x400>;
-			resets = <&rctl VSW_R>;
+			resets = <&rcc_reset VSW_R>;
 
 			st,syscfg-vddio = <&syscfg 0x4000>;
 
@@ -576,7 +576,7 @@
 			compatible = "st,stm32mp25-fmc2-ebi";
 			reg = <0x58200000 0x400>;
 			clocks = <&rcc CK_KER_FMC>;
-			resets = <&rctl FMC_R>;
+			resets = <&rcc_reset FMC_R>;
 			status = "disabled";
 		};
 
@@ -584,7 +584,7 @@
 			compatible = "st,stm32-dma3";
 			reg = <0x50400000 0x1000>;
 			clocks = <&rcc CK_BUS_HPDMA1>;
-			resets = <&rctl HPDMA1_R>;
+			resets = <&rcc_reset HPDMA1_R>;
 			#dma-cells = <4>;
 			status = "disabled";
 		};
@@ -593,7 +593,7 @@
 			compatible = "st,stm32-dma3";
 			reg = <0x50410000 0x1000>;
 			clocks = <&rcc CK_BUS_HPDMA2>;
-			resets = <&rctl HPDMA2_R>;
+			resets = <&rcc_reset HPDMA2_R>;
 			#dma-cells = <4>;
 			status = "disabled";
 		};
@@ -602,7 +602,7 @@
 			compatible = "st,stm32-dma3";
 			reg = <0x50420000 0x1000>;
 			clocks = <&rcc CK_BUS_HPDMA3>;
-			resets = <&rctl HPDMA3_R>;
+			resets = <&rcc_reset HPDMA3_R>;
 			#dma-cells = <4>;
 			status = "disabled";
 		};
