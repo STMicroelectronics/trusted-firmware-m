@@ -1,0 +1,23 @@
+# Copyright (c) 2023, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  the RCC implements the following security/isolation requirements which apply
+  to any defined security domain:
+    - filtering of secure/non-secure accesses
+    - filtering of privileged/unprivileged accesses
+    - filtering of hardware execution compartments (CIDs)
+
+compatible: "st,stm32mp25-rcc-rif"
+
+include:
+  - base.yaml
+  - access-controller.yaml
+  - st,stm32mp25-rif.yaml
+
+properties:
+  "#access-controller-cells":
+    const: 1
+
+access-controller-cells:
+  - protreg
