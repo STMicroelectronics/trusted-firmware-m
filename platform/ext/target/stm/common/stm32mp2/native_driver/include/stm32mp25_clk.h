@@ -104,4 +104,7 @@ struct stm32_clk_opp_dt_cfg {
 		.csg_enabled = false,		\
 	}
 
+#define INITLEVEL_RCC PRE_CORE
+#define PRIORITY_RCC 5
+
 #endif /* STM32MP2_CLK_H */

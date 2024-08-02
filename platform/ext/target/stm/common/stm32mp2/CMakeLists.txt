@@ -99,6 +99,7 @@ target_sources(platform_s
 		${STM_SOC_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c
 		${STM_SOC_DIR}/native_driver/src/mtd/nor/spi_nor.c
 		${STM_SOC_DIR}/native_driver/src/rif/stm32_rif.c
+		${STM_SOC_DIR}/native_driver/src/rif/stm32_rcc_rif.c
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c>
@@ -169,6 +170,7 @@ target_sources(tfm_s
 		${STM_SOC_DIR}/native_driver/src/power/stm32mp2_pwr.c
 		${STM_SOC_DIR}/native_driver/src/bsec/stm32_bsec3.c
 		${STM_SOC_DIR}/native_driver/src/spi/stm32_omm.c
+		${STM_SOC_DIR}/native_driver/src/rif/stm32_rcc_rif.c
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c>
@@ -318,6 +320,7 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_rifsc.c
+			${STM_SOC_DIR}/native_driver/src/rif/stm32_rcc_rif.c
 			${STM_SOC_DIR}/native_driver/src/tamper/stm32_tamp.c
 			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_SOC_DIR}/native_driver/src/mmc/mmc.c>
 			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_SOC_DIR}/native_driver/src/mmc/stm32_sdmmc2.c>
@@ -372,6 +375,7 @@ if(BL2)
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risaf.c
 			${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c
 			${STM_SOC_DIR}/native_driver/src/tamper/stm32_tamp.c
+			${STM_SOC_DIR}/native_driver/src/rif/stm32_rcc_rif.c
 			$<$<STREQUAL:${STM32_BOOT_DEV},ospi>:${STM_SOC_DIR}/native_driver/src/spi/stm32_omm.c>
 			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_SOC_DIR}/native_driver/src/mmc/stm32_sdmmc2>
 	)

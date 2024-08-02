@@ -3363,42 +3363,9 @@ static void clk_stm32_init_oscillators(struct clk_stm32_priv *priv)
 	}
 }
 
-#if (!IS_ENABLED(STM32_SEC))
 static int clk_stm32_apply_rcc_config(const struct device *dev)
 {
-	return 0;
-}
-
-static int clk_stm32_rif_init_probe(const struct device *dev)
-{
-	return 0;
-}
-
-#else
-//tfm_s
-static int stm32mp25_clk_rif_init(const struct device *dev)
-{
-	const struct stm32_rcc_config *drv_cfg = dev_get_config(dev);
-	struct clk_stm32_priv *priv = (struct clk_stm32_priv *)dev_get_data(dev);
-	int err;
-
-	if (!drv_cfg->rif_ctl)
-		return 0;
-
-	err = stm32_rifprot_init(drv_cfg->rif_ctl);
-	if (err)
-		goto out;
-
-	clk_stm32_set_flexgen_as_critical(priv);
-
-out:
-	return err;
-}
-
-#if (IS_ENABLED(STM32_M33TDCID))
-//tfm_s_cm33tdcid:
-static int clk_stm32_apply_rcc_config(const struct device *dev)
-{
+#if (IS_ENABLED(STM32_M33TDCID) && IS_ENABLED(STM32_SEC))
 	const struct stm32_rcc_config *drv_cfg = dev_get_config(dev);
 
 	io_write32(drv_cfg->base + RCC_C1MSRDCR,
@@ -3407,36 +3374,9 @@ static int clk_stm32_apply_rcc_config(const struct device *dev)
 	if (drv_cfg->syscfg && drv_cfg->saferst_reg != INT32_MAX)
 		syscon_setbits(drv_cfg->syscfg,
 			       drv_cfg->saferst_reg, drv_cfg->saferst_mask);
-
-	return 0;
-}
-
-static int clk_stm32_rif_init_probe(const struct device *dev)
-{
-	return 0;
-}
-
-static int clk_stm32_rif_init_late(void)
-{
-	const struct device *dev = DEVICE_GET(DEVICE_DT_DEV_ID(DT_DRV_INST(0)));
-	return stm32mp25_clk_rif_init(dev);
-
-}
-SYS_INIT(clk_stm32_rif_init_late, REST, 0);
-
-#else
-//tfm_s_ca35tdcid
-static int clk_stm32_apply_rcc_config(const struct device *dev)
-{
-	return 0;
-}
-
-static int clk_stm32_rif_init_probe(const struct device *dev)
-{
-	return stm32mp25_clk_rif_init(dev);
-}
 #endif
-#endif
+	return 0;
+}
 
 static int stm32mp25_clk_dt_init(const struct device *dev)
 {
@@ -3464,8 +3404,6 @@ static int stm32mp25_clk_dt_init(const struct device *dev)
 		goto out;
 
 	clk_stm32_register_clocks(priv);
-
-	err = clk_stm32_rif_init_probe(dev);
 
 out:
 	if (err)
@@ -3515,15 +3453,6 @@ static struct stm32_pll_dt_cfg stm32_pll[] = {
 	STM32_PLL_DEFINE_COND(st_pll_8, PLL8_ID)
 };
 
-static __unused const struct rif_base rif_rbase = {
-	.sec = DT_INST_REG_ADDR(0) + RCC_SECCFGR0,
-	.priv = DT_INST_REG_ADDR(0) + RCC_PRIVCFGR0,
-	.cid = DT_INST_REG_ADDR(0) + RCC_R0CIDCFGR,
-	.sem = DT_INST_REG_ADDR(0) + RCC_R0SEMCR,
-};
-
-DT_INST_RIFPROT_CTRL_DEFINE(0, &rif_rbase, NULL, RCC_NB_RIF_RES);
-
 const struct stm32_rcc_config stm32mp25_rcc_cfg = {
 	.base = DT_INST_REG_ADDR(0),
 	.c1msrd = DT_INST_PROP_OR(0, st_c1msrd, 0),
@@ -3540,7 +3469,6 @@ const struct stm32_rcc_config stm32mp25_rcc_cfg = {
 	.nosci = ARRAY_SIZE(stm32_osci),
 	.pll = stm32_pll,
 	.npll = ARRAY_SIZE(stm32_pll),
-	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(0),
 };
 
 static struct clk_controller_api stm32mp25_clk_api = {
@@ -3551,8 +3479,5 @@ DEVICE_DT_INST_DEFINE(0,
 		      &stm32mp25_clk_dt_init,
 		      &stm32mp25_clock_data,
 		      &stm32mp25_rcc_cfg,
-		      PRE_CORE, 5,
+		      INITLEVEL_RCC, PRIORITY_RCC,
 		      &stm32mp25_clk_api);
-
-BUILD_ASSERT(DT_INST_PROP_LEN_OR(0, st_protreg, 1) <= RCC_NB_RIF_RES,
-	     "number of rif ressource not supported");
