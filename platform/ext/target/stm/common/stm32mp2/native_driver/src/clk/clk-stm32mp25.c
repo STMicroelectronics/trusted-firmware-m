@@ -1831,11 +1831,60 @@ static bool clk_stm32_pll_is_enabled(struct clk *clk)
 
 	return stm32_gate_is_enabled(priv, cfg->gate_id);
 }
+
 static const struct clk_ops clk_stm32_pll_ops = {
 	.get_parent	= clk_stm32_pll_get_parent,
 	.get_rate	= clk_stm32_pll_get_rate,
 	.enable		= clk_stm32_pll_enable,
 	.disable	= clk_stm32_pll_disable,
+	.is_enabled	= clk_stm32_pll_is_enabled,
+};
+
+static int clk_stm32_pll3_enable(struct clk *clk)
+{
+	struct clk_stm32_pll_cfg *cfg = clk->priv;
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	const struct stm32_pll_dt_cfg *pll_conf = clk_stm32_pll_get_cfg(priv, PLL3_ID);
+	int res = 0;
+	struct clk *parent = NULL;
+	size_t pidx = 0;
+
+	/* ck_icn_p_gpu activate */
+	stm32_gate_enable(priv, GATE_GPU);
+
+	if (clk_stm32_pll_init(priv, PLL3_ID, pll_conf)) {
+		stm32_gate_disable(priv, GATE_GPU);
+		return -EBUSY;
+	}
+
+	res = stm32_gate_rdy_enable(priv, cfg->gate_id);
+	if (res)
+		EMSG("%s timeout", clk_get_name(clk));
+
+	/* Update parent */
+	pidx = clk_stm32_pll_get_parent(clk);
+	parent = clk_get_parent_by_index(clk, pidx);
+
+	res = clk_reparent(clk, parent);
+	if (res)
+		EMSG("fail to reparent PLL3");
+
+	return res;
+}
+
+static void clk_stm32_pll3_disable(struct clk *clk)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+
+	clk_stm32_pll_disable(clk);
+	stm32_gate_disable(priv, GATE_GPU);
+}
+
+static const struct clk_ops clk_stm32_pll3_ops = {
+	.get_parent	= clk_stm32_pll_get_parent,
+	.get_rate	= clk_stm32_pll_get_rate,
+	.enable		= clk_stm32_pll3_enable,
+	.disable	= clk_stm32_pll3_disable,
 	.is_enabled	= clk_stm32_pll_is_enabled,
 };
 
@@ -2289,6 +2338,21 @@ const struct clk_ops ck_timer_ops = {
 		.dev = DT_RCC_DEVICE,\
 	}
 
+#define STM32_PLL3(_name, _flags, _reg, _gate_id, _mux_id)\
+	struct clk _name = {\
+		.ops = &clk_stm32_pll3_ops,\
+		.priv = &(struct clk_stm32_pll_cfg){\
+			.pll_offset = (_reg),\
+			.gate_id = (_gate_id),\
+			.mux_id = (_mux_id),\
+		},\
+		CLOCK_NAME(#_name)\
+		.flags = (_flags),\
+		.num_parents = 3,\
+		.parents = (pll_parents),\
+		.dev = DT_RCC_DEVICE,\
+	}
+
 #define STM32_PLLS(_name, _flags, _reg, _gate_id, _mux_id)\
 	struct clk _name = {\
 		.ops	= &clk_stm32_pll_ops,\
@@ -2406,6 +2470,7 @@ static STM32_HSE_RTC(ck_hse_rtc, &ck_hse, 0, DIV_RTC);
 
 /* PLL clocks */
 static STM32_PLL2(ck_pll2, 0, RCC_PLL2CFGR1, GATE_PLL2, MUX_MUXSEL6);
+static STM32_PLL3(ck_pll3, 0, RCC_PLL3CFGR1, GATE_PLL3, MUX_MUXSEL7);
 static STM32_PLLS(ck_pll4, 0, RCC_PLL4CFGR1, GATE_PLL4, MUX_MUXSEL0);
 static STM32_PLLS(ck_pll5, 0, RCC_PLL5CFGR1, GATE_PLL5, MUX_MUXSEL1);
 static STM32_PLLS(ck_pll6, 0, RCC_PLL6CFGR1, GATE_PLL6, MUX_MUXSEL2);
@@ -2763,7 +2828,7 @@ static STM32_GATE(ck_ker_eth1ptp, &ck_flexgen_56, 0, GATE_ETH1);
 static STM32_GATE(ck_ker_eth2ptp, &ck_flexgen_56, 0, GATE_ETH2);
 static STM32_GATE(ck_ker_usb2phy2, &ck_flexgen_58, 0, GATE_USB3DRD);
 static STM32_GATE(ck_icn_m_gpu, &ck_flexgen_59, 0, GATE_GPU);
-// static STM32_GATE(ck_ker_gpu, &ck_pll3, 0, GATE_GPU);
+static STM32_GATE(ck_ker_gpu, &ck_pll3, 0, GATE_GPU);
 static STM32_GATE(ck_ker_ethswref, &ck_flexgen_60, 0, GATE_ETHSWREF);
 
 static STM32_GATE(ck_ker_eth1stp, &ck_icn_ls_mcu, 0, GATE_ETH1STP);
@@ -2841,7 +2906,7 @@ static struct clk *stm32mp25_clk_provided[STM32MP25_ALL_CLK_NB] = {
 	[HSE_DIV2_CK]		= &ck_hse_div2,
 
 	[PLL2_CK]		= &ck_pll2,
-	// [PLL3_CK]		= &ck_pll3,
+	[PLL3_CK]		= &ck_pll3,
 	[PLL4_CK]		= &ck_pll4,
 	[PLL5_CK]		= &ck_pll5,
 	[PLL6_CK]		= &ck_pll6,
@@ -3151,7 +3216,7 @@ static struct clk *stm32mp25_clk_provided[STM32MP25_ALL_CLK_NB] = {
 	[CK_KER_ETH1PTP]	= &ck_ker_eth1ptp,
 	[CK_KER_ETH2PTP]	= &ck_ker_eth2ptp,
 	[CK_BUS_GPU]		= &ck_icn_m_gpu,
-	// [CK_KER_GPU]		= &ck_ker_gpu,
+	[CK_KER_GPU]		= &ck_ker_gpu,
 	[CK_KER_ETHSWREF]	= &ck_ker_ethswref,
 
 	[CK_MCO1]		= &ck_mco1,
