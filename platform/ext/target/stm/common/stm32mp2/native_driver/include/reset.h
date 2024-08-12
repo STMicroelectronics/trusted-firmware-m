@@ -150,7 +150,7 @@ int reset_control_status(struct reset_control *rstc);
  * @retval -ENOSYS If the functionality is not implemented by the driver.
  * @retval -errno Other negative errno in case of failure.
  */
-int reset_control_assert(struct reset_control *rstc);
+int reset_control_assert(const struct reset_control *rstc);
 
 /**
  * @brief Take out the device from reset state.
@@ -165,7 +165,7 @@ int reset_control_assert(struct reset_control *rstc);
  * @retval -ENOSYS If the functionality is not implemented by the driver.
  * @retval -errno Other negative errno in case of failure.
  */
-int reset_control_deassert(struct reset_control *rstc);
+int reset_control_deassert(const struct reset_control *rstc);
 
 /**
  * @brief Reset the device.

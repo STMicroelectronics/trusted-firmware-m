@@ -47,7 +47,7 @@ static inline int _assert(const struct device *dev, uint32_t id)
 	return api->assert_level(dev, id);
 }
 
-int reset_control_assert(struct reset_control *rstc)
+int reset_control_assert(const struct reset_control *rstc)
 {
 	int dev_err = _is_valid_dev(rstc);
 
@@ -67,7 +67,7 @@ static inline int _deassert(const struct device *dev, uint32_t id)
 	return api->deassert_level(dev, id);
 }
 
-int reset_control_deassert(struct reset_control *rstc)
+int reset_control_deassert(const struct reset_control *rstc)
 {
 	int dev_err = _is_valid_dev(rstc);
 
