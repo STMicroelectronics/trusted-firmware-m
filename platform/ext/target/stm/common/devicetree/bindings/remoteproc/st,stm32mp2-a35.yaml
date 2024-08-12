@@ -1,0 +1,16 @@
+# Copyright (c) 2024, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  This document defines the binding for the remoteproc component that
+  boots firmwares on the ST32MP2 family chipset.
+
+compatible: "st,stm32mp2-a35"
+
+include:
+  - reset-device.yaml
+  - access-device.yaml
+
+properties:
+  resets:
+    required: true
