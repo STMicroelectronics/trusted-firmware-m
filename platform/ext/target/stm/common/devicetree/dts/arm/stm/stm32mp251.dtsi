@@ -15,6 +15,13 @@
 		#size-cells = <0>;
 
 		cpu0: cpu@0 {
+			compatible = "arm,cortex-a35";
+			device_type = "cpu";
+			reg = <0>;
+			status = "disabled";
+		};
+
+		cpu1: cpu@1 {
 			compatible = "arm,cortex-m33";
 			device_type = "cpu";
 			reg = <0>;
@@ -638,6 +645,13 @@
 			#address-cells = <1>;
 			#size-cells = <1>;
 			ranges;
+			status = "disabled";
+		};
+
+		a35_rproc: a35@0 {
+			compatible = "st,stm32mp2-a35";
+			#remoteproc-cells = <0>;
+			resets = <&rcc_reset C1_R>;
 			status = "disabled";
 		};
 	};
