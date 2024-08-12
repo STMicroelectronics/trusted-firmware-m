@@ -406,3 +406,12 @@
 &hconf1_otp {
 	shadow-provisionning = <0x00018db6>;
 };
+
+&a35_rproc {
+	status = "okay";
+};
+
+&cpu0 {
+	enable-method = "remoteproc";
+	remoteprocs = <&a35_rproc>;
+};
