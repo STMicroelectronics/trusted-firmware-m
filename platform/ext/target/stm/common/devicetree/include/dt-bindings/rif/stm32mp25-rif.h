@@ -46,6 +46,30 @@
 /* RIF lock states */
 #define RIF_UNLOCK		0x0
 #define RIF_LOCK		0x1
+/* define for mp2 Resource */
+#define RES_FLEX0               0
+#define RES_FLEX1               1
+#define RES_BUS                 69
+#define RES_GPIOA               90
+#define RES_GPIOB               91
+#define RES_GPIOC               92
+#define RES_GPIOD               93
+#define RES_GPIOE               94
+#define RES_GPIOF               95
+#define RES_GPIOG               96
+#define RES_GPIOH               97
+#define RES_GPIOI               98
+#define RES_GPIOJ               99
+#define RES_GPIOK               100
+#define RES_GPIOZ               101
+#define RES_HPDMA1              83
+#define RES_HPDMA2              84
+#define RES_HPDMA3              85
+#define RES_LPDMA1              86
+#define RES_IPCC1               87
+#define RES_IPCC2               88
+#define RES_BSEC                103
+#define RES_BKUPRAM             77
 
 /* Used when a field in a macro has no impact */
 #define RIF_UNUSED		0x0
