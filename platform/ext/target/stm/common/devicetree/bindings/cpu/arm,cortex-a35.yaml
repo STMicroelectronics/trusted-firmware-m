@@ -1,0 +1,8 @@
+# Copyright (C) 2024 STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: ARM Cortex-A35 CPU
+
+compatible: "arm,cortex-a35"
+
+include: cpu.yaml
