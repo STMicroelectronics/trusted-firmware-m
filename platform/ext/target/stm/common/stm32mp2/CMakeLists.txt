@@ -89,6 +89,7 @@ target_sources(platform_s
 		${STM_SOC_DIR}/native_driver/src/reset/core.c
 		${STM_SOC_DIR}/native_driver/src/reset/stm32_reset.c
 		${STM_SOC_DIR}/native_driver/src/timer/systick.c
+		${STM_SOC_DIR}/native_driver/src/timer/plat_test.c
 		${STM_SOC_DIR}/native_driver/src/pinctrl/common.c
 		${STM_SOC_DIR}/native_driver/src/pinctrl/stm32_pinctrl.c
 		${STM_SOC_DIR}/native_driver/src/uart/console.c
