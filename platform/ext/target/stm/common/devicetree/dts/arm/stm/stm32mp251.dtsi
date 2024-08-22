@@ -184,6 +184,14 @@
 				max-frequency = <120000000>;
 				status = "disabled";
 			};
+
+			tim2: timer@50000000 {
+				compatible = "st,stm32mp25-timer";
+				reg = <0x50000000 0x400>;
+				interrupts = <105  0>;
+				clocks = <&rcc CK_KER_TIM2>;
+				status = "disabled";
+			};
 		};
 
 		iac: iac@52090000 {
