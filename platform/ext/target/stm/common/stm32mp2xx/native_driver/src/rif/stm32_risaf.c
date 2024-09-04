@@ -1,24 +1,35 @@
 /*
- * Copyright (c) 2023, STMicroelectronics - All Rights Reserved
+ * Copyright (c) 2023-2025, STMicroelectronics - All Rights Reserved
  * Author(s): Ludovic Barre, <ludovic.barre@foss.st.com> for STMicroelectronics.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 #define DT_DRV_COMPAT st_stm32mp25_risaf
 
+#include <device.h>
 #include <errno.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
+#include <debug.h>
+
+#include "lib/delay.h"
 #include <lib/mmio.h>
+#include <lib/mmiopoll.h>
+#include "lib/timeout.h"
 #include <lib/utils_def.h>
 #include <cmsis.h>
-#include <device.h>
 #include <clk.h>
+
+#include <entropy.h>
+#include <string.h>
+#include <strings.h>
 
 #include <dt-bindings/rif/stm32mp25-risaf.h>
 
 /* ID Registers */
+#define _RISAF_SR			0x04U
+#define _RISAF_KEYR			0x30U
 #define _RISAF_REG_CFGR			0x40U
 #define _RISAF_REG_STARTR		0x44U
 #define _RISAF_REG_ENDR			0x48U
@@ -27,6 +38,14 @@
 
 #define _RISAF_HWCFGR			0xFF0U
 #define _RISAF_VERR			0xFF4U
+
+/* _RISAF_SR register fields */
+#define _RISAF_SR_KEYVALID_SHIFT	U(0)
+#define _RISAF_SR_KEYVALID		BIT(_RISAF_SR_KEYVALID_SHIFT)
+#define _RISAF_SR_KEYRDY_SHIFT		U(1)
+#define _RISAF_SR_KEYRDY		BIT(_RISAF_SR_KEYRDY_SHIFT)
+#define _RISAF_SR_ENCDIS_SHIFT		U(2)
+#define _RISAF_SR_ENCDIS		BIT(_RISAF_SR_ENCDIS_SHIFT)
 
 /* _RISAF_REG_CFGR(n) register fields */
 #define _RISAF_REG_CFGR_BREN_SHIFT	U(0)
@@ -77,6 +96,10 @@
 	((_FLD_GET(DT_RISAF_WRITE, cfg) << _RISAF_REG_CIDCFGR_WRENC_SHIFT) |	\
 	 (_FLD_GET(DT_RISAF_READ, cfg) << _RISAF_REG_CIDCFGR_RDENC_SHIFT))
 
+#define _RISAF_KEY_SIZE_IN_BYTES		0x10U
+#define _RISAF_TIMEOUT_1MS_IN_US		USEC_PER_MSEC
+#define _RISAF_TIMEOUT_STEP_10US		10U
+
 struct risaf_region {
 	uint32_t id;
 	uint32_t cfg;
@@ -97,6 +120,7 @@ struct stm32_risaf_config {
 	const clk_subsys_t clk_subsys;
 	const struct risaf_dt_region *dt_regions;
 	const int ndt_regions;
+	const struct device *entropy_dev;
 	const bool has_enc;
 };
 
@@ -189,6 +213,10 @@ static int stm32_risaf_region_cfg(const struct device *dev,
 	if (region.cfg & _RISAF_REG_CFGR_ENC) {
 		if ((!drv_cfg->has_enc) || !(region.cfg & _RISAF_REG_CFGR_SEC))
 			return -EINVAL;
+
+		if (!(mmio_read_32(drv_cfg->base + _RISAF_SR) & _RISAF_SR_KEYVALID) ||
+		    !(mmio_read_32(drv_cfg->base + _RISAF_SR) & _RISAF_SR_KEYRDY))
+			return -EINVAL;
 	}
 
 	base = drv_cfg->base + _RISAF_REGX_OFFSET(region.id);
@@ -222,6 +250,60 @@ static void stm32_risaf_get_hwconfig(const struct device *dev)
 	drv_data->hw_naddr_bits = _FLD_GET(_RISAF_HWCFGR_CFG4, regval);
 }
 
+static bool stm32_risaf_region_need_encryption_key(const struct device *dev)
+{
+	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
+	uint32_t status = mmio_read_32(drv_cfg->base + _RISAF_SR);
+
+	if ((status & _RISAF_SR_KEYVALID) && (status & _RISAF_SR_KEYRDY) &&
+	   !(status & _RISAF_SR_ENCDIS))
+		return false;
+
+	return true;
+}
+
+static int stm32_risaf_install_encryption_key(const struct device *dev,
+					      uint8_t key[_RISAF_KEY_SIZE_IN_BYTES])
+{
+	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
+	uint64_t sr;
+	uint32_t i;
+	int err;
+
+	for (i = 0U; i < _RISAF_KEY_SIZE_IN_BYTES; i += sizeof(uint32_t)) {
+		uint32_t key_val = 0U;
+
+		memcpy(&key_val, key + i, sizeof(uint32_t));
+		mmio_write_32(drv_cfg->base + _RISAF_KEYR + i, key_val);
+	}
+
+	err = mmio_read32_poll_timeout(drv_cfg->base + _RISAF_SR,
+				       sr,
+				       (sr & (_RISAF_SR_KEYVALID | _RISAF_SR_KEYRDY)),
+				       _RISAF_TIMEOUT_1MS_IN_US);
+	if (err)
+		EMSG("[%s] Timeout waiting encryption key expension\n", dev->name);
+
+	return err;
+}
+
+static int stm32_risaf_encryption_init(const struct device *dev)
+{
+	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
+	uint8_t key[_RISAF_KEY_SIZE_IN_BYTES];
+	int err;
+
+	bzero(key, _RISAF_KEY_SIZE_IN_BYTES);
+
+	err = entropy_get_entropy(drv_cfg->entropy_dev, key, _RISAF_KEY_SIZE_IN_BYTES);
+	if (err) {
+		EMSG("[%s] Could not get specific entropy\n", dev->name);
+		return err;
+	}
+
+	return stm32_risaf_install_encryption_key(dev, key);
+}
+
 static int stm32_risaf_init(const struct device *dev)
 {
 	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
@@ -241,6 +323,15 @@ static int stm32_risaf_init(const struct device *dev)
 
 	if (drv_cfg->ndt_regions > drv_data->hw_nregions)
 		return -EINVAL;
+
+	if (drv_cfg->has_enc && stm32_risaf_region_need_encryption_key(dev)) {
+		if (!drv_cfg->entropy_dev)
+			return -EINVAL;
+
+		err = stm32_risaf_encryption_init(dev);
+		if (err)
+			return err;
+	}
 
 	for(i = 0; i < drv_cfg->ndt_regions; i++) {
 		err = stm32_risaf_region_cfg(dev, i, true);
@@ -291,6 +382,7 @@ static const struct stm32_risaf_config stm32_risaf_cfg_##variant####n = {		\
 	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),			\
 	.dt_regions = risaf_dt_regions_##variant####n,					\
 	.ndt_regions = ARRAY_SIZE(risaf_dt_regions_##variant####n),			\
+	.entropy_dev = DEVICE_DT_GET_OR_NULL(DT_INST_ENTROPY_CTLR(n)),			\
 	.has_enc = DT_NODE_HAS_COMPAT(DT_DRV_INST(n), st_stm32mp25_risaf_enc),		\
 };											\
 											\
