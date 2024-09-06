@@ -513,7 +513,7 @@ bool device_is_ready(const struct device *dev);
  * The maximum length is set so that device_get_binding() can be used from
  * userspace.
  */
-#define DEVICE_MAX_NAME_LEN 48
+#define DEVICE_MAX_NAME_LEN 32
 
 /**
  * @brief Compile time check for device name length
