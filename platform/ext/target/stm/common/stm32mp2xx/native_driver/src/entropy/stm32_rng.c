@@ -1,0 +1,318 @@
+/*
+ * Copyright (c) 2024-2025, STMicroelectronics - All Rights Reserved
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+#define DT_DRV_COMPAT st_stm32mp25_rng
+
+
+#include "lib/delay.h"
+#include "lib/mmio.h"
+#include "lib/mmiopoll.h"
+#include "lib/timeout.h"
+#include <clk.h>
+#include <debug.h>
+#include <device.h>
+#include <entropy.h>
+#include <firewall.h>
+#include <reset.h>
+#include <stdint.h>
+#include <string.h>
+
+#define _RNG_CR			0x00U
+#define _RNG_SR			0x04U
+#define _RNG_DR			0x08U
+#define _RNG_HTCR		0x10U
+
+#define _CR_RNGEN		0x4U
+#define _CR_CED			0x20U
+#define _CR_CLKDIV		0xF0000U
+#define _CR_CLKDIV_Pos		16U
+#define _CR_CONDRST		0x40000000U
+
+#define _SR_DRDY		0x1U
+#define _SR_SECS		0x4U
+#define _SR_SEIS		0x40U
+
+#define _HTCR_CONFIG		0x00006688U
+
+#define RNG_TIMEOUT_US		100000U
+#define RNG_TIMEOUT_STEP_US	10U
+
+#define TIMEOUT_US_1MS		1000U
+
+#define RNG_NIST_CONFIG_A	0x00F40F00U
+#define RNG_NIST_CONFIG_B	0x01801000U
+#define RNG_NIST_CONFIG_C	0x00F00D00U
+#define RNG_NIST_CONFIG_MASK	GENMASK(25, 8)
+
+#define RNG_MAX_NOISE_CLK_FREQ	48000000U
+
+struct stm32_rng_config {
+	uintptr_t base;
+	const struct device *hclk_dev;
+	const clk_subsys_t hclk_subsys;
+	const struct reset_control rst_ctl;
+	const struct firewall_spec *firewall;
+	const int n_firewall;
+};
+
+struct stm32_rng_data {
+	struct clk *clk;
+};
+
+static int seed_error_recovery(const struct device *dev)
+{
+	const struct stm32_rng_config *drv_cfg = dev_get_config(dev);
+
+	/* Recommended by the SoC reference manual */
+	mmio_clrbits_32(drv_cfg->base + _RNG_SR, _SR_SEIS);
+
+	if ((mmio_read_32(drv_cfg->base + _RNG_SR) & _SR_SEIS) != 0U) {
+		ERROR("[%s] RNG noise\n", dev->name);
+		return -EBUSY;
+	}
+
+	return 0;
+}
+
+static uint32_t stm32_rng_clock_freq_restrain(const struct device *dev)
+{
+	unsigned long clock_rate;
+	uint32_t clock_div = 0U;
+	struct stm32_rng_data *drv_data = dev_get_data(dev);
+
+	clock_rate = clk_get_rate(drv_data->clk);
+
+	/*
+	 * Get the exponent to apply on the CLKDIV field in _RNG_CR register.
+	 * No need to handle the case when clock-div > 0xF as it is physically
+	 * impossible.
+	 */
+	while ((clock_rate >> clock_div) > RNG_MAX_NOISE_CLK_FREQ)
+		clock_div++;
+
+	VERBOSE("[%s] RNG clk rate : %lu\n", dev->name, clk_get_rate(drv_data->clk) >> clock_div);
+
+	return clock_div;
+}
+
+static int check_data_integrity(const struct device *dev)
+{
+	const struct stm32_rng_config *drv_cfg = dev_get_config(dev);
+	uint32_t status = mmio_read_32(drv_cfg->base + _RNG_SR);
+	uint32_t sr;
+	int nb_tries, err;
+
+	if ((status & (_SR_SECS | _SR_SEIS | _SR_DRDY)) != _SR_DRDY) {
+		for (nb_tries = 3; nb_tries > 0; nb_tries--) {
+
+			uint32_t status = mmio_read_32(drv_cfg->base + _RNG_SR);
+			if ((status & (_SR_SECS | _SR_SEIS)) != 0U) {
+				err = seed_error_recovery(dev);
+				if (err)
+					return err;
+			}
+
+			err = mmio_read32_poll_timeout(drv_cfg->base + _RNG_SR,
+						       sr,
+						       (sr & _SR_DRDY),
+						       RNG_TIMEOUT_US);
+
+			if (!err)
+				break;
+
+			if (err && nb_tries == 0)
+				return -ETIMEDOUT;
+		}
+	}
+
+	return 0;
+}
+
+static int stm32_rng_enable(const struct device *dev)
+{
+	const struct stm32_rng_config *drv_cfg = dev_get_config(dev);
+	uint32_t clock_div;
+
+	/* Reset internal block and disable CED bit */
+	clock_div = stm32_rng_clock_freq_restrain(dev);
+
+	/* Update configuration fields */
+	mmio_clrsetbits_32(drv_cfg->base + _RNG_CR, RNG_NIST_CONFIG_MASK,
+			   RNG_NIST_CONFIG_A | _CR_CONDRST | _CR_CED);
+
+	mmio_clrsetbits_32(drv_cfg->base + _RNG_CR, _CR_CLKDIV,
+			   (clock_div << _CR_CLKDIV_Pos));
+
+	mmio_write_32(drv_cfg->base + _RNG_HTCR, _HTCR_CONFIG);
+
+	mmio_clrsetbits_32(drv_cfg->base + _RNG_CR, _CR_CONDRST, _CR_RNGEN);
+
+	DMSG("[%s] Init RNG done\r\n", dev->name);
+
+	return check_data_integrity(dev);
+}
+
+static int stm32_rng_acquire_sem(const struct stm32_rng_config *drv_cfg)
+{
+	struct firewall_spec *firewall;
+	int err, i;
+
+	for_each_firewall(drv_cfg->firewall, firewall, drv_cfg->n_firewall, i) {
+		err = firewall_acquire_access(firewall);
+		if (err != 0)
+			break;
+	}
+
+	if (err)
+		ERROR("Could not acquire firewall access.\n");
+
+	return err;
+}
+
+static int stm32_rng_release_sem(const struct stm32_rng_config *drv_cfg)
+{
+	struct firewall_spec *firewall;
+	int err, i;
+
+	for_each_firewall(drv_cfg->firewall, firewall, drv_cfg->n_firewall, i) {
+		err = firewall_release_access(firewall);
+		if (err != 0)
+			break;
+	}
+
+	if (err)
+		ERROR("Could not release firewall access.\n");
+
+	return err;
+}
+
+/*
+ * stm32_rng_get_entropy - Read a number of random bytes from RNG
+ * out: pointer to the output buffer
+ * size: number of bytes to be read
+ * Return 0 on success, non-0 on failure
+ */
+static int stm32_rng_get_entropy(const struct device *dev, uint8_t *out, uint32_t size)
+{
+	const struct stm32_rng_config *drv_cfg = dev_get_config(dev);
+	uint8_t *buf = out;
+	size_t len = size;
+	uint32_t data32;
+	int err = 0;
+	unsigned int fifo_size;
+
+	/* Check if RNG is open */
+	if (!device_is_ready(dev))
+		return -ENODEV;
+
+	err = stm32_rng_acquire_sem(drv_cfg);
+	if (err)
+		return err;
+
+	while (len != 0U) {
+		err = check_data_integrity(dev);
+		if (err)
+			goto bail;
+
+		/* The data output buffer can store up to four 32-bit words.  When four words have
+		 * been read from the output FIFO through the RNG_DR register, the content of the
+		 * 128-bit conditioning output register is pushed into the output FIFO, and a new
+		 * conditioning round is automatically started.  Four new words are added to the
+		 * conditioning output register after a specific number of clock cycles.
+		 */
+		fifo_size = 4U;
+		while (len != 0U) {
+			if ((mmio_read_32(drv_cfg->base + _RNG_SR) & _SR_DRDY) == 0U) {
+				break;
+			}
+
+			data32 = mmio_read_32(drv_cfg->base + _RNG_DR);
+			if (data32 == 0U)
+				break;
+
+			fifo_size--;
+
+			memcpy(buf, &data32, MIN(len, sizeof(uint32_t)));
+			buf += MIN(len, sizeof(uint32_t));
+			len -= MIN(len, sizeof(uint32_t));
+
+			if (fifo_size == 0U) {
+				break;
+			}
+		}
+	}
+
+bail:
+
+	if (err)
+		memset(out, 0, buf - out);
+
+	err = stm32_rng_release_sem(drv_cfg);
+	if (err)
+		return err;
+
+	return err;
+}
+
+static const struct entropy_driver_api __maybe_unused stm32_rng_api = {
+	.get_entropy = stm32_rng_get_entropy,
+};
+
+/*
+ * stm32_rng_init: Initialize rng from DT
+ * return 0 on success, negative value on failure
+ */
+static int stm32_rng_init(const struct device *dev)
+{
+	const struct stm32_rng_config *drv_cfg = dev_get_config(dev);
+	struct stm32_rng_data *drv_data = dev_get_data(dev);
+	int err;
+
+	err = stm32_rng_acquire_sem(drv_cfg);
+	if (err)
+		return err;
+
+	drv_data->clk = clk_get(drv_cfg->hclk_dev, drv_cfg->hclk_subsys);
+	if (!drv_data->clk)
+		return -ENODEV;
+
+	err = clk_enable(drv_data->clk);
+	if (err)
+		return err;
+
+	err = reset_control_reset(&drv_cfg->rst_ctl);
+	if (err)
+		return err;
+
+	err = stm32_rng_enable(dev);
+	if (err)
+		return err;
+
+	return stm32_rng_release_sem(drv_cfg);
+}
+
+#define STM32_RNG_INIT(n)								  \
+											  \
+DT_INST_ACCESS_CTRLS_DEFINE(n);								  \
+											  \
+static const struct stm32_rng_config stm32_rng_cfg_##n = {				  \
+	.base = DT_INST_REG_ADDR(n),							  \
+	.hclk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR_BY_NAME(n, rng_hclk)),              \
+	.hclk_subsys = (clk_subsys_t)DT_INST_CLOCKS_CELL_BY_NAME(n, rng_hclk, bits),      \
+	.rst_ctl = DT_INST_RESET_CONTROL_GET(n),					  \
+	.firewall = DT_INST_ACCESS_CTRLS_GET(n),					  \
+	.n_firewall = DT_INST_ACCESS_CTRLS_NUM(n),					  \
+};											  \
+											  \
+static struct stm32_rng_data stm32_rng_data_##n = {};					  \
+											  \
+DEVICE_DT_INST_DEFINE(n,								  \
+		 &stm32_rng_init,							  \
+		 &stm32_rng_data_##n,							  \
+		 &stm32_rng_cfg_##n,							  \
+		 CORE, 6,								  \
+		 &stm32_rng_api);
+
+DT_INST_FOREACH_STATUS_OKAY(STM32_RNG_INIT)

@@ -101,6 +101,7 @@ target_sources(platform_s
 		${STM_FAMILLY_DIR}/native_driver/src/core/mpu_armv8m_drv.c
 		${STM_FAMILLY_DIR}/native_driver/src/core/sau_armv8m_drv.c
 		${STM_FAMILLY_DIR}/native_driver/src/entropy/entropy.c
+		${STM_FAMILLY_DIR}/native_driver/src/entropy/stm32_rng.c
 		${STM_FAMILLY_DIR}/native_driver/src/bsec/stm32_bsec3.c
 		${STM_FAMILLY_DIR}/native_driver/src/syscfg/stm32_syscfg.c
 		${STM_FAMILLY_DIR}/native_driver/src/clk/clk.c
@@ -201,6 +202,7 @@ target_sources(tfm_s
         ${STM_FAMILLY_DIR}/native_driver/src/timer/systick.c
         ${STM_FAMILLY_DIR}/native_driver/src/syscfg/stm32_syscfg.c
         ${STM_FAMILLY_DIR}/native_driver/src/i2c/stm32_i2c.c
+        ${STM_FAMILLY_DIR}/native_driver/src/entropy/stm32_rng.c
         ${STM_FAMILLY_DIR}/native_driver/src/bsec/stm32_bsec3.c
         ${STM_FAMILLY_DIR}/native_driver/src/spi/stm32_omm.c
         ${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_rcc_rif.c
@@ -270,6 +272,7 @@ if(BL2)
 			${STM_FAMILLY_DIR}/cmsis_driver/src/driver_flash_mm.c
 			${STM_FAMILLY_DIR}/native_driver/src/core/mpu_armv8m_drv.c
 			${STM_FAMILLY_DIR}/native_driver/src/entropy/entropy.c
+			${STM_FAMILLY_DIR}/native_driver/src/entropy/stm32_rng.c
 			${STM_FAMILLY_DIR}/native_driver/src/power/stm32mp2_pwr.c
 			${STM_FAMILLY_DIR}/native_driver/src/bsec/stm32_bsec3.c
 			${STM_FAMILLY_DIR}/native_driver/src/syscfg/stm32_syscfg.c
@@ -331,6 +334,7 @@ if(BL2)
             ${STM_FAMILLY_DIR}/native_driver/src/uart/console.c
             ${STM_FAMILLY_DIR}/native_driver/src/syscfg/stm32_syscfg.c
             ${STM_FAMILLY_DIR}/native_driver/src/bsec/stm32_bsec3.c
+            ${STM_FAMILLY_DIR}/native_driver/src/entropy/stm32_rng.c
             ${STM_FAMILLY_DIR}/native_driver/src/i2c/stm32_i2c.c
             ${STM_FAMILLY_DIR}/native_driver/src/regulator/stm32mp2_pmic.c
             ${STM_FAMILLY_DIR}/native_driver/src/regulator/stm32mp25_pwr_regul.c
