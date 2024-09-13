@@ -252,7 +252,11 @@ if(NS)
 			${STM_SOC_DIR}/native_driver/src/syscfg/stm32_syscfg.c
 	)
 endif()
-
+#========================= tfm_spm ============================================#
+target_sources(tfm_spm
+    PRIVATE
+      $<$<OR:$<BOOL:${CONFIG_TFM_FLIH_API}>,$<BOOL:${CONFIG_TFM_SLIH_API}>>:${STM_SOC_DIR}/secure/tfm_interrupts.c>
+)
 #========================= Platform BL2 =======================================#
 if(BL2)
 
