@@ -69,6 +69,11 @@ struct scmi_perfd {
 	struct rdev *rdev;
 };
 
+struct shared_mem {
+	uintptr_t *area;
+	size_t size;
+};
+
 /*
  * struct scpfw_channel_config - SCMI channel resources
  * @name: Channel name
@@ -79,8 +84,7 @@ struct scmi_perfd {
  * @reset_count: Number of cells of @reset
  * @voltd: Description of the regulators exposed on the channel
  * @voltd_count: Number of cells of @voltd
- * @perfd: Description of the DVFS/perf exposed on the channel
- * @perfd_count: Number of cells of @perfd
+ * @shm: shared memory for tfm_smt transport
  */
 struct scpfw_channel_config {
 	const char *name;
@@ -91,8 +95,7 @@ struct scpfw_channel_config {
 	size_t reset_count;
 	struct scmi_voltd *voltd;
 	size_t voltd_count;
-	struct scmi_perfd *perfd;
-	size_t perfd_count;
+	struct shared_mem shm;
 };
 
 /*

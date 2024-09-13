@@ -47,6 +47,7 @@ const struct sau_region_cfg_t sau_region[] = {
 	//ipc share memory
 	SAU_REGION_CFG(NS_IPC_SHMEM_START, NS_IPC_SHMEM_LIMIT, SAU_EN),
 #endif
+	SAU_REGION_CFG(S_SCMI_ADDR, S_SCMI_ADDR + S_SCMI_SIZE - 1, SAU_EN)
 };
 
 int sau_get_platdata(struct sau_platdata *pdata)

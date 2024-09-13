@@ -20,6 +20,7 @@
 #include <pinctrl.h>
 #include <reset.h>
 #include <syscon.h>
+#include <dt-bindings/scmi/stm32mp25-agents.h>
 #include "dt-bindings/clock/stm32mp25-clks.h"
 #include <stdlib.h>
 #include "clk-stm32-core.h"
@@ -27,7 +28,8 @@
 #include "tfm_scmi.h"
 #include <assert.h>
 #include <scmi_agent_configuration.h>
-
+/*  include memory layout for scmi tfm smt memory */
+#include <region_defs.h>
 /*
  * struct stm32_scmi_clk - Data for the exposed clock
  * @change_rate: SCMMI agent is allowed to change the rate
@@ -252,6 +254,8 @@ int32_t scmi_scpfw_cfg_early_init(void)
 		scpfw_cfg.agent_config[index].channel_count = 1;
 		channel_cfg = calloc(scpfw_cfg.agent_config[index].channel_count,
 				     sizeof(*scpfw_cfg.agent_config[index].channel_config));
+		channel_cfg->shm.area = (uintptr_t *)S_SCMI_ADDR;
+		channel_cfg->shm.size = S_SCMI_SIZE;
 
 		scpfw_cfg.agent_config[index].channel_config = channel_cfg;
 		channel_cfg->name = "channel";

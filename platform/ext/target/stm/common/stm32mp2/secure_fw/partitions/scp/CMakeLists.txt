@@ -14,15 +14,12 @@ cmake_policy(SET CMP0079 NEW)
 
 add_library(tfm_psa_rot_partition_scp STATIC)
 
-target_sources(tfm_spm
-    PRIVATE
-        scp_irq.c
-)
 target_sources(tfm_psa_rot_partition_scp
   PRIVATE
         scp_init.c
         scmi_server.c
         scmi_server_scpfw.c
+        scp_mbox.c
   )
 
 # The generated sources
@@ -35,7 +32,7 @@ target_sources(tfm_partitions
         ${CMAKE_BINARY_DIR}/generated/secure_fw/partitions/scp/auto_generated/load_info_tfm_scp.c
 )
 
-set(SCP_LOG_LEVEL DEBUG)
+set(SCP_LOG_LEVEL DISABLED)
 set(SCP_ARCHITECTURE tfm)
 set(SCP_ENABLE_OVERRIDE_FIRMWARE_NAME OFF)
 set(SCP_FIRMWARE scmi-fw)
@@ -56,6 +53,7 @@ add_dependencies(scmi-fw dt_platform_s_gen_h)
 target_compile_definitions(scmi-fw
    INTERFACE
    CFG_SCPFW_MOD_TFM_CLOCK
+   CFG_SCPFW_MOD_TFM_SMT
    CFG_SCPFW_MOD_TFM_RESET
    CFG_SCPFW_MOD_TFM_PSU_REGULATOR
    CFG_SCPFW_MOD_RESET_DOMAIN
@@ -67,6 +65,7 @@ target_compile_definitions(scmi-fw
    CFG_SCPFW_MOD_VOLTAGE_DOMAIN
    CFG_SCPFW_MOD_CLOCK
    CFG_SCPFW_MOD_TFM_CONSOLE
+   CFG_SCPFW_MOD_MSG_SMT
 )
 add_dependencies(framework dt_platform_s_gen_h)
 
@@ -74,6 +73,8 @@ target_compile_definitions(framework
    INTERFACE
    CFG_SCPFW_MOD_TFM_CLOCK
    CFG_SCPFW_MOD_TFM_MBX
+   CFG_SCPFW_MOD_TFM_SMT
+   CFG_SCPFW_MOD_TFM_PSU_REGULATOR
    CFG_SCPFW_MOD_RESET_DOMAIN
    CFG_SCPFW_MOD_SCMI
    CFG_SCPFW_MOD_SCMI_CLOCK
@@ -83,6 +84,7 @@ target_compile_definitions(framework
    CFG_SCPFW_MOD_VOLTAGE_DOMAIN
    CFG_SCPFW_MOD_CLOCK
    CFG_SCPFW_MOD_TFM_CONSOLE
+   CFG_SCPFW_MOD_MSG_SMT
 )
 
 target_include_directories(tfm_psa_rot_partition_scp
