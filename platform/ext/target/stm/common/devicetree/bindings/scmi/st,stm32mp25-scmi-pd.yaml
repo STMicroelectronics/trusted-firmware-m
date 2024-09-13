@@ -1,0 +1,20 @@
+# Copyright (c) 2023, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Define a pd service exported by scmi
+
+compatible: "st,stm32mp25-scmi-pd"
+include:
+  - base.yaml
+  - scmi-id.yaml
+
+properties:
+  clocks:
+    required: true
+  regu:
+    type: phandle
+    required: true
+
+  scmi-id:
+    required: true

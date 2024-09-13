@@ -12,6 +12,7 @@ include:
   - scmi-rst-list.yaml
   - scmi-clk-list.yaml
   - scmi-regu-list.yaml
+  - scmi-pd-list.yaml
 
 properties:
 
@@ -37,4 +38,10 @@ properties:
     required: true
 
   regu-id-max:
+    required: true
+
+  pd-list:
+    required: true
+
+  pd-id-max:
     required: true
