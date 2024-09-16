@@ -297,6 +297,12 @@
 	clk-id-max = <STM32MP25_CK_SCMI_MAX>;
 };
 
+&scp_mbox {
+	status = "okay";
+	mboxes = <&ipcc1 3>, <&ipcc1 3>;
+	mbox-names = "rx", "tx";
+};
+
 &rtc {
 	status = "okay";
 };
