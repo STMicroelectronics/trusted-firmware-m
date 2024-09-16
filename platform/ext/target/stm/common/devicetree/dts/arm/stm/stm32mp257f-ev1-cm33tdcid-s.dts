@@ -6,6 +6,7 @@
 /dts-v1/;
 
 #include <dt-bindings/clock/stm32mp25-clksrc.h>
+#include <dt-bindings/power/stm32mp25-power.h>
 #include <dt-bindings/reset/stm32mp25-resets.h>
 #include <dt-bindings/regulator/stm32mp25-regulator.h>
 
@@ -276,7 +277,7 @@
 	regu-list = <&scmi_vddcore>, <&scmi_v1v8>, <&scmi_v3v3> , <&scmi_vdd_emmc>,
 		     <&scmi_vdd3v3_usb>, <&scmi_vdd_sdcard>, <&scmi_vddio1>,
          <&scmi_vddio2>, <&scmi_vddio3>,  <&scmi_vddio4>,
-         <&scmi_vdd33ucpd>, <&scmi_vdda18adc>, <&scmi_vddgpu>;
+         <&scmi_vdd33ucpd>, <&scmi_vdda18adc>;
 	regu-id-max = <STMP25_VOLTD_SCMI_MAX>;
 
 	rst-list = <&scmi_rst_fmc>, <&scmi_rst_pcie>;
@@ -346,6 +347,9 @@
          <&scmi_clk_bus_stm>;
 
 	clk-id-max = <STM32MP25_CK_SCMI_MAX>;
+
+	pd-list = <&scmi_pd_gpu>;
+	pd-id-max = <STM32MP25_PD_SCMI_MAX>;
 };
 
 &scmi_m33 {
@@ -360,6 +364,9 @@
 		      <&scmi_clk_flexgen_07>, <&scmi_clk_flexgen_08>,
 		      <&scmi_clk_flexgen_09>, <&scmi_clk_flexgen_10>;
 	clk-id-max = <STM32MP25_CK_SCMI_MAX>;
+
+	pd-list = <&scmi_pd_gpu>;
+	pd-id-max = <STM32MP25_PD_SCMI_MAX>;
 };
 
 &scp_mbox {

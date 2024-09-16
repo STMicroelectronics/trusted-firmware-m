@@ -708,4 +708,13 @@
 			scmi-id = <VOLTD_SCMI_GPU>;
 		};
 	};
+
+	stm32mp25-scmi-pd {
+		scmi_pd_gpu:scmi_pd_gpu {
+			compatible = "st,stm32mp25-scmi-pd";
+			scmi-id = <PD_SCMI_GPU>;
+			clocks = <&rcc PLL3_CK>;
+			regu = <&vddgpu>;
+		};
+	};
 };
