@@ -69,6 +69,12 @@ struct scmi_perfd {
 	struct rdev *rdev;
 };
 
+struct scmi_pd {
+	const char *name;
+	struct clk *clk;
+	const struct device *regu;
+};
+
 struct shared_mem {
 	uintptr_t *area;
 	size_t size;
@@ -95,6 +101,8 @@ struct scpfw_channel_config {
 	size_t reset_count;
 	struct scmi_voltd *voltd;
 	size_t voltd_count;
+	struct scmi_pd *pd;
+	size_t pd_count;
 	struct shared_mem shm;
 };
 

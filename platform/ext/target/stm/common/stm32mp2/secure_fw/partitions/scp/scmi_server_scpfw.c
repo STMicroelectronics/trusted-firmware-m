@@ -75,6 +75,22 @@ struct stm32_scmi_rd {
 };
 
 /*
+ * struct stm32_scmi_pd - Data for the exposed power domains
+ * @scmi_id: scmi id for power domain service
+ * @name: Power domain name exposed to the channel
+ * @clk_dev: clock controller manipulated by the SCMI channel
+ * @clk_subsys: rcc id for the clock mainupation
+ * @regu_dev: regu controller manipulated by the SCMI channel
+ */
+struct stm32_scmi_pd {
+	unsigned long scmi_id;
+	const char *name;
+	const struct device *clk_dev;
+	const clk_subsys_t clk_subsys;
+	const struct device *regu_dev;
+};
+
+/*
  * Platform clocks exposed with SCMI
  */
 static int plat_scmi_clk_get_rates_steps(struct clk *clk,
@@ -112,6 +128,9 @@ struct stm32_scmi_config {
 	const struct stm32_scmi_regud *dt_regus;
 	const int ndt_regus;
 	const int ndt_regus_max;
+	const struct stm32_scmi_pd *dt_pd;
+	const int ndt_pd;
+	const int ndt_pd_max;
 };
 
 #define AGENT_NUM DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT)
@@ -178,6 +197,15 @@ static int stm32_scmi_init(const struct device *dev)
 		.regu_dev = SCMI_DT_REGU(_node_id, _prop, _idx)			\
 	},
 
+#define PD_ELE(_node_id, _prop, _idx, _n)					\
+	{									\
+		.scmi_id = SCMI_DT_ID(_node_id, _prop, _idx),			\
+		.name = SCMI_DT_NAME(_node_id, _prop, _idx),			\
+		.clk_subsys = SCMI_DT_CLOCK_SUB(_node_id, _prop, _idx),		\
+		.clk_dev = SCMI_DT_CLOCK(_node_id, _prop, _idx),		\
+	        .regu_dev = SCMI_DT_REGU(_node_id, _prop, _idx)			\
+	},
+
 #define ZERO_ELE(_node_id, _prop, _idx, _n) { 0 },
 
 #define STM32_SCMI_INIT(n)							\
@@ -189,6 +217,9 @@ static const struct stm32_scmi_clkd scmi_dt_clocks_##n[] = {			\
 };										\
 static const struct stm32_scmi_regud scmi_dt_regus_##n[] = {			\
 	DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, regu_list, REGU_ELE, (), n)	\
+};										\
+static const struct stm32_scmi_pd scmi_dt_pd_##n[] = {				\
+	DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(0, pd_list, PD_ELE, (), n)		\
 };										\
 static struct clk plat_clk_##n[] = {						\
 	DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, clk_list, ZERO_ELE, (), n)	\
@@ -206,6 +237,9 @@ static const struct stm32_scmi_config stm32_scmi_cfg_##n = {			\
 	.dt_regus  = scmi_dt_regus_##n,						\
 	.ndt_regus = ARRAY_SIZE(scmi_dt_regus_##n),				\
 	.ndt_regus_max = DT_INST_PROP(n, regu_id_max),				\
+	.dt_pd = scmi_dt_pd_##n,						\
+	.ndt_pd = ARRAY_SIZE(scmi_dt_pd_##n),					\
+	.ndt_pd_max =  DT_PROP(DT_DRV_INST(n), pd_id_max),			\
 };										\
 DEVICE_DT_INST_DEFINE(n ,&stm32_scmi_init,					\
 		      &plat_clk_##n[0],						\
@@ -261,6 +295,8 @@ int32_t scmi_scpfw_cfg_early_init(void)
 		channel_cfg->clock_count = scmi_cfg[i]->ndt_clocks_max;
 		channel_cfg->reset_count = scmi_cfg[i]->ndt_resets_max;
 		channel_cfg->voltd_count = scmi_cfg[i]->ndt_regus_max;
+		channel_cfg->pd_count = scmi_cfg[i]->ndt_pd_max;
+
 		channel_cfg->clock =
 			calloc(scpfw_cfg.agent_config[index].channel_config->clock_count,
 			       sizeof(*scpfw_cfg.agent_config[index].channel_config->clock));
@@ -270,6 +306,9 @@ int32_t scmi_scpfw_cfg_early_init(void)
 		channel_cfg->voltd =
 			calloc(scpfw_cfg.agent_config[index].channel_config->voltd_count,
 			       sizeof(*scpfw_cfg.agent_config[index].channel_config->voltd));
+		channel_cfg->pd =
+			calloc(scpfw_cfg.agent_config[index].channel_config->pd_count,
+			       sizeof(*scpfw_cfg.agent_config[index].channel_config->pd));
 
 		/* initialize with dummy name */
 		for(j = 0; j < channel_cfg->clock_count; j++)
@@ -287,6 +326,12 @@ int32_t scmi_scpfw_cfg_early_init(void)
 		for(j = 0; j < channel_cfg->voltd_count; j++)
 			channel_cfg->voltd[j] =
 				(struct scmi_voltd) {
+					.name  = dummy,
+				};
+
+		for(j = 0; j < channel_cfg->pd_count; j++)
+			channel_cfg->pd[j] =
+				(struct scmi_pd) {
 					.name  = dummy,
 				};
 	}
@@ -380,6 +425,22 @@ static int32_t scmi_scpfw_cfg_init_agent(const struct stm32_scmi_config *agent)
 		}
 	}
 
+	if (channel_cfg->pd_count) {
+
+		/*  re-order pd within table according to scmi id  */
+		for (j = 0; j < agent->ndt_pd; j++) {
+			clk = clk_get(agent->dt_pd[j].clk_dev,
+				      agent->dt_pd[j].clk_subsys);
+			assert(agent->pd[j].scmi_id < agent->ndt_pd_max);
+			channel_cfg->pd[agent->dt_pd[j].scmi_id] =
+				(struct scmi_pd ){
+					.name = agent->dt_pd[j].name,
+					.regu = agent->dt_pd[j].regu_dev,
+					.clk = clk,
+				};
+		}
+	}
+
 	return TFM_SCMI_SUCCESS;
 }
 
@@ -413,6 +474,7 @@ void scmi_scpfw_release_configuration(void)
 			free(channel_cfg->clock);
 			free(channel_cfg->reset);
 			free(channel_cfg->voltd);
+			free(channel_cfg->pd);
 		}
 
 		free(agent_cfg->channel_config);
