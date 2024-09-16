@@ -463,7 +463,6 @@ void scmi_scpfw_release_configuration(void)
 	struct scpfw_agent_config *agent_cfg = NULL;
 	size_t i = 0;
 	size_t j = 0;
-	size_t k = 0;
 
 	for (i = 0; i < scpfw_cfg.agent_count; i++) {
 		agent_cfg = scpfw_cfg.agent_config + i;
