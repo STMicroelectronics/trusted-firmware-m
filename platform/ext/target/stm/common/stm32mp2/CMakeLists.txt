@@ -34,6 +34,7 @@ target_include_directories(platform_region_defs
 		include
 		${STM_SOC_DIR}/boards
 		${STM_SOC_DIR}/native_driver/include
+		${STM_SOC_DIR}/secure/services/include
 )
 
 #========================= Platform psa interface =============================#
@@ -121,7 +122,7 @@ target_sources(platform_s
 		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${STM_SOC_DIR}/secure/services/src/tfm_platform_system.c>
 		$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${STM_SOC_DIR}/secure/nv_counters.c>
 		$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_OTP}>>:${STM_SOC_DIR}/secure/otp.c>
-		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/secure/services/src/stm32_copro.c>
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/secure/services/src/cpus.c>
 		${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_nvic.c
 )
 
@@ -178,7 +179,7 @@ target_sources(tfm_s
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rif/stm32_risab.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/regulator/stm32mp2_pmic.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/regulator/stm32mp25_pwr_regul.c>
-		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/secure/services/src/stm32_copro.c>
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/secure/services/src/cpus.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/rtc/stm32_rtc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/memc/stm32_fmc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/dma/stm32_hpdma.c>
