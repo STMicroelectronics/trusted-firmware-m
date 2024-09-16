@@ -17,7 +17,7 @@
     {
       "source": "MAILBOX_IRQ",
       "name": "MAILBOX",
-      "handling": "SLIH"
+      "handling": "FLIH"
     }
   ],
   }

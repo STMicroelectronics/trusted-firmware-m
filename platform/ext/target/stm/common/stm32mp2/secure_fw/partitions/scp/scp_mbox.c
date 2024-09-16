@@ -33,8 +33,12 @@ extern struct irq_t mailbox_irq;
 
 void scp_com_handle(void)
 {
+}
+
+psa_flih_result_t mailbox_flih(void)
+{
 	IPCC_HANDLE_0();
-	psa_eoi(mailbox_irq.p_ildi->signal);
+	return PSA_FLIH_NO_SIGNAL;
 }
 
 void scp_com_init(void)
