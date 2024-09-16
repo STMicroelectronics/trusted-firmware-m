@@ -818,7 +818,7 @@ static bool stm32_rcc_has_access_by_id(struct clk_stm32_priv *priv, uint16_t id)
 	uintptr_t rcc_base = clk_stm32_get_rcc_base(priv);
 	unsigned int master = RIF_CID2;
 	uint32_t cid_reg_value = 0;
-#if (!IS_ENABLED(STM32_SEC))
+#if (IS_ENABLED(STM32_NSEC))
 	uint32_t s_reg_value = io_read32(rcc_base +_RCC_SECCFGR(id));
 	if (s_reg_value & BIT(id % 32))
 		return false;
