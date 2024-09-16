@@ -335,6 +335,11 @@
 				compatible = "st,stm32mp25-rcc-reset";
 				#reset-cells = <1>;
 			};
+
+			rcc_rif: access-controller {
+				compatible = "st,stm32mp25-rcc-rif";
+				#access-controller-cells = <1>;
+			};
 		};
 
 		syscfg: syscon@54230000 {
