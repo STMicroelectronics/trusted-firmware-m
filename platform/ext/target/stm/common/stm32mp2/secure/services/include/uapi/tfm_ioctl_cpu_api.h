@@ -82,4 +82,43 @@ struct tfm_cpu_service_out_t {
 		} cpu_cmd;
 	};
 };
+
+/**
+ * @brief get information on cpu service, like number of cpu managed.
+ *
+ * @param[out] serv_info   Pointer on service information structure
+ *
+ * @return Returns values as specified by the tfm_platform_err_t
+ */
+enum tfm_platform_err_t tfm_platform_cpu_service_info(struct cpu_serv_info *serv_info);
+
+/**
+ * @brief get information on cpu id X.
+ *
+ * @param[in]  cpu_id	   cpu id
+ * @param[out] cpu_info    Pointer on cpu information structure
+ *
+ * @return Returns values as specified by the tfm_platform_err_t
+ */
+enum tfm_platform_err_t tfm_platform_cpu_info(uint32_t cpu_id, struct cpu_info_res *cpu_info);
+
+/**
+ * @brief send start command on cpu id X.
+ *
+ * @param[in]  cpu_id	   cpu id
+ * @param[out] status      Pointer, return status after command.
+ *
+ * @return Returns values as specified by the tfm_platform_err_t
+ */
+enum tfm_platform_err_t tfm_platform_cpu_start(uint32_t cpu_id, int32_t *status);
+
+/**
+ * @brief send stop command on cpu id X.
+ *
+ * @param[in]  cpu_id	   cpu id
+ * @param[out] status      Pointer, return status after command.
+ *
+ * @return Returns values as specified by the tfm_platform_err_t
+ */
+enum tfm_platform_err_t tfm_platform_cpu_stop(uint32_t cpu_id, int32_t *status);
 #endif /* TFM_IOCTL_CPU_API_H */

@@ -116,6 +116,7 @@ target_sources(platform_s
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/tamper/stm32_tamp.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/remoteproc/rproc_core.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/native_driver/src/remoteproc/stm32_rproc.c>
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
 		$<$<BOOL:${STM32_DDR_CACHED}>:${STM_SOC_DIR}/native_driver/src/core/stm32_icache.c>
 		$<$<BOOL:${STM32_DDR_CACHED}>:${STM_SOC_DIR}/native_driver/src/core/stm32_dcache.c>
 		${STM_SOC_DIR}/native_driver/src/i2c/stm32_i2c.c
@@ -234,6 +235,7 @@ if(NS)
 			${STM_SOC_DIR}/native_driver/src/pinctrl/stm32_pinctrl.c
 			${STM_SOC_DIR}/native_driver/src/uart/console.c
 			${STM_SOC_DIR}/native_driver/src/uart/stm32_uart.c
+			$<$<BOOL:${STM32_M33TDCID}>:${STM_SOC_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
 	)
 
 	target_compile_definitions(platform_ns
