@@ -54,7 +54,7 @@ struct timer_config {
 
 /*  struct and variable used in tf-m-tests for interrupt test */
 struct platform_data_t {};
-const struct platform_data_t tfm_peripheral_timer2 = {0};
+const struct platform_data_t tfm_peripheral_timer2 = {};
 
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
 "only one timer node is supported for this test");
