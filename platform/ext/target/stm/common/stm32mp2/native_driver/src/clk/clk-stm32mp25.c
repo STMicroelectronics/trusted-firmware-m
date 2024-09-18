@@ -1118,14 +1118,26 @@ static const struct stm32_clk_pll *clk_stm32_pll_data(unsigned int idx)
 
 static void __maybe_unused stm32mp2_clk_xbar_on_hsi(struct clk_stm32_priv *priv)
 {
+	const struct stm32_rcc_config *rcc_cfg = priv->rcc_cfg;
 	uintptr_t rcc_base = clk_stm32_get_rcc_base(priv);
 	uint32_t i;
 
-	for (i = 0; i < XBAR_CHANNEL_NB; i++) {
-		if (!stm32_rcc_has_access_by_id(priv, i))
+	for (i = 0; i < rcc_cfg->nflexgen; i++) {
+		uint32_t val = rcc_cfg->flexgen[i];
+		uint32_t cmd, cmd_data;
+		unsigned int channel;
+
+		cmd = _FLD_GET(CMD, val);
+		if (cmd != CMD_FLEXGEN)
 			continue;
 
-		io_clrsetbits32(rcc_base + RCC_XBAR0CFGR + (0x4 * i),
+		cmd_data = val & ~CMD_MASK;
+		channel = _FLD_GET(FLEX_ID, cmd_data);
+
+		if (!stm32_rcc_has_access_by_id(priv, channel))
+			continue;
+
+		io_clrsetbits32(rcc_base + RCC_XBAR0CFGR + (0x4 * channel),
 				_RCC_XBAR0CFGR_XBAR0SEL_MASK, XBAR_SRC_HSI);
 	}
 }
