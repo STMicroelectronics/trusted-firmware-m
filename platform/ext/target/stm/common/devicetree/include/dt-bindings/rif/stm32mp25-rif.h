@@ -111,6 +111,8 @@
 #define RES_FLEX61		61
 #define RES_FLEX62		62
 #define RES_FLEX63		63
+#define RES_CPURST		66
+#define RES_CPUBOOT		67
 #define RES_BUS			69
 #define RES_GPIOA		90
 #define RES_GPIOB		91
