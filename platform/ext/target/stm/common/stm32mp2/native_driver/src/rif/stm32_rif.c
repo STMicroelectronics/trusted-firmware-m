@@ -204,7 +204,10 @@ static int _rifprot_init(const struct rifprot_controller *ctl)
 
 int stm32_rifprot_init(const struct rifprot_controller *ctl)
 {
-	if (!ctl || !ctl->dev)
+	if (!ctl)
+		return 0;
+
+	if (!ctl->dev)
 		return -ENODEV;
 
 	if (ctl->ops && ctl->ops->init)
