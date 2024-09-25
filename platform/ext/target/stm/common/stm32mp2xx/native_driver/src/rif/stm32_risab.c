@@ -197,7 +197,7 @@ static void stm32_risab_set_priv_cfg(const struct device *dev,
 				     struct risab_region *region)
 {
 	const struct stm32_risab_config *drv_cfg = dev_get_config(dev);
-	uint8_t i;
+	uint32_t i;
 
 	/* set all priv of region pages */
 	for (i = region->first_page; i<= region->last_page; i++)
@@ -209,7 +209,7 @@ static void stm32_risab_set_cid_cfg(const struct device *dev,
 				    struct risab_region *region)
 {
 	const struct stm32_risab_config *drv_cfg = dev_get_config(dev);
-	uint8_t i;
+	uint32_t i;
 
 	/*
 	 * When TDCID, TFM should be the one to set the CID filtering
@@ -224,7 +224,7 @@ static void stm32_risab_set_sec_cfg(const struct device *dev,
 				    struct risab_region *region)
 {
 	const struct stm32_risab_config *drv_cfg = dev_get_config(dev);
-	uint8_t i;
+	uint32_t i;
 
 	for (i = region->first_page; i<= region->last_page; i++)
 		io_clrsetbits32(drv_cfg->base + _RISAB_PGy_SECCFGR(i),
