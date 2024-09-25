@@ -132,9 +132,9 @@ def create_issue_fixed(args, release_path):
     fixed_rst = RstHelper(release_path + "/" + "/fixed.rst")
 
     print("Found issue fixed in bugzilla between 2 commits:")
-    g_brch = input('\tEnter gerrit branch:')
-    s_sha1 = input('\tEnter start sha1,branch or tag:')
-    e_sha1 = input('\tEnter end sha1,branch or tag:')
+    g_brch = input('\tEnter gerrit branch: ')
+    s_sha1 = input('\tEnter start sha1,branch or tag: ')
+    e_sha1 = input('\tEnter end sha1,branch or tag: ')
 
     bz_list = stm32_bzlist.main(["-b", g_brch, "-s", s_sha1, "-e", e_sha1, "-c"])
 
