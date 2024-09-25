@@ -1582,6 +1582,14 @@ static int stm32_clk_kernel_configure(struct clk_stm32_priv *priv)
 	return 0;
 }
 
+static void stm32_clk_gate_init(struct clk_stm32_priv *priv)
+{
+
+	uint32_t i;
+	for(i=0; i < priv->nb_gates; i++)
+               priv->gate_cpt[i] = 0;
+}
+
 static int stm32mp2_init_clock_tree(struct clk_stm32_priv *priv)
 {
 	int ret;
@@ -1599,6 +1607,8 @@ static int stm32mp2_init_clock_tree(struct clk_stm32_priv *priv)
 	ret = stm32_clk_oscillators_wait_lse_ready(priv);
 	if (ret != 0)
 		panic();
+
+	stm32_clk_gate_init(priv);
 
 	ret = stm32mp2_clk_flexgen_configure(priv);
 	if (ret != 0)
