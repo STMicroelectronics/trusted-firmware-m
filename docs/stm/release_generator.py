@@ -37,9 +37,10 @@ class Testsuite:
 def tfm_log2testsuite(log):
 
     sum_pattern = re.compile(r"Test suite \'(?P<DESC>.*?)\s*\((?P<NAME>\w+)\)\'\s+has\s+(?P<RES>\w+)")
-    testsuites_pattern = re.compile(r"(?:Running Test Suite.*?TESTSUITE PASSED!)", re.DOTALL)
+    testsuites_pattern = re.compile(r"(?:Running Test Suite.*?TESTSUITE .*?!)", re.DOTALL)
     testsuite_pattern = re.compile(r"Running Test Suite (?P<DESC>.*?)\s*\((?P<NAME>\w+)\)...")
-    test_pattern = re.compile(r"> Executing \'(?P<NAME>\w+)\'[\s|\w|>]*Description.*\'(?P<DESC>.*)\'[\s|\w|>]*TEST.*- (?P<RES>\w+)!")
+    test_pattern = re.compile(r"> Executing '(?P<NAME>\w+)'[\s\S]*?Description: '(?P<DESC>[^']+)'[\s\S]*?TEST: (\w+) - (?P<RES>PASSED|FAILED)!")
+
     testsuites = []
 
     summary = Testsuite("Summary")
