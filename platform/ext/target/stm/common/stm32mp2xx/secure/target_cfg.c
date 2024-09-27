@@ -73,6 +73,9 @@ enum tfm_plat_err_t nvic_interrupt_target_state_cfg(void)
 		NVIC_ClearTargetState(IAC_IRQn);
 		NVIC_ClearTargetState(SERF_IRQn);
 		NVIC_ClearTargetState(CPU1_SEV_IRQn);
+		/* Make sure that interrupt reserved for NS notification is
+		 * nonsecure */
+		NVIC_SetTargetState(RESERVED_9);
 	}
 
 	return TFM_PLAT_ERR_SUCCESS;

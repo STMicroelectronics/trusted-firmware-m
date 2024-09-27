@@ -85,3 +85,14 @@ uint32_t tfm_hal_get_ns_entry_point(void)
 {
     return *((uint32_t *)(NS_SECURE_BASE + 4));
 }
+
+uint32_t tfm_hal_raise_notify_ns(void)
+{
+	TZ_NVIC_SetPendingIRQ_NS(RESERVED_9);
+	return TFM_HAL_SUCCESS;
+}
+
+uint32_t tfm_hal_notify_ns_init(void)
+{
+	return TFM_HAL_SUCCESS;
+}
