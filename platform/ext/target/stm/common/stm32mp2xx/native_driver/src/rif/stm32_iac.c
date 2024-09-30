@@ -189,6 +189,8 @@ int stm32_iac_enable_irq(void)
 	/* just less than exception fault */
 	NVIC_SetPriority(drv_cfg->irq, 1);
 	NVIC_EnableIRQ(drv_cfg->irq);
+
+	return 0;
 }
 
 /*FIXME just a workaround for poc */
