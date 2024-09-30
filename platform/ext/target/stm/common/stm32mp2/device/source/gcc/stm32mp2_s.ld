@@ -29,6 +29,12 @@
  * default values if needed. */
 #include "tfm_s_linker_alignments.h"
 
+
+#ifndef TFM_LINKER_PSA_ROT_LINKER_CODE_ALIGNMENT
+#define TFM_LINKER_PSA_ROT_LINKER_CODE_ALIGNMENT    TFM_LINKER_DEFAULT_ALIGNMENT
+#endif
+
+
 MEMORY
 {
   FLASH    (rx)  : ORIGIN = S_CODE_START, LENGTH = S_CODE_SIZE
@@ -47,12 +53,26 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
-    .TFM_VECTORS : ALIGN(4)
+    /*
+     * To support firmware image encryption by OP-TEE (TF-M running on a coprocessor),
+     * we need to align all sections to have a modulo 16 size. This size is the atomic block size to
+     * encrypt. Use TFM_LINKER_DEFAULT_ALIGNMENT that is set to 32 bytes.
+     * Each section declared should respect this template:
+     *
+     * section_name : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
+     * {
+     *     ...
+     *     ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
+     * }
+     */
+
+   .TFM_VECTORS : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         __vectors_start__ = .;
         KEEP(*(.vectors))
         . = ALIGN(4);
         __vectors_end__ = .;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > FLASH
 
 #ifdef CONFIG_TFM_USE_TRUSTZONE
@@ -72,7 +92,7 @@ SECTIONS
     Image$$VENEER_ALIGN$$Limit = ADDR(.gnu.sgstubs) + SIZEOF(.gnu.sgstubs);
 #endif
 
-    .copy.table : ALIGN(4)
+    .copy.table : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         __copy_table_start__ = .;
 #ifdef RAM_VECTORS_SUPPORT
@@ -104,9 +124,10 @@ SECTIONS
         LONG (SIZEOF(.ER_CODE_SRAM) / 4)
 #endif
         __copy_table_end__ = .;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > FLASH
 
-    .zero.table : ALIGN(4)
+    .zero.table : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         __zero_table_start__ = .;
         LONG (ADDR(.TFM_BSS))
@@ -121,6 +142,7 @@ SECTIONS
         LONG (SIZEOF(.TFM_SP_META_PTR) / 4)
 #endif
         __zero_table_end__ = .;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > FLASH
 
     /**** Section for holding partition RO load data */
@@ -128,12 +150,13 @@ SECTIONS
      * Sort the partition info by priority to guarantee the initing order.
      * The first loaded partition will be inited at last in SFN model.
      */
-    .TFM_SP_LOAD_LIST : ALIGN(4)
+    .TFM_SP_LOAD_LIST : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
        KEEP(*(.part_load_priority_lowest))
        KEEP(*(.part_load_priority_low))
        KEEP(*(.part_load_priority_normal))
        KEEP(*(.part_load_priority_high))
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > FLASH
     Image$$TFM_SP_LOAD_LIST$$RO$$Base = ADDR(.TFM_SP_LOAD_LIST);
     Image$$TFM_SP_LOAD_LIST$$RO$$Limit = ADDR(.TFM_SP_LOAD_LIST) + SIZEOF(.TFM_SP_LOAD_LIST);
@@ -178,7 +201,7 @@ SECTIONS
     Image$$TFM_APP_CODE_END$$Base = .;
 
 #if defined(S_CODE_SRAM_ALIAS_BASE)
-    .ER_CODE_SRAM : ALIGN(4)
+    .ER_CODE_SRAM : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         *Driver_GFC100_EFlash.o(.text*)
         *Driver_GFC100_EFlash.o(.rodata*)
@@ -186,7 +209,7 @@ SECTIONS
         *gfc100_eflash_drv.o(.rodata*)
         *musca_b1_eflash_drv.o(.text*)
         *musca_b1_eflash_drv.o(.rodata*)
-        . = ALIGN(4); /* This alignment is needed to make the section size 4 bytes aligned */
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > CODE_RAM AT > FLASH
     Image$$ER_CODE_SRAM$$RO$$Base = ADDR(.ER_CODE_SRAM);
     Image$$ER_CODE_SRAM$$RO$$Limit = ADDR(.ER_CODE_SRAM) + SIZEOF(.ER_CODE_SRAM);
@@ -195,21 +218,23 @@ SECTIONS
 #endif
 
 #if TFM_LVL != 1
-    .ARM.extab :
+    .ARM.extab : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > FLASH
 
     __exidx_start = .;
-    .ARM.exidx :
+    .ARM.exidx : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > FLASH
     __exidx_end = .;
 
 #endif /* TFM_LVL != 1 */
 
-    .ER_TFM_CODE : ALIGN(4)
+    .ER_TFM_CODE : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         *startup*(.text*)
         *libplatform_s*:*(.text*)
@@ -217,6 +242,7 @@ SECTIONS
 
         *libplatform_s*:*(.rodata*)
         *libtfm_spm*:*(.rodata*)
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > FLASH
 
 #include <linker/devices.ld>
@@ -225,6 +251,7 @@ SECTIONS
     .tfm_secure_data_start :
     {
         . = ABSOLUTE(S_DATA_START) ;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM
 
     /*
@@ -247,6 +274,7 @@ SECTIONS
     .TFM_SHARED_SYMBOLS : ALIGN(TFM_LINKER_SHARED_SYMBOLS_ALIGNMENT)
     {
         . += SHARED_SYMBOL_AREA_SIZE;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM
 #endif
 
@@ -257,18 +285,21 @@ SECTIONS
     .tfm_bl2_shared_data : ALIGN(TFM_LINKER_BL2_SHARED_DATA_ALIGNMENT)
     {
         . += BOOT_TFM_SHARED_DATA_SIZE;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM
 
     .msp_stack : ALIGN(TFM_LINKER_MSP_STACK_ALIGNMENT)
     {
         . += __msp_stack_size__ - 0x8;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM
     Image$$ARM_LIB_STACK$$ZI$$Base = ADDR(.msp_stack);
     Image$$ARM_LIB_STACK$$ZI$$Limit = ADDR(.msp_stack) + SIZEOF(.msp_stack);
 
-    .msp_stack_seal_res :
+    .msp_stack_seal_res : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         . += 0x8;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM
     __StackSeal = ADDR(.msp_stack_seal_res);
 
@@ -277,7 +308,7 @@ SECTIONS
 
 #if defined(ENABLE_HEAP)
     __heap_size__ = S_HEAP_SIZE;
-    .heap : ALIGN(8)
+    .heap : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         __end__ = .;
         PROVIDE(end = .);
@@ -285,6 +316,7 @@ SECTIONS
         . += __heap_size__;
         __HeapLimit = .;
         __heap_limit = .; /* Add for _sbrk */
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM
 #endif
 
@@ -306,12 +338,12 @@ SECTIONS
     {
         *tfm_app_rot_partition*:*(.data*)
         *(TFM_*_APP-ROT_ATTR_RW)
-        . = ALIGN(4);
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM AT> FLASH
     Image$$TFM_APP_ROT_LINKER_DATA$$RW$$Base = ADDR(.TFM_APP_ROT_LINKER_DATA);
     Image$$TFM_APP_ROT_LINKER_DATA$$RW$$Limit = ADDR(.TFM_APP_ROT_LINKER_DATA) + SIZEOF(.TFM_APP_ROT_LINKER_DATA);
 
-    .TFM_APP_ROT_LINKER_BSS : ALIGN(4)
+    .TFM_APP_ROT_LINKER_BSS : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         start_of_TFM_APP_ROT_LINKER = .;
         *tfm_app_rot_partition*:*(.bss*)
@@ -333,6 +365,7 @@ SECTIONS
     .tfm_secure_priv_data_boundary :
     {
         . = ABSOLUTE(S_DATA_PRIV_START) ;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM
 #endif
 
@@ -348,11 +381,13 @@ SECTIONS
     .tfm_bl2_shared_data : ALIGN(TFM_LINKER_BL2_SHARED_DATA_ALIGNMENT)
     {
         . += BOOT_TFM_SHARED_DATA_SIZE;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM AT> RAM
 
     .msp_stack : ALIGN(TFM_LINKER_MSP_STACK_ALIGNMENT)
     {
         . += __msp_stack_size__;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM
     Image$$ARM_LIB_STACK$$ZI$$Base = ADDR(.msp_stack);
     Image$$ARM_LIB_STACK$$ZI$$Limit = ADDR(.msp_stack) + SIZEOF(.msp_stack);
@@ -367,12 +402,12 @@ SECTIONS
     {
         *tfm_psa_rot_partition*:*(.data*)
         *(TFM_*_PSA-ROT_ATTR_RW)
-        . = ALIGN(4);
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM AT> FLASH
     Image$$TFM_PSA_ROT_LINKER_DATA$$RW$$Base = ADDR(.TFM_PSA_ROT_LINKER_DATA);
     Image$$TFM_PSA_ROT_LINKER_DATA$$RW$$Limit = ADDR(.TFM_PSA_ROT_LINKER_DATA) + SIZEOF(.TFM_PSA_ROT_LINKER_DATA);
 
-    .TFM_PSA_ROT_LINKER_BSS : ALIGN(4)
+    .TFM_PSA_ROT_LINKER_BSS : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         start_of_TFM_PSA_ROT_LINKER = .;
         *tfm_psa_rot_partition*:*(.bss*)
@@ -423,11 +458,12 @@ SECTIONS
         __ram_vectors_start__ = .;
         KEEP(*(.ram_vectors))
         __ram_vectors_end__   = .;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM
     .TFM_DATA __ram_vectors_end__ : ALIGN(4)
 #else
 
-    .TFM_DATA : ALIGN(4)
+    .TFM_DATA : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
 #endif
     {
         *(.data*)
@@ -453,13 +489,12 @@ SECTIONS
         PROVIDE_HIDDEN (__fini_array_end = .);
 
         KEEP(*(.jcr*))
-        . = ALIGN(4);
-
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM AT> FLASH
     Image$$ER_TFM_DATA$$RW$$Base = ADDR(.TFM_DATA);
     Image$$ER_TFM_DATA$$RW$$Limit = ADDR(.TFM_DATA) + SIZEOF(.TFM_DATA);
 
-    .TFM_BSS : ALIGN(4)
+    .TFM_BSS : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         __bss_start__ = .;
 
@@ -483,6 +518,7 @@ SECTIONS
         *(COMMON)
         . = ALIGN(4);
         __bss_end__ = .;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM AT> RAM
     Image$$ER_TFM_DATA$$ZI$$Base = ADDR(.TFM_BSS);
     Image$$ER_TFM_DATA$$ZI$$Limit = ADDR(.TFM_BSS) + SIZEOF(.TFM_BSS);
@@ -496,10 +532,10 @@ SECTIONS
 
 #if defined (S_RAM_CODE_START)
     /* Code executed from RAM */
-    .TFM_RAM_CODE S_RAM_CODE_START :
+    .TFM_RAM_CODE S_RAM_CODE_START :  ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         KEEP(*(.ramfunc))
-        . = ALIGN(4);
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM AT> FLASH
 
     ASSERT(S_RAM_CODE_START % 4 == 0, "S_RAM_CODE_START must be divisible by 4")

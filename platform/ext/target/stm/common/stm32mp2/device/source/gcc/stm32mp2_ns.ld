@@ -22,6 +22,11 @@
 
 #include "region_defs.h"
 
+/* Include file with definitions for section alignments.
+ * Note: it should be included after region_defs.h to let platform define
+ * default values if needed. */
+#include "tfm_s_linker_alignments.h"
+
 MEMORY
 {
   FLASH (rx)  : ORIGIN = NS_CODE_START, LENGTH = NS_CODE_SIZE
@@ -38,7 +43,7 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
-    .text :
+    .text : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         KEEP(*(.vectors))
         __Vectors_End = .;
@@ -68,17 +73,20 @@ SECTIONS
         *(.rodata*)
 
         KEEP(*(.eh_frame*))
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > FLASH
 
-    .ARM.extab :
+    .ARM.extab : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > FLASH
 
     __exidx_start = .;
-    .ARM.exidx :
+    .ARM.exidx : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > FLASH
     __exidx_end = .;
 
@@ -87,9 +95,8 @@ SECTIONS
     /* To copy multiple ROM to RAM sections,
      * define etext2/data2_start/data2_end and
      * define __STARTUP_COPY_MULTIPLE in startup_cmsdk_mps3_an524_ns.S */
-    .copy.table :
+    .copy.table :  ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
-        . = ALIGN(4);
         __copy_table_start__ = .;
         LONG (__etext)
         LONG (__data_start__)
@@ -98,23 +105,24 @@ SECTIONS
         LONG (DEFINED(__data2_start__) ? __data2_start__ : 0)
         LONG (DEFINED(__data2_start__) ? ((__data2_end__ - __data2_start__) / 4) : 0)
         __copy_table_end__ = .;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > FLASH
 
     /* To clear multiple BSS sections,
      * uncomment .zero.table section and,
      * define __STARTUP_CLEAR_BSS_MULTIPLE in startup_cmsdk_mps3_an524_ns.S */
-    .zero.table :
+    .zero.table :  ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
-        . = ALIGN(4);
         __zero_table_start__ = .;
         LONG (__bss_start__)
         LONG ((__bss_end__ - __bss_start__) / 4)
         LONG (DEFINED(__bss2_start__) ? __bss2_start__ : 0)
         LONG (DEFINED(__bss2_start__) ? ((__bss2_end__ - __bss2_start__) / 4) : 0)
         __zero_table_end__ = .;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > FLASH
 
-    __etext = ALIGN(4);
+    __etext =  ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
 
     .data : AT (__etext)
     {
@@ -147,29 +155,30 @@ SECTIONS
         . = ALIGN(4);
         /* All data end */
         __data_end__ = .;
-
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM
 
-    .bss :
+    .bss : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
-        . = ALIGN(4);
         __bss_start__ = .;
         *(.bss*)
         *(COMMON)
         . = ALIGN(4);
         __bss_end__ = .;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM
 
     bss_size = __bss_end__ - __bss_start__;
 
-    .stack : ALIGN(32)
+    .stack :  ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         . += __stack_size__;
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM
     __StackLimit = ADDR(.stack);
     __StackTop = ADDR(.stack) + SIZEOF(.stack);
 
-    .heap : ALIGN(8)
+    .heap : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {
         . = ALIGN(8);
         __end__ = .;
@@ -178,6 +187,7 @@ SECTIONS
         . += __heap_size__;
         __HeapLimit = .;
         __heap_limit = .; /* Add for _sbrk */
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > RAM
 
     PROVIDE(__stack = __StackTop);
