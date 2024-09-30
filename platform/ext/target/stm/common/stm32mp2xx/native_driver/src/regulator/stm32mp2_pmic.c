@@ -689,6 +689,8 @@ static int stpmic2_reg_show(const struct device *dev)
 	_show_reg(&drv_cfg->i2c, regu_desc->msrt_reg, "msrt_reg");
 	_show_reg(&drv_cfg->i2c, regu_desc->pd_reg, "pd_reg");
 	_show_reg(&drv_cfg->i2c, regu_desc->ocp_reg, "ocp_reg");
+
+	return 0;
 }
 
 static int stpmic2_parse_prop(const struct device *dev)
