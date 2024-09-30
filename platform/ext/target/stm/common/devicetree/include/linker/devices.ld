@@ -51,3 +51,9 @@
 		_device_list_end = .;
 		. = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
 	} > FLASH
+
+	.__device_handles_pass1 : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
+	{
+		KEEP (*(.__device_handles_pass1));
+		. = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
+	} > FLASH
