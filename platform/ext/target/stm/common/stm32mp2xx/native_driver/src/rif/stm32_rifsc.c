@@ -158,10 +158,12 @@ static int stm32_rimu_cfg(const struct device *dev, const struct rimu_cfg *rimu)
 {
 	const struct stm32_rifsc_config *dev_cfg = dev_get_config(dev);
 	struct rifsc_driver_data *drv_data = dev_get_data(dev);
-	uintptr_t offset =  _RIFSC_RIMC_ATTR0 + (sizeof(uint32_t) * rimu->id);
+	uintptr_t offset;
 
 	if (!rimu || rimu->id >= drv_data->nb_rimu)
 		return -EINVAL;
+
+	offset =  _RIFSC_RIMC_ATTR0 + (sizeof(uint32_t) * rimu->id);
 
 	if (drv_data->rif_en)
 		io_write32(dev_cfg->base + offset, rimu->attr);
