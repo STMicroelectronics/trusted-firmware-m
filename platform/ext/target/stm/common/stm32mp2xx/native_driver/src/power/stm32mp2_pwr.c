@@ -251,6 +251,7 @@ int stm32mp2_pwr_init(const struct device *dev)
 {
 	const struct stm32mp2_pwr_config *dev_cfg = dev_get_config(dev);
 	uint32_t bdcr;
+	int err;
 
 	/*
 	 * Disable the backup domain write protection.
@@ -262,7 +263,9 @@ int stm32mp2_pwr_init(const struct device *dev)
 				 bdcr, (bdcr &  _PWR_BDCR1_DBD3P), 0);
 
 	/* Reset backup domain on cold boot cases */
-	reset_control_reset(&dev_cfg->rst_ctl_bck);
+	err = reset_control_reset(&dev_cfg->rst_ctl_bck);
+	if (err)
+		return err;
 
 	if (dev_cfg->rif_ctl)
 		return stm32_rifprot_init(dev_cfg->rif_ctl);
