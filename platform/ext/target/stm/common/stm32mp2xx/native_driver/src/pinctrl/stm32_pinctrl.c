@@ -208,6 +208,7 @@ int stm32_pinctrl_to_gpio(const pinctrl_soc_pin_t *pin, struct gpio_cfg *gpio)
 	case 1 ... 16:
 		gpio->alternate = func - 1U;
 		gpio->mode = GPIO_MODE_ALTERNATE;
+		break;
 	case 17:
 		gpio->mode = GPIO_MODE_ANALOG;
 		break;
