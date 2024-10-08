@@ -22,6 +22,11 @@
 
 #include "region_defs.h"
 
+/* Include file with definitions for section alignments.
+ * Note: it should be included after region_defs.h to let platform define
+ * default values if needed. */
+#include "tfm_s_linker_alignments.h"
+
 MEMORY
 {
     RETRAM     (rx)  : ORIGIN = BL2_CODE_START,		LENGTH = BL2_CODE_SIZE
