@@ -93,6 +93,35 @@ static int _rifprot_release_conf(const struct rifprot_controller *ctl, uint32_t 
 	return -ENOTSUP;
 }
 
+/*
+ * check only cid filtering access,
+ * this part of software is considerate secure and priv.
+ */
+static int _rifprot_check_access(const struct rifprot_controller *ctl, uint32_t id)
+{
+	uint32_t cidcfgr, semcr;
+
+	cidcfgr = io_read32(ctl->rbase->cid + CID_SEM_X_OFFSET(id));
+	if (ctl->rbase->sem)
+		semcr = io_read32(ctl->rbase->sem + CID_SEM_X_OFFSET(id));
+
+	/* filtering on cid disabled */
+	if (!_FLD_GET(_CIDCFGR_CFEN, cidcfgr))
+		return 0;
+
+	/* semaphore enabled and it's my cid */
+	if (ctl->rbase->sem &&
+	    _FLD_GET(_CIDCFGR_SEMEN, cidcfgr) &&
+	    semcr == (_SEMCR_MUTEX_MASK | _FLD_PREP(_SEMCR_SCID, MY_CID)))
+		return 0;
+
+	/* filtering enabled on my cid */
+	if (_FLD_GET(_CIDCFGR_SCID, cidcfgr) == MY_CID)
+		return 0;
+
+	return -EPERM;
+}
+
 #if (IS_ENABLED(STM32_M33TDCID))
 static int _rifprot_set_conf(const struct rifprot_controller *ctl,
 			     struct rifprot_config *cfg)
@@ -114,7 +143,6 @@ static int _rifprot_set_conf(const struct rifprot_controller *ctl,
 
 	return 0;
 }
-
 #else
 
 static int _rifprot_set_conf(const struct rifprot_controller *ctl,
@@ -183,6 +211,20 @@ int stm32_rifprot_release_sem(const struct rifprot_controller *ctl, uint32_t id)
 		return ctl->ops->release_sem(ctl, id);
 
 	return _rifprot_semaphore_release(ctl, id);
+}
+
+int stm32_rifprot_check_access(const struct rifprot_controller *ctl, uint32_t id)
+{
+	if (!ctl)
+		return -ENODEV;
+
+	if (id >= ctl->nperipherals)
+		return -EINVAL;
+
+	if (ctl->ops && ctl->ops->check_access)
+		return ctl->ops->check_access(ctl, id);
+
+	return _rifprot_check_access(ctl, id);
 }
 
 int stm32_rifprot_release_conf(const struct rifprot_controller *ctl, uint32_t id)

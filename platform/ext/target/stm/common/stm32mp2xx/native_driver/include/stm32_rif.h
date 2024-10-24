@@ -74,6 +74,7 @@ typedef int (*_rifprot_init_t)(const struct rifprot_controller *ctl);
 typedef int (*_rifprot_set_conf_t)(const struct rifprot_controller *ctl,
 				   struct rifprot_config *cfg);
 typedef int (*_rifprot_release_conf_t)(const struct rifprot_controller *ctl, uint32_t id);
+typedef int (*_rifprot_check_access_t)(const struct rifprot_controller *ctl, uint32_t id);
 typedef int (*_rifprot_sem_t)(const struct rifprot_controller *ctl,
 				  uint32_t id);
 typedef int (*_rifprot_rel_sem_t)(const struct rifprot_controller *ctl,
@@ -83,6 +84,7 @@ struct rif_ops {
 	_rifprot_init_t init;
 	_rifprot_set_conf_t set_conf;
 	_rifprot_release_conf_t release_conf;
+	_rifprot_check_access_t check_access;
 	_rifprot_sem_t acquire_sem;
 	_rifprot_sem_t release_sem;
 };
@@ -242,6 +244,10 @@ inline int stm32_rifprot_set_conf(const struct rifprot_controller *ctl,
 	return 0;
 }
 
+inline int stm32_rifprot_check_access(const struct rifprot_controller *ctl, uint32_t id)
+{
+	return 0;
+}
 #else
 /**
  * @brief Initialize the rif controller
@@ -276,6 +282,16 @@ int stm32_rifprot_set_conf(const struct rifprot_controller *ctl,
  * @return 0 on success, negative errno on failure.
  */
 int stm32_rifprot_release_conf(const struct rifprot_controller *ctl, uint32_t id);
+
+/**
+ * @brief only Check if the access is authorized for the consumer
+ * according to the configuration of rif controller.
+ *
+ * @param ctl reference on rif controller.
+ * @param id  rif config id
+ * @return 0 on success, negative errno on failure.
+ */
+int stm32_rifprot_check_access(const struct rifprot_controller *ctl, uint32_t id);
 
 /**
  * @brief Acquire semaphore id of rif controller
