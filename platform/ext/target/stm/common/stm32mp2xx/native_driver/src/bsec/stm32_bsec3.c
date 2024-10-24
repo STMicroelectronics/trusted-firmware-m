@@ -151,6 +151,56 @@ static bool is_bsec_write_locked(void)
 		_BSEC_LOCKR_GWLOCK_MASK) != 0U;
 }
 
+static int shadow_otp(const struct device *dev, uint32_t otp)
+{
+	const struct stm32_bsec_config *drv_cfg = dev_get_config(dev);
+	struct stm32_bsec_data *drv_data = dev_get_data(dev);
+	struct bsec_shadow *shadow = drv_data->p_shadow;
+	uint32_t i, err, sr = 0;
+
+	/* if shadow is not allowed */
+	if (shadow->status[otp] & LOCK_SHADOW_R) {
+		shadow->status[otp] |= LOCK_ERROR;
+		shadow->value[otp] = 0x0U;
+		return -EACCES;
+	}
+
+	shadow->status[otp] &= ~LOCK_ERROR;
+
+	for (i = 0U; i < _MAX_NB_TRIES; i++) {
+		io_write32(drv_cfg->base + _BSEC_OTPCR, otp);
+
+		err = mmio_read32_poll_timeout(drv_cfg->base + _BSEC_OTPSR, sr,
+					       (!(sr & _BSEC_OTPSR_BUSY)),
+					       _BSEC_TIMEOUT_US);
+
+		if (err) {
+			EMSG("BSEC busy timeout\n");
+			panic();
+		}
+
+		/* Retry on error */
+		if (sr & (_BSEC_OTPSR_AMEF | _BSEC_OTPSR_DISTURBF |
+			  _BSEC_OTPSR_DEDF))
+			continue;
+
+		/* break for OTP correctly shadowed */
+		break;
+	}
+
+	if (sr & _BSEC_OTPSR_PPLF)
+		shadow->status[otp] |= LOCK_PERM;
+
+	if (i == _MAX_NB_TRIES || sr & (_BSEC_OTPSR_PPLMF | _BSEC_OTPSR_AMEF |
+					_BSEC_OTPSR_DISTURBF |
+					_BSEC_OTPSR_DEDF)) {
+		shadow->status[otp] |= LOCK_ERROR;
+		return -EIO;
+	}
+
+	return 0;
+}
+
 void stm32_bsec_write_debug_conf(uint32_t val)
 {
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
@@ -528,56 +578,6 @@ static void stm32_bsec_check_error(uint32_t opt_status)
 		EMSG("BSEC global write lock\n");
 		panic();
 	}
-}
-
-static int shadow_otp(const struct device *dev, uint32_t otp)
-{
-	const struct stm32_bsec_config *drv_cfg = dev_get_config(dev);
-	struct stm32_bsec_data *drv_data = dev_get_data(dev);
-	struct bsec_shadow *shadow = drv_data->p_shadow;
-	uint32_t i, err, sr = 0;
-
-	/* if shadow is not allowed */
-	if (shadow->status[otp] & LOCK_SHADOW_R) {
-		shadow->status[otp] |= LOCK_ERROR;
-		shadow->value[otp] = 0x0U;
-		return -EACCES;
-	}
-
-	shadow->status[otp] &= ~LOCK_ERROR;
-
-	for (i = 0U; i < _MAX_NB_TRIES; i++) {
-		io_write32(drv_cfg->base + _BSEC_OTPCR, otp);
-
-		err = mmio_read32_poll_timeout(drv_cfg->base + _BSEC_OTPSR, sr,
-					       (!(sr & _BSEC_OTPSR_BUSY)),
-					       _BSEC_TIMEOUT_US);
-
-		if (err) {
-			EMSG("BSEC busy timeout\n");
-			panic();
-		}
-
-		/* Retry on error */
-		if (sr & (_BSEC_OTPSR_AMEF | _BSEC_OTPSR_DISTURBF |
-			  _BSEC_OTPSR_DEDF))
-			continue;
-
-		/* break for OTP correctly shadowed */
-		break;
-	}
-
-	if (sr & _BSEC_OTPSR_PPLF)
-		shadow->status[otp] |= LOCK_PERM;
-
-	if (i == _MAX_NB_TRIES || sr & (_BSEC_OTPSR_PPLMF | _BSEC_OTPSR_AMEF |
-					_BSEC_OTPSR_DISTURBF |
-					_BSEC_OTPSR_DEDF)) {
-		shadow->status[otp] |= LOCK_ERROR;
-		return -EIO;
-	}
-
-	return 0;
 }
 
 static uint32_t init_state(const struct device *dev, uint32_t status)
