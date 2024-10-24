@@ -236,9 +236,18 @@ static int stm32_rifsc_firewall_release_conf(const struct firewall_spec *spec)
 	return stm32_rifprot_release_conf(rifsc_cfg->risup_ctl, rifprot_cfg.id);
 }
 
+static int stm32_rifsc_firewall_check_access(const struct firewall_spec *spec)
+{
+	const struct stm32_rifsc_config *rifsc_cfg = dev_get_config(spec->dev);
+	struct rifprot_config rifprot_cfg = RIFPROT_CFG(spec->args[0]);
+
+	return stm32_rifprot_check_access(rifsc_cfg->risup_ctl, rifprot_cfg.id);
+}
+
 static const struct firewall_controller_api stm32_rifsc_firewall_api = {
 	.set_conf = stm32_rifsc_firewall_set_conf,
 	.release_conf = stm32_rifsc_firewall_release_conf,
+	.check_access = stm32_rifsc_firewall_check_access,
 };
 
 static int stm32_rifsc_init(const struct device *dev)
