@@ -13,10 +13,10 @@
 #include "stm32mp257.dtsi"
 #include "stm32mp257f-ev1-cm33tdcid-resmem.dtsi"
 #include "stm32mp257f-ev1-cm33tdcid-rcc.dtsi"
+#include "stm32mp257f-ev1-cm33tdcid-scmi.dtsi"
 #include "stm32mp257f-ev1-cm33tdcid-s-rif.dtsi"
 #include "stm32mp25-pinctrl.dtsi"
 #include "stm32mp25xxai-pinctrl.dtsi"
-#include "stm32mp257f-ev1-cm33tdcid-scmi.dtsi"
 
 / {
 	model = "STMicroelectronics STM32MP257F-EV1 Evaluation Board";
