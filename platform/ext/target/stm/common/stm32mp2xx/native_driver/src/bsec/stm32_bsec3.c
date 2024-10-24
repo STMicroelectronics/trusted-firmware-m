@@ -207,9 +207,8 @@ void stm32_bsec_write_debug_conf(uint32_t val)
 
 	uint32_t masked_val = val & _BSEC_DENR_ALL_MSK;
 
-	if (is_bsec_write_locked() == true) {
+	if (is_bsec_write_locked())
 		panic();
-	}
 
 	bsec_lock();
 	mmio_write_32(drv_cfg->base + _BSEC_DENR,
@@ -718,14 +717,14 @@ static int stm32_bsec_shadow_init(const struct device *dev)
 	for (i = 0; i < drv_cfg->n_otp_cell; i++) {
 		cell = &drv_cfg->otp_cell[i];
 
-		if(cell->n_shadow_value == 0)
+		if (cell->n_shadow_value == 0)
 			continue;
 
 		/*
 		 * The shadow_value array must have a value for all
 		 * the OTP of the section.
 		 */
-		if(cell->n_shadow_value != cell->n_otp){
+		if (cell->n_shadow_value != cell->n_otp) {
 			EMSG("size of shadow-provisionning not equal to size of"
 			     " reg for node otp : %d\n",
 			     cell->otp_id);
@@ -790,12 +789,12 @@ static struct stm32_bsec_variant variant_stm32mp25 = {
 #endif
 
 #define NVMEM_CELL_CHILD_DEFINE(node_id)					\
-static const uint32_t shadow_value_##node_id[] = 				\
-	DT_PROP_OR(node_id, shadow_provisionning, {}); 				\
+static const uint32_t shadow_value_##node_id[] =				\
+	DT_PROP_OR(node_id, shadow_provisionning, {});				\
 										\
 static const struct nvmem_cell stm32_otp_cell_##node_id = {			\
 	.otp_id = (DT_REG_ADDR(node_id) / 4),					\
-	.n_otp = (DT_REG_SIZE(node_id) / 4), 					\
+	.n_otp = (DT_REG_SIZE(node_id) / 4),					\
 	.shadow_value = shadow_value_##node_id,					\
 	.n_shadow_value = DT_PROP_LEN_OR(node_id, shadow_provisionning, 0)	\
 };
