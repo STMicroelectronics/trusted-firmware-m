@@ -138,9 +138,8 @@ static inline int firewall_release_configuration(const struct firewall_spec *spe
 }
 
 /**
- * @brief Check if the access is authorized for the consumer
- * and the given firewall settings according to the
- * configuration of its firewall controller.
+ * @brief only Check if the access is authorized for the consumer
+ * according to the configuration of its firewall controller.
  *
  * @param spec reference on firewall specification.
  * @return 0 on success, negative errno on failure.
