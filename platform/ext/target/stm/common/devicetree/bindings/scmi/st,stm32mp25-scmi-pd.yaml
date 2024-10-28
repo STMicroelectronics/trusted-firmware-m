@@ -7,14 +7,21 @@ description: |
 compatible: "st,stm32mp25-scmi-pd"
 include:
   - base.yaml
+  - access-device.yaml
   - scmi-id.yaml
 
 properties:
   clocks:
     required: true
+
   regu:
     type: phandle
     required: true
+
+  access-controllers:
+    description: |
+      For gpu power domain, the cid filtering must be disabled to access
+      at regulator gpu and pll3 clock (PWR_CR12, cf errata section 2 3 5).
 
   scmi-id:
     required: true
