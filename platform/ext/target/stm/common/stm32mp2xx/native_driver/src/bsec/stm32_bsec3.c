@@ -160,14 +160,16 @@ static int shadow_otp(const struct device *dev, uint32_t otp)
 	struct bsec_mirror *mirror = drv_data->p_mirror;
 	uint32_t i, err, sr = 0;
 
-	/* if shadow is not allowed */
-	if (mirror->otp[otp].status & LOCK_SHADOW_R) {
-		mirror->otp[otp].status |= LOCK_ERROR;
-		mirror->otp[otp].value = 0x0U;
-		return -EACCES;
-	}
+	if (mirror) {
+		/* if shadow is not allowed */
+		if (mirror->otp[otp].status & LOCK_SHADOW_R) {
+			mirror->otp[otp].status |= LOCK_ERROR;
+			mirror->otp[otp].value = 0x0U;
+			return -EACCES;
+		}
 
-	mirror->otp[otp].status &= ~LOCK_ERROR;
+		mirror->otp[otp].status &= ~LOCK_ERROR;
+	}
 
 	for (i = 0U; i < _MAX_NB_TRIES; i++) {
 		io_write32(drv_cfg->base + _BSEC_OTPCR, otp);
@@ -190,14 +192,115 @@ static int shadow_otp(const struct device *dev, uint32_t otp)
 		break;
 	}
 
-	if (sr & _BSEC_OTPSR_PPLF)
+	if (mirror && sr & _BSEC_OTPSR_PPLF)
 		mirror->otp[otp].status |= LOCK_PERM;
 
 	if (i == _MAX_NB_TRIES || sr & (_BSEC_OTPSR_PPLMF | _BSEC_OTPSR_AMEF |
 					_BSEC_OTPSR_DISTURBF |
 					_BSEC_OTPSR_DEDF)) {
-		mirror->otp[otp].status |= LOCK_ERROR;
+		if (mirror)
+			mirror->otp[otp].status |= LOCK_ERROR;
+
 		return -EIO;
+	}
+
+	return 0;
+}
+
+static bool is_fuse_shadowed(uint32_t otp)
+{
+	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
+	uint32_t bank = _FLD_GET(_BSEC_OTP_BANK, otp);
+	uint32_t mask = BIT(_FLD_GET(_BSEC_OTP_BIT, otp));
+	uint32_t bank_value = io_read32(drv_cfg->base + _BSEC_SFSR(bank));
+
+	if (bank_value & mask)
+		return true;
+
+	return false;
+}
+
+/*
+ * bsec_read_otp: read an OTP data value.
+ * val: read value.
+ * otp: OTP number.
+ * return value: 0 if no error.
+ */
+static int __maybe_unused stm32_bsec_read_otp(uint32_t *val, uint32_t otp)
+{
+	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
+	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
+	int ret;
+
+	if (!val || otp > drv_data->variant->max_id)
+		return -EINVAL;
+
+	*val = 0U;
+	ret = shadow_otp(bsec_dev, otp);
+	if (!ret)
+		*val = io_read32(drv_cfg->base + _BSEC_FVR(otp));
+
+	return ret;
+}
+
+/*
+ * bsec_shadow_read_otp: Load OTP from SAFMEM and provide its value
+ * val: read value.
+ * otp: OTP number.
+ * return value: 0 if no error.
+ */
+static int __maybe_unused stm32_bsec_shadow_read_otp(uint32_t *val,
+						     uint32_t otp)
+{
+	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
+	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
+	int ret = 0;
+
+	if (!val || otp > drv_data->variant->max_id)
+		return -EINVAL;
+
+	*val = 0U;
+	if (!is_fuse_shadowed(otp))
+		ret = shadow_otp(bsec_dev, otp);
+	if (!ret)
+		*val = io_read32(drv_cfg->base + _BSEC_FVR(otp));
+
+	return ret;
+}
+
+/*
+ * bsec_write_otp: write value in BSEC data register.
+ * val: value to write.
+ * otp: OTP number.
+ * return value: 0 if no error.
+ */
+static int __maybe_unused stm32_bsec_write_otp(uint32_t val, uint32_t otp)
+{
+	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
+	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
+	bool value = false;
+	int ret;
+
+	if (otp > drv_data->variant->max_id)
+		return -EINVAL;
+
+	if (is_bsec_write_locked())
+		return -EPERM;
+
+	/* for HW shadowed OTP, update value in FVR register */
+	if (is_fuse_shadowed(otp)) {
+		ret = stm32_bsec_read_sw_lock(otp, &value);
+		if (ret)
+			return ret;
+
+		if (value)
+			return -EPERM;
+
+		bsec_lock();
+
+		io_write32(drv_cfg->base + _BSEC_FVR(otp), val);
+
+		bsec_unlock();
 	}
 
 	return 0;
@@ -266,10 +369,23 @@ static int _otp_read(uint32_t offset, size_t len, size_t out_len, uint8_t *out)
 	offset /= sizeof(uint32_t);
 
 	for (idx = 0; idx < (copy_size / sizeof(uint32_t)); idx++) {
-		if (!_otp_is_valid(mirror->otp[offset + idx].status))
-			return -EPERM;
+		if (mirror) {
+			if (!_otp_is_valid(mirror->otp[offset + idx].status))
+				return -EPERM;
 
-		p_out_w[idx] = mirror->otp[offset + idx].value;
+			p_out_w[idx] = mirror->otp[offset + idx].value;
+		} else {
+			uint32_t val;
+			int res;
+
+			res = stm32_bsec_shadow_read_otp(&val, offset + idx);
+			if (res) {
+				memset(p_out_w, 0, copy_size);
+				return -EIO;
+			}
+
+			p_out_w[idx] = val;
+		}
 	}
 
 	return 0;
@@ -326,11 +442,19 @@ static int __maybe_unused _otp_write(uint32_t offset, size_t len,
 	offset /= sizeof(uint32_t);
 
 	for (idx = 0; idx < (len / sizeof(uint32_t)); idx++) {
-		if (!_otp_is_valid(mirror->otp[offset + idx].status))
-			return -EPERM;
+		if (mirror) {
+			if (!_otp_is_valid(mirror->otp[offset + idx].status))
+				return -EPERM;
 
-		mirror->otp[offset + idx].value = p_in_w[idx];
-		mirror->otp[offset + idx].status = LOCK_SHADOW_R;
+			mirror->otp[offset + idx].value = p_in_w[idx];
+			mirror->otp[offset + idx].status = LOCK_SHADOW_R;
+		} else {
+			int res;
+
+			res = stm32_bsec_write_otp(p_in_w[idx], offset + idx);
+			if (res)
+				return -EIO;
+		}
 	}
 
 	return 0;
@@ -386,6 +510,7 @@ static int __maybe_unused _otp_write_lcs(uint32_t in_len, const uint8_t *in)
  */
 int stm32_bsec_read_sw_lock(uint32_t otp, bool *value)
 {
+	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
 	const struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
 
 	if (!value)
@@ -394,7 +519,14 @@ int stm32_bsec_read_sw_lock(uint32_t otp, bool *value)
 	if (otp > drv_data->variant->max_id)
 		return -EINVAL;
 
-	*value = !!(drv_data->p_mirror->otp[otp].status & LOCK_SHADOW_W);
+	if (drv_data->p_mirror) {
+		*value = !!(drv_data->p_mirror->otp[otp].status & LOCK_SHADOW_W);
+	} else {
+		uint32_t bank = _FLD_GET(_BSEC_OTP_BANK, otp);
+		uint32_t mask = BIT(_FLD_GET(_BSEC_OTP_BIT, otp));
+
+		*value = !!(io_read32(drv_cfg->base + _BSEC_SWLOCK(bank)) & mask);
+	}
 
 	return 0;
 }
@@ -422,7 +554,8 @@ int stm32_bsec_write(uint32_t otp, uint32_t value)
 	mmio_write_32(drv_cfg->base + _BSEC_FVR(otp), value);
 
 	/* update bsec mirror */
-	drv_data->p_mirror->otp[otp].value = value;
+	if (drv_data->p_mirror)
+		drv_data->p_mirror->otp[otp].value = value;
 
 	return 0;
 }
@@ -524,9 +657,11 @@ int stm32_bsec_dummy_switch(void)
 {
 	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
 
-	memcpy(&(drv_data->mirror_dummy), drv_data->p_mirror,
-	       sizeof(drv_data->mirror_dummy));
-	drv_data->p_mirror = &drv_data->mirror_dummy;
+	if (drv_data->p_mirror) {
+		memcpy(&(drv_data->mirror_dummy), drv_data->p_mirror,
+		       sizeof(drv_data->mirror_dummy));
+		drv_data->p_mirror = &drv_data->mirror_dummy;
+	}
 
 	return 0;
 }
@@ -767,18 +902,26 @@ static int stm32_bsec_dt_init(const struct device *dev)
 	struct stm32_bsec_data *drv_data = dev_get_data(dev);
 
 	drv_data->hw_key_valid = false;
-	drv_data->p_mirror = (struct bsec_mirror *)drv_cfg->mirror_addr;
 
-	if (IS_ENABLED(STM32_BL2))
-		stm32_bsec_mirror_init(dev, true);
+	if (IS_ENABLED(STM32_BL2) || !IS_ENABLED(STM32_M33TDCID)) {
+		drv_data->p_mirror = (struct bsec_mirror *)drv_cfg->mirror_addr;
 
-	if (drv_data->p_mirror->magic != BSEC_MAGIC)
-		return -ENOSYS;
+		if (IS_ENABLED(STM32_BL2))
+			stm32_bsec_mirror_init(dev, true);
 
-	if (drv_data->p_mirror->state & BSEC_HARDWARE_KEY)
-		drv_data->hw_key_valid = true;
+		if (drv_data->p_mirror->magic != BSEC_MAGIC)
+			return -ENOSYS;
 
-	return stm32_bsec_shadow_init(dev);
+		if (drv_data->p_mirror->state & BSEC_HARDWARE_KEY)
+			drv_data->hw_key_valid = true;
+
+		return stm32_bsec_shadow_init(dev);
+	} else {
+		/* BSEC mirror is not used in TF-M secure if Cortex-M is TDCID */
+		drv_data->p_mirror = NULL;
+
+		return 0;
+	}
 }
 
 #if DT_HAS_COMPAT_STATUS_OKAY(st_stm32mp25_bsec)
