@@ -79,12 +79,14 @@ enum tfm_plat_err_t provision_psa_rot(void)
 		return err;
 	}
 
+#if defined(STM32_BL2)
 	err = tfm_plat_otp_write(PLAT_OTP_ID_IMPLEMENTATION_ID,
 				 sizeof(psa_rot_prov_data.implementation_id),
 				 psa_rot_prov_data.implementation_id);
 	if (err != TFM_PLAT_ERR_SUCCESS) {
 		return err;
 	}
+#endif
 
 	err = tfm_plat_otp_write(PLAT_OTP_ID_ENTROPY_SEED,
 				 sizeof(psa_rot_prov_data.entropy_seed),
