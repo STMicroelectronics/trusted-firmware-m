@@ -19,6 +19,7 @@
 #include <clk.h>
 #include <pinctrl.h>
 #include <reset.h>
+#include <firewall.h>
 #include <syscon.h>
 #include <dt-bindings/scmi/stm32mp25-agents.h>
 #include "dt-bindings/clock/stm32mp25-clks.h"
@@ -88,6 +89,8 @@ struct stm32_scmi_pd {
 	const struct device *clk_dev;
 	const clk_subsys_t clk_subsys;
 	const struct device *regu_dev;
+	const struct firewall_spec *firewall;
+	const int n_firewall;
 };
 
 /*
@@ -128,7 +131,7 @@ struct stm32_scmi_config {
 	const struct stm32_scmi_regud *dt_regus;
 	const int ndt_regus;
 	const int ndt_regus_max;
-	const struct stm32_scmi_pd *dt_pd;
+	const struct stm32_scmi_pd **dt_pd;
 	const int ndt_pd;
 	const int ndt_pd_max;
 };
@@ -175,6 +178,12 @@ static int stm32_scmi_init(const struct device *dev)
 #define SCMI_DT_REGU(_node_id, _prop, _idx)					\
 	DEVICE_DT_GET(DT_PHANDLE_BY_IDX(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx), regu, 0))
 
+#define SCMI_DT_ACCESS_CTRLS_GET(_node_id, _prop, _idx)				\
+	DT_ACCESS_CTRLS_GET(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx))
+
+#define SCMI_DT_ACCESS_CTRLS_NUM(_node_id, _prop, _idx)				\
+	DT_ACCESS_CTRLS_NUM(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx))
+
 #define RST_ELE(_node_id, _prop, _idx, _n)					\
 	{									\
 		.scmi_id = SCMI_DT_ID(_node_id, _prop, _idx),			\
@@ -197,16 +206,38 @@ static int stm32_scmi_init(const struct device *dev)
 		.regu_dev = SCMI_DT_REGU(_node_id, _prop, _idx)			\
 	},
 
-#define PD_ELE(_node_id, _prop, _idx, _n)					\
-	{									\
-		.scmi_id = SCMI_DT_ID(_node_id, _prop, _idx),			\
-		.name = SCMI_DT_NAME(_node_id, _prop, _idx),			\
-		.clk_subsys = SCMI_DT_CLOCK_SUB(_node_id, _prop, _idx),		\
-		.clk_dev = SCMI_DT_CLOCK(_node_id, _prop, _idx),		\
-	        .regu_dev = SCMI_DT_REGU(_node_id, _prop, _idx)			\
-	},
-
 #define ZERO_ELE(_node_id, _prop, _idx, _n) { 0 },
+
+/* Create all scmi pd handler */
+#define _PD_PH_GET(_node_id) \
+	&_PD_PH_NAME(_node_id)
+
+#define _PD_PH_NAME(_node_id) \
+	_CONCAT(_scmi_dt_pd_, DEVICE_DT_NAME_GET(_node_id))
+
+#define STM32_SCMI_PD_INIT(n)								\
+	DT_INST_ACCESS_CTRLS_DEFINE(n);							\
+	static const struct stm32_scmi_pd _PD_PH_NAME(DT_DRV_INST(n)) =			\
+	{										\
+		.scmi_id = DT_INST_PROP(n, scmi_id),					\
+		.name = DT_NODE_FULL_NAME(DT_DRV_INST(n)),				\
+		.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),		\
+		.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),			\
+	        .regu_dev = DEVICE_DT_GET(DT_INST_PHANDLE_BY_IDX(n, regu, 0)),		\
+		.firewall = DT_INST_ACCESS_CTRLS_GET(n),				\
+		.n_firewall = DT_INST_ACCESS_CTRLS_NUM(n),			\
+	};
+
+#undef DT_DRV_COMPAT
+#define DT_DRV_COMPAT		st_stm32mp25_scmi_pd
+
+DT_INST_FOREACH_STATUS_OKAY(STM32_SCMI_PD_INIT)
+
+/* create all agents */
+#define _PD_ELEM(_node_id, _prop, _idx, _n)					\
+	_PD_PH_GET(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx))
+
+#define _DT_INST_PD_LIST_NUM(n) DT_INST_PROP_LEN_OR(n, pd_list, 0)
 
 #define STM32_SCMI_INIT(n)							\
 static const struct stm32_scmi_rd scmi_dt_resets_##n[] = {			\
@@ -218,11 +249,12 @@ static const struct stm32_scmi_clkd scmi_dt_clocks_##n[] = {			\
 static const struct stm32_scmi_regud scmi_dt_regus_##n[] = {			\
 	DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, regu_list, REGU_ELE, (), n)	\
 };										\
-static const struct stm32_scmi_pd scmi_dt_pd_##n[] = {				\
-	DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(0, pd_list, PD_ELE, (), n)		\
-};										\
 static struct clk plat_clk_##n[] = {						\
 	DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, clk_list, ZERO_ELE, (), n)	\
+};										\
+										\
+static const struct stm32_scmi_pd *scmi_dt_pd_##n[] = {				\
+	DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, pd_list, _PD_ELEM, (,), n)	\
 };										\
 										\
 static const struct stm32_scmi_config stm32_scmi_cfg_##n = {			\
@@ -238,14 +270,17 @@ static const struct stm32_scmi_config stm32_scmi_cfg_##n = {			\
 	.ndt_regus = ARRAY_SIZE(scmi_dt_regus_##n),				\
 	.ndt_regus_max = DT_INST_PROP(n, regu_id_max),				\
 	.dt_pd = scmi_dt_pd_##n,						\
-	.ndt_pd = ARRAY_SIZE(scmi_dt_pd_##n),					\
-	.ndt_pd_max =  DT_PROP(DT_DRV_INST(n), pd_id_max),			\
+	.ndt_pd = _DT_INST_PD_LIST_NUM(n),					\
+	.ndt_pd_max =  DT_PROP_OR(DT_DRV_INST(n), pd_id_max, 0),		\
 };										\
 DEVICE_DT_INST_DEFINE(n ,&stm32_scmi_init,					\
 		      &plat_clk_##n[0],						\
 		      &stm32_scmi_cfg_##n,					\
 		      CORE, 30,							\
 		      NULL);
+
+#undef DT_DRV_COMPAT
+#define DT_DRV_COMPAT st_stm32mp2_scmi
 
 DT_INST_FOREACH_STATUS_OKAY(STM32_SCMI_INIT)
 
@@ -429,14 +464,16 @@ static int32_t scmi_scpfw_cfg_init_agent(const struct stm32_scmi_config *agent)
 
 		/*  re-order pd within table according to scmi id  */
 		for (j = 0; j < agent->ndt_pd; j++) {
-			clk = clk_get(agent->dt_pd[j].clk_dev,
-				      agent->dt_pd[j].clk_subsys);
+			clk = clk_get(agent->dt_pd[j]->clk_dev,
+				      agent->dt_pd[j]->clk_subsys);
 			assert(agent->pd[j].scmi_id < agent->ndt_pd_max);
-			channel_cfg->pd[agent->dt_pd[j].scmi_id] =
+			channel_cfg->pd[agent->dt_pd[j]->scmi_id] =
 				(struct scmi_pd ){
-					.name = agent->dt_pd[j].name,
-					.regu = agent->dt_pd[j].regu_dev,
+					.name = agent->dt_pd[j]->name,
+					.regu = agent->dt_pd[j]->regu_dev,
 					.clk = clk,
+					.firewall = agent->dt_pd[j]->firewall,
+					.n_firewall = agent->dt_pd[j]->n_firewall,
 				};
 		}
 	}

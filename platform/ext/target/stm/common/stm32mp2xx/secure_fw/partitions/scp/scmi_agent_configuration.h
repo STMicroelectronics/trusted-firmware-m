@@ -73,6 +73,8 @@ struct scmi_pd {
 	const char *name;
 	struct clk *clk;
 	const struct device *regu;
+	const struct firewall_spec *firewall;
+	int n_firewall;
 };
 
 struct shared_mem {
