@@ -149,6 +149,7 @@
 /*
  * RIF miscellaneous
  */
+
 #define RCC_NB_RIF_RES			U(114)
 #define RCC_NB_MAX_CID_SUPPORTED	U(7)
 
@@ -163,7 +164,7 @@
 #define RIF_CID1		0x1
 #define RIF_CID2		0x2
 
-/* RCC RIF resource IDs  */
+/* RCC RIF resource IDs */
 #define RCC_RIF_PLL4_TO_8	64
 #define RCC_RIF_FCAL		65
 #define RCC_RIF_SYSTEM_RESET	66
@@ -216,7 +217,8 @@
  * GATE CONFIG
  */
 
-/* WARNING GATE_XXX_RDY MUST FOLOW GATE_XXX */
+/* WARNING GATE_XXX_RDY MUST FOLLOW GATE_XXX */
+
 enum enum_gate_cfg {
 	GATE_HSI,
 	GATE_HSI_RDY,
@@ -445,9 +447,9 @@ enum enum_gate_cfg {
 
 #define GATE_CFG(_id, _offset, _bit_idx, _offset_clr)\
 	[(_id)] = {\
-		.offset		= (_offset),\
-		.bit_idx	= (_bit_idx),\
-		.set_clr	= (_offset_clr),\
+		.offset = (_offset),\
+		.bit_idx = (_bit_idx),\
+		.set_clr = (_offset_clr),\
 	}
 
 static const struct gate_cfg gates_mp25[GATE_NB] = {
@@ -677,79 +679,81 @@ static const struct gate_cfg gates_mp25[GATE_NB] = {
 
 /*
  * MUX CONFIG
- *
  */
 
-#undef MUX_CFG
-
-#define MUXRDY_CFG(_id, _offset, _shift, _witdh, _rdy)\
+#define _MUX_CFG(_id, _offset, _shift, _width, _rdy)\
 	[(_id)] = {\
-			.offset	= (_offset),\
-			.shift	= (_shift),\
-			.width	= (_witdh),\
-			.ready = _rdy,\
+		.offset = (_offset),\
+		.shift = (_shift),\
+		.width = (_width),\
+		.ready = (_rdy),\
 	}
 
-#define MUX_CFG(_id, _offset, _shift, _witdh)\
-	MUXRDY_CFG(_id, _offset, _shift, _witdh, MUX_NO_RDY)
-
 static const struct mux_cfg parent_mp25[MUX_NB] = {
-	MUXRDY_CFG(MUX_MUXSEL0,		RCC_MUXSELCFGR,		0,	2, GATE_PLL4_CKREFST),
-	MUXRDY_CFG(MUX_MUXSEL1,		RCC_MUXSELCFGR,		4,	2, GATE_PLL5_CKREFST),
-	MUXRDY_CFG(MUX_MUXSEL2,		RCC_MUXSELCFGR,		8,	2, GATE_PLL6_CKREFST),
-	MUXRDY_CFG(MUX_MUXSEL3,		RCC_MUXSELCFGR,		12,	2, GATE_PLL7_CKREFST),
-	MUXRDY_CFG(MUX_MUXSEL4,		RCC_MUXSELCFGR,		16,	2, GATE_PLL8_CKREFST),
-	MUX_CFG(MUX_MUXSEL5,		RCC_MUXSELCFGR,		20,	2),
-	MUX_CFG(MUX_MUXSEL6,		RCC_MUXSELCFGR,		24,	2),
-	MUX_CFG(MUX_MUXSEL7,		RCC_MUXSELCFGR,		28,	2),
-	MUX_CFG(MUX_XBARSEL,		RCC_XBAR0CFGR,		0,	4),
-	MUX_CFG(MUX_RTC,		RCC_BDCR,		16,	2),
-	MUX_CFG(MUX_D3PER,		RCC_D3DCR,		16,	2),
-	MUX_CFG(MUX_MCO1,		RCC_MCO1CFGR,		0,	1),
-	MUX_CFG(MUX_MCO2,		RCC_MCO2CFGR,		0,	1),
-	MUX_CFG(MUX_ADC12,		RCC_ADC12CFGR,		12,	1),
-	MUX_CFG(MUX_ADC3,		RCC_ADC3CFGR,		12,	2),
-	MUX_CFG(MUX_USB2PHY1,		RCC_USB2PHY1CFGR,	15,	1),
-	MUX_CFG(MUX_USB2PHY2,		RCC_USB2PHY2CFGR,	15,	1),
-	MUX_CFG(MUX_USB3PCIEPHY,	RCC_USB3PCIEPHYCFGR,	15,	1),
-	MUX_CFG(MUX_DSIBLANE,		RCC_DSICFGR,		12,	1),
-	MUX_CFG(MUX_DSIPHY,		RCC_DSICFGR,		15,	1),
-	MUX_CFG(MUX_LVDSPHY,		RCC_LVDSCFGR,		15,	1),
-	MUX_CFG(MUX_DTS,		RCC_DTSCFGR,		12,	2),
+	_MUX_CFG(MUX_MUXSEL0, RCC_MUXSELCFGR, 0, 2, GATE_PLL4_CKREFST),
+	_MUX_CFG(MUX_MUXSEL1, RCC_MUXSELCFGR, 4, 2, GATE_PLL5_CKREFST),
+	_MUX_CFG(MUX_MUXSEL2, RCC_MUXSELCFGR, 8, 2, GATE_PLL6_CKREFST),
+	_MUX_CFG(MUX_MUXSEL3, RCC_MUXSELCFGR, 12, 2, GATE_PLL7_CKREFST),
+	_MUX_CFG(MUX_MUXSEL4, RCC_MUXSELCFGR, 16, 2, GATE_PLL8_CKREFST),
+	_MUX_CFG(MUX_MUXSEL5, RCC_MUXSELCFGR, 20, 2, MUX_NO_RDY),
+	_MUX_CFG(MUX_MUXSEL6, RCC_MUXSELCFGR, 24, 2, MUX_NO_RDY),
+	_MUX_CFG(MUX_MUXSEL7, RCC_MUXSELCFGR, 28, 2, MUX_NO_RDY),
+	_MUX_CFG(MUX_XBARSEL, RCC_XBAR0CFGR, 0, 4, MUX_NO_RDY),
+	_MUX_CFG(MUX_RTC, RCC_BDCR, 16, 2, MUX_NO_RDY),
+	_MUX_CFG(MUX_D3PER, RCC_D3DCR, 16, 2, MUX_NO_RDY),
+	_MUX_CFG(MUX_MCO1, RCC_MCO1CFGR, 0, 1, MUX_NO_RDY),
+	_MUX_CFG(MUX_MCO2, RCC_MCO2CFGR, 0, 1, MUX_NO_RDY),
+	_MUX_CFG(MUX_ADC12, RCC_ADC12CFGR, 12, 1, MUX_NO_RDY),
+	_MUX_CFG(MUX_ADC3, RCC_ADC3CFGR, 12, 2, MUX_NO_RDY),
+	_MUX_CFG(MUX_USB2PHY1, RCC_USB2PHY1CFGR, 15, 1, MUX_NO_RDY),
+	_MUX_CFG(MUX_USB2PHY2, RCC_USB2PHY2CFGR, 15, 1, MUX_NO_RDY),
+	_MUX_CFG(MUX_USB3PCIEPHY, RCC_USB3PCIEPHYCFGR, 15, 1, MUX_NO_RDY),
+	_MUX_CFG(MUX_DSIBLANE, RCC_DSICFGR, 12, 1, MUX_NO_RDY),
+	_MUX_CFG(MUX_DSIPHY, RCC_DSICFGR, 15, 1, MUX_NO_RDY),
+	_MUX_CFG(MUX_LVDSPHY, RCC_LVDSCFGR, 15, 1, MUX_NO_RDY),
+	_MUX_CFG(MUX_DTS, RCC_DTSCFGR, 12, 2, MUX_NO_RDY),
 };
 
 /*
  * DIV CONFIG
- *
  */
 
 static const struct div_table_cfg apb_div_table[] = {
-	{ 0, 1 },  { 1, 2 },  { 2, 4 },  { 3, 8 }, { 4, 16 },
-	{ 5, 16 }, { 6, 16 }, { 7, 16 }, { 0 },
+	{ .val = 0, .div = 1 },
+	{ .val = 1, .div = 2 },
+	{ .val = 2, .div = 4 },
+	{ .val = 3, .div = 8 },
+	{ .val = 4, .div = 16 },
+	{ .val = 5, .div = 16 },
+	{ .val = 6, .div = 16 },
+	{ .val = 7, .div = 16 },
+	/* .div = 0 termination cell */
+	{ }
 };
 
-#define DIVRDY_CFG(_id, _offset, _shift, _width, _flags, _table, _ready)\
+#define _DIV_CFG(_id, _offset, _shift, _width, _flags, _table, _ready)\
 	[(_id)] = {\
-		.offset	= (_offset),\
-		.shift	= (_shift),\
-		.width	= (_width),\
-		.flags	= (_flags),\
-		.table	= (_table),\
-		.ready	= (_ready),\
+		.offset = (_offset),\
+		.shift = (_shift),\
+		.width = (_width),\
+		.flags = (_flags),\
+		.table = (_table),\
+		.ready = (_ready),\
 	}
 
-#undef DIV_CFG
-#define DIV_CFG(_id, _offset, _shift, _width, _flags, _table)\
-	DIVRDY_CFG(_id, _offset, _shift, _width, _flags, _table, DIV_NO_RDY)
-
 static const struct div_cfg dividers_mp25[DIV_NB] = {
-	DIV_CFG(DIV_RTC,	RCC_RTCDIVR,	0, 6, 0, NULL),
-	DIVRDY_CFG(DIV_APB1,	RCC_APB1DIVR,	0, 3, 0, apb_div_table,	GATE_APB1DIV_RDY),
-	DIVRDY_CFG(DIV_APB2,	RCC_APB2DIVR,	0, 3, 0, apb_div_table,	GATE_APB2DIV_RDY),
-	DIVRDY_CFG(DIV_APB3,	RCC_APB3DIVR,	0, 3, 0, apb_div_table,	GATE_APB3DIV_RDY),
-	DIVRDY_CFG(DIV_APB4,	RCC_APB4DIVR,	0, 3, 0, apb_div_table,	GATE_APB4DIV_RDY),
-	DIVRDY_CFG(DIV_APBDBG,	RCC_APBDBGDIVR,	0, 3, 0, apb_div_table,	GATE_APBDBGDIV_RDY),
-	DIVRDY_CFG(DIV_LSMCU,	RCC_LSMCUDIVR,	0, 1, 0, NULL,		GATE_LSMCUDIV_RDY),
+	_DIV_CFG(DIV_RTC, RCC_RTCDIVR, 0, 6, 0, NULL, DIV_NO_RDY),
+	_DIV_CFG(DIV_APB1, RCC_APB1DIVR, 0, 3, 0, apb_div_table,
+		 GATE_APB1DIV_RDY),
+	_DIV_CFG(DIV_APB2, RCC_APB2DIVR, 0, 3, 0, apb_div_table,
+		 GATE_APB2DIV_RDY),
+	_DIV_CFG(DIV_APB3, RCC_APB3DIVR, 0, 3, 0, apb_div_table,
+		 GATE_APB3DIV_RDY),
+	_DIV_CFG(DIV_APB4, RCC_APB4DIVR, 0, 3, 0, apb_div_table,
+		 GATE_APB4DIV_RDY),
+	_DIV_CFG(DIV_APBDBG, RCC_APBDBGDIVR, 0, 3, 0, apb_div_table,
+		 GATE_APBDBGDIV_RDY),
+	_DIV_CFG(DIV_LSMCU, RCC_LSMCUDIVR, 0, 1, 0, NULL, GATE_LSMCUDIV_RDY),
 };
 
 struct clk_stm32_bypass {
@@ -781,31 +785,34 @@ struct clk_oscillator_data {
 	struct clk_stm32_drive *drive;
 };
 
-#define BYPASS(_offset, _bit_byp, _bit_digbyp) &(struct clk_stm32_bypass){\
-	.offset		= (_offset),\
-	.bit_byp	= (_bit_byp),\
-	.bit_digbyp	= (_bit_digbyp),\
-}
+#define BYPASS(_offset, _bit_byp, _bit_digbyp) \
+	(&(struct clk_stm32_bypass){\
+		.offset = (_offset),\
+		.bit_byp = (_bit_byp),\
+		.bit_digbyp = (_bit_digbyp),\
+	})
 
-#define CSS(_offset, _bit_css)	&(struct clk_stm32_css){\
-	.offset		= (_offset),\
-	.bit_css	= (_bit_css),\
-}
+#define CSS(_offset, _bit_css) \
+	(&(struct clk_stm32_css){\
+		.offset = (_offset),\
+		.bit_css = (_bit_css),\
+	})
 
-#define DRIVE(_offset, _shift, _width, _default) &(struct clk_stm32_drive){\
-	.offset		= (_offset),\
-	.drv_shift	= (_shift),\
-	.drv_width	= (_width),\
-	.drv_default	= (_default),\
-}
+#define DRIVE(_offset, _shift, _width, _default) \
+	(&(struct clk_stm32_drive){\
+		.offset = (_offset),\
+		.drv_shift = (_shift),\
+		.drv_width = (_width),\
+		.drv_default = (_default),\
+	})
 
 #define OSCILLATOR(idx_osc, _name, _gate_id, _bypass, _css, _drive) \
 	[(idx_osc)] = (struct clk_oscillator_data){\
 		CLOCK_NAME(#_name)\
-		.gate_id	= (_gate_id),\
-		.bypass		= (_bypass),\
-		.css		= (_css),\
-		.drive		= (_drive),\
+		.gate_id = (_gate_id),\
+		.bypass = (_bypass),\
+		.css = (_css),\
+		.drive = (_drive),\
 	}
 
 static struct clk_oscillator_data stm32mp25_osc_data[NB_OSCILLATOR] = {
@@ -819,13 +826,16 @@ static struct clk_oscillator_data stm32mp25_osc_data[NB_OSCILLATOR] = {
 		   NULL, NULL, NULL),
 
 	OSCILLATOR(OSC_LSE, "clk-lse", GATE_LSE,
-		   BYPASS(RCC_BDCR, 1, 3),
-		   CSS(RCC_BDCR, 8),
-		   DRIVE(RCC_BDCR, 4, 2, 2)),
+		   BYPASS(RCC_BDCR, _RCC_BDCR_LSEBYP_BIT,
+			  _RCC_BDCR_LSEDIGBYP_BIT),
+		   CSS(RCC_BDCR, _RCC_BDCR_LSECSSON_BIT),
+		   DRIVE(RCC_BDCR, _RCC_BDCR_LSEDRV_SHIFT,
+			 _RCC_BDCR_LSEDRV_WIDTH, LSEDRV_MEDIUM_HIGH)),
 
 	OSCILLATOR(OSC_HSE, "clk-hse", GATE_HSE,
-		   BYPASS(RCC_OCENSETR, 10, 7),
-		   CSS(RCC_OCENSETR, 11),
+		   BYPASS(RCC_OCENSETR, _RCC_OCENSETR_HSEBYP_BIT,
+			  _RCC_OCENSETR_HSEDIGBYP_BIT),
+		   CSS(RCC_OCENSETR, _RCC_OCENSETR_HSECSSON_BIT),
 		   NULL),
 };
 
@@ -2664,7 +2674,7 @@ static STM32_FIXED_RATE(ck_off, RCC_0_MHZ);
 static STM32_FIXED_RATE(ck_obser0, RCC_0_MHZ);
 static STM32_FIXED_RATE(ck_obser1, RCC_0_MHZ);
 static STM32_FIXED_RATE(spdifsymb, RCC_0_MHZ);
-static STM32_FIXED_RATE(ck_dsi_phy, RCC_0_MHZ);
+static STM32_FIXED_RATE(txbyteclk, 27000000);
 static STM32_FIXED_RATE(i2sckin, RCC_0_MHZ);
 
 static STM32_DT_OSC(clk_hsi);
@@ -2729,7 +2739,9 @@ static STM32_FLEXGEN(ck_icn_display, 0, 3);
 static STM32_FLEXGEN(ck_icn_hsl, 0, 4);
 static STM32_FLEXGEN(ck_icn_nic, 0, 5);
 static STM32_FLEXGEN(ck_icn_vid, 0, 6);
+
 static STM32_DIVIDER(ck_icn_ls_mcu, &ck_icn_hs_mcu, 0, DIV_LSMCU);
+
 static STM32_FLEXGEN(ck_flexgen_07, 0, 7);
 static STM32_FLEXGEN(ck_flexgen_08, 0, 8);
 static STM32_FLEXGEN(ck_flexgen_09, 0, 9);
@@ -2793,7 +2805,8 @@ static STM32_DIVIDER(ck_icn_apb1, &ck_icn_ls_mcu, 0, DIV_APB1);
 static STM32_DIVIDER(ck_icn_apb2, &ck_icn_ls_mcu, 0, DIV_APB2);
 static STM32_DIVIDER(ck_icn_apb3, &ck_icn_ls_mcu, 0, DIV_APB3);
 static STM32_DIVIDER(ck_icn_apb4, &ck_icn_ls_mcu, 0, DIV_APB4);
-static STM32_DIVIDER(ck_icn_apbdbg, &ck_icn_ls_mcu, 0, DIV_APBDBG);
+static RIF_COMPOSITE(ck_icn_apbdbg, 1, PARENTS(&ck_icn_ls_mcu), 0,
+		     GATE_DBG, DIV_APBDBG, NO_MUX, RCC_RIF_DEBUG_TRACE);
 
 /* Kernel Timers */
 static STM32_TIMER(ck_timg1, &ck_icn_apb1, 0, RCC_APB1DIVR, RCC_TIMG1PRER);
@@ -3089,7 +3102,7 @@ static STM32_COMPOSITE(ck_ker_usb3pciephy, 2, PARENTS(&ck_flexgen_34,
 		       &ck_hse_div2),
 		       0, GATE_USB3PCIEPHY, NO_DIV, MUX_USB3PCIEPHY);
 
-static STM32_COMPOSITE(ck_ker_dsiblane, 2, PARENTS(&ck_dsi_phy, &ck_flexgen_27),
+static STM32_COMPOSITE(clk_lanebyte, 2, PARENTS(&txbyteclk, &ck_ker_ltdc),
 		       0, GATE_DSI, NO_DIV, MUX_DSIBLANE);
 
 static STM32_COMPOSITE(ck_phy_dsi, 2, PARENTS(&ck_flexgen_28, &ck_hse),
@@ -3113,7 +3126,7 @@ enum {
 	I2SCKIN,
 	SPDIFSYMB,
 	CK_HSE_RTC,
-	DSIPHY,
+	TXBYTECLK,
 	CK_OBSER0,
 	CK_OBSER1,
 	CLK_HSI,
@@ -3473,7 +3486,7 @@ static struct clk *stm32mp25_clk_provided[STM32MP25_ALL_CLK_NB] = {
 	[CK_KER_USB2PHY2EN]	= &ck_ker_usb2phy2_en,
 	[CK_KER_USB3PCIEPHY]	= &ck_ker_usb3pciephy,
 	[CK_KER_LTDC]		= &ck_ker_ltdc,
-	[CK_KER_DSIBLANE]	= &ck_ker_dsiblane,
+	[CK_KER_DSIBLANE]	= &clk_lanebyte,
 	[CK_KER_DSIPHY]		= &ck_phy_dsi,
 	[CK_KER_LVDSPHY]	= &ck_ker_lvdsphy,
 	[CK_KER_DTS]		= &ck_ker_dts,
@@ -3492,7 +3505,7 @@ static struct clk *stm32mp25_clk_provided[STM32MP25_ALL_CLK_NB] = {
 	[CK_OFF]		= &ck_off,
 	[I2SCKIN]		= &i2sckin,
 	[SPDIFSYMB]		= &spdifsymb,
-	[DSIPHY]		= &ck_dsi_phy,
+	[TXBYTECLK]		= &txbyteclk,
 };
 
 static void __unused clk_stm32_set_flexgen_as_critical(struct clk_stm32_priv *priv)
