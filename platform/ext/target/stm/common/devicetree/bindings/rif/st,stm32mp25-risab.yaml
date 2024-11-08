@@ -40,3 +40,8 @@ properties:
       instances. Eventually CID0 is always authorized to handle this case and
       CID0 is prohibited for any bus master to avoid unwanted access to these
       memories.
+
+  st,glock:
+    type: boolean
+    description: |
+      When set, this bit lock all regions configurations.
