@@ -2709,10 +2709,12 @@ static STM32_TIMER(ck_timg2, &ck_icn_apb2, 0, RCC_APB2DIVR, RCC_TIMG2PRER);
 
 /* Clocks under RCC RIF protection */
 static RIF_GATE(ck_sys_dbg, &ck_icn_apbdbg, 0, GATE_DBG, RCC_RIF_DEBUG_TRACE);
+static RIF_GATE(ck_icn_p_stm, &ck_icn_apbdbg, 0, GATE_STM, RCC_RIF_DEBUG_TRACE);
 static RIF_GATE(ck_icn_s_stm, &ck_icn_ls_mcu, 0, GATE_STM, RCC_RIF_DEBUG_TRACE);
 static RIF_GATE(ck_ker_tsdbg, &ck_flexgen_43, 0, GATE_DBG, RCC_RIF_DEBUG_TRACE);
 static RIF_GATE(ck_ker_tpiu, &ck_flexgen_44, 0, GATE_TRACE,
 		RCC_RIF_DEBUG_TRACE);
+static RIF_GATE(ck_icn_p_etr, &ck_icn_apbdbg, 0, GATE_ETR,RCC_RIF_DEBUG_TRACE);
 static RIF_GATE(ck_icn_m_etr, &ck_flexgen_45, 0, GATE_ETR, RCC_RIF_DEBUG_TRACE);
 static RIF_GATE(ck_sys_atb, &ck_flexgen_45, 0, GATE_DBG, RCC_RIF_DEBUG_TRACE);
 static RIF_GATE(ck_icn_s_sysram, &ck_icn_hs_mcu, 0, GATE_SYSRAM,
@@ -3182,7 +3184,8 @@ static struct clk *stm32mp25_clk_provided[STM32MP25_ALL_CLK_NB] = {
 	[CK_RTC_AM]		= &ck_icn_p_rtc_am,
 	[CK_BUS_IWDG5]		= &ck_icn_p_iwdg5,
 	[CK_BUS_WWDG2]		= &ck_icn_p_wwdg2,
-	[CK_BUS_STM]		= &ck_icn_s_stm,
+	[CK_BUS_STM]		= &ck_icn_p_stm,
+	[CK_KER_STM]		= &ck_icn_s_stm,
 	[CK_BUS_FMC]		= &ck_icn_p_fmc,
 	[CK_BUS_ETH1]		= &ck_icn_p_eth1,
 	[CK_BUS_ETHSW]		= &ck_icn_p_ethsw,
@@ -3349,7 +3352,8 @@ static struct clk *stm32mp25_clk_provided[STM32MP25_ALL_CLK_NB] = {
 	[CK_KER_ADF1]		= &ck_ker_adf1,
 	[CK_KER_TSDBG]		= &ck_ker_tsdbg,
 	[CK_KER_TPIU]		= &ck_ker_tpiu,
-	[CK_BUS_ETR]		= &ck_icn_m_etr,
+	[CK_BUS_ETR]		= &ck_icn_p_etr,
+	[CK_KER_ETR]		= &ck_icn_m_etr,
 	[CK_BUS_SYSATB]		= &ck_sys_atb,
 	[CK_KER_OSPI1]		= &ck_ker_ospi1,
 	[CK_KER_OSPI2]		= &ck_ker_ospi2,
