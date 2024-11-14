@@ -244,13 +244,13 @@ static int stm32_rifsc_firewall_check_access(const struct firewall_spec *spec)
 	return stm32_rifprot_check_access(rifsc_cfg->risup_ctl, rifprot_cfg.id);
 }
 
-static const struct firewall_controller_api stm32_rifsc_firewall_api = {
+static const struct firewall_controller_api __maybe_unused stm32_rifsc_firewall_api = {
 	.set_conf = stm32_rifsc_firewall_set_conf,
 	.release_conf = stm32_rifsc_firewall_release_conf,
 	.check_access = stm32_rifsc_firewall_check_access,
 };
 
-static int stm32_rifsc_init(const struct device *dev)
+static int __maybe_unused stm32_rifsc_init(const struct device *dev)
 {
 	const struct stm32_rifsc_config *rifsc_cfg = dev_get_config(dev);
 	struct rifsc_driver_data *rifsc_data = dev_get_data(dev);
