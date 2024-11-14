@@ -32,6 +32,20 @@ properties:
   reg:
     required: true
 
+  st,glocked:
+    type: int
+    description:
+      Applicable for platforms implementing the RIF. Used to globally lock
+      the RIF configuration. When set, Security, privilege, and CID
+      configurations are locked and can't be modified until next reset.
+      RIMU global lock is enabled with bit 0 and RISUP global lock by
+      bit 1.
+    enum:
+      - 0
+      - 1
+      - 2
+      - 3
+
   "#access-controller-cells":
     const: 1
 
