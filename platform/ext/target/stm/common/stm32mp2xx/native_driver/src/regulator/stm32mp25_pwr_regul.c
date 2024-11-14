@@ -370,6 +370,9 @@ static const struct regulator_driver_api stm32_pwr_regu_fixed_ops = {
 	.enable = stm32_pwr_enable,
 	.disable = stm32_pwr_disable,
 	.get_voltage = stm32_pwr_get_voltage,
+	.count_voltages = stm32_pwr_count_voltages,
+	.list_voltage = stm32_pwr_list_voltage,
+
 };
 
 static int stm32_pwr_regulator_init(const struct device *dev)
