@@ -35,6 +35,33 @@ struct firewall_spec {
 	     i < (n_firewall);						\
 	     i++, firewall++)
 
+/*
+ * internal only, you must used:
+ * - set_for_each_firewall
+ * - release_for_each_firewall
+ * @return 0 on success, negative errno on failure.
+ */
+#define _fn_for_each_fwall(fn_firewall, fwall_tbl, fwall, n_fwall, i)	\
+({									\
+	int __err = 0;							\
+									\
+	if (n_fwall) {							\
+		for_each_firewall(fwall_tbl, fwall, n_fwall, i) {	\
+			__err = fn_firewall(fwall);			\
+			if (__err)					\
+				break;					\
+		}							\
+	}								\
+									\
+	__err;								\
+})
+
+#define set_for_each_firewall(fwall_tbl, fwall, n_fwall, i) \
+	_fn_for_each_fwall(firewall_set_configuration, fwall_tbl, fwall, n_fwall, i)
+
+#define release_for_each_firewall(fwall_tbl, fwall, n_fwall, i) \
+	_fn_for_each_fwall(firewall_release_configuration, fwall_tbl, fwall, n_fwall, i)
+
 typedef int (*firewall_controller_set_conf_t)(const struct firewall_spec *spec);
 typedef int (*firewall_controller_release_conf_t)(const struct firewall_spec *spec);
 typedef int (*firewall_controller_check_access_t)(const struct firewall_spec *spec);
