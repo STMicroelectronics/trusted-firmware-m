@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright (c) 2023, STMicroelectronics
+ * Copyright (c) 2023-2025, STMicroelectronics
  * Author(s): Ludovic Barre, <ludovic.barre@foss.st.com> for STMicroelectronics.
  *
  */
@@ -105,6 +105,7 @@ struct stm32_risab_config {
 	const int ndt_regions;
 	const bool st_srwiad;
 	const bool errata_ahbrisab;
+	const bool st_glock;
 };
 
 /*
@@ -397,6 +398,13 @@ static int stm32_risab_init(const struct device *dev)
 			return err;
 	}
 
+        if (IS_ENABLED(STM32_M33TDCID)) {
+		if (drv_cfg->st_glock) {
+			DMSG("GLOCK Set\n");
+			io_setbits32(drv_cfg->base + _RISAB_CR, _RISAB_CR_GLOCK);
+                }
+        }
+
 	clk_disable(clk);
 
 	return err;
@@ -427,7 +435,8 @@ static const struct stm32_risab_config stm32_risab_cfg_##n = {			\
 	.dt_regions = risab_dt_regions_##n,					\
 	.ndt_regions = ARRAY_SIZE(risab_dt_regions_##n),			\
 	.st_srwiad = DT_INST_PROP_OR(n, st_srwiad, false),			\
-	.errata_ahbrisab = DT_INST_PROP_OR(n, st_errata_ahbrisab, false)	\
+	.errata_ahbrisab = DT_INST_PROP_OR(n, st_errata_ahbrisab, false),	\
+	.st_glock = DT_INST_PROP_OR(n, st_glock, false),			\
 };										\
 										\
 static struct stm32_risab_data stm32_risab_data_##n = {};			\
