@@ -6,6 +6,7 @@ description: |
   to any defined security domain:
     - filtering of secure/non-secure accesses
     - filtering of privileged/unprivileged accesses
+    - locking of the configuration for each ressources
     - filtering of hardware execution compartments (CIDs)
 
 compatible: "st,stm32mp25-rcc-rif"
