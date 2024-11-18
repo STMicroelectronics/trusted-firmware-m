@@ -268,7 +268,7 @@ struct scpfw_config *scmi_scpfw_get_configuration(void)
 
 	return &scpfw_cfg;
 }
-static const char dummy[]="dummy";
+static const char dummy[]="";
 
 int32_t scmi_scpfw_cfg_early_init(void)
 {
