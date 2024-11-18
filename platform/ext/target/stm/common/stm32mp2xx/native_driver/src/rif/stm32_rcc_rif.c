@@ -65,6 +65,7 @@ static __unused const struct rif_base rbase_##n = {				\
 	.priv = DT_REG_ADDR(DT_INST_PARENT(n)) + RCC_PRIVCFGR0,			\
 	.cid = DT_REG_ADDR(DT_INST_PARENT(n)) + RCC_R0CIDCFGR,			\
 	.sem = DT_REG_ADDR(DT_INST_PARENT(n)) + RCC_R0SEMCR,			\
+	.lock = DT_REG_ADDR(DT_INST_PARENT(n)) + RCC_RCFGLOCKR0,		\
 };										\
 										\
 DT_INST_RIFPROT_CTRL_DEFINE(n, &rbase_##n, NULL, RCC_NB_RIF_RES);		\
