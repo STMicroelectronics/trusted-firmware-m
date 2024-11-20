@@ -120,7 +120,12 @@ static int _cpu_assert(const struct device *dev, uint32_t id,
 	uint32_t rst_mask = RESET_BIT(id);
 	uint32_t cpu_mask = CPUBOOT_BIT(rst_offset);
 	uint32_t cfgr;
+	uint32_t no_holdboot;
 	int err = 0;
+
+	no_holdboot = !!(mmio_read_32(base + _RCC_CPUBOOTCR) & cpu_mask);
+	if (!no_holdboot)
+		return 0;
 
 	/* put in HOLD: enable HOLD boot & reset */
 	io_clrbits32(base + _RCC_CPUBOOTCR, cpu_mask);
@@ -128,38 +133,31 @@ static int _cpu_assert(const struct device *dev, uint32_t id,
 				       cfgr, (~cfgr & cpu_mask), to_us);
 	if (err)
 		return err;
-
 	io_setbits32(base + rst_offset, rst_mask);
 
 	if (!to_us)
 		return 0;
 
 	return mmio_read32_poll_timeout(base + rst_offset, cfgr,
-					(cfgr & rst_mask), to_us);
+					(!(cfgr & rst_mask)), to_us);
 }
 
-static int _cpu_deassert(const struct device *dev, uint32_t id,
-		       unsigned int to_us)
+static int _cpu_deassert(const struct device *dev, uint32_t id)
 {
 	const struct stm32_reset_config *drv_cfg = dev_get_config(dev);
 	uintptr_t base = drv_cfg->base;
 	uint32_t rst_offset = RESET_OFFSET(id);
-	uint32_t rst_mask = RESET_BIT(id);
 	uint32_t cpu_mask = CPUBOOT_BIT(rst_offset);
-	uint32_t cfgr, no_holdboot;
+	uint32_t no_holdboot;
 
 	no_holdboot = !!(mmio_read_32(base + _RCC_CPUBOOTCR) & cpu_mask);
 	if (no_holdboot)
 		return -EINVAL;
 
-	/* release HOLD: disable HOLD boot & reset */
+	/* release HOLD: disable HOLD boot */
 	io_setbits32(base + _RCC_CPUBOOTCR, cpu_mask);
 
-	if (!to_us)
-		return 0;
-
-	return mmio_read32_poll_timeout(base + rst_offset,
-					cfgr, (~cfgr & rst_mask), to_us);
+	return 0;
 }
 
 int _stm32_reset_cpu_assert(const struct device *dev, uint32_t id)
@@ -169,7 +167,7 @@ int _stm32_reset_cpu_assert(const struct device *dev, uint32_t id)
 
 int _stm32_reset_cpu_deassert(const struct device *dev, uint32_t id)
 {
-	return _cpu_deassert(dev, id, 4 * USEC_PER_MSEC);
+	return _cpu_deassert(dev, id);
 }
 
 int _stm32_reset_cpu_reset(const struct device *dev, uint32_t id)
