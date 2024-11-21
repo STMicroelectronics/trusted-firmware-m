@@ -199,9 +199,21 @@ int _stm32_reset_vsw_assert(const struct device *dev, uint32_t id)
 	return _assert(dev, id, 0);
 }
 
+int _stm32_reset_vsw_reset(const struct device *dev, uint32_t id)
+{
+	int err;
+
+	err = _stm32_reset_vsw_assert(dev, id);
+	if (err)
+		return err;
+
+	return _stm32_reset_deassert(dev, id);
+}
+
 static const struct reset_driver_api stm32_reset_vsw_ops = {
 	.assert_level = _stm32_reset_vsw_assert,
 	.deassert_level = _stm32_reset_deassert,
+	.reset = _stm32_reset_vsw_reset,
 };
 
 #define stm32_reset_op(_op, _dev, _id)			\
