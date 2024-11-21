@@ -220,9 +220,9 @@ static const struct reset_driver_api stm32_reset_vsw_ops = {
 ({							\
 	const struct reset_driver_api *ops;		\
 							\
-	if (id == C1_R)					\
+	if (_id == C1_R)				\
 		ops = &stm32_reset_cpu_ops;		\
-	else if (id == VSW_R)				\
+	else if (_id == VSW_R)				\
 		ops = &stm32_reset_vsw_ops;		\
 	else						\
 		ops = &stm32_reset_ops;			\
