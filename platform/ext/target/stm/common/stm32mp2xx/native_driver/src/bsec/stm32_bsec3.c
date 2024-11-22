@@ -408,15 +408,16 @@ int stm32_bsec_write(uint32_t otp, uint32_t value)
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
 	const struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
 	bool sw_lock = false;
-
-	if (otp > drv_data->variant->max_id)
-		return -EINVAL;
+	int ret;
 
 	if (is_bsec_write_locked())
 		return -EINVAL;
 
 	/* for HW shadowed OTP, update value in FVR register */
-	stm32_bsec_read_sw_lock(otp, &sw_lock);
+	ret = stm32_bsec_read_sw_lock(otp, &sw_lock);
+	if (ret)
+		return ret;
+
 	if (sw_lock) {
 		DMSG("BSEC: OTP %d is write locked, write ignored\n", otp);
 		return -EACCES;
