@@ -47,6 +47,7 @@
 #define BUCKS_PD_CR2		U(0x1A)
 #define LDOS_PD_CR1		U(0x1B)
 #define LDOS_PD_CR2		U(0x1C)
+#define GPO_MRST_CR		U(0x1C)
 #define BUCKS_MRST_CR		U(0x1D)
 #define LDOS_MRST_CR		U(0x1E)
 /* Buck CR */
@@ -85,6 +86,13 @@
 #define BUCK7_ALT_CR1		U(0x40)
 #define BUCK7_ALT_CR2		U(0x41)
 #define BUCK7_PWRCTRL_CR	U(0x42)
+/* GPO CR used only on PMIC1L and PMIC2L*/
+#define GPO1_MAIN_CR		U(0x43)
+#define GPO1_ALT_CR		U(0x44)
+#define GPO1_PWRCTRL_CR		U(0x45)
+#define GPO2_MAIN_CR		U(0x46)
+#define GPO2_ALT_CR		U(0x47)
+#define GPO2_PWRCTRL_CR		U(0x48)
 /* LDO CR */
 #define LDO1_MAIN_CR		U(0x4C)
 #define LDO1_ALT_CR		U(0x4D)
@@ -113,6 +121,16 @@
 #define REFDDR_MAIN_CR		U(0x64)
 #define REFDDR_ALT_CR		U(0x65)
 #define REFDDR_PWRCTRL_CR	U(0x66)
+/* GPO CR used only on PMIC1L and PMIC2L*/
+#define GPO3_MAIN_CR		U(0x67)
+#define GPO3_ALT_CR		U(0x68)
+#define GPO3_PWRCTRL_CR		U(0x69)
+#define GPO4_MAIN_CR		U(0x6A)
+#define GPO4_ALT_CR		U(0x6B)
+#define GPO4_PWRCTRL_CR		U(0x6C)
+#define GPO5_MAIN_CR		U(0x6D)
+#define GPO5_ALT_CR		U(0x6E)
+#define GPO5_PWRCTRL_CR		U(0x6F)
 /* INTERRUPT CR */
 #define INT_PENDING_R1		U(0x70)
 #define INT_PENDING_R2		U(0x71)
@@ -154,6 +172,13 @@
 #define LDO6_MRST		BIT(5)
 #define LDO7_MRST		BIT(6)
 #define LDO8_MRST		BIT(7)
+
+/* GPO_MRST_CR bits definition */
+#define GPO1_MRST		BIT(1)
+#define GPO2_MRST		BIT(2)
+#define GPO3_MRST		BIT(3)
+#define GPO4_MRST		BIT(4)
+#define GPO5_MRST		BIT(5)
 
 /* LDOx_MAIN_CR */
 #define LDO_VOUT_SHIFT		1
@@ -317,6 +342,10 @@ static const struct linear_range __maybe_unused refddr_ranges[] = {
 	LINEAR_RANGE_INIT(0, 0, 0, 0),
 };
 
+static const struct linear_range __maybe_unused gpox_ranges[] = {
+	LINEAR_RANGE_INIT(3300000, 0, 0, 0),
+};
+
 #define DEFINE_BUCK(_regu_name, _id, _pd, _ranges) {		\
 	.name			= _regu_name,			\
 	.ranges			= _ranges,			\
@@ -454,6 +483,17 @@ static const struct linear_range __maybe_unused refddr_ranges[] = {
 	.has_alternate_source	= false,			\
 }
 
+#define DEFINE_GPO(_regu_name, _id, _pd, _ranges) {		\
+	.name			= _regu_name,			\
+	.ranges			= _ranges,			\
+	.nranges		= ARRAY_SIZE(_ranges),		\
+	.en_cr			= _id ## _MAIN_CR,		\
+	.alt_en_cr		= _id ## _ALT_CR,		\
+	.pwrctrl_cr		= _id ## _PWRCTRL_CR,		\
+	.msrt_reg		= GPO_MRST_CR,			\
+	.msrt_mask		= _id ## _MRST,			\
+}
+
 struct regu_stpmic2_config {
 	struct regulator_common_config common;
 	struct i2c_dt_spec i2c;
@@ -541,6 +581,9 @@ static int stpmic2_set_prop(const struct device *dev,
 
 		return stpmic2_update_en_crs(dev, LDO1_INPUT_SRC, LDO1_INPUT_SRC);
 	case STPMIC2_OCP:
+		if (!regu_desc->ocp_reg)
+			return -ENOTSUP;
+
 		return i2c_reg_update_byte_dt(&drv_cfg->i2c,
 					      regu_desc->ocp_reg,
 					      regu_desc->ocp_mask,
@@ -868,6 +911,15 @@ static const struct regulator_driver_api stpmic2_api = {
 	REGULATOR_STPMIC2_DEFINE_COND(inst, ldo7, DEFINE_LDO_BYPASS,			\
 				      LDO7, NULL, ldo235678_ranges)			\
 	REGULATOR_STPMIC2_DEFINE_COND(inst, ldo8, DEFINE_LDO_BYPASS,			\
-				      LDO8, NULL, ldo235678_ranges)
-
+				      LDO8, NULL, ldo235678_ranges)			\
+	REGULATOR_STPMIC2_DEFINE_COND(inst, gpo1, DEFINE_GPO,				\
+				      GPO1, NULL, gpox_ranges)				\
+	REGULATOR_STPMIC2_DEFINE_COND(inst, gpo2, DEFINE_GPO,				\
+				      GPO2, NULL, gpox_ranges)				\
+	REGULATOR_STPMIC2_DEFINE_COND(inst, gpo3, DEFINE_GPO,				\
+				      GPO3, NULL, gpox_ranges)				\
+	REGULATOR_STPMIC2_DEFINE_COND(inst, gpo4, DEFINE_GPO,				\
+				      GPO4, NULL, gpox_ranges)				\
+	REGULATOR_STPMIC2_DEFINE_COND(inst, gpo5, DEFINE_GPO,				\
+				      GPO5, NULL, gpox_ranges)
 DT_INST_FOREACH_STATUS_OKAY(REGULATOR_STPMIC2_DEFINE_ALL)
