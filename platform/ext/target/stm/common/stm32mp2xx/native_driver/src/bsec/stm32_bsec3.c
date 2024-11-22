@@ -103,8 +103,10 @@ struct nvmem_cell {
 struct bsec_shadow {
 	uint32_t magic;
 	uint32_t state;
-	uint32_t value[OTP_MAX_SIZE];
-	uint32_t status[OTP_MAX_SIZE];
+	struct {
+		uint32_t value;
+		uint32_t status;
+	} otp[OTP_MAX_SIZE];
 };
 
 struct stm32_bsec_config {
@@ -159,13 +161,13 @@ static int shadow_otp(const struct device *dev, uint32_t otp)
 	uint32_t i, err, sr = 0;
 
 	/* if shadow is not allowed */
-	if (shadow->status[otp] & LOCK_SHADOW_R) {
-		shadow->status[otp] |= LOCK_ERROR;
-		shadow->value[otp] = 0x0U;
+	if (shadow->otp[otp].status & LOCK_SHADOW_R) {
+		shadow->otp[otp].status |= LOCK_ERROR;
+		shadow->otp[otp].value = 0x0U;
 		return -EACCES;
 	}
 
-	shadow->status[otp] &= ~LOCK_ERROR;
+	shadow->otp[otp].status &= ~LOCK_ERROR;
 
 	for (i = 0U; i < _MAX_NB_TRIES; i++) {
 		io_write32(drv_cfg->base + _BSEC_OTPCR, otp);
@@ -189,12 +191,12 @@ static int shadow_otp(const struct device *dev, uint32_t otp)
 	}
 
 	if (sr & _BSEC_OTPSR_PPLF)
-		shadow->status[otp] |= LOCK_PERM;
+		shadow->otp[otp].status |= LOCK_PERM;
 
 	if (i == _MAX_NB_TRIES || sr & (_BSEC_OTPSR_PPLMF | _BSEC_OTPSR_AMEF |
 					_BSEC_OTPSR_DISTURBF |
 					_BSEC_OTPSR_DEDF)) {
-		shadow->status[otp] |= LOCK_ERROR;
+		shadow->otp[otp].status |= LOCK_ERROR;
 		return -EIO;
 	}
 
@@ -253,7 +255,6 @@ static int _otp_read(uint32_t offset, size_t len, size_t out_len, uint8_t *out)
 	struct bsec_shadow *shadow = drv_data->p_shadow;
 	size_t copy_size = len < out_len ? len : out_len;
 	uint32_t *p_out_w = (uint32_t *)out;
-	uint32_t *p_value, *p_status;
 	uint32_t idx;
 
 	if (offset % (sizeof(uint32_t)))
@@ -263,14 +264,12 @@ static int _otp_read(uint32_t offset, size_t len, size_t out_len, uint8_t *out)
 		return -EINVAL;
 
 	offset /= sizeof(uint32_t);
-	p_value = &(shadow->value[offset]);
-	p_status = &(shadow->status[offset]);
 
 	for (idx = 0; idx < (copy_size / sizeof(uint32_t)); idx++) {
-		if (!_otp_is_valid(p_status[idx]))
+		if (!_otp_is_valid(shadow->otp[offset + idx].status))
 			return -EPERM;
 
-		p_out_w[idx] = p_value[idx];
+		p_out_w[idx] = shadow->otp[offset + idx].value;
 	}
 
 	return 0;
@@ -313,7 +312,6 @@ static int __maybe_unused _otp_write(uint32_t offset, size_t len,
 	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
 	struct bsec_shadow *shadow = drv_data->p_shadow;
 	uint32_t *p_in_w = (uint32_t *)in;
-	uint32_t *p_value, *p_status;
 	uint32_t idx;
 
 	if (offset % (sizeof(uint32_t)))
@@ -326,15 +324,13 @@ static int __maybe_unused _otp_write(uint32_t offset, size_t len,
 		return -EINVAL;
 
 	offset /= sizeof(uint32_t);
-	p_value = &(shadow->value[offset]);
-	p_status = &(shadow->status[offset]);
 
 	for (idx = 0; idx < (len / sizeof(uint32_t)); idx++) {
-		if (!_otp_is_valid(p_status[idx]))
+		if (!_otp_is_valid(shadow->otp[offset + idx].status))
 			return -EPERM;
 
-		p_value[idx] = p_in_w[idx];
-		p_status[idx] = LOCK_SHADOW_R;
+		shadow->otp[offset + idx].value = p_in_w[idx];
+		shadow->otp[offset + idx].status = LOCK_SHADOW_R;
 	}
 
 	return 0;
@@ -398,7 +394,7 @@ int stm32_bsec_read_sw_lock(uint32_t otp, bool *value)
 	if (otp > drv_data->variant->max_id)
 		return -EINVAL;
 
-	*value = !!(drv_data->p_shadow->status[otp] & LOCK_SHADOW_W);
+	*value = !!(drv_data->p_shadow->otp[otp].status & LOCK_SHADOW_W);
 
 	return 0;
 }
@@ -426,7 +422,7 @@ int stm32_bsec_write(uint32_t otp, uint32_t value)
 	mmio_write_32(drv_cfg->base + _BSEC_FVR(otp), value);
 
 	/* update bsec mirror */
-	drv_data->p_shadow->value[otp] = value;
+	drv_data->p_shadow->otp[otp].value = value;
 
 	return 0;
 }
@@ -598,7 +594,7 @@ static uint32_t init_state(const struct device *dev, uint32_t status)
 			EMSG("BSEC invalid nvstates %#x\n", nvstates);
 		} else {
 			state = BSEC_STATE_SEC_OPEN;
-			if (shadow->value[_OTP_SECURE_BOOT] & _OTP_CLOSED_SECURE)
+			if (shadow->otp[_OTP_SECURE_BOOT].value & _OTP_CLOSED_SECURE)
 				state = BSEC_STATE_SEC_CLOSED;
 		}
 	}
@@ -629,7 +625,7 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 	if (status & _BSEC_OTPSR_HIDEUP) {
 		for (otp = drv_data->variant->upper_base;
 		     otp <= drv_data->variant->max_id ; otp++) {
-			drv_data->p_shadow->status[otp] |= _HIDEUP_ERROR;
+			drv_data->p_shadow->otp[otp].status |= _HIDEUP_ERROR;
 #ifdef TFM_DUMMY_PROVISIONING
 			/*
 			 * In dummy provisioning case, we will need to overwrite some upper OTP
@@ -637,9 +633,9 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 			 * LOCK_ERROR flag, or else the dummy value won't be updated in the mirror
 			 * and the _otp_write/_otp_read will report errors.
 			 */
-			drv_data->p_shadow->status[otp] &= ~LOCK_ERROR;
+			drv_data->p_shadow->otp[otp].status &= ~LOCK_ERROR;
 #endif
-			drv_data->p_shadow->value[otp] = 0x0U;
+			drv_data->p_shadow->otp[otp].value = 0x0U;
 		}
 		max_id = drv_data->variant->upper_base - 1;
 	}
@@ -657,13 +653,13 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 		mask = BIT(_FLD_GET(_BSEC_OTP_BIT, otp));
 
 		if (srlock[bank] & mask)
-			drv_data->p_shadow->status[otp] |= LOCK_SHADOW_R;
+			drv_data->p_shadow->otp[otp].status |= LOCK_SHADOW_R;
 		if (swlock[bank] & mask)
-			drv_data->p_shadow->status[otp] |= LOCK_SHADOW_W;
+			drv_data->p_shadow->otp[otp].status |= LOCK_SHADOW_W;
 		if (splock[bank] & mask)
-			drv_data->p_shadow->status[otp] |= LOCK_SHADOW_P;
+			drv_data->p_shadow->otp[otp].status |= LOCK_SHADOW_P;
 
-		if (drv_data->p_shadow->status[otp] & STATUS_SECURE)
+		if (drv_data->p_shadow->otp[otp].status & STATUS_SECURE)
 			continue;
 
 		/*
@@ -671,7 +667,7 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 		 * They are stored in last OTPs
 		 */
 		if (otp >= _OEM_KEY_FIRST_OTP) {
-			drv_data->p_shadow->status[otp] |= LOCK_SHADOW_R;
+			drv_data->p_shadow->otp[otp].status |= LOCK_SHADOW_R;
 			continue;
 		}
 
@@ -682,7 +678,7 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 			return ret;
 		}
 
-		drv_data->p_shadow->value[otp] = io_read32(drv_cfg->base +
+		drv_data->p_shadow->otp[otp].value = io_read32(drv_cfg->base +
 							   _BSEC_FVR(otp));
 	}
 
