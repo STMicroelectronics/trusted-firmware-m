@@ -13,13 +13,6 @@
 #include <tfm_plat_otp.h>
 
 #define DBG_FULL 0xFFF
-/*
- * otp shadow depend of TDCID loader
- * which copies bsec otp to shadow memory.
- * must be aligned with [TDCID loader]stm32_bsec3 driver
- */
-#define STM32MP2_OTP_MAX_ID		367
-#define OTP_MAX_SIZE			(STM32MP2_OTP_MAX_ID + 1U)
 
 /* Magic use to indicated valid SHADOW = 'B' 'S' 'E' 'C' */
 #define BSEC_MAGIC			0x42534543

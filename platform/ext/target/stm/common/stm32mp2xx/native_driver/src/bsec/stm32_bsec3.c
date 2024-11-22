@@ -4,7 +4,6 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#define DT_DRV_COMPAT st_stm32mp25_bsec
 
 #include <errno.h>
 #include <stdint.h>
@@ -90,8 +89,18 @@
 #define _OTP_SECURE_BOOT		18U
 #define _OTP_CLOSED_SECURE		GENMASK_32(3, 0)
 
-/* OEM Keys are stored from _OEM_KEY_FIRST_OTP to OTP bsec_dev.max_id (367) */
-#define _OEM_KEY_FIRST_OTP		360
+/*
+ * otp shadow depend of TDCID loader
+ * which copies bsec otp to shadow memory.
+ * must be aligned with [TDCID loader]stm32_bsec3 driver
+ */
+#ifdef STM32MP215Cxx
+#define STM32MP2_OTP_MAX_ID		363
+#define OTP_MAX_SIZE			(STM32MP2_OTP_MAX_ID + 1U)
+#else
+#define STM32MP2_OTP_MAX_ID		367
+#define OTP_MAX_SIZE			(STM32MP2_OTP_MAX_ID + 1U)
+#endif
 
 struct nvmem_cell {
 	uint32_t otp_id;
@@ -120,6 +129,7 @@ struct stm32_bsec_config {
 struct stm32_bsec_variant {
 	uint32_t upper_base;
 	uint32_t max_id;
+	unsigned int oem_key_first_otp;
 };
 
 struct stm32_bsec_data {
@@ -131,7 +141,7 @@ struct stm32_bsec_data {
 #endif
 };
 
-static const struct device *bsec_dev = DEVICE_DT_INST_GET(0);
+static const struct device *bsec_dev;
 
 static void bsec_lock(void)
 {
@@ -326,6 +336,22 @@ void stm32_bsec_write_debug_conf(uint32_t val)
  * A filter is apply to not miror all otp.
  * This area is read only and share whith cortex A and M.
  */
+ #ifdef STM32MP215Cxx
+__PACKED_STRUCT otp_shadow_layout_t {
+	uint32_t reserved1[5];
+	uint32_t implementation_id[3];		/* otp 5..7 */
+	uint32_t reserved2[10];
+	uint32_t bootrom_config_9[1];		/* otp 18  */
+	uint32_t reserved3[105];
+	uint32_t hconf1[1];			/* otp 124 */
+	uint32_t reserved4[55];
+	uint32_t bl2_rotpk_0[8];		/* otp 180 */
+	uint32_t bl2_rotpk_1[8];		/* otp 188 */
+	uint32_t reserved5[128];
+	uint32_t entropy_seed[16];		/* otp 323 */
+	uint32_t iak[8];			/* otp 340 */
+};
+#else
 __PACKED_STRUCT otp_shadow_layout_t {
 	uint32_t reserved1[5];
 	uint32_t implementation_id[3];		/* otp 5..7 */
@@ -340,6 +366,7 @@ __PACKED_STRUCT otp_shadow_layout_t {
 	uint32_t entropy_seed[16];		/* otp 332 */
 	uint32_t iak[8];			/* otp 348 */
 };
+#endif
 
 #define OTP_OFFSET(x)		(offsetof(struct otp_shadow_layout_t, x))
 #define OTP_SIZE(x)		(sizeof(((struct otp_shadow_layout_t *)0)->x))
@@ -857,7 +884,7 @@ static void stm32_bsec_mirror_load(const struct device *dev, uint32_t status)
 		 * OEM keys are accessible only in ROM code
 		 * They are stored in last OTPs
 		 */
-		if (otp >= _OEM_KEY_FIRST_OTP) {
+		if (otp >= drv_data->variant->oem_key_first_otp) {
 			drv_data->p_mirror->otp[otp].status |= LOCK_SHADOW_R;
 			continue;
 		}
@@ -982,13 +1009,6 @@ static int stm32_bsec_dt_init(const struct device *dev)
 	}
 }
 
-#if DT_HAS_COMPAT_STATUS_OKAY(st_stm32mp25_bsec)
-static struct stm32_bsec_variant variant_stm32mp25 = {
-	.upper_base = 256,
-	.max_id = 367,
-};
-#endif
-
 #define NVMEM_CELL_CHILD_DEFINE(node_id)					\
 static const uint32_t shadow_value_##node_id[] =				\
 	DT_PROP_OR(node_id, shadow_provisionning, {});				\
@@ -1022,11 +1042,48 @@ static struct stm32_bsec_data stm32_bsec3_data_ ## node_id = {			\
 	.variant = _variant,							\
 };										\
 										\
+static const struct device *bsec_dev = DEVICE_DT_INST_GET(0);			\
+										\
 DEVICE_DT_DEFINE(node_id, &stm32_bsec_dt_init,					\
 		 &stm32_bsec3_data_##node_id,					\
 		 &stm32_bsec3_cfg_##node_id,					\
 		 CORE, 5,							\
 		 NULL);
+
+
+
+static __unused struct stm32_bsec_variant variant_stm32mp21 = {
+/*
+ * BSEC: 364 available OTPs, the other are masked
+ * - OEM FSBL keys 348 to 363 (programmable but not readable)
+ * - ECIES key: 364 to 375 (only readable by bootrom)
+ * - HWKEY: 376 to 383 (never reloadable or readable)
+ */
+	.oem_key_first_otp = 348,
+	.upper_base = 256,
+	.max_id = STM32MP2_OTP_MAX_ID,
+};
+
+static __unused struct stm32_bsec_variant variant_stm32mp25 = {
+/*
+ * BSEC: 368 available OTPs, the other are masked
+ * - OEM FSBL keys 360 to 367 (programmable but not readable)
+ * - ECIES key: 368 to 375 (only readable by bootrom)
+ * - HWKEY: 376 to 383 (never reloadable or readable)
+ */
+	.oem_key_first_otp = 360,
+	.upper_base = 256,
+	.max_id = STM32MP2_OTP_MAX_ID,
+};
+
+#undef DT_DRV_COMPAT
+#define DT_DRV_COMPAT		st_stm32mp21_bsec
+
+DT_FOREACH_STATUS_OKAY_VARGS(st_stm32mp21_bsec, STM32_BSEC3_INIT,
+			     &variant_stm32mp21);
+
+#undef DT_DRV_COMPAT
+#define DT_DRV_COMPAT		st_stm32mp25_bsec
 
 DT_FOREACH_STATUS_OKAY_VARGS(st_stm32mp25_bsec, STM32_BSEC3_INIT,
 			     &variant_stm32mp25);
