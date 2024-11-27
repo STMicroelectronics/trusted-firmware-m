@@ -106,18 +106,21 @@ struct clk_ops {
 	int (*set_parent)(struct clk *clk, size_t index);
 	size_t (*get_parent)(struct clk *clk);
 	int (*set_rate)(struct clk *clk, unsigned long rate,
-			       unsigned long parent_rate);
+			unsigned long parent_rate);
 	unsigned long (*get_rate)(struct clk *clk,
 				  unsigned long parent_rate);
+	int (*get_rates_array)(struct clk *clk, size_t start_index,
+			       unsigned long *rates, size_t *nb_elts);
+	int (*get_rates_steps)(struct clk *clk, unsigned long *min,
+			       unsigned long *max, unsigned long *step);
+	int (*determine_rate)(struct clk *clk,
+			      struct clk_rate_request *req);
+
 	int (*get_duty_cycle)(struct clk *clk,
-				     struct clk_duty *duty);
+			      struct clk_duty *duty);
 	unsigned long (*round_rate)(struct clk *clk,
 				    unsigned long rate,
 				    unsigned long parent_rate);
-	int (*determine_rate)(struct clk *clk,
-				     struct clk_rate_request *req);
-	int (*get_rates_steps)(struct clk *clk, unsigned long *min,
-			       unsigned long *max, unsigned long *step);
 	int (*save_context)(struct clk *clk);
 	void (*restore_context)(struct clk *clk);
 };
@@ -270,6 +273,19 @@ int clk_get_duty_cycle(struct clk *clk, struct clk_duty *duty);
  * Returns the closest rate actually supported by the clock.
  */
 unsigned long clk_round_rate(struct clk *clk, unsigned long rate);
+
+/**
+ * clk_get_rates_array - Get supported rates as an increasing frequencies array
+ *
+ * @clk: Clock for which the rates are requested
+ * @start_index: start index of requested rates
+ * @rates: Array of rates allocated by caller or NULL to query count of rates
+ * @nb_elts: Max number of elements that the array can hold as input. Contains
+ * the number of elements that was added in the array as output.
+ * Returns a int compliant value
+ */
+int clk_get_rates_array(struct clk *clk, size_t start_index,
+			       unsigned long *rates, size_t *nb_elts);
 
 /* clock controller */
 

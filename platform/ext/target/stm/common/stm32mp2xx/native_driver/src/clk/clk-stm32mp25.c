@@ -8,8 +8,10 @@
 #include <errno.h>
 #include <limits.h>
 #include <lib/mmio.h>
+#include <qsort.h>
 #include <lib/utils_def.h>
 #include <stdint.h>
+#include <string.h>
 #include <lib/timeout.h>
 #include <lib/delay.h>
 #include <debug.h>
@@ -2045,35 +2047,69 @@ static unsigned long clk_stm32_flexgen_get_rate(__maybe_unused struct clk *clk,
 	return freq;
 }
 
+/* Fexgen findiv (final divisor) max value */
+#define FLEXGEN_FINDIV_MAX	U(64)
+
+static unsigned long clk_stm32_flexgen_get_round_rate(unsigned long rate,
+						      unsigned long prate,
+						      unsigned int *prediv,
+						      unsigned int *findiv)
+{
+	unsigned int pre_val[] = { 0x0, 0x1, 0x3, 0x3FF };
+	unsigned int pre_div[] = { 1, 2, 4, 1024 };
+	long best_diff = LONG_MAX;
+	unsigned int i = 0;
+
+	*prediv = 0;
+	*findiv = 0;
+
+	for (i = 0; i < ARRAY_SIZE(pre_div); i++) {
+		unsigned long freq = 0UL;
+		unsigned long ratio = 0UL;
+		long diff = 0L;
+
+		freq = UDIV_ROUND_NEAREST((uint64_t)prate, pre_div[i]);
+		ratio = UDIV_ROUND_NEAREST((uint64_t)freq, rate);
+
+		if (ratio == 0UL)
+			ratio = 1;
+		else if (ratio > FLEXGEN_FINDIV_MAX)
+			ratio = FLEXGEN_FINDIV_MAX;
+
+		freq = UDIV_ROUND_NEAREST((uint64_t)freq, ratio);
+		if (freq < rate)
+			diff = rate - freq;
+		else
+			diff = freq - rate;
+
+		if (diff < best_diff) {
+			best_diff = diff;
+			*prediv = pre_val[i];
+			*findiv = ratio - 1;
+
+			if (diff == 0UL)
+				break;
+		}
+	}
+
+	return (prate / (*prediv + 1)) / (*findiv + 1);
+}
+
 static int clk_stm32_flexgen_set_rate(struct clk *clk,
-					     unsigned long rate,
-					     unsigned long parent_rate)
+				      unsigned long rate,
+				      unsigned long parent_rate)
 {
 	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
 	uintptr_t rcc_base = clk_stm32_get_rcc_base(priv);
 	struct clk_stm32_flexgen_cfg *cfg = clk->priv;
 	uint8_t channel = cfg->flex_id;
-	// unsigned long ratio = UDIV_ROUND_NEAREST((uint64_t)parent_rate, rate);TO CHECK
-	unsigned long ratio = div_round_up((uint64_t)parent_rate, rate);
 	unsigned int prediv = 0;
 	unsigned int findiv = 0;
 
 	if (!stm32_rcc_has_access_by_id(priv, cfg->flex_id))
 		return 0;
 
-	if (ratio <= 64) {
-		prediv = 0x0;
-		findiv = ratio - 1;
-	} else if (ratio <= 128) {
-		prediv = 0x1;
-		findiv = (ratio / 2) - 1;
-	} else if (ratio <= 256) {
-		prediv = 0x3;
-		findiv = (ratio / 4) - 1;
-	} else {
-		prediv = 0x3FF;
-		findiv = (ratio / 1024) - 1;
-	}
+	clk_stm32_flexgen_get_round_rate(rate, parent_rate, &prediv, &findiv);
 
 	if (wait_predivsr(rcc_base, channel) != 0)
 		panic();
@@ -2143,25 +2179,10 @@ static unsigned long clk_stm32_flexgen_round_rate(struct clk *clk __unused,
 						  unsigned long rate,
 						  unsigned long prate)
 {
-	unsigned long ratio = div_round_up((uint64_t)prate, rate);
 	unsigned int prediv = 0;
 	unsigned int findiv = 0;
 
-	if (ratio <= 64) {
-		prediv = 0x0;
-		findiv = ratio - 1;
-	} else if (ratio <= 128) {
-		prediv = 0x1;
-		findiv = (ratio / 2) - 1;
-	} else if (ratio <= 256) {
-		prediv = 0x3;
-		findiv = (ratio / 4) - 1;
-	} else {
-		prediv = 0x3FF;
-		findiv = (ratio / 1024) - 1;
-	}
-
-	return (prate / (prediv + 1)) / (findiv + 1);
+	return clk_stm32_flexgen_get_round_rate(rate, prate, &prediv, &findiv);
 }
 
 static int clk_stm32_flexgen_save_context(struct clk *clk)
@@ -2192,10 +2213,80 @@ static void clk_stm32_flexgen_pm_restore(struct clk *clk)
 	if (clk_is_enabled(clk))
 		clk_stm32_flexgen_enable(clk);
 }
+#if defined(STM32_SEC)
+/*
+ * To save a bit of memory, compute flexgen clock rates array once when
+ * the flexgen clock parent clock rate is the same. If not, recompute
+ * the array. Flexgen supports up to 4 x 64 divisor combinations:
+ * 4 prediv values and 64 findiv values (from 1 to FLEXGEN_FINDIV_MAX).
+ */
+static const unsigned int flexgen_prediv[] = { 1, 2, 4, 1024 };
+static unsigned long flexgen_rates_array[FLEXGEN_FINDIV_MAX *
+					 ARRAY_SIZE(flexgen_prediv)];
+static unsigned long array_parent_rate;
+
+static void load_flexgen_rates_array(unsigned long parent_rate)
+{
+	unsigned long *rate = flexgen_rates_array;
+	uint64_t freq = 0;
+	size_t findiv = 0;
+	size_t n = 0;
+
+	assert(parent_rate);
+	if (parent_rate == array_parent_rate)
+		return;
+
+	array_parent_rate = parent_rate;
+
+	for (n = 0; n < ARRAY_SIZE(flexgen_prediv); n++) {
+		for (findiv = 1; findiv <= FLEXGEN_FINDIV_MAX; findiv++) {
+			freq = parent_rate / flexgen_prediv[n];
+			*rate = freq / findiv;
+			rate++;
+		}
+	}
+
+	qsort_ul(flexgen_rates_array, ARRAY_SIZE(flexgen_rates_array));
+}
+#endif
+
+static int clk_stm32_flexgen_rates_array(struct clk *clk,
+					 size_t start_index,
+					 unsigned long *rates,
+					 size_t *nb_elts)
+{
+#if !defined(STM32_SEC)
+	return -EINVAL;
+#else
+	uint64_t prate = clk_get_rate(clk->parent);
+	if (!prate)
+		return -EINVAL;
+
+	if (start_index >= ARRAY_SIZE(flexgen_rates_array) || !nb_elts)
+		return -EINVAL;
+
+	if (!rates || !*nb_elts) {
+		*nb_elts = ARRAY_SIZE(flexgen_rates_array) - start_index;
+
+		return 0;
+	}
+	load_flexgen_rates_array(prate);
+
+	if (start_index + *nb_elts > ARRAY_SIZE(flexgen_rates_array))
+		*nb_elts = ARRAY_SIZE(flexgen_rates_array) - start_index;
+
+	memcpy(rates, flexgen_rates_array + start_index,
+	       *nb_elts * sizeof(*rates));
+
+	return 0;
+#endif
+}
+
 
 static const struct clk_ops clk_stm32_flexgen_ops = {
 	.get_rate	= clk_stm32_flexgen_get_rate,
 	.set_rate	= clk_stm32_flexgen_set_rate,
+	.get_rates_array = clk_stm32_flexgen_rates_array,
 	.get_parent	= clk_stm32_flexgen_get_parent,
 	.set_parent	= clk_stm32_flexgen_set_parent,
 	.enable		= clk_stm32_flexgen_enable,

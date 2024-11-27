@@ -96,14 +96,50 @@ struct stm32_scmi_pd {
 /*
  * Platform clocks exposed with SCMI
  */
+static int plat_scmi_clk_get_rates_array(struct clk *clk, size_t index,
+						unsigned long *rates,
+						size_t *nb_elts)
+{
+	uint32_t plat_clock_flags = *(uint32_t *)clk->priv;
+
+	if (!nb_elts)
+		return -EINVAL;
+
+	if (plat_clock_flags)
+		return clk_get_rates_array(clk->parent, index, rates, nb_elts);
+
+	if (!rates || !*nb_elts) {
+		*nb_elts = 1;
+		return 0;
+	}
+
+	if (index)
+		return -EINVAL;
+
+	assert(rates);
+
+	/*
+	 * Clocks not exposed have no effective parent/platform clock.
+	 * Report a 0 Hz rate in this case.
+	 */
+	if (clk->parent)
+		*rates = clk_get_rate(clk->parent);
+	else
+		*rates = 0;
+
+	*nb_elts = 1;
+
+	return 0;
+}
+
 static int plat_scmi_clk_get_rates_steps(struct clk *clk,
 						unsigned long *min,
 						unsigned long *max,
 						unsigned long *step)
 {
-	struct stm32_scmi_clk *scmi_clk = clk->priv;
+	uint32_t plat_clock_flags = *(uint32_t *)clk->priv;
 
-	if (scmi_clk->change_rate) {
+	if (plat_clock_flags) {
 		*min = 0;
 		*max = UINT32_MAX;
 		*step = 0;
@@ -113,11 +149,12 @@ static int plat_scmi_clk_get_rates_steps(struct clk *clk,
 		*step = 0;
 	}
 
-	return TFM_SCMI_SUCCESS;
+	return 0;
 }
 
 static const struct clk_ops plat_scmi_clk_ops = {
-  .get_rates_steps = plat_scmi_clk_get_rates_steps,
+	.get_rates_array = plat_scmi_clk_get_rates_array,
+	.get_rates_steps = plat_scmi_clk_get_rates_steps,
 };
 struct stm32_scmi_config {
 	const int dt_agent_id;
@@ -408,11 +445,11 @@ static int32_t scmi_scpfw_cfg_init_agent(const struct stm32_scmi_config *agent)
 			}
 			clk->name = agent->dt_clocks[j].name;
 			clk->ops = &plat_scmi_clk_ops;
-			clk->priv = (struct scmi_clock *)&no_rate;
+			clk->priv = (struct sm32_scmi_clock *)&no_rate;
 			/*  dt option to add */
 			if (agent->dt_clocks[j].rate) {
 				clk->flags = CLK_SET_RATE_PARENT;
-				clk->priv = (struct scmi_clock *)&rate;
+				clk->priv = (struct stm32_scmi_clock *)&rate;
 			}
 
 			clk->flags |= CLK_DUTY_CYCLE_PARENT;

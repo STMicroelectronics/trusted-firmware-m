@@ -405,11 +405,20 @@ struct clk *clk_get(const struct device *dev, clk_subsys_t sys)
 	return api->get(dev, sys);
 }
 
+int clk_get_rates_array(struct clk *clk, size_t start_index,
+			       unsigned long *rates, size_t *nb_elts)
+{
+	if (!clk->ops->get_rates_array)
+		return -ENOENT;
+
+	return clk->ops->get_rates_array(clk, start_index, rates, nb_elts);
+}
+
 int  clk_get_rates_steps(struct clk *clk, unsigned long *min,
 			       unsigned long *max, unsigned long *step)
 {
 	if (!clk->ops->get_rates_steps)
-		return -1;
+		return -ENOENT;
 
 	return clk->ops->get_rates_steps(clk, min, max, step);
 }
