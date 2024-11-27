@@ -1,0 +1,13 @@
+# Copyright (c) 2024, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: This file needs to be included by devices that need a remoteproc.
+
+properties:
+  remoteprocs:
+    type: phandle-array
+    description: remote processor reference
+
+  remoteproc-names:
+    type: string-array
+    description: Name of each remote processor

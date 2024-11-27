@@ -1,0 +1,21 @@
+# Copyright (c) 2024, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Define a reset service exported by scmi
+
+compatible: "st,stm32mp25-scmi-rst"
+include:
+  - base.yaml
+  - reset-device.yaml
+  - scmi-id.yaml
+
+properties:
+  resets:
+    required: true
+
+  reset-names:
+    required: true
+
+  scmi-id:
+    required: true

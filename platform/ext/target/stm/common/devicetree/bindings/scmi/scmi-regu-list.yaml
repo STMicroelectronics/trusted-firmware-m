@@ -1,0 +1,11 @@
+# Copyright (c) 2024, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+# Scmi regu list
+properties:
+  regu-list:
+    type: phandles
+    description: List of regu scmi phandles
+  regu-id-max:
+    type: int
+    description: highest id in regu list

@@ -1,0 +1,19 @@
+# Copyright (c) 2023, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Define a clock service exported by scmi
+
+compatible: "st,stm32mp25-scmi-clk"
+include:
+  - base.yaml
+  - scmi-id.yaml
+
+properties:
+  clocks:
+    required: true
+  rate:
+    type: boolean
+    description: when true, it enables rate support
+  scmi-id:
+    required: true

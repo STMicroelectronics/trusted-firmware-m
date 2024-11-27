@@ -1,0 +1,21 @@
+# Copyright (c) 2024, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: STM32 IPCC MBOX
+
+compatible: "st,stm32mp25-ipcc"
+
+include:
+  - base.yaml
+  - mailbox-controller.yaml
+  - st,stm32mp25-rif.yaml
+
+properties:
+  clocks:
+    required: true
+
+  interrupts:
+    required: true
+
+mbox-cells:
+  - channel

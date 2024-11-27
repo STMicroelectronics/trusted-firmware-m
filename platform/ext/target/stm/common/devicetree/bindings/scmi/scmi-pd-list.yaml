@@ -1,0 +1,11 @@
+# Copyright (c) 2024, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+# SCMI pd list
+properties:
+  pd-list:
+    type: phandles
+    description: List of SCMI power domain
+  pd-id-max:
+    type: int
+    description: highest id in pd list

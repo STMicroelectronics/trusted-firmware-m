@@ -1,0 +1,11 @@
+# Copyright (c) 2024, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: This file needs to be included to define an scmi agent
+properties:
+  agent-id:
+    type: int
+    description: Agent id number , agent 0 is reserved for cortex A, agent 1 is for non secure
+  agent-name:
+    type: string
+    description: Agent Name

@@ -1,0 +1,18 @@
+# Copyright (c) 2023, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Define a regulator service exported by scmi
+
+compatible: "st,stm32mp25-scmi-regu"
+include:
+  - base.yaml
+  - scmi-id.yaml
+
+properties:
+  regu:
+    type: phandle
+    required: true
+
+  scmi-id:
+    required: true

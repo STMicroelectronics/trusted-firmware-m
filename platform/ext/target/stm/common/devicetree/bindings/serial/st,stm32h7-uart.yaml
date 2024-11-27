@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: (GPL-2.0 OR BSD-2-Clause)
+# Copyright (c) 2023, STMicroelectronics
+
+description: STMicroelectronics STM32 UART
+
+compatible: "st,stm32h7-uart"
+
+include:
+  - name: base.yaml
+  - name: reset-device.yaml
+  - name: pinctrl-device.yaml
+  - name: uart-controller.yaml
+    property-allowlist:
+      - current-speed
+
+properties:
+  reg:
+    required: true
+
+  clocks:
+    required: true
+
+  pinctrl-0:
+    required: true
+
+  pinctrl-names:
+    required: true

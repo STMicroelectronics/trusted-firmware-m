@@ -1,0 +1,8 @@
+# Copyright (c) 2024, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: This file needs to be included to define a service exported by scmi
+properties:
+  scmi-id:
+    type: int
+    description: Fix the id used by remote to reach the scmi service
