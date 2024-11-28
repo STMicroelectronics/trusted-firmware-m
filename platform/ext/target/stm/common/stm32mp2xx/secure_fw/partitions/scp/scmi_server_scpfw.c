@@ -290,7 +290,10 @@ static struct clk plat_clk_##n[] = {						\
 };										\
 										\
 static const struct stm32_scmi_pd *scmi_dt_pd_##n[] = {				\
-	DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, pd_list, _PD_ELEM, (,), n)	\
+	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, pd_list),				\
+		(DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, pd_list,		\
+						     _PD_ELEM, (,), n)),	\
+		())								\
 };										\
 										\
 static const struct stm32_scmi_config stm32_scmi_cfg_##n = {			\
