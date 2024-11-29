@@ -104,6 +104,7 @@ struct stm32_risab_config {
 	const struct risab_dt_region *dt_regions;
 	const int ndt_regions;
 	const bool st_srwiad;
+	const bool errata_ahbrisab;
 };
 
 /*
@@ -313,6 +314,11 @@ static int stm32_risab_region_cfg(const struct device *dev, uint8_t idx)
 	cid_bf = _FLD_GET(DT_RISAB_WRITE_LIST, dt_region->st_protreg);
 	stm32_risab_set_list(dev, cid_bf, drv_data->wlist, region_pages);
 
+	if (drv_cfg->errata_ahbrisab) {
+		drv_data->rlist[RIF_CID0] |= region_pages;
+		drv_data->wlist[RIF_CID0] |= region_pages;
+	}
+
 	/* update cid read/write/priv cfg */
 	stm32_risab_set_cid_x_cfg(dev);
 
@@ -421,6 +427,7 @@ static const struct stm32_risab_config stm32_risab_cfg_##n = {			\
 	.dt_regions = risab_dt_regions_##n,					\
 	.ndt_regions = ARRAY_SIZE(risab_dt_regions_##n),			\
 	.st_srwiad = DT_INST_PROP_OR(n, st_srwiad, false),			\
+	.errata_ahbrisab = DT_INST_PROP_OR(n, st_errata_ahbrisab, false)	\
 };										\
 										\
 static struct stm32_risab_data stm32_risab_data_##n = {};			\
