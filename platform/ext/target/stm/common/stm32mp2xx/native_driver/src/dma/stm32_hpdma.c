@@ -61,6 +61,7 @@ struct stm32_hpdma_config {
 	const struct rifprot_controller *rif_ctl;
 	const struct device *clk_dev;
 	const clk_subsys_t clk_subsys;
+	const bool errata_ahbrisab;
 };
 
 /*
@@ -106,10 +107,26 @@ static __unused
 int stm32_hpdma_rif_set_conf(const struct rifprot_controller *ctl,
 			     struct rifprot_config *cfg)
 {
+	const struct stm32_hpdma_config *hpdma_cfg = dev_get_config(ctl->dev);
 	uint32_t shift = cfg->id;
 
 	if (!IS_ENABLED(STM32_M33TDCID))
 		return 0;
+
+	/*
+	 * Errata: When CID filtering is enabled on one of RISAB 3/4/5
+	 * instances, we forbid the use of CID0 for any initiator on the
+	 * bus to handle spurious CID0 transactions on these RAMs.
+	 */
+	if (hpdma_cfg->errata_ahbrisab &&
+	    (!(cfg->cid_attr & _CIDCFGR_CFEN_MASK) ||
+	     (!(cfg->cid_attr & _CIDCFGR_SEMEN_MASK) &&
+	      _FLD_GET(_CIDCFGR_SCID, cfg->cid_attr) == RIF_CID0) ||
+	     (cfg->cid_attr & _CIDCFGR_SEMEN_MASK &&
+	      cfg->cid_attr & BIT(_CIDCFGR_SEMWLC_SHIFT)))) {
+		EMSG("HPDMA channel cannot hold CID0 value");
+		return -EPERM;
+	}
 
 	/* disable filtering befor write sec and priv cfgr */
 	io_clrbits32(ctl->rbase->cid + _CID_SEM_X_OFFSET(cfg->id), _CIDCFGR_MASK);
@@ -178,6 +195,7 @@ static const struct stm32_hpdma_config hpdma_cfg_##n = {		\
 	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),		\
 	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),	\
 	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),				\
+	.errata_ahbrisab = DT_INST_PROP_OR(n, st_errata_ahbrisab, false)\
 };									\
 									\
 DEVICE_DT_INST_DEFINE(n, &stm32_hpdma_init,				\
