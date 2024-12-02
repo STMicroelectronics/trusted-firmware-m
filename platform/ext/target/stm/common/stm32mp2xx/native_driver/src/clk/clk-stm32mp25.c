@@ -1467,19 +1467,10 @@ static int stm32mp2_clk_flexgen_configure(struct clk_stm32_priv *priv)
 			continue;
 
 		channel = (cmd_data & FLEX_ID_MASK) >> FLEX_ID_SHIFT;
-
-		/*
-		 * Skip ck_ker_stgen configuration, will be done by
-		 * stgen driver.
-		 */
-		if (channel == 33U)
-			continue;
-
 		clk_src = (cmd_data & FLEX_SEL_MASK) >> FLEX_SEL_SHIFT;
 		pdiv = (cmd_data & FLEX_PDIV_MASK) >> FLEX_PDIV_SHIFT;
 		fdiv = (cmd_data & FLEX_FDIV_MASK) >> FLEX_FDIV_SHIFT;
 
-		/* TODO: check if channel can be reconfigured */
 		flexclkgen_config_channel(priv, channel, clk_src, pdiv, fdiv);
 	}
 
