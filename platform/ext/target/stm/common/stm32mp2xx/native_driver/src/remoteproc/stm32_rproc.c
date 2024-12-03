@@ -54,6 +54,14 @@ struct stm32_rproc_data {
  * - apply rif access on exti (exti driver)
  * - send event by exti software interrupt
  */
+static __unused void clr_set_exti_64(void)
+{
+	/*  Clear event if pending */
+	EXTI1->RPR3 = BIT(0);
+	/* send CPU2 SEV event to cpu1 (exti 64)*/
+	EXTI1->SWIER3 |= BIT(0);
+
+}
 
 /*
  * FIXME
@@ -64,6 +72,7 @@ static __unused int stm32mp2_a35_init(const struct device *dev)
 {
 	const struct stm32_rproc_config *cfg = dev_get_config(dev);
 
+	/* unmask event before rif has initialized CID1 filtering on EXTI1_C1CIDCFGR*/
 	EXTI1->C1IMR3 |= BIT(0);
 
 	if (cfg->irq_ack != IRQ_INVALID){
@@ -71,6 +80,12 @@ static __unused int stm32mp2_a35_init(const struct device *dev)
 		EXTI1->RTSR3 |= BIT(1);
 		NVIC_SetPriority(cfg->irq_ack, 1);
 	}
+	/* the deassert release hold boot and set hold boot */
+	reset_control_deassert(&cfg->rst_ctl);
+	/* power up cpu, in case it is in standby*/
+	clr_set_exti_64();
+	/* reset cpu if not in standby */
+	reset_control_assert(&cfg->rst_ctl);
 
 	return 0;
 }
@@ -83,9 +98,13 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 	struct firewall_spec *firewall;
 	int i, err;
 
-	err = reset_control_assert(&cfg->rst_ctl);
-	if (err)
-		return err;
+	if (PWR_S->CPU1D1SR != PWR_CPU1D1SR_HOLD_BOOT_Msk) {
+		/*  power up cpu, in case it is in standby*/
+		clr_set_exti_64();
+		err = reset_control_assert(&cfg->rst_ctl);
+		if (err)
+			return err;
+	}
 
 	if (cfg->irq_ack != IRQ_INVALID) {
 		/* clear rising pending register */
@@ -114,10 +133,11 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 	IAC->IER[3] &= ~(IAC_BIT(108));
 	IAC->IER[4] &= ~(IAC_BIT(152) | IAC_BIT(155) | IAC_BIT(156));
 
-	/* send CPU2 SEV event to cpu1 (exti 64)*/
-	EXTI1->SWIER3 |= BIT(0);
+	/*  power up cpu, in case it is in standby */
+	clr_set_exti_64();
+	err = reset_control_deassert(&cfg->rst_ctl);
 
-	return reset_control_deassert(&cfg->rst_ctl);
+	return err;
 }
 
 static __unused int stm32mp2_a35_release(const struct device *dev)
@@ -175,11 +195,16 @@ static __unused int stm32mp2_a35_stop(const struct device *dev)
 	const struct stm32_rproc_config *cfg = dev_get_config(dev);
 	int err;
 
+	/*  power up cpu, in case it is in standby */
+	clr_set_exti_64();
+
 	err = reset_control_assert(&cfg->rst_ctl);
 	if (err)
 		EMSG("[%s] reset err:%d\n", err);
 
-	return stm32mp2_a35_release(dev);
+	err = stm32mp2_a35_release(dev);
+
+	return err;
 }
 
 static __unused void stm32mp2_a35_irq_ack(const struct device *dev)

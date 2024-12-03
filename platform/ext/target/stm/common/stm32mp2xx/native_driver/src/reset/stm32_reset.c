@@ -111,58 +111,42 @@ static const struct reset_driver_api stm32_reset_ops = {
 	.reset = _stm32_reset_reset,
 };
 
-static int _cpu_assert(const struct device *dev, uint32_t id,
-		       unsigned int to_us)
+static int _cpu_assert(const struct device *dev, uint32_t id)
 {
 	const struct stm32_reset_config *drv_cfg = dev_get_config(dev);
 	uintptr_t base = drv_cfg->base;
 	uint32_t rst_offset = RESET_OFFSET(id);
 	uint32_t rst_mask = RESET_BIT(id);
-	uint32_t cpu_mask = CPUBOOT_BIT(rst_offset);
-	uint32_t cfgr;
-	uint32_t no_holdboot;
-	int err = 0;
 
-	no_holdboot = !!(mmio_read_32(base + _RCC_CPUBOOTCR) & cpu_mask);
-	if (!no_holdboot)
-		return 0;
-
-	/* put in HOLD: enable HOLD boot & reset */
-	io_clrbits32(base + _RCC_CPUBOOTCR, cpu_mask);
-	err = mmio_read32_poll_timeout(base + _RCC_CPUBOOTCR,
-				       cfgr, (~cfgr & cpu_mask), to_us);
-	if (err)
-		return err;
 	io_setbits32(base + rst_offset, rst_mask);
 
-	if (!to_us)
-		return 0;
-
-	return mmio_read32_poll_timeout(base + rst_offset, cfgr,
-					(!(cfgr & rst_mask)), to_us);
+	return 0;
 }
 
 static int _cpu_deassert(const struct device *dev, uint32_t id)
 {
 	const struct stm32_reset_config *drv_cfg = dev_get_config(dev);
-	uintptr_t base = drv_cfg->base;
+	uintptr_t addr = drv_cfg->base +_RCC_CPUBOOTCR;
 	uint32_t rst_offset = RESET_OFFSET(id);
 	uint32_t cpu_mask = CPUBOOT_BIT(rst_offset);
-	uint32_t no_holdboot;
-
-	no_holdboot = !!(mmio_read_32(base + _RCC_CPUBOOTCR) & cpu_mask);
-	if (no_holdboot)
-		return -EINVAL;
+	uint32_t cfgr;
+	int err;
 
 	/* release HOLD: disable HOLD boot */
-	io_setbits32(base + _RCC_CPUBOOTCR, cpu_mask);
+	io_setbits32(addr, cpu_mask);
 
-	return 0;
+	/* 1 us timeout to get hold boot not set */
+	err = mmio_read32_poll_timeout(addr, cfgr, (cfgr & cpu_mask), 1);
+
+	/* cpu should start, set hold boot to avoid later an uncontrolled reset */
+	io_clrbits32(addr, cpu_mask);
+
+	return err;
 }
 
 int _stm32_reset_cpu_assert(const struct device *dev, uint32_t id)
 {
-	return _cpu_assert(dev, id, 4 * USEC_PER_MSEC);
+	return _cpu_assert(dev, id);
 }
 
 int _stm32_reset_cpu_deassert(const struct device *dev, uint32_t id)
