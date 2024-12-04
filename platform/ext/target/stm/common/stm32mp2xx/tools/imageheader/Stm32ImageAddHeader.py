@@ -50,7 +50,10 @@ class Stm32Image:
 
     def __init__(self, header_major_ver=0, header_minor_ver=0, entry=0, loadaddr=0, _binary_type=0):
         self.magic_number = b'STM\x32'                             # Magic number
-        self.image_signature = b'\x00' * 64                        # Image Signature
+        if  header_major_ver == 2 and header_minor_ver == 3:
+            self.image_signature = b'\x00' * 96                    # Image Signature V2.3
+        else:
+            self.image_signature = b'\x00' * 64                    # Image Signature
         self.checksum = 0                                          # Image Checksum
         self.header_major_ver = header_major_ver
         self.header_minor_ver = header_minor_ver
@@ -59,14 +62,20 @@ class Stm32Image:
         self.load_address = loadaddr                               # Load address
         self.version_number = 0                                    # Version Number
         self.extension_flag = (1 << 31)                            # Extension flags
-        self.post_headers_length = 512 - 128                       # Post headers length
+        if  header_major_ver == 2 and header_minor_ver == 3:
+            self.post_headers_length = 576 - 160                       # Post headers length V2.3
+        else:
+            self.post_headers_length = 512 - 128                       # Post headers length
         self.binary_type = _binary_type                            # Binary type : 0x00 U-Boot, 0x10 TF-A, 0x20..0x2F OPTEE, 0x30 CM33 
         self.ext_header_type = b'ST\xFF\xFF'                       # Extension header type
         self.ext_header_length = self.post_headers_length          # Extension header length
         self.ext_padding0 = b'\x00' * (self.ext_header_length - 8) # Extension PAD
         self.option_flags = 1                                      # V1: b0=1: no signature verification
         self.ecdsa_algorithm = 1                                   # V1: 1: P-256 NIST ; 2: brainpool 256
-        self.ecdsa_pub_key = b'\x00' * 64                          # V1: public key to be used to verify the signature
+        if  self.header_major_ver == 2 and  self.header_minor_ver == 3:
+            self.ecdsa_pub_key = b'\x00' * 96                          # V2.3: public key to be used to verify the signature
+        else:
+            self.ecdsa_pub_key = b'\x00' * 64                          # V1: public key to be used to verify the signature
 
 
     def print_header(self):
@@ -109,7 +118,10 @@ class Stm32Image:
         names[9]  = "Version Number"
 
         field[0]  = struct.pack('<4s', self.magic_number)       # Magic number
-        field[1]  = struct.pack('64s', self.image_signature)    # Image Signature
+        if self.header_major_ver == 2 and self.header_minor_ver == 3:
+            field[1]  = struct.pack('96s', self.image_signature)    # V2.3 Image Signature
+        else:
+            field[1]  = struct.pack('64s', self.image_signature)    # Image Signature
         field[2]  = struct.pack('<I', self.checksum)            # Image Checksum
         field[3]  = struct.pack('<4B', 0x0, self.header_minor_ver, self.header_major_ver, 0x0)
         field[4]  = struct.pack('<I', self.image_length)        # Image Length
@@ -139,7 +151,12 @@ class Stm32Image:
             field[13] = struct.pack('16s', b'\x00' * 16)                    # V2: PAD
             field[14] = struct.pack('<4s', self.ext_header_type)            # V2: Extension header type
             field[15] = struct.pack('<I', self.ext_header_length)           # V2: Extension header length
-            field[16] = struct.pack('376s', self.ext_padding0)              # V2: Extension PAD
+
+            if self.header_major_ver == 2 and self.header_minor_ver == 3:
+                field[16] = struct.pack('408s', self.ext_padding0)              # V2.3: Extension PAD
+            else:
+                field[16] = struct.pack('376s', self.ext_padding0)              # V2: Extension PAD
+            
             names[10] = "Extension flags"
             names[11] = "Post headers length"
             names[12] = "Binary type"
