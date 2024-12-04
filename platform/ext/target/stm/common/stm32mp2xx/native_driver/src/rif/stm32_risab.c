@@ -254,11 +254,14 @@ static bool stm32_risab_access_granted(const struct device *dev,
 	uint32_t cid_cfg = io_read32(drv_cfg->base +
 				     _RISAB_PGy_CIDCFGR(region->first_page));
 
+	/* No CID filtering */
+	if (!(cid_cfg & _RISAB_PG_CIDCFGR_CFEN))
+		return true;
+
 	/* Trusted CID access */
 	if (IS_ENABLED(STM32_M33TDCID) &&
-	    ((cid_cfg & _RISAB_PG_CIDCFGR_CFEN &&
-	      !(cid_cfg & _RISAB_PG_CIDCFGR_DCEN)) ||
-	     !(cid_cfg & _RISAB_PG_CIDCFGR_CFEN)))
+	    (cid_cfg & _RISAB_PG_CIDCFGR_CFEN &&
+	     !(cid_cfg & _RISAB_PG_CIDCFGR_DCEN)))
 		return true;
 
 	/* Delegated CID access check */
