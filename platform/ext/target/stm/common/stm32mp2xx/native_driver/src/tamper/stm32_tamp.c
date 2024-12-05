@@ -4,17 +4,17 @@
  * Author(s): Ludovic Barre, <ludovic.barre@foss.st.com> for STMicroelectronics.
  *
  */
-#include <stdint.h>
-#include <stdbool.h>
-#include <lib/utils_def.h>
-#include <lib/mmio.h>
-#include <inttypes.h>
-#include <debug.h>
-#include <errno.h>
-
-#include <device.h>
-#include <stm32_rif.h>
 #include <clk.h>
+#include <debug.h>
+#include <device.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <lib/mmio.h>
+#include <lib/utils_def.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stm32_rif.h>
+#include <stm32_tamp.h>
 
 /* TAMP offset register */
 #define _TAMP_SECCFGR			U(0x20)
@@ -181,6 +181,44 @@ static __unused int _stm32mp25_tamp_init_bkpr(const struct device *dev)
 	return 0;
 }
 
+int stm32_tamp_bkpreg_write(const struct device *dev, unsigned int reg_id,
+			    uint32_t value)
+{
+	const struct stm32_tamp_config *cfg = dev_get_config(dev);
+	struct stm32_tamp_data *dev_data = dev_get_data(dev);
+	uint32_t reg_val = 0;
+
+	if (!cfg || !dev_data)
+		return -ENODEV;
+
+	if (reg_id > dev_data->hw_nb_bkp_reg)
+		return -EINVAL;
+
+	io_write32(cfg->base + _TAMP_BKPxR(reg_id), value);
+	reg_val = io_read32(cfg->base + _TAMP_BKPxR(reg_id));
+	if (reg_val != value)
+		return -EACCES;
+
+	return 0;
+}
+
+int stm32_tamp_bkpreg_read(const struct device *dev, unsigned int reg_id,
+			   uint32_t *value)
+{
+	const struct stm32_tamp_config *cfg = dev_get_config(dev);
+	struct stm32_tamp_data *dev_data = dev_get_data(dev);
+
+	if (!cfg || !dev_data)
+		return -ENODEV;
+
+	if (reg_id > dev_data->hw_nb_bkp_reg)
+		return -EINVAL;
+
+	*value = io_read32(cfg->base + _TAMP_BKPxR(reg_id));
+
+	return 0;
+}
+
 /*
  * Errata: This errata avoid a corteA stuck after reset.
  * When restarting after M33 TDCID, the ROM code read the bkpr11 and if it's valide
@@ -198,8 +236,9 @@ static __unused int _stm32mp25_tamp_init_bkpr(const struct device *dev)
 static __unused int _stm32mp25_bkpr11_errata(const struct device *dev)
 {
 	const struct stm32_tamp_config *cfg = dev_get_config(dev);
-	uint32_t r0cid_cfgr, r1cid_cfgr, r2cid_cfgr, bkpr11;
+	uint32_t r0cid_cfgr, r1cid_cfgr, r2cid_cfgr;
 	bool protected;
+	int err;
 
 	r0cid_cfgr = io_read32(cfg->base + _TAMP_RxCIDCFGR(0));
 	r1cid_cfgr = io_read32(cfg->base + _TAMP_RxCIDCFGR(1));
@@ -212,11 +251,9 @@ static __unused int _stm32mp25_bkpr11_errata(const struct device *dev)
 		io_write32(cfg->base + _TAMP_RxCIDCFGR(2), r2cid_cfgr & ~_CIDCFGR_CFEN_MASK);
 	}
 
-	io_write32(cfg->base + _TAMP_BKPxR(11), CLEAR_PATTERN);
-	bkpr11 = io_read32(cfg->base + _TAMP_BKPxR(11));
-
-	if (bkpr11 != CLEAR_PATTERN)
-		EMSG("tamp: errata: issue not fixed\n");
+	err = stm32_tamp_bkpreg_write(dev, 11, CLEAR_PATTERN);
+	if (err)
+		EMSG("TAMP: errata: issue not fixed");
 
 	if (protected) {
 		io_write32(cfg->base + _TAMP_RxCIDCFGR(0), r0cid_cfgr);
@@ -224,7 +261,7 @@ static __unused int _stm32mp25_bkpr11_errata(const struct device *dev)
 		io_write32(cfg->base + _TAMP_RxCIDCFGR(2), r2cid_cfgr);
 	}
 
-	return 0;
+	return err;
 }
 
 static void stm32_tamp_get_hwconfig(const struct device *dev)
@@ -273,7 +310,8 @@ static __unused int stm32_tamp_init(const struct device *dev)
 		err = stm32_rifprot_init(cfg->rif_ctl);
 
 out:
-	clk_disable(clk);
+	if (err)
+		clk_disable(clk);
 
 	return err;
 }
