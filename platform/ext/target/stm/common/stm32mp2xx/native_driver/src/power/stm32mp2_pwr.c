@@ -20,6 +20,8 @@
 
 #include <stm32mp2_pwr.h>
 #include <stm32_rif.h>
+/* Necessary to detect cold boot case */
+#include <cmsis.h>
 
 /* PWR offset register */
 #define _PWR_RSECCFGR			U(0x100)
@@ -250,9 +252,10 @@ int stm32mp2_pwr_rif_set_conf(const struct rifprot_controller *ctl,
 int stm32mp2_pwr_init(const struct device *dev)
 {
 	const struct stm32mp2_pwr_config *dev_cfg = dev_get_config(dev);
-	uint32_t bdcr;
-	int err;
+	uint32_t __maybe_unused bdcr;
+	int __maybe_unused err;
 
+#if defined(STM32_BL2)
 	/*
 	 * Disable the backup domain write protection.
 	 * The protection is enable at each reset by hardware
@@ -263,9 +266,12 @@ int stm32mp2_pwr_init(const struct device *dev)
 				 bdcr, (bdcr &  _PWR_BDCR1_DBD3P), 0);
 
 	/* Reset backup domain on cold boot cases */
-	err = reset_control_reset(&dev_cfg->rst_ctl_bck);
-	if (err)
-		return err;
+	if (!(RCC->BDCR & RCC_BDCR_RTCCKEN)) {
+		err = reset_control_reset(&dev_cfg->rst_ctl_bck);
+		if (err)
+			return err;
+	}
+#endif
 
 	if (dev_cfg->rif_ctl)
 		return stm32_rifprot_init(dev_cfg->rif_ctl);
