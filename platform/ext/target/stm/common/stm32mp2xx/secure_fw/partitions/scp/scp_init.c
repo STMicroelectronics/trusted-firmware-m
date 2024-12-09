@@ -39,12 +39,11 @@ psa_status_t tfm_scp_entry(void)
 	ret = scmi_server_initialize();
 	assert(ret == TFM_SCMI_SUCCESS);
 
-	while (1) {
-		LOG_DBGFMT("scp wait loop..\r\n");
-		signals = psa_wait(PSA_WAIT_ANY, PSA_BLOCK);
-		LOG_DBGFMT("receive notification..\r\n");
-		if (signals & MAILBOX_SIGNAL) scp_com_handle();
-	}
+	return PSA_SUCCESS;
+}
 
+psa_status_t tfm_scp_service_sfn(const psa_msg_t *msg)
+{
+	scp_com_handle();
 	return PSA_SUCCESS;
 }

@@ -175,6 +175,9 @@ if (TFM_PARTITION_SCP)
 	add_subdirectory(${STM_FAMILLY_DIR}/lib/SCP-firmware SCP-firmware)
 	add_subdirectory(${STM_FAMILLY_DIR}/secure_fw/partitions/scp scp)
 endif()
+if (TFM_PARTITION_IPCC)
+	add_subdirectory(${STM_FAMILLY_DIR}/secure_fw/partitions/ipcc ipcc)
+endif()
 
 # GNU ld has some strange behaviour to do with weak functions, and does not deal
 # well with strong functions in static libraries overriding weak functions in

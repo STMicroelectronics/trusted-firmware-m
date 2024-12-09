@@ -34,6 +34,20 @@
          ]
       }
     },
+    {
+      "description": "TFM IPCC Partition",
+      "manifest": "../secure_fw/partitions/ipcc/tfm_ipcc.yaml",
+      "output_path": "secure_fw/partitions/ipcc",
+      "conditional": "TFM_PARTITION_IPCC",
+      "version_major": 0,
+      "version_minor": 1,
+      "pid": 272,
+      "linker_pattern": {
+        "library_list": [
+          "*tfm_*partition_ipcc*"
+         ]
+      }
+    },
 
   ]
 }
