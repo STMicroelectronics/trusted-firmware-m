@@ -20,3 +20,11 @@ properties:
 
   clocks:
     required: true
+
+  st,errata-ahbrisab:
+    type: boolean
+    description: |
+      If set, a software workaround is set to that the RISAB AHB errata is
+      managed. Whenever CID filtering is enabled on either RISAB3/4/5 instances,
+      then DMA channels cannot hold the CID0 value on the bus to avoid unwanted
+      access rights to some memories.
