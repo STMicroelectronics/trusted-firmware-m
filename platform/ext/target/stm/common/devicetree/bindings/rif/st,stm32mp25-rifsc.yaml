@@ -40,5 +40,13 @@ properties:
     description:
       protection value of rif master port, each entry is defined by a 32 bit.
 
+  st,errata-ahbrisab:
+    type: boolean
+    description: |
+      If set, a software workaround is set to that the RISAB AHB errata is
+      managed. Whenever CID filtering is enabled on either RISAB3/4/5 instances,
+      then RIMUs cannot hold the CID0 value on the bus to avoid unwanted access
+      rights to some memories.
+
 access-controller-cells:
   - protreg
