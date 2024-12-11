@@ -28,3 +28,15 @@ properties:
     description: |
       When set, this bit allows secure read/write data accesses to non-secure
       blocks and pages (secure execute remains illegal).
+
+  st,errata-ahbrisab:
+    type: boolean
+    description: |
+      If set, force authorized accessed for CID0 on RISAB protected memories.
+      This has to be set if CID filtering is enabled for either RISAB3/4/5
+      instances. CID0 must also be prohibited for bus masters system-wide:
+      HPDMA channels and RIMUs. This is done to handle bus transactions
+      spuriously holding the CID0 when the traffic is dense on these RISAB
+      instances. Eventually CID0 is always authorized to handle this case and
+      CID0 is prohibited for any bus master to avoid unwanted access to these
+      memories.
