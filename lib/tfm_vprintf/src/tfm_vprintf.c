@@ -15,6 +15,16 @@
 
 #include "tfm_vprintf.h"
 
+#define get_num_va_args(_args, _lcount)                         \
+	(((_lcount) > 1)  ? va_arg(_args, long long int) :      \
+	(((_lcount) == 1) ? va_arg(_args, long int) :           \
+			    va_arg(_args, int)))
+
+#define get_unum_va_args(_args, _lcount)                                \
+	(((_lcount) > 1)  ? va_arg(_args, unsigned long long int) :     \
+	(((_lcount) == 1) ? va_arg(_args, unsigned long int) :          \
+			    va_arg(_args, unsigned int)))
+
 static inline const char *get_log_prefix(uint8_t log_level)
 {
     switch(log_level) {
@@ -52,21 +62,27 @@ static void output_str(tfm_log_output_str output_func, void *priv, const char *s
     output_func(priv, (const unsigned char *)str, len);
 }
 
-static void output_val(tfm_log_output_str output_func, void *priv, uint32_t val,
-                        uint16_t num_padding, bool zero_padding)
+static void output_val(tfm_log_output_str output_func, void *priv,
+                       unsigned long long int val, uint16_t base,
+                       int16_t num_padding, bool zero_padding)
 {
+    /* Just need enough space to store 64 bit decimal integer + Null character */
+    char buf[21];
     uint8_t digit, chars_to_print;
     uint16_t i;
-    char buf[9];
     char *const buf_end = &buf[sizeof(buf) - 1];
     char *buf_ptr = buf_end;
     const char pad_char = zero_padding ? '0' : ' ';
+
+    /* not support base < 10 to not increase buf */
+    if (base < 10)
+        assert(0);
 
     /* Ensure buffer ends with NULL character */
     *buf_ptr-- = '\0';
 
     do {
-        digit = val & 0xf;
+        digit = val % base;
 
         if (digit < 10) {
             *buf_ptr-- = '0' + digit;
@@ -74,7 +90,7 @@ static void output_val(tfm_log_output_str output_func, void *priv, uint32_t val,
             *buf_ptr-- = 'a' + digit - 10;
         }
 
-        val >>= 4;
+        val /= base;
     } while (val);
 
     chars_to_print = (buf_end - 1) - buf_ptr;
@@ -92,20 +108,31 @@ static void output_val(tfm_log_output_str output_func, void *priv, uint32_t val,
 }
 
 /* Basic vprintf, understands:
+ * %l  long int (32-bit on cortex m)
+ * %ll long long int (64-bit on cortex m)
+ *
  * %s: output string
+ * %u: unsigned decimal format
  * %x: output uint32_t in hex
+ * %d or %i: signed decimal format
+* %p - pointer format
+ *
  */
 static void tfm_vprintf_internal(tfm_log_output_str output_func,
                                 void *priv, const char *fmt, va_list args)
 {
     char c;
+    long long int num;
+    unsigned long long int unum;
     bool formatting = false;
+    uint16_t l_count = 0;
     uint16_t num_padding = 0;
     bool zero_padding = false;
 
     while ((c = *fmt++) != '\0') {
         if (!formatting) {
             if (c == '%') {
+                l_count = 0;
                 zero_padding = false;
                 num_padding = 0;
                 formatting = true;
@@ -120,9 +147,35 @@ static void tfm_vprintf_internal(tfm_log_output_str output_func,
 
         switch (c) {
         case 'l':
+            l_count++;
             continue;
+        case 'u':
+            unum = get_unum_va_args(args, l_count);
+            output_val(output_func, priv, unum, 10, num_padding, zero_padding);
+            break;
+        case 'i':
+        case 'd':
+            num = get_num_va_args(args, l_count);
+
+            if (num < 0) {
+                output_char(output_func, priv, '-');
+                unum = (unsigned long long int)-num;
+                num_padding--;
+            } else {
+                unum = (unsigned long long int)num;
+            }
+
+            output_val(output_func, priv, unum, 10, num_padding, zero_padding);
+            break;
+        case 'p':
+            unum = (uintptr_t)va_arg(args, void *);
+            output_str(output_func, priv, "0x");
+            num_padding -= 2;
+            output_val(output_func, priv, unum, 16, num_padding, zero_padding);
+            break;
         case 'x':
-            output_val(output_func, priv, va_arg(args, uint32_t), num_padding, zero_padding);
+            unum = get_unum_va_args(args, l_count);
+            output_val(output_func, priv, unum, 16, num_padding, zero_padding);
             break;
         case 's':
             output_str(output_func, priv, va_arg(args, char *));
