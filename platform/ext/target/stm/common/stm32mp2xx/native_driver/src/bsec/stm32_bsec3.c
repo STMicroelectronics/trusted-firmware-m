@@ -100,7 +100,7 @@ struct nvmem_cell {
 	uint32_t n_shadow_value;
 };
 
-struct bsec_shadow {
+struct bsec_mirror {
 	uint32_t magic;
 	uint32_t state;
 	struct {
@@ -125,9 +125,9 @@ struct stm32_bsec_variant {
 struct stm32_bsec_data {
 	const struct stm32_bsec_variant *variant;
 	bool hw_key_valid;
-	struct bsec_shadow *p_shadow;
+	struct bsec_mirror *p_mirror;
 #ifdef TFM_DUMMY_PROVISIONING
-	__PACKED_STRUCT bsec_shadow shadow_dummy;
+	__PACKED_STRUCT bsec_mirror mirror_dummy;
 #endif
 };
 
@@ -157,17 +157,17 @@ static int shadow_otp(const struct device *dev, uint32_t otp)
 {
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(dev);
 	struct stm32_bsec_data *drv_data = dev_get_data(dev);
-	struct bsec_shadow *shadow = drv_data->p_shadow;
+	struct bsec_mirror *mirror = drv_data->p_mirror;
 	uint32_t i, err, sr = 0;
 
 	/* if shadow is not allowed */
-	if (shadow->otp[otp].status & LOCK_SHADOW_R) {
-		shadow->otp[otp].status |= LOCK_ERROR;
-		shadow->otp[otp].value = 0x0U;
+	if (mirror->otp[otp].status & LOCK_SHADOW_R) {
+		mirror->otp[otp].status |= LOCK_ERROR;
+		mirror->otp[otp].value = 0x0U;
 		return -EACCES;
 	}
 
-	shadow->otp[otp].status &= ~LOCK_ERROR;
+	mirror->otp[otp].status &= ~LOCK_ERROR;
 
 	for (i = 0U; i < _MAX_NB_TRIES; i++) {
 		io_write32(drv_cfg->base + _BSEC_OTPCR, otp);
@@ -191,12 +191,12 @@ static int shadow_otp(const struct device *dev, uint32_t otp)
 	}
 
 	if (sr & _BSEC_OTPSR_PPLF)
-		shadow->otp[otp].status |= LOCK_PERM;
+		mirror->otp[otp].status |= LOCK_PERM;
 
 	if (i == _MAX_NB_TRIES || sr & (_BSEC_OTPSR_PPLMF | _BSEC_OTPSR_AMEF |
 					_BSEC_OTPSR_DISTURBF |
 					_BSEC_OTPSR_DEDF)) {
-		shadow->otp[otp].status |= LOCK_ERROR;
+		mirror->otp[otp].status |= LOCK_ERROR;
 		return -EIO;
 	}
 
@@ -252,7 +252,7 @@ static inline int _otp_is_valid(uint32_t status){
 static int _otp_read(uint32_t offset, size_t len, size_t out_len, uint8_t *out)
 {
 	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
-	struct bsec_shadow *shadow = drv_data->p_shadow;
+	struct bsec_mirror *mirror = drv_data->p_mirror;
 	size_t copy_size = len < out_len ? len : out_len;
 	uint32_t *p_out_w = (uint32_t *)out;
 	uint32_t idx;
@@ -266,10 +266,10 @@ static int _otp_read(uint32_t offset, size_t len, size_t out_len, uint8_t *out)
 	offset /= sizeof(uint32_t);
 
 	for (idx = 0; idx < (copy_size / sizeof(uint32_t)); idx++) {
-		if (!_otp_is_valid(shadow->otp[offset + idx].status))
+		if (!_otp_is_valid(mirror->otp[offset + idx].status))
 			return -EPERM;
 
-		p_out_w[idx] = shadow->otp[offset + idx].value;
+		p_out_w[idx] = mirror->otp[offset + idx].value;
 	}
 
 	return 0;
@@ -310,7 +310,7 @@ static int __maybe_unused _otp_write(uint32_t offset, size_t len,
 				     size_t in_len, const uint8_t *in)
 {
 	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
-	struct bsec_shadow *shadow = drv_data->p_shadow;
+	struct bsec_mirror *mirror = drv_data->p_mirror;
 	uint32_t *p_in_w = (uint32_t *)in;
 	uint32_t idx;
 
@@ -326,11 +326,11 @@ static int __maybe_unused _otp_write(uint32_t offset, size_t len,
 	offset /= sizeof(uint32_t);
 
 	for (idx = 0; idx < (len / sizeof(uint32_t)); idx++) {
-		if (!_otp_is_valid(shadow->otp[offset + idx].status))
+		if (!_otp_is_valid(mirror->otp[offset + idx].status))
 			return -EPERM;
 
-		shadow->otp[offset + idx].value = p_in_w[idx];
-		shadow->otp[offset + idx].status = LOCK_SHADOW_R;
+		mirror->otp[offset + idx].value = p_in_w[idx];
+		mirror->otp[offset + idx].status = LOCK_SHADOW_R;
 	}
 
 	return 0;
@@ -394,7 +394,7 @@ int stm32_bsec_read_sw_lock(uint32_t otp, bool *value)
 	if (otp > drv_data->variant->max_id)
 		return -EINVAL;
 
-	*value = !!(drv_data->p_shadow->otp[otp].status & LOCK_SHADOW_W);
+	*value = !!(drv_data->p_mirror->otp[otp].status & LOCK_SHADOW_W);
 
 	return 0;
 }
@@ -422,7 +422,7 @@ int stm32_bsec_write(uint32_t otp, uint32_t value)
 	mmio_write_32(drv_cfg->base + _BSEC_FVR(otp), value);
 
 	/* update bsec mirror */
-	drv_data->p_shadow->otp[otp].value = value;
+	drv_data->p_mirror->otp[otp].value = value;
 
 	return 0;
 }
@@ -524,9 +524,9 @@ int stm32_bsec_dummy_switch(void)
 {
 	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
 
-	memcpy(&(drv_data->shadow_dummy), drv_data->p_shadow,
-	       sizeof(drv_data->shadow_dummy));
-	drv_data->p_shadow = &drv_data->shadow_dummy;
+	memcpy(&(drv_data->mirror_dummy), drv_data->p_mirror,
+	       sizeof(drv_data->mirror_dummy));
+	drv_data->p_mirror = &drv_data->mirror_dummy;
 
 	return 0;
 }
@@ -580,7 +580,7 @@ static uint32_t init_state(const struct device *dev, uint32_t status)
 {
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(dev);
 	struct stm32_bsec_data *drv_data = dev_get_data(dev);
-	struct bsec_shadow *shadow = drv_data->p_shadow;
+	struct bsec_mirror *mirror = drv_data->p_mirror;
 	uint32_t state = BSEC_STATE_INVALID;
 
 	if (status & _BSEC_OTPSR_INIT_DONE) {
@@ -594,7 +594,7 @@ static uint32_t init_state(const struct device *dev, uint32_t status)
 			EMSG("BSEC invalid nvstates %#x\n", nvstates);
 		} else {
 			state = BSEC_STATE_SEC_OPEN;
-			if (shadow->otp[_OTP_SECURE_BOOT].value & _OTP_CLOSED_SECURE)
+			if (mirror->otp[_OTP_SECURE_BOOT].value & _OTP_CLOSED_SECURE)
 				state = BSEC_STATE_SEC_CLOSED;
 		}
 	}
@@ -603,7 +603,7 @@ static uint32_t init_state(const struct device *dev, uint32_t status)
 }
 
 
-static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
+static void stm32_bsec_mirror_load(const struct device *dev, uint32_t status)
 {
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(dev);
 	struct stm32_bsec_data *drv_data = dev_get_data(dev);
@@ -615,9 +615,9 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 	uint32_t mask = 0U;
 	unsigned int max_id = drv_data->variant->max_id;
 
-	memset(drv_data->p_shadow, 0, sizeof(*drv_data->p_shadow));
-	drv_data->p_shadow->magic = BSEC_MAGIC;
-	drv_data->p_shadow->state = BSEC_STATE_INVALID;
+	memset(drv_data->p_mirror, 0, sizeof(*drv_data->p_mirror));
+	drv_data->p_mirror->magic = BSEC_MAGIC;
+	drv_data->p_mirror->state = BSEC_STATE_INVALID;
 
 	//exceptions = bsec_lock();
 
@@ -625,7 +625,7 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 	if (status & _BSEC_OTPSR_HIDEUP) {
 		for (otp = drv_data->variant->upper_base;
 		     otp <= drv_data->variant->max_id ; otp++) {
-			drv_data->p_shadow->otp[otp].status |= _HIDEUP_ERROR;
+			drv_data->p_mirror->otp[otp].status |= _HIDEUP_ERROR;
 #ifdef TFM_DUMMY_PROVISIONING
 			/*
 			 * In dummy provisioning case, we will need to overwrite some upper OTP
@@ -633,9 +633,9 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 			 * LOCK_ERROR flag, or else the dummy value won't be updated in the mirror
 			 * and the _otp_write/_otp_read will report errors.
 			 */
-			drv_data->p_shadow->otp[otp].status &= ~LOCK_ERROR;
+			drv_data->p_mirror->otp[otp].status &= ~LOCK_ERROR;
 #endif
-			drv_data->p_shadow->otp[otp].value = 0x0U;
+			drv_data->p_mirror->otp[otp].value = 0x0U;
 		}
 		max_id = drv_data->variant->upper_base - 1;
 	}
@@ -653,13 +653,13 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 		mask = BIT(_FLD_GET(_BSEC_OTP_BIT, otp));
 
 		if (srlock[bank] & mask)
-			drv_data->p_shadow->otp[otp].status |= LOCK_SHADOW_R;
+			drv_data->p_mirror->otp[otp].status |= LOCK_SHADOW_R;
 		if (swlock[bank] & mask)
-			drv_data->p_shadow->otp[otp].status |= LOCK_SHADOW_W;
+			drv_data->p_mirror->otp[otp].status |= LOCK_SHADOW_W;
 		if (splock[bank] & mask)
-			drv_data->p_shadow->otp[otp].status |= LOCK_SHADOW_P;
+			drv_data->p_mirror->otp[otp].status |= LOCK_SHADOW_P;
 
-		if (drv_data->p_shadow->otp[otp].status & STATUS_SECURE)
+		if (drv_data->p_mirror->otp[otp].status & STATUS_SECURE)
 			continue;
 
 		/*
@@ -667,7 +667,7 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 		 * They are stored in last OTPs
 		 */
 		if (otp >= _OEM_KEY_FIRST_OTP) {
-			drv_data->p_shadow->otp[otp].status |= LOCK_SHADOW_R;
+			drv_data->p_mirror->otp[otp].status |= LOCK_SHADOW_R;
 			continue;
 		}
 
@@ -678,7 +678,7 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 			return ret;
 		}
 
-		drv_data->p_shadow->otp[otp].value = io_read32(drv_cfg->base +
+		drv_data->p_mirror->otp[otp].value = io_read32(drv_cfg->base +
 							   _BSEC_FVR(otp));
 	}
 
@@ -689,19 +689,19 @@ static void stm32_bsec_mirror_init(const struct device *dev, bool force_load)
 {
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(dev);
 	struct stm32_bsec_data *drv_data = dev_get_data(dev);
-	struct bsec_shadow *shadow = drv_data->p_shadow;
+	struct bsec_mirror *mirror = drv_data->p_mirror;
 	uint32_t status;
 
 	status = io_read32(drv_cfg->base + _BSEC_OTPSR);
 	stm32_bsec_check_error(status);
 
-	/* update shadow when forced or invalid */
-	if (force_load || shadow->magic != BSEC_MAGIC)
-		stm32_bsec_shadow_load(dev, status);
+	/* update mirror when forced or invalid */
+	if (force_load || mirror->magic != BSEC_MAGIC)
+		stm32_bsec_mirror_load(dev, status);
 
 	/* always update status */
-	shadow->state = init_state(dev, status);
-	if ((shadow->state & BSEC_STATE_MASK) == BSEC_STATE_INVALID) {
+	mirror->state = init_state(dev, status);
+	if ((mirror->state & BSEC_STATE_MASK) == BSEC_STATE_INVALID) {
 		EMSG("BSEC invalid state\n");
 		panic();
 	}
@@ -767,15 +767,15 @@ static int stm32_bsec_dt_init(const struct device *dev)
 	struct stm32_bsec_data *drv_data = dev_get_data(dev);
 
 	drv_data->hw_key_valid = false;
-	drv_data->p_shadow = (struct bsec_shadow *)drv_cfg->mirror_addr;
+	drv_data->p_mirror = (struct bsec_mirror *)drv_cfg->mirror_addr;
 
 	if (IS_ENABLED(STM32_BL2))
 		stm32_bsec_mirror_init(dev, true);
 
-	if (drv_data->p_shadow->magic != BSEC_MAGIC)
+	if (drv_data->p_mirror->magic != BSEC_MAGIC)
 		return -ENOSYS;
 
-	if (drv_data->p_shadow->state & BSEC_HARDWARE_KEY)
+	if (drv_data->p_mirror->state & BSEC_HARDWARE_KEY)
 		drv_data->hw_key_valid = true;
 
 	return stm32_bsec_shadow_init(dev);
