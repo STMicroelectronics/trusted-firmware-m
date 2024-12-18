@@ -39,7 +39,7 @@
 
 /* BSEC_OTPSR register fields */
 #define _BSEC_OTPSR_BUSY		BIT(0)
-#define _BSEC_OTPSR_FUSEOK		BIT(1)
+#define _BSEC_OTPSR_INIT_DONE		BIT(1)
 #define _BSEC_OTPSR_HIDEUP		BIT(2)
 #define _BSEC_OTPSR_OTPNVIR		BIT(4)
 #define _BSEC_OTPSR_OTPERR		BIT(5)
@@ -569,7 +569,7 @@ static void stm32_bsec_check_error(uint32_t opt_status)
 		panic();
 	}
 
-	if (!(opt_status & _BSEC_OTPSR_FUSEOK)) {
+	if (!(opt_status & _BSEC_OTPSR_INIT_DONE)) {
 		EMSG("BSEC reset operations not completed\n");
 		panic();
 	}
@@ -585,17 +585,14 @@ static uint32_t init_state(const struct device *dev, uint32_t status)
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(dev);
 	struct stm32_bsec_data *drv_data = dev_get_data(dev);
 	struct bsec_shadow *shadow = drv_data->p_shadow;
-	uint32_t sr, nvstates, state;
+	uint32_t state = BSEC_STATE_INVALID;
 
-	sr = io_read32(drv_cfg->base + _BSEC_SR);
-	nvstates = _FLD_GET(_BSEC_SR_NVSTATES, sr);
-	state = BSEC_STATE_INVALID;
+	if (status & _BSEC_OTPSR_INIT_DONE) {
+		/* NVSTATES is only valid if INIT_DONE = 1 */
+		uint32_t sr = io_read32(drv_cfg->base + _BSEC_SR);
+		uint32_t nvstates = _FLD_GET(_BSEC_SR_NVSTATES, sr);
 
-	if (status & _BSEC_OTPSR_FUSEOK) {
-		/*
-		 * NVSTATES is only valid if FUSEOK
-		 * Only 1 supported state = CLOSED
-		 */
+		/* Only 1 supported state = CLOSED */
 		if (nvstates != _BSEC_SR_NVSTATES_CLOSED) {
 			state = BSEC_STATE_INVALID;
 			EMSG("BSEC invalid nvstates %#x\n", nvstates);
