@@ -1,0 +1,33 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2020, Arm Limited. All rights reserved.
+# Copyright (c) 2024 STMicroelectronics. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+#-------------------------------------------------------------------------------
+
+# set familly platform config
+if (EXISTS ${STM_FAMILLY_DIR}/config.cmake)
+	include(${STM_FAMILLY_DIR}/config.cmake)
+endif()
+
+# set specific stm32mp25 config
+########################## STM32 #######################################
+set(STM32_BOARD_MODEL		    "stm32mp25xxxx"	CACHE STRING	"Define board model name" FORCE)
+set(STM32_STM32MP25_SOC_REV	    "revB"			CACHE STRING	"Set soc revision: revA, revB")
+
+# set specific borad config
+set(STM32_IPC				    ON              CACHE BOOL     "Use IPC (rpmsg) to communicate with main processor" FORCE)
+set(TFM_DUMMY_PROVISIONING      ON              CACHE BOOL     "Provision with dummy values. NOT to be used in production" FORCE)
+set(STM32_DDR_CACHED			OFF             CACHE BOOL     "Enable cache for ddr" FORCE)
+set(STM32_PROV_FAKE			    ON              CACHE BOOL     "Provisioning with dummy values. NOT to be used in production" FORCE)
+
+if (STM32_STM32MP25_SOC_REV STREQUAL "revA")
+    set(STM32_HEADER_MAJOR_VER  2   CACHE STRING    "Define stm32 header major version: 2" FORCE)
+    set(STM32_HEADER_MINOR_VER  0   CACHE STRING    "Define stm32 header minor version: 0,2" FORCE)
+elseif(STM32_STM32MP25_SOC_REV STREQUAL "revB")
+    set(STM32_HEADER_MAJOR_VER  2   CACHE STRING    "Define stm32 header major version: 2" FORCE)
+    set(STM32_HEADER_MINOR_VER  2   CACHE STRING    "Define stm32 header minor version: 0,2" FORCE)
+else()
+	message(FATAL_ERROR "stm32mp25 SoC Revision not supported")
+endif()

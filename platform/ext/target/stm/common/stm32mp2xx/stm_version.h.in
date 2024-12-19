@@ -1,0 +1,17 @@
+/*
+ * Copyright (C) 2022 STMicroelectronics.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ */
+#ifndef __STM_VERSION_H__
+#define __STM_VERSION_H__
+
+/*
+ * Defines for board model.
+ */
+#cmakedefine STM32_BOARD_MODEL   "@STM32_BOARD_MODEL@"
+
+#define MODEL_FULLSTR    STM32_BOARD_MODEL
+
+#endif /* __STM_VERSION_H__ */
