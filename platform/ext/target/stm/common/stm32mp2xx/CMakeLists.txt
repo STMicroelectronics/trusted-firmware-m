@@ -66,6 +66,8 @@ target_link_libraries(tfm_s_scatter
 	dt_platform_s_defs
 )
 
+add_subdirectory(${STM_FAMILLY_DIR}/lib/qsort qsort)
+
 target_include_directories(platform_s
 	PUBLIC
 		${PLATFORM_DIR}/include
@@ -148,6 +150,7 @@ target_compile_definitions(platform_s
 
 target_link_libraries(platform_s
     PUBLIC
+        lib_qsort
         tfm_log
         tfm_log_unpriv
 )
@@ -292,6 +295,7 @@ if(BL2)
 
 	target_link_libraries(platform_bl2
         PRIVATE
+            lib_qsort
             bl2_mbedcrypto_config
 	)
 
@@ -348,6 +352,11 @@ install(DIRECTORY
     ${STM_FAMILLY_DIR}/native_driver
     ${STM_FAMILLY_DIR}/cmsis_driver
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx
+)
+
+install(DIRECTORY
+    ${STM_FAMILLY_DIR}/lib/qsort
+    DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx/lib
 )
 
 install(DIRECTORY
