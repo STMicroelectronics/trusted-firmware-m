@@ -80,6 +80,11 @@
 }							\
 )
 
+#define UDIV_ROUND_NEAREST(x, y)			\
+	(__extension__ ({ __typeof__(x) _x = (x);	\
+	  __typeof__(y) _y = (y);			\
+	  (_x + (_y / 2)) / _y; }))
+
 #define MIN(x, y) __extension__ ({	\
 	__typeof__(x) _x = (x);		\
 	__typeof__(y) _y = (y);		\
