@@ -6,6 +6,7 @@
  */
 #define DT_DRV_COMPAT st_stm32mp25_rifsc
 
+#include <cmsis.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <lib/utils_def.h>
@@ -18,8 +19,6 @@
 #include <stm32_rif.h>
 #include <stm32_rifsc.h>
 #include <firewall.h>
-
-#include <dt-bindings/rif/stm32mp25-rifsc.h>
 
 /* RIFSC offset register */
 #define _RIFSC_RISC_CR			U(0x00)
@@ -134,6 +133,8 @@ struct rimu_risup_pairs {
 	uint32_t risup_id;
 };
 
+#if defined(STM32MP25xxxx) || defined(STM32MP23xxxx)
+#include <dt-bindings/rif/stm32mp25-rifsc.h>
 static const struct rimu_risup_pairs rimu_risup[] = {
 	[0] = {
 		.rimu_id = 0,
@@ -200,7 +201,55 @@ static const struct rimu_risup_pairs rimu_risup[] = {
 		.risup_id = STM32MP25_RIFSC_VENC_ID,
 	},
 };
-
+#else
+#include <dt-bindings/rif/stm32mp21-rifsc.h>
+static const struct rimu_risup_pairs rimu_risup[] = {
+	[0] = {
+		.rimu_id = 0,
+		.risup_id = 0,
+	},
+	[1] = {
+		.rimu_id = 1,
+		.risup_id = STM32MP21_RIFSC_SDMMC1_ID,
+	},
+	[2] = {
+		.rimu_id = 2,
+		.risup_id = STM32MP21_RIFSC_SDMMC2_ID,
+	},
+	[3] = {
+		.rimu_id = 3,
+		.risup_id = STM32MP21_RIFSC_SDMMC3_ID,
+	},
+	[4] = {
+		.rimu_id = 4,
+		.risup_id = STM32MP21_RIFSC_OTG_HS_ID,
+	},
+	[5] = {
+		.rimu_id = 5,
+		.risup_id = STM32MP21_RIFSC_USBH_ID,
+	},
+	[6] = {
+		.rimu_id = 6,
+		.risup_id = STM32MP21_RIFSC_ETH1_ID,
+	},
+	[7] = {
+		.rimu_id = 7,
+		.risup_id = STM32MP21_RIFSC_ETH2_ID,
+	},
+	[10] = {
+		.rimu_id = 10,
+		.risup_id = STM32MP21_RIFSC_DCMIPP_ID,
+	},
+	[11] = {
+		.rimu_id = 11,
+		.risup_id = 0,
+	},
+	[12] = {
+		.rimu_id = 12,
+		.risup_id = 0,
+	},
+};
+#endif
 
 /*
  * Must be rework
