@@ -6,6 +6,7 @@
 /dts-v1/;
 
 #include <dt-bindings/clock/stm32mp25-clksrc.h>
+#include <dt-bindings/ipcc/stm32mp25-ipcc.h>
 #include <dt-bindings/power/stm32mp25-power.h>
 #include <dt-bindings/reset/stm32mp25-resets.h>
 #include <dt-bindings/regulator/stm32mp25-regulator.h>
@@ -374,7 +375,7 @@
 
 &scp_mbox {
 	status = "okay";
-	mboxes = <&ipcc1 3>, <&ipcc1 3>;
+	mboxes = <&ipcc1 IPCC_CHANNEL(4)>, <&ipcc1 IPCC_CHANNEL(4)>;
 	mbox-names = "rx", "tx";
 };
 
