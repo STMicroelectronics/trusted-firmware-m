@@ -113,6 +113,16 @@ Trusted Firmware-M Documentation
     Security Center <https://developer.trustedfirmware.org/w/collaboration/security_center>
     PSA <https://www.arm.com/architecture/security-features/platform-security>
 
+.. toctree::
+    :caption: STMICROELECTRONICS
+    :maxdepth: 1
+    :titlesonly:
+    :hidden:
+
+    stm/releases/index
+    stm/technical/index
+    stm/ide/index
+
 --------------
 
 *Copyright (c) 2017-2022, Arm Limited. All rights reserved.*
