@@ -742,9 +742,11 @@ static int stm32_bsec_shadow_init(const struct device *dev)
 					 cell->shadow_value[j]);
 
 			/* update bsec mirror */
-			_otp_write(cell->otp_id, cell->n_otp * sizeof(uint32_t),
-				   cell->n_shadow_value,
-				   (uint8_t*)cell->shadow_value);
+			ret = _otp_write(cell->otp_id, cell->n_otp * sizeof(uint32_t),
+					 cell->n_shadow_value * sizeof(uint32_t),
+					 (uint8_t *)cell->shadow_value);
+			if (ret)
+				return ret;
 		}
 	}
 
