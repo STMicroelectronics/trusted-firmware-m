@@ -1,0 +1,32 @@
+{{tag_tittle}}
+
+-  `TF-M gitweb <https://gerrit.st.com/gitweb?p=mpu/oe/st/TF-M/trusted-firmware-m.git;a=summary>`_
+-  branch: `{{branch}} <https://gerrit.st.com/gitweb?p=mpu/oe/st/TF-M/trusted-firmware-m.git;a=shortlog;h=refs/heads/{{branch}}>`_
+-  tag: `{{tag}} <https://gerrit.st.com/gitweb?p=mpu/oe/st/TF-M/trusted-firmware-m.git;a=tag;h=refs/tags/{{tag}}>`_
+-  sha1: `{{sha1}} <https://gerrit.st.com/gitweb?p=mpu/oe/st/TF-M/trusted-firmware-m.git;a=commit;h={{sha1}}>`_
+
+*************
+Documentation
+*************
+
+-  Prerequisites and software build: `Getting started <https://stmicroelectronics-my.sharepoint.com/personal/ludovic_barre_st_com/Documents/tfm/user_guide/html/{{doc_release}}/stm/releases/getting_started.html.aspx>`_
+-  `Trusted Firmware-M Documentation <https://stmicroelectronics-my.sharepoint.com/personal/ludovic_barre_st_com/Documents/tfm/user_guide/html/{{doc_release}}/index.html.aspx>`_
+
+{{features_log}}
+
+****************
+Tested platforms
+****************
+
+{% for plat_test in tests_platform %}
+{{plat_test}}
+{% endfor %}
+
+{{issues_log}}
+
+{{fixed_log}}
+
+--------------
+
+*Copyright (c) 2023 STMicroelectronics. All rights reserved.*
+*SPDX-License-Identifier: BSD-3-Clause*

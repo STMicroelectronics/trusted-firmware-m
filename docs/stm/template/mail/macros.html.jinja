@@ -1,0 +1,31 @@
+{% macro hypertexte(link) %}
+	<a href="{{link.url}}">{{link.name}}</a>
+{% endmacro %}
+
+{% macro table_bz(list_bz) %}
+	<table class="st_table_bz">
+	<tbody>
+		<tr>
+			<th>Descriptions</th>
+			<th>Links</th>
+		</tr>
+
+		{% for bz in list_bz %}
+		<tr>
+			<td>{{bz.desc}}</td>
+			<td>{{ hypertexte(bz) }}</td>
+		</tr>
+		{% endfor %}
+
+	</tbody>
+	</table>
+{% endmacro %}
+
+{% macro list_test(l_test) %}
+	<ul>
+		{% for key, value in l_test.items() %}
+			<li>{{ hypertexte(value) }}</li>
+		{% endfor %}
+	</ul>
+{% endmacro %}
+

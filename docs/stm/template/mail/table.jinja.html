@@ -1,0 +1,39 @@
+<table class="st_table">
+<tbody>
+	<tr>
+		<th>{{tfm.week}}</th>
+		<th colspan="4">{{tfm.repo}}</th>
+	</tr>
+	<tr>
+		<td class="projet fbold" rowspan="7">MP25</td>
+		<td class="fbold" rowspan="4">community version:<br>{{tfm.com_ver}}</td>
+		<td rowspan="2">branch</td>
+		<td>developer</td>
+		<td>{{ hypertexte(tfm.l_branch_dev) }}</td>
+	</tr>
+	<tr>
+		<td>integration</td>
+		<td colspan="2">{{ hypertexte(tfm.l_branch_int) }}</td>
+	</tr>
+	<tr>
+		<td colspan="2">tag</td>
+		<td>{{ hypertexte(tfm.l_tag) }}</td>
+	</tr>
+	<tr>
+		<td colspan="2">sha-1</td>
+		<td>{{ hypertexte(tfm.l_sha1) }}</td>
+	</tr>
+	<tr>
+		<td class="note fbold">Infos</td>
+		<td colspan="3">{% include "table_info.jinja.html" %}</td>
+	</tr>
+	<tr>
+		<td class="note fbold">Restrictions</td>
+		<td colspan="4">{% include "table_restriction.jinja.html" %}</td>
+	</tr>
+	<tr>
+		<td class="note fbold">Highlights</td>
+		<td colspan="4">{% include "table_highlights.jinja.html" %}</td>
+	</tr>
+</tbody>
+</table>
