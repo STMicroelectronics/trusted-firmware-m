@@ -646,7 +646,7 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 
 	for (otp = 0U; otp <= max_id ; otp++) {
 		bank = _FLD_GET(_BSEC_OTP_BANK, otp);
-		mask = _FLD_GET(_BSEC_OTP_BIT, otp);
+		mask = BIT(_FLD_GET(_BSEC_OTP_BIT, otp));
 
 		if (srlock[bank] & mask)
 			drv_data->p_shadow->status[otp] |= LOCK_SHADOW_R;
