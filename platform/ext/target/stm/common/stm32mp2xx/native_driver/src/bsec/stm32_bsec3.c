@@ -651,6 +651,8 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 	}
 
 	for (otp = 0U; otp <= max_id ; otp++) {
+		int ret;
+
 		bank = _FLD_GET(_BSEC_OTP_BANK, otp);
 		mask = BIT(_FLD_GET(_BSEC_OTP_BIT, otp));
 
@@ -674,7 +676,11 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 		}
 
 		/* reload shadow to read Permanent Programing Lock Flag */
-		shadow_otp(dev, otp);
+		ret = shadow_otp(dev, otp);
+		if (ret) {
+			EMSG("Shadowing failed (%d)\n", ret);
+			return ret;
+		}
 
 		drv_data->p_shadow->value[otp] = io_read32(drv_cfg->base +
 							   _BSEC_FVR(otp));
