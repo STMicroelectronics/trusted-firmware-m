@@ -633,6 +633,15 @@ static void stm32_bsec_shadow_load(const struct device *dev, uint32_t status)
 		for (otp = drv_data->variant->upper_base;
 		     otp <= drv_data->variant->max_id ; otp++) {
 			drv_data->p_shadow->status[otp] |= _HIDEUP_ERROR;
+#ifdef TFM_DUMMY_PROVISIONING
+			/*
+			 * In dummy provisioning case, we will need to overwrite some upper OTP
+			 * values (for IAK and entropy seed). Those should then not have the
+			 * LOCK_ERROR flag, or else the dummy value won't be updated in the mirror
+			 * and the _otp_write/_otp_read will report errors.
+			 */
+			drv_data->p_shadow->status[otp] &= ~LOCK_ERROR;
+#endif
 			drv_data->p_shadow->value[otp] = 0x0U;
 		}
 		max_id = drv_data->variant->upper_base - 1;
