@@ -6,7 +6,7 @@ Trusted Firmware-M Documentation
 
     <ul class="grid">
         <li class="grid-item">
-            <a href="introduction/readme.html">
+            <a href="introduction/readme.html.aspx">
                 <img alt="" src="_static/images/tfm-introduction.png"/>
                 <h2>Introduction</h2>
             </a>
@@ -14,7 +14,7 @@ Trusted Firmware-M Documentation
                architecture, features, and licensing.</p>
         </li>
         <li class="grid-item">
-            <a href="getting_started/index.html">
+            <a href="getting_started/index.html.aspx">
                <img alt="" src="_static/images/tfm-documentation.png"/>
                <h2>Getting Started</h2>
             </a>
@@ -22,14 +22,14 @@ Trusted Firmware-M Documentation
                system, and then build and run a sample application.</p>
         </li>
         <li class="grid-item">
-            <a href="platform/index.html">
+            <a href="platform/index.html.aspx">
                 <img alt="" src="_static/images/tfm-platform.png"/>
                 <h2>Supported Platforms</h2>
             </a>
             <p>List of supported boards and platforms.</p>
         </li>
         <li class="grid-item">
-            <a href="contributing/index.html">
+            <a href="contributing/index.html.aspx">
                 <img alt="" src="_static/images/tfm-contribution.png"/>
                 <h2>Contribution</h2>
             </a>
@@ -37,21 +37,21 @@ Trusted Firmware-M Documentation
                to submit patches directly to the project.</p>
         </li>
         <li class="grid-item">
-            <a href="integration_guide/index.html">
+            <a href="integration_guide/index.html.aspx">
                 <img alt="" src="_static/images/tfm-integration.png"/>
                 <h2>Integration</h2>
             </a>
             <p>Guidelines for integration with TF-M.</p>
         </li>
         <li class="grid-item">
-            <a href="design_docs/index.html">
+            <a href="design_docs/index.html.aspx">
                 <img alt="" src="_static/images/tfm-reference.png"/>
                 <h2>References</h2>
             </a>
             <p>Design documents.</p>
         </li>
         <li class="grid-item">
-            <a href="security/index.html">
+            <a href="security/index.html.aspx">
                 <img alt="" src="_static/images/tfm.png"/>
                 <h2>Security</h2>
             </a>
@@ -59,7 +59,7 @@ Trusted Firmware-M Documentation
                is addressed within the TF-M project.</p>
         </li>
         <li class="grid-item">
-            <a href="releases/index.html">
+            <a href="releases/index.html.aspx">
                 <img alt="" src="_static/images/tfm-release.png"/>
                 <h2>Releases</h2>
             </a>
