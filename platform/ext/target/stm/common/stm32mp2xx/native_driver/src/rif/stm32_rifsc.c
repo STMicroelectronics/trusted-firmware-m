@@ -22,17 +22,25 @@
 #include <dt-bindings/rif/stm32mp25-rifsc.h>
 
 /* RIFSC offset register */
+#define _RIFSC_RISC_CR			U(0x00)
 #define _RIFSC_SECCFGR0			U(0x10)
 #define _RIFSC_PRIVCFGR0		U(0x30)
 #define _RIFSC_PER0_CIDCFGR		U(0x100)
 #define _RIFSC_PER0_SEMCR		U(0x104)
 
+#define _RIFSC_RIMC_CR			U(0xC00)
 #define _RIFSC_RIMC_ATTR0		U(0xC10)
 
 #define _RIFSC_HWCFGR3			U(0xFE8)
 #define _RIFSC_HWCFGR2			U(0xFEC)
 #define _RIFSC_HWCFGR1			U(0xFF0)
 #define _RIFSC_VERR			U(0xFF4)
+
+/* RIFSC_RISC_CR register fields */
+#define _RIFSC_RISC_CR_GLOCK		BIT(0)
+
+/* RIFSC_RIMC_CR register fields */
+#define _RIFSC_RIMC_CR_GLOCK		BIT(0)
 
 /* RIFSC_RISC_PERX_CIDCFG register fields */
 #define _RIFSC_RISC_CIDCFGR_CFEN_MASK		BIT(0)
@@ -108,6 +116,7 @@ struct stm32_rifsc_config {
 	const struct rimu_cfg *rimu;
 	const int nrimu;
 	const bool errata_ahbrisab;
+	const int glock;
 };
 
 struct rifsc_driver_data {
@@ -350,6 +359,31 @@ static int stm32_rimu_setup(const struct device *dev)
 	return 0;
 }
 
+static int stm32_rifsc_glock(const struct device *dev)
+{
+	const struct stm32_rifsc_config *rifsc_cfg = dev_get_config(dev);
+	const int glock_conf = rifsc_cfg->glock;
+
+	/* Setting global lock on RIMU configuration */
+	if (glock_conf & RIFSC_RIMU_GLOCK) {
+		io_setbits32(rifsc_cfg->base + _RIFSC_RIMC_CR, _RIFSC_RIMC_CR_GLOCK);
+
+		if (!(io_read32(rifsc_cfg->base + _RIFSC_RIMC_CR) & _RIFSC_RIMC_CR_GLOCK))
+			return -EPERM;
+
+	}
+
+	/* Setting global lock on RISUP configuration */
+	if (glock_conf & RIFSC_RISUP_GLOCK) {
+		io_setbits32(rifsc_cfg->base + _RIFSC_RISC_CR, _RIFSC_RISC_CR_GLOCK);
+
+		if (!(io_read32(rifsc_cfg->base + _RIFSC_RISC_CR) & _RIFSC_RISC_CR_GLOCK))
+			return -EPERM;
+	}
+
+	return 0;
+}
+
 static void stm32_rifsc_set_drvdata(const struct device *dev)
 {
 	const struct stm32_rifsc_config *rifsc_cfg = dev_get_config(dev);
@@ -450,7 +484,12 @@ static int __maybe_unused stm32_rifsc_init(const struct device *dev)
 	if (err)
 		return err;
 
-	return stm32_rimu_setup(dev);
+	err = stm32_rimu_setup(dev);
+	if (err)
+		return err;
+
+	/* Lock RIMU and RISUP configuration */
+	return stm32_rifsc_glock(dev);
 }
 
 #define STM32_RIMU(_node_id, _prop, _idx)					\
@@ -485,7 +524,8 @@ static const struct stm32_rifsc_config stm32_rifsc_cfg_##n = {				\
 	.rimu = rimu_config_##n,							\
 	.nrimu = ARRAY_SIZE(rimu_config_##n),						\
 	.risup_ctl = DT_INST_RIFPROT_CTRL_GET(n),					\
-	.errata_ahbrisab = DT_INST_PROP_OR(n, st_errata_ahbrisab, false)		\
+	.errata_ahbrisab = DT_INST_PROP_OR(n, st_errata_ahbrisab, false),		\
+	.glock = DT_INST_PROP_OR(n, st_glocked, 0),					\
 };											\
 											\
 static struct rifsc_driver_data stm32_rifsc_data_##n = {};				\
