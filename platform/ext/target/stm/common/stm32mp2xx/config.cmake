@@ -57,7 +57,7 @@ if (TFM_PARTITION_SCP)
 	list(APPEND MANIFEST_LISTS ${CMAKE_CURRENT_LIST_DIR}/manifest/tfm_manifest_list.yaml)
 endif()
 
-set(SCP_FW_VERSION                      "620cf0ee9cfade51f1926" CACHE STRING    "The version of SCP-firmware to use")
+set(SCP_FW_VERSION                      "a8cfaf31f0016a7130bc7" CACHE STRING    "The version of SCP-firmware to use")
 set(SCP_FW_PATH                         "DOWNLOAD"              CACHE PATH      "Path to SCP-firmware (or DOWNLOAD to fetch automatically")
 set(PLATFORM_SLIH_IRQ_TEST_SUPPORT      OFF                     CACHE BOOL      "Platform supports SLIH IRQ tests")
 set(PLATFORM_FLIH_IRQ_TEST_SUPPORT      OFF                     CACHE BOOL      "Platform supports FLIH IRQ tests")
