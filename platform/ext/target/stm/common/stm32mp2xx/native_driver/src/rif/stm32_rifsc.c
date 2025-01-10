@@ -24,8 +24,8 @@
 /* RIFSC offset register */
 #define _RIFSC_SECCFGR0			U(0x10)
 #define _RIFSC_PRIVCFGR0		U(0x30)
-#define _RIFSC_PERX_CIDCFGR		U(0x100)
-#define _RIFSC_PERX_SEMCR		U(0x104)
+#define _RIFSC_PER0_CIDCFGR		U(0x100)
+#define _RIFSC_PER0_SEMCR		U(0x104)
 
 #define _RIFSC_RIMC_ATTR0		U(0xC10)
 
@@ -83,6 +83,8 @@
 /* Periph id per register */
 #define _PERIPH_IDS_PER_REG		32
 #define _OFST_PERX_CIDCFGR		U(0x8)
+#define _OFST_PERX_PRIVCFGR		U(0x4)
+#define _OFST_PERX_SECCFGR		U(0x4)
 
 /* max entries */
 #define MAX_RIMU	16
@@ -198,7 +200,7 @@ static const struct rimu_risup_pairs rimu_risup[] = {
 int stm32_rifsc_get_access_by_id(const struct device *dev, uint32_t id)
 {
 	const struct stm32_rifsc_config *dev_cfg = dev_get_config(dev);
-	uintptr_t x_offset = _RIFSC_PERX_CIDCFGR + _OFST_PERX_CIDCFGR * id;
+	uintptr_t x_offset = _RIFSC_PER0_CIDCFGR + _OFST_PERX_CIDCFGR * id;
 	unsigned int master = RIF_CID2;
 	uint32_t cid_cfgr = 0;
 
@@ -280,7 +282,7 @@ static int stm32_rimu_errata_ahbrisab(const struct device *dev,
 		if (!risup)
 			panic();
 
-		risup_cidcfgr = io_read32(dev_cfg->base + _RIFSC_PERX_CIDCFGR +
+		risup_cidcfgr = io_read32(dev_cfg->base + _RIFSC_PER0_CIDCFGR +
 					  _OFST_PERX_CIDCFGR * risup->id);
 
 		/*
@@ -379,6 +381,27 @@ static void stm32_rifsc_set_drvdata(const struct device *dev)
 	     rifsc_drvdata->nb_risal);
 }
 
+static int stm32_rifsc_set_risup_config(const struct rifprot_controller *ctl,
+					struct rifprot_config *cfg)
+{
+	unsigned int reg_offset = cfg->id / _PERIPH_IDS_PER_REG;
+	uint32_t shift = cfg->id % _PERIPH_IDS_PER_REG;
+
+	if (IS_ENABLED(STM32_M33TDCID))
+		io_clrbits32(ctl->rbase->cid + _OFST_PERX_CIDCFGR * cfg->id,
+			     _RIFSC_RISC_CIDCFGR_CFEN_MASK);
+
+	io_clrsetbits32(ctl->rbase->sec + _OFST_PERX_SECCFGR * reg_offset, BIT(shift),
+			cfg->sec << shift);
+	io_clrsetbits32(ctl->rbase->priv + _OFST_PERX_PRIVCFGR *  reg_offset, BIT(shift),
+			cfg->priv << shift);
+
+	if (IS_ENABLED(STM32_M33TDCID))
+		io_write32(ctl->rbase->cid + _OFST_PERX_CIDCFGR * cfg->id, cfg->cid_attr);
+
+	return 0;
+}
+
 static int stm32_rifsc_firewall_set_conf(const struct firewall_spec *spec)
 {
 	const struct stm32_rifsc_config *rifsc_cfg = dev_get_config(spec->dev);
@@ -447,11 +470,15 @@ static const struct rimu_cfg rimu_config_##n[] = {					\
 static __unused const struct rif_base rbase_##n = {					\
 	.sec = DT_INST_REG_ADDR(n) + _RIFSC_SECCFGR0,					\
 	.priv = DT_INST_REG_ADDR(n) + _RIFSC_PRIVCFGR0,					\
-	.cid = DT_INST_REG_ADDR(n) + _RIFSC_PERX_CIDCFGR,				\
-	.sem = DT_INST_REG_ADDR(n) + _RIFSC_PERX_SEMCR,					\
+	.cid = DT_INST_REG_ADDR(n) + _RIFSC_PER0_CIDCFGR,				\
+	.sem = DT_INST_REG_ADDR(n) + _RIFSC_PER0_SEMCR,					\
 };											\
 											\
-DT_INST_RIFPROT_CTRL_DEFINE(n, &rbase_##n, NULL, MAX_RISUP);				\
+static __unused struct rif_ops rops_##n = {						\
+	.set_conf = stm32_rifsc_set_risup_config,					\
+};											\
+											\
+DT_INST_RIFPROT_CTRL_DEFINE(n, &rbase_##n, &rops_##n, MAX_RISUP);			\
 											\
 static const struct stm32_rifsc_config stm32_rifsc_cfg_##n = {				\
 	.base = DT_INST_REG_ADDR(n),							\
