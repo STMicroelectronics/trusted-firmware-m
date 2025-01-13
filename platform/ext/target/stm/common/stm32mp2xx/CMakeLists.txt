@@ -125,6 +125,7 @@ target_sources(platform_s
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_risab.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_iac.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_serc.c>
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/crypto/stm32_saes.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/regulator/regulator_common.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/regulator/stm32mp25_pwr_regul.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/rtc/stm32_rtc.c>
@@ -216,6 +217,7 @@ target_sources(tfm_s
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_rifsc.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_risaf.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_risab.c>
+	$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/crypto/stm32_saes.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/regulator/stm32mp2_pmic.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/regulator/stm32mp25_pwr_regul.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/services/src/cpus.c>
