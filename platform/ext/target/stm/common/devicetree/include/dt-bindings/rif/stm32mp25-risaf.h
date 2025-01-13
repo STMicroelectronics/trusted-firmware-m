@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause) */
 /*
- * Copyright (C) 2020-2021, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2020-2025, STMicroelectronics - All Rights Reserved
  */
 
 #ifndef _DT_BINDINGS_STM32MP25_RISAF_H
@@ -15,16 +15,19 @@
 
 /* RISAF encryption modes */
 #define RIF_ENC_DIS		0x0
-#define RIF_ENC_EN		0x1
+#ifdef STM32MP21xxxx
+#define RIF_ENC_MCE_EN		0x1 /* Side-channel attack protection */
+#endif
+#define RIF_ENC_EN		0x2
 
 #define DT_RISAF_ID_SHIFT	0
-#define DT_RISAF_ID_MASK	GENMASK_32(4, 0)
-#define DT_RISAF_EN_SHIFT	5
-#define DT_RISAF_EN_MASK	BIT(5)
-#define DT_RISAF_SEC_SHIFT	6
-#define DT_RISAF_SEC_MASK	BIT(6)
-#define DT_RISAF_ENC_SHIFT	7
-#define DT_RISAF_ENC_MASK	BIT(7)
+#define DT_RISAF_ID_MASK	GENMASK_32(3, 0)
+#define DT_RISAF_EN_SHIFT	4
+#define DT_RISAF_EN_MASK	BIT(4)
+#define DT_RISAF_SEC_SHIFT	5
+#define DT_RISAF_SEC_MASK	BIT(5)
+#define DT_RISAF_ENC_SHIFT	6
+#define DT_RISAF_ENC_MASK	GENMASK_32(7, 6)
 #define DT_RISAF_PRIV_SHIFT	8
 #define DT_RISAF_PRIV_MASK	GENMASK_32(15, 8)
 #define DT_RISAF_READ_SHIFT	16
