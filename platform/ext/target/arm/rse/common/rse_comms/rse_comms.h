@@ -17,8 +17,9 @@ extern "C" {
 #endif
 
  /* size suits to get_attest_token() */
+#ifndef RSE_COMMS_PAYLOAD_MAX_SIZE
 #define RSE_COMMS_PAYLOAD_MAX_SIZE (0x40 + 0x800)
-
+#endif
 /*
  * Allocated for each client request.
  *
@@ -40,7 +41,9 @@ struct client_request_t {
     int32_t return_val;
     uint64_t out_vec_host_addr[PSA_MAX_IOVEC];
     uint8_t param_copy_buf[RSE_COMMS_PAYLOAD_MAX_SIZE];
+#ifdef RSE_COMMS_PROTOCOL_POINTER_ACCESS_ENABLED
     comms_atu_region_set_t atu_regions;
+#endif
 };
 
 #ifdef __cplusplus

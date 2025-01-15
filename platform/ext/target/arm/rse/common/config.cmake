@@ -133,6 +133,7 @@ else()
     message(FATAL_ERROR "Invalid TP mode ${RSE_TP_MODE}")
 endif()
 
+set(CONFIG_TFM_ARM_RSE_COMMS_PLAT_HAL   OFF        CACHE BOOL "Whether to use a platform specific hal for platform/ext/arm/rse/common/rse_comms")
 set(RSE_ENCRYPTED_OTP_KEYS              ON         CACHE BOOL "Whether keys in OTP are encrypted")
 set(RSE_ENABLE_TRAM                     OFF        CACHE BOOL "Whether TRAM encryption is enabled")
 
