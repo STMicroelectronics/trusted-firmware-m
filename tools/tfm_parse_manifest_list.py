@@ -37,7 +37,7 @@ sid_list = []
 # Summary of manifest attributes defined by FFM for use in the Secure Partition manifest file.
 ffm_manifest_attributes = ['psa_framework_version', 'name', 'type', 'priority', 'model', 'entry_point', \
 'stack_size', 'description', 'entry_init', 'heap_size', 'mmio_regions', 'services', 'irqs', 'dependencies',\
-'client_id_base', 'client_id_limit']
+'client_id_base', 'client_id_limit', 'overload']
 
 class TemplateLoader(BaseLoader):
     """
@@ -257,6 +257,7 @@ def process_partition_manifests(manifest_lists, configs):
     partition_list = []
     all_manifests = []
     pid_list = []
+    pid_replaceable_list = []
     no_pid_manifest_idx = []
     service_partition_map = {}
     partition_statistics = {
@@ -317,6 +318,7 @@ def process_partition_manifests(manifest_lists, configs):
         valid_enabled_conditions  = ['1', 'on',  'true',  'enabled']
         valid_disabled_conditions = ['0', 'off', 'false', 'disabled', '']
         is_enabled = ''
+        pid_replaced = False
 
         if 'conditional' in manifest_item.keys():
             if manifest_item['conditional'] not in configs.keys():
@@ -348,9 +350,17 @@ def process_partition_manifests(manifest_lists, configs):
 
             # Check if partition ID is duplicated
             if pid in pid_list:
-                raise Exception('PID No. {} has already been used!'.format(pid))
+                #since platform partition manifest are parsed before generic
+                #TF-m partition duplicated pid is possible if platform partition 
+                #contain overload attribute
+                if pid in pid_replaceable_list:
+                    pid_replaced = True
+                else:
+                    raise Exception('PID No. {} has already been used!'.format(pid))
             else:
                 pid_list.append(pid)
+        if pid_replaced:
+            continue
 
         manifest_path = manifest_item['manifest']
         with open(manifest_path) as manifest_file:
@@ -366,6 +376,8 @@ def process_partition_manifests(manifest_lists, configs):
 
             # Priority mapping
             numbered_priority = priority_map[manifest['priority']]
+            if 'overload' in manifest.keys():
+                pid_replaceable_list.append(pid)
 
         if (pid == None or pid >= TFM_PID_BASE) and not manifest['ns_agent']:
             # Count the number of IPC/SFN partitions (excluding TF-M internal
