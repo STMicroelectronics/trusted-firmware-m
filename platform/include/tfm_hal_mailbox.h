@@ -24,6 +24,8 @@ typedef int32_t    mailbox_msg_handle_t;
                         ((signals) & MAILBOX_INTERRUPT_SIGNAL)
 #define MAILBOX_SIGNAL_GET_ACTIVE(signals) \
                         (MAILBOX_INTERRUPT_SIGNAL)
+#define MAILBOX_CLEAR_SIGNAL(signals) \
+			(psa_eoi(signals))
 #endif /* MAILBOX_ENABLE_INTERRUPTS */
 
 /* A single slot structure in SPE mailbox queue */
