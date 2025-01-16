@@ -862,11 +862,13 @@ static void stm32_bsec_mirror_load(const struct device *dev, uint32_t status)
 			continue;
 		}
 
-		/* reload shadow to read Permanent Programing Lock Flag */
-		ret = shadow_otp(dev, otp);
-		if (ret) {
-			EMSG("Shadowing failed (%d)\n", ret);
-			return ret;
+		if (!(drv_data->p_mirror->otp[otp].status & LOCK_SHADOW_R)) {
+			/* reload shadow to read Permanent Programing Lock Flag */
+			ret = shadow_otp(dev, otp);
+			if (ret) {
+				EMSG("Shadowing failed (%d)\n", ret);
+				return ret;
+			}
 		}
 
 		drv_data->p_mirror->otp[otp].value = io_read32(drv_cfg->base +
