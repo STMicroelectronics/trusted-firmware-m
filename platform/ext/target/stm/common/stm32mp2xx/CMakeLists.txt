@@ -93,6 +93,9 @@ target_sources(platform_s
 		${STM_FAMILLY_DIR}/secure/tfm_hal_isolation.c
 		${STM_FAMILLY_DIR}/secure/provisioning.c
 		${STM_FAMILLY_DIR}/secure/tfm_hal_platform.c
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/tfm_hal_multi_core.c>
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/rse_comms_hal.c>
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/rse_comms_permissions_hal.c>
 		${STM_FAMILLY_DIR}/cmsis_driver/src/driver_spi_flash.c
 		${STM_FAMILLY_DIR}/cmsis_driver/src/driver_flash_mm.c
 		${STM_FAMILLY_DIR}/native_driver/src/core/mpu_armv8m_drv.c
@@ -183,6 +186,9 @@ if (TFM_PARTITION_SCP)
 endif()
 if (TFM_PARTITION_IPCC)
 	add_subdirectory(${STM_FAMILLY_DIR}/secure_fw/partitions/ipcc ipcc)
+endif()
+if (TFM_PARTITION_NS_AGENT_MAILBOX)
+	add_subdirectory(${PLATFORM_DIR}/ext/target/arm/rse/common/rse_comms rse)
 endif()
 
 # GNU ld has some strange behaviour to do with weak functions, and does not deal

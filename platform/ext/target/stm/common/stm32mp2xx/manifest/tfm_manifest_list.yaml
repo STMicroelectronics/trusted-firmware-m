@@ -21,6 +21,21 @@
   "version_minor": 1,
   "manifest_list": [
     {
+      "description": "Non-Secure Mailbox Agent",
+      "manifest": "./ns_agent_mailbox.yaml",
+      "output_path": "secure_fw/partitions/ns_agent_mailbox",
+      "conditional": "TFM_PARTITION_NS_AGENT_MAILBOX",
+      "version_major": 0,
+      "version_minor": 1,
+      "pid": 262,
+      "linker_pattern": {
+        "library_list": [
+           "*tfm_*ns_agent_mailbox.*"
+         ],
+      },
+      "non_ffm_attributes": ['ns_agent']
+    },
+    {
       "description": "TFM SCP Firmware Partition",
       "manifest": "../secure_fw/partitions/scp/tfm_scp.yaml",
       "output_path": "secure_fw/partitions/scp",

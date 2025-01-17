@@ -21,7 +21,8 @@
     }
   ],
   "dependencies": [
-  "TFM_SCP_SERVICE"
+  "TFM_SCP_SERVICE",
+  "TFM_MBOX_SERVICE"
   ]
 
 }
