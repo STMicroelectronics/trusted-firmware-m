@@ -100,6 +100,7 @@ target_sources(platform_s
 		${STM_FAMILLY_DIR}/cmsis_driver/src/driver_flash_mm.c
 		${STM_FAMILLY_DIR}/native_driver/src/core/mpu_armv8m_drv.c
 		${STM_FAMILLY_DIR}/native_driver/src/core/sau_armv8m_drv.c
+		${STM_FAMILLY_DIR}/native_driver/src/entropy/entropy.c
 		${STM_FAMILLY_DIR}/native_driver/src/bsec/stm32_bsec3.c
 		${STM_FAMILLY_DIR}/native_driver/src/syscfg/stm32_syscfg.c
 		${STM_FAMILLY_DIR}/native_driver/src/clk/clk.c
@@ -268,6 +269,7 @@ if(BL2)
 			${STM_FAMILLY_DIR}/bl2/flash_map_bl2.c
 			${STM_FAMILLY_DIR}/cmsis_driver/src/driver_flash_mm.c
 			${STM_FAMILLY_DIR}/native_driver/src/core/mpu_armv8m_drv.c
+			${STM_FAMILLY_DIR}/native_driver/src/entropy/entropy.c
 			${STM_FAMILLY_DIR}/native_driver/src/power/stm32mp2_pwr.c
 			${STM_FAMILLY_DIR}/native_driver/src/bsec/stm32_bsec3.c
 			${STM_FAMILLY_DIR}/native_driver/src/syscfg/stm32_syscfg.c
