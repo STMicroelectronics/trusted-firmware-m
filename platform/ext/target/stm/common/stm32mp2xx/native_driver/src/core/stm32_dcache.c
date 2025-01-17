@@ -1,18 +1,22 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright (c) 2020, STMicroelectronics
+ * Copyright (c) 2020-2025, STMicroelectronics
  */
+
+#define DT_DRV_COMPAT st_stm32mp2_dcache
+
 #include <cmsis.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include <debug.h>
+#include <device.h>
 #include <errno.h>
-#include <strings.h>
-#include <lib/utils_def.h>
-#include <stm32_dcache.h>
+#include <inttypes.h>
 #include <lib/mmio.h>
 #include <lib/mmiopoll.h>
-#include <inttypes.h>
-#include <debug.h>
+#include <lib/utils_def.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stm32_dcache.h>
+#include <strings.h>
 
 /* DCACHE offset register */
 #define _DCACHE_CR			U(0x000)
@@ -24,7 +28,7 @@
 #define _DCACHE_WHMONR			U(0x020)
 #define _DCACHE_WMMONR			U(0x024)
 #define _DCACHE_CMDRSADDRR		U(0x028)
-#define _DCACHE_CMDREADDRR		U(0x028)
+#define _DCACHE_CMDREADDRR		U(0x02C)
 #define _DCACHE_HWCFGR			U(0x3F0)
 #define _DCACHE_VERR			U(0x3F4)
 #define _DCACHE_IPIDR			U(0x3F8)
@@ -87,30 +91,33 @@
 
 #define _DCACHE_BUSY_TIMEOUT_US		10000U
 
-static struct dcache_driver_data dcache_drvdata;
-static struct stm32_dcache_platdata dcache_pdata;
+struct dcache_driver_data {
+	uint32_t version;
+	uint8_t ways;
+};
 
-static void stm32_dcache_get_driverdata(struct stm32_dcache_platdata *pdata)
+struct stm32_dcache_config {
+	uintptr_t base;
+	struct dcache_driver_data drv_data;
+	int irq;
+};
+
+static struct stm32_dcache_config *dcache_conf;
+
+static void stm32_dcache_get_hwconfig(void)
 {
 	uint32_t regval = 0;
 
-	regval = io_read32(pdata->base + _DCACHE_HWCFGR);
-	dcache_drvdata.ways = _DCACHE_FLD_GET(_DCACHE_HWCFGR_WAYS, regval);
+	regval = io_read32(dcache_conf->base + _DCACHE_HWCFGR);
+	dcache_conf->drv_data.ways = _DCACHE_FLD_GET(_DCACHE_HWCFGR_WAYS, regval);
 
-	pdata->drv_data = &dcache_drvdata;
-
-	regval = io_read32(pdata->base + _DCACHE_VERR);
+	regval = io_read32(dcache_conf->base + _DCACHE_VERR);
 
 	DMSG("DCACHE version %"PRIu32".%"PRIu32"\n",
 	     _DCACHE_FLD_GET(_DCACHE_VERR_MAJREV, regval),
 	     _DCACHE_FLD_GET(_DCACHE_VERR_MINREV, regval));
 
-	DMSG("HW cap: ways:%"PRIu8"\n", dcache_drvdata.ways);
-}
-
-static int stm32_dcache_parse_fdt(struct stm32_dcache_platdata *pdata)
-{
-	return -ENOTSUP;
+	DMSG("HW cap: ways:%"PRIu8"\n", dcache_conf->drv_data.ways);
 }
 
 static int stm32_dcache_waitforready(int flags)
@@ -118,25 +125,15 @@ static int stm32_dcache_waitforready(int flags)
 	uint32_t sr;
 	int err;
 
-	err = mmio_read32_poll_timeout(dcache_pdata.base + _DCACHE_SR,
+	err = mmio_read32_poll_timeout(dcache_conf->base + _DCACHE_SR,
 				       sr, (sr & (flags)),
 				       _DCACHE_BUSY_TIMEOUT_US);
-
 	if (err)
-		EMSG("%s: busy timeout\n", __func__);
+		EMSG("%s: busy timeout, SR: %x\n", __func__, sr);
 
-	io_write32(dcache_pdata.base + _DCACHE_FCR, flags);
+	io_write32(dcache_conf->base + _DCACHE_FCR, flags);
 
 	return err;
-}
-
-/*
- * This function could be overridden by platform to define
- * pdata of dcache driver
- */
-__weak int stm32_dcache_get_platdata(struct stm32_dcache_platdata *pdata)
-{
-	return -ENODEV;
 }
 
 void DCACHE_IRQHandler(void)
@@ -145,22 +142,22 @@ void DCACHE_IRQHandler(void)
 
 int stm32_dcache_enable_irq(void)
 {
-	if (dcache_pdata.base == 0)
+	if (dcache_conf->base == 0)
 		return -ENODEV;
 
-	NVIC_EnableIRQ(dcache_pdata.irq);
+	NVIC_EnableIRQ(dcache_conf->irq);
 }
 
 int stm32_dcache_monitor_reset(void)
 {
-	if (dcache_pdata.base == 0)
+	if (dcache_conf->base == 0)
 		return -ENODEV;
 
-	io_setbits32(dcache_pdata.base + _DCACHE_CR,
+	io_setbits32(dcache_conf->base + _DCACHE_CR,
 		     _DCACHE_CR_RHITMRST | _DCACHE_CR_RMISSMRST |
 		     _DCACHE_CR_WHITMRST | _DCACHE_CR_WMISSMRST);
 
-	io_clrbits32(dcache_pdata.base + _DCACHE_CR,
+	io_clrbits32(dcache_conf->base + _DCACHE_CR,
 		     _DCACHE_CR_RHITMRST | _DCACHE_CR_RMISSMRST |
 		     _DCACHE_CR_WHITMRST | _DCACHE_CR_WMISSMRST);
 
@@ -169,10 +166,10 @@ int stm32_dcache_monitor_reset(void)
 
 int stm32_dcache_monitor_start(void)
 {
-	if (dcache_pdata.base == 0)
+	if (dcache_conf->base == 0)
 		return -ENODEV;
 
-	io_setbits32(dcache_pdata.base + _DCACHE_CR,
+	io_setbits32(dcache_conf->base + _DCACHE_CR,
 		     _DCACHE_CR_RHITMEN | _DCACHE_CR_RMISSMEN |
 		     _DCACHE_CR_WHITMEN	 | _DCACHE_CR_WMISSMEN);
 
@@ -181,10 +178,10 @@ int stm32_dcache_monitor_start(void)
 
 int stm32_dcache_monitor_stop(void)
 {
-	if (dcache_pdata.base == 0)
+	if (dcache_conf->base == 0)
 		return -ENODEV;
 
-	io_clrbits32(dcache_pdata.base + _DCACHE_CR,
+	io_clrbits32(dcache_conf->base + _DCACHE_CR,
 		     _DCACHE_CR_RHITMEN | _DCACHE_CR_RMISSMEN |
 		     _DCACHE_CR_WHITMEN	 | _DCACHE_CR_WMISSMEN);
 
@@ -193,13 +190,13 @@ int stm32_dcache_monitor_stop(void)
 
 int stm32_dcache_monitor_get(struct stm32_dcache_mon *mon)
 {
-	if (dcache_pdata.base == 0)
+	if (dcache_conf->base == 0)
 		return -ENODEV;
 
-	mon->rmiss = io_read32(dcache_pdata.base + _DCACHE_RMMONR);
-	mon->rhit = io_read32(dcache_pdata.base + _DCACHE_RHMONR);
-	mon->wmiss = io_read32(dcache_pdata.base + _DCACHE_WMMONR);
-	mon->whit = io_read32(dcache_pdata.base + _DCACHE_WHMONR);
+	mon->rmiss = io_read32(dcache_conf->base + _DCACHE_RMMONR);
+	mon->rhit = io_read32(dcache_conf->base + _DCACHE_RHMONR);
+	mon->wmiss = io_read32(dcache_conf->base + _DCACHE_WMMONR);
+	mon->whit = io_read32(dcache_conf->base + _DCACHE_WHMONR);
 
 	return 0;
 }
@@ -208,10 +205,10 @@ int stm32_dcache_enable(bool monitor, bool inv)
 {
 	uint32_t reg;
 
-	if (dcache_pdata.base == 0)
+	if (dcache_conf->base == 0)
 		return -ENODEV;
 
-	reg = io_read32(dcache_pdata.base + _DCACHE_SR);
+	reg = io_read32(dcache_conf->base + _DCACHE_SR);
 	if (reg & (_DCACHE_SR_BUSYF | _DCACHE_SR_BUSYCMDF))
 		return -EBUSY;
 
@@ -221,15 +218,15 @@ int stm32_dcache_enable(bool monitor, bool inv)
 	}
 
 	/*
-	 * cacheinv when DCACHE_CR.EN=0 is not allow.
-	 * The cache inv is done:
+	 * Cache invalidation is not allowed when DCACHE_CR.EN=0.
+	 * The cache invalidation is done:
 	 *  - on reset
 	 *  - after DCACHE_CR.EN=1->0
 	 *  - when cacheinv=1 with DCACHE_CR.EN=1
 	 * warning: the mpu must be disabled to avoid unpredictable behavior
 	 * before the busyendf
 	 */
-	reg = io_read32(dcache_pdata.base + _DCACHE_CR);
+	reg = io_read32(dcache_conf->base + _DCACHE_CR);
 	if (reg & (_DCACHE_CR_EN)) {
 		if (!inv)
 			return 0;
@@ -237,7 +234,7 @@ int stm32_dcache_enable(bool monitor, bool inv)
 		return stm32_dcache_full_inv();
 	} else {
 		/* if en=0 cache is clean (by reset or 1->0) */
-		io_setbits32(dcache_pdata.base + _DCACHE_CR, _DCACHE_CR_EN);
+		io_setbits32(dcache_conf->base + _DCACHE_CR, _DCACHE_CR_EN);
 	}
 
 	return 0;
@@ -245,17 +242,17 @@ int stm32_dcache_enable(bool monitor, bool inv)
 
 int stm32_dcache_disable(void)
 {
-	if (dcache_pdata.base == 0)
+	if (dcache_conf->base == 0)
 		return -ENODEV;
 
-	io_clrbits32(dcache_pdata.base + _DCACHE_CR, _DCACHE_CR_EN);
+	io_clrbits32(dcache_conf->base + _DCACHE_CR, _DCACHE_CR_EN);
 
 	return stm32_dcache_waitforready(_DCACHE_SR_BUSYENDF);
 }
 
 int stm32_dcache_full_inv(void)
 {
-	uintptr_t base = dcache_pdata.base;
+	uintptr_t base = dcache_conf->base;
 	uint32_t sr;
 
 	if (!base)
@@ -274,7 +271,8 @@ int stm32_dcache_full_inv(void)
 
 int stm32_dcache_maintenance(int cmd, uintptr_t start, uintptr_t end)
 {
-	uintptr_t base = dcache_pdata.base;
+	uintptr_t base = dcache_conf->base;
+	uint32_t cr;
 	uint32_t sr;
 
 	if (!base)
@@ -284,11 +282,17 @@ int stm32_dcache_maintenance(int cmd, uintptr_t start, uintptr_t end)
 	if (sr & (_DCACHE_SR_BUSYF | _DCACHE_SR_BUSYCMDF))
 		return -EBUSY;
 
+	cr = io_read32(base + _DCACHE_CR);
+	if (!(cr & (_DCACHE_CR_EN))) {
+		EMSG("Cache operation not possible when cache is disabled\n");
+		return -EINVAL;
+	}
+
 	io_write32(base + _DCACHE_CMDRSADDRR, start);
 	io_write32(base + _DCACHE_CMDREADDRR, end);
 
 	io_clrsetbits32(base + _DCACHE_CR,
-			_DCACHE_CR_CACHECMD_MASK | _DCACHE_CR_STARTCMD,
+			_DCACHE_CR_CACHECMD_MASK,
 			_DCACHE_FLD_PREP(_DCACHE_CR_CACHECMD, cmd));
 
 	io_setbits32(base + _DCACHE_CR, _DCACHE_CR_STARTCMD);
@@ -296,20 +300,27 @@ int stm32_dcache_maintenance(int cmd, uintptr_t start, uintptr_t end)
 	return stm32_dcache_waitforready(_DCACHE_SR_CMDENDF);
 }
 
-int stm32_dcache_init(void)
+int stm32_dcache_init(const struct device *dev)
 {
-	int err = 0;
+	dcache_conf = (struct stm32_dcache_config *)dev_get_config(dev);
 
-	err = stm32_dcache_get_platdata(&dcache_pdata);
-	if (err)
-		return err;
-
-	err = stm32_dcache_parse_fdt(&dcache_pdata);
-	if (err && err != -ENOTSUP)
-		return err;
-
-	if (!dcache_pdata.drv_data)
-		stm32_dcache_get_driverdata(&dcache_pdata);
+	stm32_dcache_get_hwconfig();
 
 	return 0;
 }
+
+#define STM32_DCACHE_INIT(n)					\
+								\
+static const struct stm32_dcache_config cfg_##n = {		\
+	.base = DT_INST_REG_ADDR(n),				\
+	.irq = DT_INST_IRQN(n),					\
+};								\
+								\
+								\
+static struct dcache_driver_data data_##n = { };		\
+								\
+DEVICE_DT_INST_DEFINE(n, &stm32_dcache_init,			\
+		      &data_##n, &cfg_##n,			\
+		      PRE_CORE, 17, NULL);
+
+DT_INST_FOREACH_STATUS_OKAY(STM32_DCACHE_INIT)
