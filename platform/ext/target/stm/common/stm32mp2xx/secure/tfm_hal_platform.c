@@ -34,15 +34,16 @@ enum tfm_hal_status_t tfm_hal_platform_init(void)
 	__enable_irq();
 
 	sys_init_run_level(INIT_LEVEL_PRE_CORE);
-	sys_init_run_level(INIT_LEVEL_CORE);
-
-	if (stm32_platform_s_init())
-		return TFM_HAL_ERROR_GENERIC;
 
 #if defined(STM32_DDR_CACHED)
 	if (stm32_dcache_enable(true, true))
 		return TFM_HAL_ERROR_GENERIC;
 #endif
+
+	sys_init_run_level(INIT_LEVEL_CORE);
+
+	if (stm32_platform_s_init())
+		return TFM_HAL_ERROR_GENERIC;
 
 	stdio_init();
 
