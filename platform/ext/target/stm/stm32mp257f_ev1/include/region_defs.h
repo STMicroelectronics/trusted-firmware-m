@@ -158,6 +158,6 @@
 #define BOOT_TFM_SHARED_DATA_LIMIT	(BOOT_TFM_SHARED_DATA_BASE)
 #endif
 #if STM32_M33TDCID
-#define MAILBOX_IRQ 			DT_IRQ(DT_NODELABEL(ipcc1), irq)
+#define IPCC_IRQ			DT_IRQ(DT_NODELABEL(ipcc1), irq)
 #endif
 #endif /* __REGION_DEFS_H__ */
