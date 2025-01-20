@@ -6,4 +6,10 @@ description: |
 
 compatible: "st,stm32mp25-risaf-enc"
 
-include: st,stm32mp25-risaf.yaml
+include:
+   - st,stm32mp25-risaf.yaml
+   - entropy-device.yaml
+
+properties:
+   entropy:
+      required: true
