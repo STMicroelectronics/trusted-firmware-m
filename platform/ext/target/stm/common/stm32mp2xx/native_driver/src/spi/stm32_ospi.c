@@ -804,7 +804,7 @@ int stm32_omi_init(const struct device *dev)
 	return 0;
 }
 
-static const struct spi_bus_ops stm32_ospi_bus_ops = {
+static __maybe_unused const struct spi_bus_ops stm32_ospi_bus_ops = {
 	.claim_bus = stm32_ospi_claim_bus,
 	.release_bus = stm32_ospi_release_bus,
 	.exec_op = stm32_ospi_exec_op,
