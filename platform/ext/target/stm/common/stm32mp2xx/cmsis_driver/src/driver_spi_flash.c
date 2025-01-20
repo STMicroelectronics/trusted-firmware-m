@@ -90,28 +90,28 @@ static bool is_write_aligned(arm_part_dev_t *dev, uint32_t value)
 	return value % dev->data->program_unit ? false : true;
 }
 
-static ARM_DRIVER_VERSION ARM_Part_GetVersion(void)
+static __maybe_unused ARM_DRIVER_VERSION ARM_Part_GetVersion(void)
 {
 	return DriverVersion;
 }
 
-static ARM_FLASH_CAPABILITIES ARM_Part_GetCapabilities(void)
+static __maybe_unused ARM_FLASH_CAPABILITIES ARM_Part_GetCapabilities(void)
 {
 	return DriverCapabilities;
 }
 
-static int32_t ARM_Part_X_Initialize(arm_part_dev_t *dev,
+static __maybe_unused int32_t ARM_Part_X_Initialize(arm_part_dev_t *dev,
 				     ARM_Flash_SignalEvent_t cb_event)
 {
 	return ARM_DRIVER_OK;
 }
 
-static int32_t ARM_Part_X_Uninitialize(arm_part_dev_t *dev)
+static __maybe_unused int32_t ARM_Part_X_Uninitialize(arm_part_dev_t *dev)
 {
 	return ARM_DRIVER_OK;
 }
 
-static int32_t ARM_Part_X_PowerControl(arm_part_dev_t *dev,
+static __maybe_unused int32_t ARM_Part_X_PowerControl(arm_part_dev_t *dev,
 				       ARM_POWER_STATE state)
 {
 	switch(state) {
@@ -126,7 +126,7 @@ static int32_t ARM_Part_X_PowerControl(arm_part_dev_t *dev,
 	}
 }
 
-static int32_t ARM_Part_X_ReadData(arm_part_dev_t *dev, uint32_t addr,
+static __maybe_unused int32_t ARM_Part_X_ReadData(arm_part_dev_t *dev, uint32_t addr,
 				   void *data, uint32_t cnt)
 {
 	const struct spi_nor_ops *ops = dev->dev_flash->api;
@@ -157,7 +157,7 @@ static int32_t ARM_Part_X_ReadData(arm_part_dev_t *dev, uint32_t addr,
 	return cnt;
 }
 
-static int32_t ARM_Part_X_ProgramData(arm_part_dev_t *dev, uint32_t addr,
+static __maybe_unused int32_t ARM_Part_X_ProgramData(arm_part_dev_t *dev, uint32_t addr,
 				      const void *data, uint32_t cnt)
 {
 	const struct spi_nor_ops *ops = dev->dev_flash->api;
@@ -190,7 +190,7 @@ static int32_t ARM_Part_X_ProgramData(arm_part_dev_t *dev, uint32_t addr,
 	return cnt;
 }
 
-static int32_t ARM_Part_X_EraseSector(arm_part_dev_t *dev, uint32_t addr)
+static __maybe_unused int32_t ARM_Part_X_EraseSector(arm_part_dev_t *dev, uint32_t addr)
 {
 	const struct spi_nor_ops *ops = dev->dev_flash->api;
 	int ret;
@@ -210,17 +210,17 @@ static int32_t ARM_Part_X_EraseSector(arm_part_dev_t *dev, uint32_t addr)
 	return ARM_DRIVER_OK;
 }
 
-static int32_t ARM_Part_X_EraseChip(arm_part_dev_t *dev)
+static __maybe_unused int32_t ARM_Part_X_EraseChip(arm_part_dev_t *dev)
 {
 	return ARM_DRIVER_ERROR_UNSUPPORTED;
 }
 
-static ARM_FLASH_STATUS ARM_Part_X_GetStatus(arm_part_dev_t *dev)
+static __maybe_unused ARM_FLASH_STATUS ARM_Part_X_GetStatus(arm_part_dev_t *dev)
 {
 	return dev->status;
 }
 
-static ARM_FLASH_INFO * ARM_Part_X_GetInfo(arm_part_dev_t *dev)
+static __maybe_unused ARM_FLASH_INFO * ARM_Part_X_GetInfo(arm_part_dev_t *dev)
 {
 	return dev->data;
 }
