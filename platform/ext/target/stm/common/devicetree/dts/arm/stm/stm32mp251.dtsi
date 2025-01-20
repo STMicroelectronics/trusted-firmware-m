@@ -191,6 +191,15 @@
 				interrupts = <86 0>;
 			};
 
+			rng: rng@52020000 {
+				compatible = "st,stm32mp25-rng";
+				reg = <0x52020000 0x400>;
+				clocks = <&clk_rcbsec>, <&rcc CK_BUS_RNG>;
+				clock-names = "rng_clk", "rng_hclk";
+				resets = <&rcc_reset RNG_R>;
+				status = "disabled";
+			};
+
 			sdmmc1: mmc@58220000 {
 				compatible = "st,stm32mp25-sdmmc2";
 				reg = <0x58220000 0x400>;
@@ -311,6 +320,7 @@
 			reg = <0x520d0000 0x1000>;
 			clocks = <&rcc CK_BUS_RISAF4>;
 			st,mem-map = <0x0 0x80000000 0x1 0x00000000>;
+			entropy = <&rng>;
 			status = "disabled";
 		};
 
