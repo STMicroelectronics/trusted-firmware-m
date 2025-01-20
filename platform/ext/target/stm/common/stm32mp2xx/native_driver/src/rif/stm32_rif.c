@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright (c) 2024, STMicroelectronics
+ * Copyright (c) 2024-2025, STMicroelectronics
  * Author(s): Ludovic Barre, <ludovic.barre@foss.st.com> for STMicroelectronics.
  *
  */
@@ -18,11 +18,6 @@
 #include <dt-bindings/rif/stm32mp25-rif.h>
 
 #if (!IS_ENABLED(STM32_NSEC))
-
-#define _PERIPH_IDS_PER_REG	32
-#define SEC_PRIV_X_OFFSET(_id)	(U(0x4) * (_id / _PERIPH_IDS_PER_REG))
-#define SEC_PRIV_X_SHIFT(_id)	(_id % _PERIPH_IDS_PER_REG)
-#define CID_SEM_X_OFFSET(_id)	(U(0x8) * (_id))
 
 // CIDCFGR register bitfields
 #define _CIDCFGR_CFEN_MASK	BIT(0)
@@ -128,18 +123,35 @@ static int _rifprot_set_conf(const struct rifprot_controller *ctl,
 {
 	uintptr_t offset = SEC_PRIV_X_OFFSET(cfg->id);
 	uint32_t shift = SEC_PRIV_X_SHIFT(cfg->id);
+	uint32_t lockr = 0;
+	int err = 0;
 
-	/* disable filtering befor write sec and priv cfgr */
-	io_clrbits32(ctl->rbase->cid + CID_SEM_X_OFFSET(cfg->id), _CIDCFGR_CFEN_MASK);
+	if (ctl->rbase->lock)
+		lockr = io_read32(ctl->rbase->lock + offset);
 
-	io_clrsetbits32(ctl->rbase->sec + offset, BIT(shift), cfg->sec << shift);
-	io_clrsetbits32(ctl->rbase->priv + offset, BIT(shift), cfg->priv << shift);
+	stm32_rifprot_release_sem(ctl, cfg->id);
 
-	io_write32(ctl->rbase->cid + CID_SEM_X_OFFSET(cfg->id), cfg->cid_attr);
+	/* Bypass configuration if IP is locked */
+	if (!(lockr & BIT(shift))) {
+		/* disable filtering before write sec and priv cfgr */
+		io_clrbits32(ctl->rbase->cid + CID_SEM_X_OFFSET(cfg->id), _CIDCFGR_CFEN_MASK);
+
+		io_clrsetbits32(ctl->rbase->sec + offset, BIT(shift), cfg->sec << shift);
+		io_clrsetbits32(ctl->rbase->priv + offset, BIT(shift), cfg->priv << shift);
+
+		io_write32(ctl->rbase->cid + CID_SEM_X_OFFSET(cfg->id), cfg->cid_attr);
+	}
 
 	if (ctl->rbase->sem &&
-	    SEMAPHORE_IS_AVAILABLE(cfg->cid_attr, MY_CID))
-		return stm32_rifprot_acquire_sem(ctl, cfg->id);
+	    SEMAPHORE_IS_AVAILABLE(cfg->cid_attr, MY_CID)) {
+		err = stm32_rifprot_acquire_sem(ctl, cfg->id);
+		if (err)
+			return err;
+	}
+
+	if (ctl->rbase->lock)
+		io_clrsetbits32(ctl->rbase->lock + offset, BIT(shift),
+				cfg->lock << shift);
 
 	return 0;
 }
@@ -178,10 +190,12 @@ static int _rifprot_set_conf(const struct rifprot_controller *ctl,
 				cfg->sec << shift);
 		io_clrsetbits32(ctl->rbase->priv + offset, BIT(shift),
 				cfg->priv << shift);
+		if (ctl->rbase->lock)
+			io_clrsetbits32(ctl->rbase->lock + offset, BIT(shift),
+					cfg->lock << shift);
 	}
 
 	return err;
-
 }
 #endif
 

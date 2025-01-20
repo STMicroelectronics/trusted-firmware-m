@@ -9,6 +9,12 @@
 
 #include <dt-bindings/rif/stm32mp25-rif.h>
 
+/* Generic RIF utility */
+#define _PERIPH_IDS_PER_REG	32
+#define SEC_PRIV_X_OFFSET(_id)	(U(0x4) * (_id / _PERIPH_IDS_PER_REG))
+#define SEC_PRIV_X_SHIFT(_id)	(_id % _PERIPH_IDS_PER_REG)
+#define CID_SEM_X_OFFSET(_id)	(U(0x8) * (_id))
+
 /* These macro and struct are used by rifsc and rif aware devices*/
 #define RIFPROT_FLD(_field, _node_id, _prop, _idx) \
 	_FLD_GET(_field, DT_PROP_BY_IDX(_node_id, _prop, _idx))
@@ -308,7 +314,7 @@ int stm32_rifprot_acquire_sem(const struct rifprot_controller *ctl,
 /**
  * @brief Release semaphore id of rif controller
  *
- * On success, the semaphore is release.
+ * On success, the semaphore is released.
  *
  * @param ctl reference on rif controller.
  * @param id resource id of controller.

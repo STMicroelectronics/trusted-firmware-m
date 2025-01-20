@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright (c) 2020, STMicroelectronics
+ * Copyright (c) 2020-2025, STMicroelectronics
  * Author(s): Ludovic Barre, <ludovic.barre@foss.st.com> for STMicroelectronics.
  *
  */
@@ -25,6 +25,7 @@
 #define _RIFSC_RISC_CR			U(0x00)
 #define _RIFSC_SECCFGR0			U(0x10)
 #define _RIFSC_PRIVCFGR0		U(0x30)
+#define _RIFSC_RCFGLOCKR0		U(0x50)
 #define _RIFSC_PER0_CIDCFGR		U(0x100)
 #define _RIFSC_PER0_SEMCR		U(0x104)
 
@@ -418,20 +419,32 @@ static void stm32_rifsc_set_drvdata(const struct device *dev)
 static int stm32_rifsc_set_risup_config(const struct rifprot_controller *ctl,
 					struct rifprot_config *cfg)
 {
-	unsigned int reg_offset = cfg->id / _PERIPH_IDS_PER_REG;
-	uint32_t shift = cfg->id % _PERIPH_IDS_PER_REG;
+	uintptr_t offset = SEC_PRIV_X_OFFSET(cfg->id);
+	uint32_t shift = SEC_PRIV_X_SHIFT(cfg->id);
+	uint32_t lockr = 0;
 
-	if (IS_ENABLED(STM32_M33TDCID))
-		io_clrbits32(ctl->rbase->cid + _OFST_PERX_CIDCFGR * cfg->id,
-			     _RIFSC_RISC_CIDCFGR_CFEN_MASK);
+	if (ctl->rbase->lock)
+		lockr = io_read32(ctl->rbase->lock + offset);
 
-	io_clrsetbits32(ctl->rbase->sec + _OFST_PERX_SECCFGR * reg_offset, BIT(shift),
-			cfg->sec << shift);
-	io_clrsetbits32(ctl->rbase->priv + _OFST_PERX_PRIVCFGR *  reg_offset, BIT(shift),
-			cfg->priv << shift);
+	stm32_rifprot_release_sem(ctl, cfg->id);
 
-	if (IS_ENABLED(STM32_M33TDCID))
-		io_write32(ctl->rbase->cid + _OFST_PERX_CIDCFGR * cfg->id, cfg->cid_attr);
+	/* Bypass configuration if IP is locked */
+	if (!(lockr & BIT(shift))) {
+		/* disable filtering before write sec and priv cfgr */
+		if (IS_ENABLED(STM32_M33TDCID))
+			io_clrbits32(ctl->rbase->cid + CID_SEM_X_OFFSET(cfg->id),
+				     _RIFSC_RISC_CIDCFGR_CFEN_MASK);
+
+		io_clrsetbits32(ctl->rbase->sec + offset, BIT(shift), cfg->sec << shift);
+		io_clrsetbits32(ctl->rbase->priv + offset, BIT(shift), cfg->priv << shift);
+
+		if (IS_ENABLED(STM32_M33TDCID))
+			io_write32(ctl->rbase->cid + CID_SEM_X_OFFSET(cfg->id), cfg->cid_attr);
+	}
+
+	if (ctl->rbase->lock)
+		io_clrsetbits32(ctl->rbase->lock + offset, BIT(shift),
+				cfg->lock << shift);
 
 	return 0;
 }
@@ -511,6 +524,7 @@ static __unused const struct rif_base rbase_##n = {					\
 	.priv = DT_INST_REG_ADDR(n) + _RIFSC_PRIVCFGR0,					\
 	.cid = DT_INST_REG_ADDR(n) + _RIFSC_PER0_CIDCFGR,				\
 	.sem = DT_INST_REG_ADDR(n) + _RIFSC_PER0_SEMCR,					\
+	.lock = DT_INST_REG_ADDR(n) + _RIFSC_RCFGLOCKR0,				\
 };											\
 											\
 static __unused struct rif_ops rops_##n = {						\
