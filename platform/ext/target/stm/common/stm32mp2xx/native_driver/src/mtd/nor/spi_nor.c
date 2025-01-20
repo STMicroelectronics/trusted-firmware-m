@@ -560,7 +560,7 @@ static int spi_nor_build_op(uint8_t cmd, struct spi_mem_op *op)
 	return ret;
 }
 
-static int spi_nor_init(const struct device *dev)
+static __maybe_unused int spi_nor_init(const struct device *dev)
 {
 	const struct spi_nor_config *dev_cfg = dev_get_config(dev);
 	struct spi_nor_data *dev_data = dev_get_data(dev);
@@ -659,7 +659,7 @@ static int spi_nor_init(const struct device *dev)
 	return ret;
 }
 
-static const struct spi_nor_ops spi_nor_ops = {
+static __maybe_unused const struct spi_nor_ops spi_nor_ops = {
 	.read = spi_nor_read,
 	.write = spi_nor_write,
 	.erase = spi_nor_erase,
