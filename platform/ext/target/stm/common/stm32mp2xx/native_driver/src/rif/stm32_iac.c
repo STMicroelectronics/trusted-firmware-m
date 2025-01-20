@@ -18,6 +18,7 @@
 #include <lib/mmio.h>
 #include <inttypes.h>
 #include <debug.h>
+#include <tfm_platform_system.h>
 #include <uart_stdout.h>
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
@@ -127,9 +128,11 @@ static void stm32_iac_get_hwconfig(void)
 __weak void access_violation_handler(void)
 {
 	IAC_LOG("Ooops...\n\r");
-	while (1) {
-		;
-	}
+#ifdef CONFIG_TFM_HALT_ON_CORE_PANIC
+	tfm_hal_system_halt();
+#else
+	tfm_platform_hal_system_reset();
+#endif /* CONFIG_TFM_HALT_ON_CORE_PANIC */
 }
 
 static bool stm32_iac_discarded(uint32_t iac)
