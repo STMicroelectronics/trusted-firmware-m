@@ -85,6 +85,17 @@ static const struct mpu_armv8m_region_cfg_t __maybe_unused mpu_regions[] = {
 		MPU_ARMV8M_AP_RW_PRIV_UNPRIV,
 		MPU_ARMV8M_SH_NONE
 	},
+#ifdef STM32_M33TDCID
+	{
+		0, /* will be updated before using */
+		S_SCMI_ADDR,
+		S_SCMI_ADDR + S_SCMI_SIZE - 1,
+		MPU_ARMV8M_MAIR_ATTR_DEVICE_IDX,
+		MPU_ARMV8M_XN_EXEC_NEVER,
+		MPU_ARMV8M_AP_RW_PRIV_ONLY,
+		MPU_ARMV8M_SH_NONE
+	},
+#endif
 #ifdef CONFIG_TFM_PARTITION_META
 	/* TFM partition metadata pointer region */
 	{
