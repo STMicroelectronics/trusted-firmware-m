@@ -45,10 +45,10 @@
 
 /* RIF miscellaneous */
 #define _PERIPH_IDS_PER_REG	32
-#define SEC_PRIV_X_OFFSET(_id)	(U(0x20) * (_id / _PERIPH_IDS_PER_REG))
-#define SEC_PRIV_X_SHIFT(_id)	(_id % _PERIPH_IDS_PER_REG)
-#define CID_X_OFFSET(_id)	(U(0x4) * (_id))
-#define CMCID_X_OFFSET(_proc)	(U(0x4) * (_proc))
+#define _EXTI_SEC_PRIV_X_OFFSET(_id)	(U(0x20) * (_id / _PERIPH_IDS_PER_REG))
+#define _EXTI_SEC_PRIV_X_SHIFT(_id)	(_id % _PERIPH_IDS_PER_REG)
+#define _EXTI_CID_X_OFFSET(_id)		(U(0x4) * (_id))
+#define _EXTI_CMCID_X_OFFSET(_proc)	(U(0x4) * (_proc))
 
 #define EXTI_RIF_RES		U(85)
 
@@ -75,8 +75,8 @@ int stm32_exti_rif_set_conf(const struct rifprot_controller *ctl,
 			    struct rifprot_config *cfg)
 {
 	const struct stm32_exti_data *drv_data = dev_get_data(ctl->dev);
-	uintptr_t offset = SEC_PRIV_X_OFFSET(cfg->id);
-	uint32_t shift = SEC_PRIV_X_SHIFT(cfg->id);
+	uintptr_t offset = _EXTI_SEC_PRIV_X_OFFSET(cfg->id);
+	uint32_t shift = _EXTI_SEC_PRIV_X_SHIFT(cfg->id);
 
 	if (!IS_ENABLED(STM32_M33TDCID))
 		return 0;
@@ -85,14 +85,14 @@ int stm32_exti_rif_set_conf(const struct rifprot_controller *ctl,
 		return -EINVAL;
 
 	/* disable filtering befor write sec and priv cfgr */
-	io_clrbits32(ctl->rbase->cid + CID_X_OFFSET(cfg->id), _CIDCFGR_CFEN_MASK);
+	io_clrbits32(ctl->rbase->cid + _EXTI_CID_X_OFFSET(cfg->id), _CIDCFGR_CFEN_MASK);
 
 	io_clrsetbits32(ctl->rbase->sec + offset, BIT(shift),
 			cfg->sec << shift);
 	io_clrsetbits32(ctl->rbase->priv + offset, BIT(shift),
 			cfg->priv << shift);
 
-	io_write32(ctl->rbase->cid + CID_X_OFFSET(cfg->id), cfg->cid_attr);
+	io_write32(ctl->rbase->cid + _EXTI_CID_X_OFFSET(cfg->id), cfg->cid_attr);
 
 	return 0;
 }
@@ -108,7 +108,7 @@ int stm32_exti_rif_init(const struct rifprot_controller *ctl)
 
 	/* disable cmcidcfgr */
 	for (i = 0; i <= drv_data->hw_nbcpus; i++)
-		io_clrbits32(cmcidcfgr_base + CMCID_X_OFFSET(i),
+		io_clrbits32(cmcidcfgr_base + _EXTI_CMCID_X_OFFSET(i),
 			     _CIDCFGR_CFEN_MASK);
 
 	for_each_rifprot_cfg(ctl->rifprot_cfg, rcfg_elem, ctl->nrifprot, i) {
@@ -121,7 +121,7 @@ int stm32_exti_rif_init(const struct rifprot_controller *ctl)
 
 	/* enable and set processor filtering cmcidcfgr */
 	for (i = 0; i <= drv_data->hw_nbcpus; i++)
-		io_write32(cmcidcfgr_base + CID_X_OFFSET(i),
+		io_write32(cmcidcfgr_base + _EXTI_CID_X_OFFSET(i),
 			   _FLD_PREP(_CIDCFGR_SCID, dev_cfg->proc_cid[i]) |
 			    _CIDCFGR_CFEN_MASK);
 
