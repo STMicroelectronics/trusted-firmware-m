@@ -16,8 +16,11 @@
 #include "tfm_peripherals_def.h"
 #include "load/interrupt_defs.h"
 #include "psa_manifest/tfm_ipcc.h"
-extern struct irq_t ipcc_irq;
+
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
+
+extern void IPCC_HANDLE_0();
+extern struct irq_t ipcc_irq;
 
 psa_flih_result_t ipcc_flih(void)
 {

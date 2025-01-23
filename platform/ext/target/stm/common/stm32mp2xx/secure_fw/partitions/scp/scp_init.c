@@ -28,7 +28,6 @@ extern void scp_com_handle(void);
 psa_status_t tfm_scp_entry(void)
 {
 	int ret = 0;
-	psa_signal_t signals = 0;
 
 	scp_com_init();
 	ret = scmi_scpfw_cfg_early_init();
