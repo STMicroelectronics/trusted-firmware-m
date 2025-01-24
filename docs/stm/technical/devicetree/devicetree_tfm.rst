@@ -38,7 +38,8 @@ To simplify, gen_defines.py script creates for each information a define with sp
    / {
 	first_node {
 		second_node_label: second_node@10000000 {
-			foo-val = <3>;
+                        compatible = "foo,foo-compatible";
+                        foo-val = <3>;
                         status = "okay";
 		};
         };
