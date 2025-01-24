@@ -38,6 +38,7 @@ target_compile_definitions(tfm_config
         # this flag is not defined in tfm_s and needed by stm32_bsec3
         $<$<BOOL:${TFM_DUMMY_PROVISIONING}>:TFM_DUMMY_PROVISIONING>
         $<$<BOOL:${TFM_PARTITION_SCP}>:S_HEAP_SIZE=0x00020000>
+        $<$<BOOL:${STM32_DDR_CACHED}>:STM32_DDR_CACHED>
         STM32_PROV_FAKE=${STM32_PROV_FAKE}
 )
 
