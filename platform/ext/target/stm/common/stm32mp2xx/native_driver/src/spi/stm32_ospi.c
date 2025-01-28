@@ -215,10 +215,30 @@ static int stm32_ospi_poll(const struct device *dev,
 static int stm32_ospi_mm(const struct device *dev, const struct spi_mem_op *op)
 {
 	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	uintptr_t from = drv_cfg->mm_base + op->addr.val;
+	uint32_t nbytes = op->data.nbytes;
+	uint8_t *buf = op->data.buf;
 
-	memcpy(op->data.buf,
-	       (void *)(drv_cfg->mm_base + (size_t)op->addr.val),
-	       op->data.nbytes);
+	while ((nbytes != 0U) && !((from % sizeof(uint32_t)) == 0U)) {
+		*(uint8_t *)buf = mmio_read_8(from);
+		buf++;
+		from++;
+		nbytes--;
+	}
+
+	while (nbytes >= sizeof(uint32_t)) {
+		*(uint32_t *)buf = mmio_read_32(from);
+		buf += sizeof(uint32_t);
+		from += sizeof(uint32_t);
+		nbytes -= sizeof(uint32_t);
+	}
+
+	while (nbytes != 0U) {
+		*(uint8_t *)buf = mmio_read_8(from);
+		buf++;
+		from++;
+		nbytes--;
+	}
 
 	return 0;
 }
