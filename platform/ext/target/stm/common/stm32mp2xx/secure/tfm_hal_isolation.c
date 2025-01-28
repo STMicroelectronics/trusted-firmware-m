@@ -85,6 +85,17 @@ static const struct mpu_armv8m_region_cfg_t __maybe_unused mpu_regions[] = {
 		MPU_ARMV8M_AP_RW_PRIV_UNPRIV,
 		MPU_ARMV8M_SH_NONE
 	},
+#if DT_HAS_COMPAT_STATUS_OKAY(st_stm32mp25_omi)
+	{
+		0, /* will be updated before using */
+		OSPI1_MEM_BASE,
+		OSPI1_MEM_BASE + 0x10000000 - 1,
+		MPU_ARMV8M_MAIR_ATTR_DEVICE_IDX,
+		MPU_ARMV8M_XN_EXEC_NEVER, /* Forbid execute in place */
+		MPU_ARMV8M_AP_RW_PRIV_ONLY,
+		MPU_ARMV8M_SH_NONE
+	},
+#endif
 #ifdef STM32_M33TDCID
 	{
 		0, /* will be updated before using */
@@ -105,21 +116,6 @@ static const struct mpu_armv8m_region_cfg_t __maybe_unused mpu_regions[] = {
 		MPU_ARMV8M_MAIR_ATTR_DATA_IDX,
 		MPU_ARMV8M_XN_EXEC_NEVER,
 		MPU_ARMV8M_AP_RW_PRIV_UNPRIV,
-		MPU_ARMV8M_SH_NONE
-	},
-#endif
-#if defined(STM32_PS_OSPI)
-	/*
-	 * used by ospi
-	 * for memory mapping to generate external memory command
-	 */
-	{
-		0, /* will be updated before using */
-		OSPI1_MEM_BASE,
-		OSPI1_MEM_BASE + SPI_NOR_FLASH_SIZE - 1,
-		MPU_ARMV8M_MAIR_ATTR_DEVICE_IDX,
-		MPU_ARMV8M_XN_EXEC_NEVER,
-		MPU_ARMV8M_AP_RW_PRIV_ONLY,
 		MPU_ARMV8M_SH_NONE
 	},
 #endif
