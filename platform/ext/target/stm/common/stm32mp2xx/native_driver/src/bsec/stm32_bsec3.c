@@ -867,7 +867,7 @@ static void stm32_bsec_mirror_load(const struct device *dev, uint32_t status)
 			ret = shadow_otp(dev, otp);
 			if (ret) {
 				EMSG("Shadowing failed (%d)\n", ret);
-				return ret;
+				return;
 			}
 		}
 
