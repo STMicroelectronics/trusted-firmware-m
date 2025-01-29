@@ -12,7 +12,11 @@
 #include <stm32mp2_ddr_helpers.h>
 #include <stm32mp2_ddr_regs.h>
 #include <lib/mmio.h>
+#ifdef STM32MP21xxxx
+#include <stm32mp21_rcc.h>
+#else
 #include <stm32mp25_rcc.h>
+#endif
 #include <stm32mp2_pwr.h>
 
 #include <ddrphy_phyinit.h>

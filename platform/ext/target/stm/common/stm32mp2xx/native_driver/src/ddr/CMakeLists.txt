@@ -58,6 +58,7 @@ target_sources(platform_bl2
 target_compile_definitions(platform_bl2
 	PUBLIC
 		$<$<STREQUAL:${STM32_DDR_PHY_FILE},ddr4_pmu_train.bin>:STM32MP_DDR4_TYPE=1>
+		$<$<STREQUAL:${STM32_DDR_PHY_FILE},lpddr4_pmu_train.bin>:STM32MP_LPDDR4_TYPE=1>
 )
 
 install(PROGRAMS

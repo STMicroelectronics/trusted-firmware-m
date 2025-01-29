@@ -1009,6 +1009,7 @@ static void aforcetricont_acx4anibdis_program(struct stm32mp_ddr_config *config)
 		} else if (anib == 7U) {
 			aforcetricont = 0xFU;
 		}
+#endif /* STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE */
 
 		/*
 		 * If all the lanes can be disabled, and Anib is not the first or last disable
@@ -1018,7 +1019,6 @@ static void aforcetricont_acx4anibdis_program(struct stm32mp_ddr_config *config)
 		    (anib != (config->uib.numanib - 1U))) {
 			acx4anibdis = acx4anibdis | (0x1U << anib);
 		}
-#endif /* STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE */
 
 		mmio_write_16((uintptr_t)(DDRPHYC_BASE + (4U * (TANIB | c_addr |
 							        CSR_AFORCETRICONT_ADDR))),

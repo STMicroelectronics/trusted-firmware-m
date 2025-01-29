@@ -54,6 +54,55 @@ uintptr_t stm32mp_rcc_base(void)
 
 int stm32mp_board_ddr_power_init(enum ddr_type ddr_type)
 {
+#if STM32MP_LPDDR4_TYPE
+	const struct device *dev_vdd1, *dev_vdd2, *dev_vddq;
+	int err;
+
+	/*
+	 * LPDDR4 power on sequence is:
+	 * enable VDD1_DDR
+	 * enable VDD2_DDR
+	 * enable VDDQ_DDR
+	 */
+
+	dev_vdd1 = DT_INST_DEV_REGULATOR_SUPPLY(0, vdd1);
+	if (!dev_vdd1)
+		return -ENODEV;
+
+	err = regulator_common_set_min_voltage(dev_vdd1);
+	if (err)
+		return err;
+
+	dev_vdd2 = DT_INST_DEV_REGULATOR_SUPPLY(0, vdd2);
+	if (!dev_vdd2)
+		return -ENODEV;
+
+	err = regulator_common_set_min_voltage(dev_vdd2);
+	if (err)
+		return err;
+
+	dev_vddq = DT_INST_DEV_REGULATOR_SUPPLY(0, vddq);
+	if (!dev_vddq)
+		return -ENODEV;
+
+	err = regulator_common_set_min_voltage(dev_vddq);
+	if (err)
+		return err;
+
+	err = regulator_enable(dev_vdd1);
+	if (err)
+		return err;
+
+	/* could be set via enable_ramp_delay on vdd1_ddr */
+	udelay(2000);
+
+	err = regulator_enable(dev_vdd2);
+	if (err)
+		return err;
+
+	return regulator_enable(dev_vddq);
+
+#else
 	const struct device *dev_vpp, *dev_vdd, *dev_vref, *dev_vtt;
 	int err;
 
@@ -100,6 +149,7 @@ int stm32mp_board_ddr_power_init(enum ddr_type ddr_type)
 	if (err)
 		return err;
 
+#endif
 	return 0;
 }
 
