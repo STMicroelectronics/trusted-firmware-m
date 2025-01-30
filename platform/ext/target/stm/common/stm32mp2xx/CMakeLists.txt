@@ -74,7 +74,6 @@ add_subdirectory(${STM_FAMILLY_DIR}/lib/qsort qsort)
 
 target_include_directories(platform_s
 	PUBLIC
-		${PLATFORM_DIR}/include
 		${CMAKE_BINARY_DIR}/generated
 		${STM_FAMILLY_DIR}/native_driver
 		${STM_FAMILLY_DIR}/native_driver/include
@@ -164,18 +163,20 @@ target_link_libraries(platform_s
 )
 
 if(TFM_PARTITION_CRYPTO)
-        target_include_directories(platform_crypto_keys
-                PUBLIC
-                        ${PLATFORM_DIR}/include
-                        ${STM_FAMILLY_DIR}/native_driver/include
-                        ${STM_FAMILLY_DIR}/cmsis_driver/include
-                        ${STM_FAMILLY_DIR}/secure
-                        ${STM_FAMILLY_DIR}/secure/services/include
-        )
+	target_include_directories(platform_crypto_keys
+		PUBLIC
+			${STM_FAMILLY_DIR}/secure
+	)
+
+	target_sources(platform_crypto_keys
+		PRIVATE
+			$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_CRYPTO_KEYS}>>:${STM_FAMILLY_DIR}/secure/crypto_keys.c>
+	)
 
 	target_link_libraries(platform_crypto_keys
 		PUBLIC
 			dt_platform_s_defs
+			platform_region_defs
 	)
 endif()
 
@@ -418,6 +419,7 @@ install(FILES
     ${PLATFORM_DIR}/ext/common/uart_stdout.h
     ${PLATFORM_DIR}/ext/common/tfm_s_linker_alignments.h
     ${PLATFORM_DIR}/ext/driver/Driver_Common.h
+    ${STM_FAMILLY_DIR}/secure/tfm_builtin_key_ids.h
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}/include
 )
 
