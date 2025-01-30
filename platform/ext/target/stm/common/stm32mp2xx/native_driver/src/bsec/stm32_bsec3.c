@@ -988,25 +988,17 @@ static int stm32_bsec_dt_init(const struct device *dev)
 
 	drv_data->hw_key_valid = false;
 
-	if (IS_ENABLED(STM32_BL2) || !IS_ENABLED(STM32_M33TDCID)) {
-		drv_data->p_mirror = (struct bsec_mirror *)drv_cfg->mirror_addr;
+	drv_data->p_mirror = (struct bsec_mirror *)drv_cfg->mirror_addr;
 
-		if (IS_ENABLED(STM32_BL2))
-			stm32_bsec_mirror_init(dev, true);
+	stm32_bsec_mirror_init(dev, true);
 
-		if (drv_data->p_mirror->magic != BSEC_MAGIC)
-			return -ENOSYS;
+	if (drv_data->p_mirror->magic != BSEC_MAGIC)
+		return -ENOSYS;
 
-		if (drv_data->p_mirror->state & BSEC_HARDWARE_KEY)
-			drv_data->hw_key_valid = true;
+	if (drv_data->p_mirror->state & BSEC_HARDWARE_KEY)
+		drv_data->hw_key_valid = true;
 
-		return stm32_bsec_shadow_init(dev);
-	} else {
-		/* BSEC mirror is not used in TF-M secure if Cortex-M is TDCID */
-		drv_data->p_mirror = NULL;
-
-		return 0;
-	}
+	return stm32_bsec_shadow_init(dev);
 }
 
 #define NVMEM_CELL_CHILD_DEFINE(node_id)					\
