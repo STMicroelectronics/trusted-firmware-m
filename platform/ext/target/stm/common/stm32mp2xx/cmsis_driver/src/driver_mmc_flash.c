@@ -160,7 +160,7 @@ static bool is_write_aligned(arm_part_dev_t *dev, uint32_t value)
 static int block_read(arm_part_dev_t *dev, uint32_t addr, uintptr_t buffer,
 		      size_t length, size_t *length_read)
 {
-	uintptr_t buf = (uintptr_t)dev->buf;
+	uintptr_t buf;
 	int lba;
 	uint32_t base;
 	size_t pos;
@@ -204,8 +204,22 @@ static int block_read(arm_part_dev_t *dev, uint32_t addr, uintptr_t buffer,
 		 */
 		lba = (pos + base) / MMC_BLOCK_SIZE;
 
-		request = mmc_read_blocks(dev->dev_flash, lba, buf,
-					  MMC_BLOCK_SIZE);
+		buf = (uintptr_t)dev->buf;
+		request = MMC_BLOCK_SIZE;
+		if ((((buffer + count) % MMC_BLOCK_SIZE) == 0U) &&
+		    (left >= MMC_BLOCK_SIZE)) {
+			/*
+			 * The underlying read buffer can be used to
+			 * read most of the data. Calculate the
+			 * number of bytes to read to align with the
+			 * block size.
+			 */
+			request = skip + left;
+			request = request & ~(MMC_BLOCK_SIZE - 1U);
+			buf = buffer + count;
+		}
+
+		request = mmc_read_blocks(dev->dev_flash, lba, buf, request);
 		if (request <= skip) {
 			/*
 			 * We couldn't read enough bytes to jump over
@@ -217,14 +231,16 @@ static int block_read(arm_part_dev_t *dev, uint32_t addr, uintptr_t buffer,
 		}
 
 		/*
-		 * Need to remove skip and padding bytes,if any, from
+		 * Need to remove skip and padding bytes, if any, from
 		 * the read data when copying to the user buffer.
 		 */
 		nbytes = request - skip;
 		padding = (nbytes > left) ? nbytes - left : 0U;
 		nbytes -= padding;
 
-		memcpy((void *)(buffer + count), (void *)(buf + skip), nbytes);
+		if ((buffer + count) != (buf + skip)) {
+			memcpy((void *)(buffer + count), (void *)(buf + skip), nbytes);
+		}
 
 		pos += nbytes;
 		count += nbytes;
