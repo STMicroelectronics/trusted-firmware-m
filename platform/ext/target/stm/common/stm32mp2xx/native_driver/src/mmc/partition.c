@@ -23,7 +23,7 @@ static partition_entry_list_t list;
 
 extern ARM_DRIVER_FLASH FLASH_DEV_NAME;
 
-#if LOG_LEVEL >= LOG_LEVEL_VERBOSE
+#if STM32_PARTITION_DEBUG
 static void dump_entries(int num) {
 	char name[EFI_NAMELEN];
 	int i, j, len;
