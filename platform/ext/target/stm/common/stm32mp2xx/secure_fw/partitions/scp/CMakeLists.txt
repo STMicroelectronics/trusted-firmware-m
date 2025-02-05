@@ -32,7 +32,12 @@ target_sources(tfm_partitions
         ${CMAKE_BINARY_DIR}/generated/secure_fw/partitions/scp/auto_generated/load_info_tfm_scp.c
 )
 
-set(SCP_LOG_LEVEL DISABLED)
+if (${TFM_SPM_LOG_LEVEL} STREQUAL STM32_LOG_LEVEL_OFF)
+    set(SCP_LOG_LEVEL DISABLED)
+else()
+    set(SCP_LOG_LEVEL ERROR)
+endif()
+
 set(SCP_ARCHITECTURE tfm)
 set(SCP_ENABLE_OVERRIDE_FIRMWARE_NAME OFF)
 set(SCP_FIRMWARE scmi-fw)
