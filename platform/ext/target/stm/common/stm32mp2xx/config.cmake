@@ -15,7 +15,7 @@ set(STM32_IPC                   OFF                     CACHE BOOL      "Use IPC
 set(STM32_PROV_FAKE             OFF                     CACHE BOOL      "Provisioning with dummy values. NOT to be used in production")
 set(STM32_M33TDCID              OFF                     CACHE BOOL      "Define M33 like Trusted Domain Compartiment ID")
 set(STM32_DTS_DIR               "arm/stm"               CACHE STRING	"Define relative path of stm32 dts")
-set(STM32_DDR_CACHED            ON                     CACHE BOOL      "Enable cache for ddr")
+set(STM32_CACHE_ENABLED         ON                      CACHE BOOL      "Enable cache")
 set(STM32_HEADER_MAJOR_VER      2                       CACHE STRING    "Define stm32 header major version: 2")
 set(STM32_HEADER_MINOR_VER      2                       CACHE STRING    "Define stm32 header minor version: 0,2")
 set(DTS_EXT_DIR                 ""                      CACHE STRING	"Define external dts directory")

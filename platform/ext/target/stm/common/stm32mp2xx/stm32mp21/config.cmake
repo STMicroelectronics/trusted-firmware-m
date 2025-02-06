@@ -15,7 +15,6 @@ endif()
 ########################## STM32 #######################################
 set(STM32_BOARD_MODEL		    "stm32mp21xxxx"	CACHE STRING	"Define board model name" FORCE)
 
-set(STM32_IPC				    ON              CACHE BOOL     "Use IPC (rpmsg) to communicate with main processor" FORCE)
+set(STM32_IPC                   ON              CACHE BOOL     "Use IPC (rpmsg) to communicate with main processor" FORCE)
 set(TFM_DUMMY_PROVISIONING      ON              CACHE BOOL     "Provision with dummy values. NOT to be used in production" FORCE)
-set(STM32_DDR_CACHED			OFF             CACHE BOOL     "Enable cache for ddr" FORCE)
-set(STM32_PROV_FAKE			    ON              CACHE BOOL     "Provisioning with dummy values. NOT to be used in production" FORCE)
+set(STM32_PROV_FAKE             ON              CACHE BOOL     "Provisioning with dummy values. NOT to be used in production" FORCE)

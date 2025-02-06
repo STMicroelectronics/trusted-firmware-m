@@ -38,7 +38,7 @@ target_compile_definitions(tfm_config
         # this flag is not defined in tfm_s and needed by stm32_bsec3
         $<$<BOOL:${TFM_DUMMY_PROVISIONING}>:TFM_DUMMY_PROVISIONING>
         $<$<BOOL:${TFM_PARTITION_SCP}>:S_HEAP_SIZE=0x00020000>
-        $<$<BOOL:${STM32_DDR_CACHED}>:STM32_DDR_CACHED>
+        $<$<BOOL:${STM32_CACHE_ENABLED}>:STM32_CACHE_ENABLED>
         STM32_PROV_FAKE=${STM32_PROV_FAKE}
 )
 
@@ -126,7 +126,7 @@ target_sources(platform_s
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/remoteproc/rproc_core.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/remoteproc/stm32_rproc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
-		$<$<BOOL:${STM32_DDR_CACHED}>:${STM_FAMILLY_DIR}/native_driver/src/core/stm32_dcache.c>
+		$<$<BOOL:${STM32_CACHE_ENABLED}>:${STM_FAMILLY_DIR}/native_driver/src/core/stm32_dcache.c>
 		${STM_FAMILLY_DIR}/native_driver/src/i2c/stm32_i2c.c
 		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_platform_system.c>
 		$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${STM_FAMILLY_DIR}/secure/nv_counters.c>

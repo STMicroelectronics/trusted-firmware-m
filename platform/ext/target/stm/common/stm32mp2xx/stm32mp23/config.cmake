@@ -16,10 +16,9 @@ endif()
 set(STM32_BOARD_MODEL		    "stm32mp23xxxx"	CACHE STRING	"Define board model name" FORCE)
 
 # set specific borad config
-set(STM32_IPC				    ON              CACHE BOOL     "Use IPC (rpmsg) to communicate with main processor" FORCE)
+set(STM32_IPC                   ON              CACHE BOOL     "Use IPC (rpmsg) to communicate with main processor" FORCE)
 set(TFM_DUMMY_PROVISIONING      ON              CACHE BOOL     "Provision with dummy values. NOT to be used in production" FORCE)
-set(STM32_DDR_CACHED			OFF             CACHE BOOL     "Enable cache for ddr" FORCE)
-set(STM32_PROV_FAKE			    ON              CACHE BOOL     "Provisioning with dummy values. NOT to be used in production" FORCE)
+set(STM32_PROV_FAKE             ON              CACHE BOOL     "Provisioning with dummy values. NOT to be used in production" FORCE)
 
 if (STM32_STM32MP25_SOC_REV STREQUAL "revA")
     set(STM32_HEADER_MAJOR_VER  2   CACHE STRING    "Define stm32 header major version: 2" FORCE)

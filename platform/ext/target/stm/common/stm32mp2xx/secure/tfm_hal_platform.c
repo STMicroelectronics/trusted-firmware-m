@@ -35,10 +35,10 @@ enum tfm_hal_status_t tfm_hal_platform_init(void)
 
 	sys_init_run_level(INIT_LEVEL_PRE_CORE);
 
-#if defined(STM32_DDR_CACHED)
-	if (stm32_dcache_enable(true, true))
-		return TFM_HAL_ERROR_GENERIC;
-#endif
+	if (IS_ENABLED(STM32_CACHE_ENABLED)) {
+		if (stm32_dcache_enable(true, true))
+			return TFM_HAL_ERROR_GENERIC;
+	}
 
 	sys_init_run_level(INIT_LEVEL_CORE);
 
