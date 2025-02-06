@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <errno.h>
 
+#include <boot_hal.h>
 #include <cmsis.h>
 #include <region.h>
 #include <region_defs.h>
@@ -173,3 +174,76 @@ int32_t boot_platform_post_init(void)
 
 	return 0;
 }
+
+#if defined(STM32_CACHE_ENABLED)
+/* Override for cache operations */
+void boot_platform_quit(struct boot_arm_vector_table *vt)
+{
+	/*
+	 * Clang at O0, stores variables on the stack with SP relative addressing.
+	 * When manually set the SP then the place of reset vector is lost.
+	 * Static variables are stored in 'data' or 'bss' section, change of SP has
+	 * no effect on them.
+	 */
+	static struct boot_arm_vector_table *vt_cpy;
+	int32_t result;
+
+	#ifdef CRYPTO_HW_ACCELERATOR
+	result = crypto_hw_accelerator_finish();
+	if (result) {
+		while (1){}
+	}
+	#endif /* CRYPTO_HW_ACCELERATOR */
+
+	#ifdef FLASH_DEV_NAME
+	result = FLASH_DEV_NAME.Uninitialize();
+	if (result != ARM_DRIVER_OK) {
+		while(1) {}
+	}
+	#endif /* FLASH_DEV_NAME */
+	#ifdef FLASH_DEV_NAME_2
+	result = FLASH_DEV_NAME_2.Uninitialize();
+	if (result != ARM_DRIVER_OK) {
+		while(1) {}
+	}
+	#endif /* FLASH_DEV_NAME_2 */
+	#ifdef FLASH_DEV_NAME_3
+	result = FLASH_DEV_NAME_3.Uninitialize();
+	if (result != ARM_DRIVER_OK) {
+		while(1) {}
+	}
+	#endif /* FLASH_DEV_NAME_3 */
+	#ifdef FLASH_DEV_NAME_SCRATCH
+	result = FLASH_DEV_NAME_SCRATCH.Uninitialize();
+	if (result != ARM_DRIVER_OK) {
+		while(1) {}
+	}
+	#endif /* FLASH_DEV_NAME_SCRATCH */
+
+	vt_cpy = vt;
+	#if defined(__ARM_ARCH_8M_MAIN__) || defined(__ARM_ARCH_8M_BASE__) \
+	|| defined(__ARM_ARCH_8_1M_MAIN__)
+	/*
+	 * Restore the Main Stack Pointer Limit register's reset value
+	 * before passing execution to runtime firmware to make the
+	 * bootloader transparent to it.
+	 */
+	__set_MSPLIM(0);
+	#endif /* defined(__ARM_ARCH_8M_MAIN__) || defined(__ARM_ARCH_8M_BASE__) \
+	|| defined(__ARM_ARCH_8_1M_MAIN__) */
+
+	/* Invalidate all the memory range accessible by the M-33 */
+	if (stm32_dcache_clean(0x0, 0xFFFFFFFF))
+		panic();
+	if (stm32_dcache_full_inv())
+		panic();
+	if (stm32_dcache_disable())
+		panic();
+
+	__set_MSP(vt_cpy->msp);
+	__DSB();
+	__ISB();
+
+	boot_jump_to_next_image(vt_cpy->reset);
+}
+#endif
