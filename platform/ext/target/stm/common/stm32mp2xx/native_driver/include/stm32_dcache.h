@@ -19,7 +19,7 @@ struct stm32_dcache_mon {
 #define DCACHE_CMD_INV		0x2
 #define DCACHE_CMD_CLRINV	0x3
 
-#if defined(STM32_CACHE_ENABLED) && !defined(STM32_BL2)
+#if defined(STM32_CACHE_ENABLED)
 #define stm32_dcache_clean(s, e)	stm32_dcache_maintenance(DCACHE_CMD_CLR, s, e)
 #define stm32_dcache_inv(s, e)		stm32_dcache_maintenance(DCACHE_CMD_INV, s, e)
 #define stm32_dcache_clean_inv(s, e)	stm32_dcache_maintenance(DCACHE_CMD_CLRINV, s, e)

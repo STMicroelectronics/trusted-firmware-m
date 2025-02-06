@@ -283,6 +283,7 @@ if(BL2)
 			$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${STM_FAMILLY_DIR}/secure/nv_counters.c>
 			$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_OTP}>>:${STM_FAMILLY_DIR}/secure/otp.c>
 			${STM_FAMILLY_DIR}/secure/provisioning.c
+			$<$<BOOL:${STM32_CACHE_ENABLED}>:${STM_FAMILLY_DIR}/native_driver/src/core/stm32_dcache.c>
 	)
 
 	target_compile_options(platform_bl2

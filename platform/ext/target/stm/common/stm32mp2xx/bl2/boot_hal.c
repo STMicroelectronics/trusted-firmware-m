@@ -23,6 +23,7 @@
 #include "flash_map/flash_map.h"
 
 #include <stm32_bsec3.h>
+#include <stm32_dcache.h>
 
 extern ARM_DRIVER_FLASH FLASH_DEV_FW_DDR_NAME;
 
@@ -148,6 +149,15 @@ SYS_INIT(stm32mp2_prepare_fw, CORE, 15);
 int32_t boot_platform_init(void)
 {
 	sys_init_run_level(INIT_LEVEL_PRE_CORE);
+
+	if (IS_ENABLED(STM32_CACHE_ENABLED)) {
+		int err;
+
+		err = stm32_dcache_enable(true, true);
+		if (err)
+			return err;
+	}
+
 	sys_init_run_level(INIT_LEVEL_CORE);
 
 	BOOT_LOG_INF("welcome");
