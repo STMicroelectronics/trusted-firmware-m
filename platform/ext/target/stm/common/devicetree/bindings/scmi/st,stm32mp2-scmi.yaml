@@ -41,7 +41,7 @@ properties:
     required: true
 
   pd-list:
-    required: true
+    required: false
 
   pd-id-max:
-    required: true
+    required: false
