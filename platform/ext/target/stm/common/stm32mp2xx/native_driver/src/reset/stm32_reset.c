@@ -16,7 +16,11 @@
 #include <device.h>
 #include <reset.h>
 
-#include <dt-bindings/reset/stm32mp25-resets.h>
+#if defined(STM32MP21xxxx)
+#include <dt-bindings/reset/st,stm32mp21-rcc.h>
+#else
+#include <dt-bindings/reset/st,stm32mp25-rcc.h>
+#endif
 
 #define RESET_ID_MASK		GENMASK_32(31, 5)
 #define RESET_ID_SHIFT		5

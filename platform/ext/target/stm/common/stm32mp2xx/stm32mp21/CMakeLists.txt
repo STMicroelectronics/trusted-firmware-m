@@ -22,6 +22,7 @@ include(${STM_FAMILLY_DIR}/CMakeLists.txt)
 target_sources(platform_s
     PRIVATE
         ${STM_SOC_DIR}/src/system_stm32mp2xx_m33.c
+        ${STM_FAMILLY_DIR}/native_driver/src/clk/clk-stm32mp21.c
 )
 
 target_sources(tfm_s
@@ -35,6 +36,7 @@ if(BL2)
     target_sources(platform_bl2
         PRIVATE
             ${STM_SOC_DIR}/src/system_stm32mp2xx_m33.c
+            ${STM_FAMILLY_DIR}/native_driver/src/clk/clk-stm32mp21.c
     )
 
     target_sources(bl2
