@@ -114,24 +114,9 @@
 
 #define DDR_RAM_OFFSET			0x0
 
-/*
- * cortex m33 interface:
- * C-AHB for Instruction
- * S-AHB for Data
- *
- * For ddr The C-AHB bus is remap and not S-AHB
- */
-#if defined(STM32_DDR_CACHED)
-/* icache: map cache area on ddr ram offset */
-#define DDR_CAHB_OFFSET			0x0
-#define DDR_CAHB_ALIAS(x)		NS_REMAP_ALIAS(2, x)
-#define DDR_CAHB2PHY_ALIAS(x)		NS_DDR_ALIAS(DDR_RAM_OFFSET + x)
-#else
-/* map = phy */
 #define DDR_CAHB_OFFSET			DDR_RAM_OFFSET
 #define DDR_CAHB_ALIAS(x)		NS_DDR_ALIAS(x)
 #define DDR_CAHB2PHY_ALIAS(x)		NS_DDR_ALIAS(x)
-#endif
 
 #define DDR_SAHB_OFFSET			DDR_RAM_OFFSET
 #define DDR_SAHB_ALIAS(x)		NS_DDR_ALIAS(x)

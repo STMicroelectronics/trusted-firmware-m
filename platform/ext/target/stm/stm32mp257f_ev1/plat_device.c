@@ -11,7 +11,6 @@
 
 #include <sau_armv8m_drv.h>
 
-#include <stm32_icache.h>
 #include <stm32_dcache.h>
 
 #include <region_defs.h>
@@ -60,41 +59,12 @@ int sau_get_platdata(struct sau_platdata *pdata)
 }
 #endif /* STM32_SEC */
 
-int __maybe_unused stm32_icache_get_platdata(struct stm32_icache_platdata *pdata)
-{
-	pdata->base = BASE_DOMAIN(ICACHE_BASE);
-	pdata->irq = ICACHE_IRQn;
-
-	return 0;
-}
-
-int __maybe_unused stm32_dcache_get_platdata(struct stm32_dcache_platdata *pdata)
-{
-	pdata->base = BASE_DOMAIN(DCACHE_BASE);
-	pdata->irq = DCACHE_IRQn;
-
-	return 0;
-}
-
 /*
  * TODO: setup risab5 (retram), to use otp (via PLATFORM_DEFAULT_OTP)
  * stored in BL2_OTP_Const section.
  */
 int __maybe_unused stm32_platform_s_init(void)
 {
-	int __maybe_unused err;
-
-#if defined(STM32_DDR_CACHED)
-	err = stm32_icache_init();
-	if (err)
-		return err;
-
-#if defined(STM32_SEC)
-	err = stm32_dcache_init();
-	if (err)
-		return err;
-#endif
-#endif
 	return 0;
 }
 
