@@ -126,7 +126,6 @@ target_sources(platform_s
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/remoteproc/rproc_core.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/remoteproc/stm32_rproc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
-		$<$<BOOL:${STM32_DDR_CACHED}>:${STM_FAMILLY_DIR}/native_driver/src/core/stm32_icache.c>
 		$<$<BOOL:${STM32_DDR_CACHED}>:${STM_FAMILLY_DIR}/native_driver/src/core/stm32_dcache.c>
 		${STM_FAMILLY_DIR}/native_driver/src/i2c/stm32_i2c.c
 		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_platform_system.c>
@@ -278,7 +277,6 @@ if(BL2)
 			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_FAMILLY_DIR}/native_driver/src/mmc/stm32_sdmmc2.c>
 			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_FAMILLY_DIR}/native_driver/src/mmc/soft_crc.c>
 			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_FAMILLY_DIR}/native_driver/src/mmc/partition.c>
-			$<$<BOOL:${STM32_DDR_CACHED}>:${STM_FAMILLY_DIR}/native_driver/src/core/stm32_icache.c>
 			${STM_FAMILLY_DIR}/native_driver/src/i2c/stm32_i2c.c
 			${STM_FAMILLY_DIR}/native_driver/src/regulator/regulator_common.c
 			${STM_FAMILLY_DIR}/native_driver/src/regulator/stm32mp25_pwr_regul.c

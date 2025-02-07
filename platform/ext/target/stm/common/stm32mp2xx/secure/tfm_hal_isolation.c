@@ -15,7 +15,6 @@
 
 #include <mpu_armv8m_drv.h>
 #include <sau_armv8m_drv.h>
-#include <stm32_icache.h>
 
 /* Boundary handle binding macros. */
 #define HANDLE_ATTR_PRIV_POS            1U

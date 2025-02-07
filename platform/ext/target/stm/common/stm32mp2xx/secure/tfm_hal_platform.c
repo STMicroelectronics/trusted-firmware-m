@@ -13,7 +13,6 @@
 #include <init.h>
 
 #include <uart_stdout.h>
-#include <stm32_icache.h>
 #include <stm32_dcache.h>
 #include <debug.h>
 #include <stm_version.h>
@@ -41,9 +40,6 @@ enum tfm_hal_status_t tfm_hal_platform_init(void)
 		return TFM_HAL_ERROR_GENERIC;
 
 #if defined(STM32_DDR_CACHED)
-	if (stm32_icache_enable(true, true))
-		return TFM_HAL_ERROR_GENERIC;
-
 	if (stm32_dcache_enable(true, true))
 		return TFM_HAL_ERROR_GENERIC;
 #endif
