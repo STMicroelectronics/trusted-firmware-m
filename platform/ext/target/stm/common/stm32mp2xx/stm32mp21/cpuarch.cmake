@@ -17,5 +17,5 @@ include(${STM_SOC_DIR}/../cpuarch.cmake)
 
 # Set specific stm32mp21 architecture
 add_compile_definitions(
-	STM32MP21xxxx
+    STM32MP21xxxx
 )
