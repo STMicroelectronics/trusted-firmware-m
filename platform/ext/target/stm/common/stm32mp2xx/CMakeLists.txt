@@ -165,6 +165,7 @@ target_link_libraries(platform_s
 if(TFM_PARTITION_CRYPTO)
 	target_include_directories(platform_crypto_keys
 		PUBLIC
+			${STM_FAMILLY_DIR}/accelerator
 			${STM_FAMILLY_DIR}/secure
 	)
 
@@ -251,6 +252,7 @@ if(BL2)
 		PUBLIC
 			${PLATFORM_DIR}/include
 			${CMAKE_BINARY_DIR}/generated
+			${STM_FAMILLY_DIR}/accelerator
 			${STM_FAMILLY_DIR}/native_driver
 			${STM_FAMILLY_DIR}/native_driver/include
 			${STM_FAMILLY_DIR}/cmsis_driver/include
@@ -419,6 +421,8 @@ install(FILES
     ${PLATFORM_DIR}/ext/common/uart_stdout.h
     ${PLATFORM_DIR}/ext/common/tfm_s_linker_alignments.h
     ${PLATFORM_DIR}/ext/driver/Driver_Common.h
+    ${STM_FAMILLY_DIR}/accelerator/crypto_accelerator_config.h
+    ${STM_FAMILLY_DIR}/accelerator/mbedtls_accelerator_config.h
     ${STM_FAMILLY_DIR}/secure/tfm_builtin_key_ids.h
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}/include
 )
