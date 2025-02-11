@@ -165,6 +165,7 @@ target_link_libraries(platform_s
 if(TFM_PARTITION_CRYPTO)
 	target_include_directories(platform_crypto_keys
 		PUBLIC
+			${STM_FAMILLY_DIR}/accelerator
 			${STM_FAMILLY_DIR}/secure
 	)
 
@@ -322,6 +323,7 @@ if(BL2)
         PRIVATE
             lib_qsort
             bl2_mbedcrypto_config
+            platform_crypto_keys
 	)
 
 	# GNU ld has some strange behaviour to do with weak functions, and does not deal
@@ -419,6 +421,8 @@ install(FILES
     ${PLATFORM_DIR}/ext/common/uart_stdout.h
     ${PLATFORM_DIR}/ext/common/tfm_s_linker_alignments.h
     ${PLATFORM_DIR}/ext/driver/Driver_Common.h
+    ${STM_FAMILLY_DIR}/accelerator/crypto_accelerator_config.h
+    ${STM_FAMILLY_DIR}/accelerator/mbedtls_accelerator_config.h
     ${STM_FAMILLY_DIR}/secure/tfm_builtin_key_ids.h
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}/include
 )
