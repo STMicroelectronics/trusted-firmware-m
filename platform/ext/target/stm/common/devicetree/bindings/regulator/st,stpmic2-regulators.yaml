@@ -82,7 +82,7 @@ child-binding:
         regulator output voltage when configured in bypass.
         Authorize automatic bypass mode selection depending on voltage.
 
-    st,sink-source:
+    st,regulator-sink-source:
       type: boolean
       description: |
         enable sink-source mode if it's available on this regulator.
