@@ -86,7 +86,7 @@ target_compile_definitions(platform_region_defs
         BL2_TRAILER_SIZE=${BL2_TRAILER_SIZE}
         BL1_HEADER_SIZE=${BL1_HEADER_SIZE}
         BL1_TRAILER_SIZE=${BL1_TRAILER_SIZE}
-        $<$<BOOL:${MCUBOOT_IMAGE_NUMBER}>:MCUBOOT_IMAGE_NUMBER=${MCUBOOT_IMAGE_NUMBER}>
+        $<$<BOOL:${TFM_NS_INDEPENDENT_SIG}>:TFM_NS_INDEPENDENT_SIG=${TFM_NS_INDEPENDENT_SIG}>
         $<$<BOOL:${TEST_PSA_API}>:PSA_API_TEST_${TEST_PSA_API}>
         $<$<OR:$<CONFIG:Debug>,$<CONFIG:relwithdebinfo>>:ENABLE_HEAP>
 )
@@ -127,7 +127,7 @@ if(BL2 AND PLATFORM_DEFAULT_IMAGE_SIGNING)
         SOURCES ${CMAKE_BINARY_DIR}/tfm_s_ns_signed.bin
     )
 
-    if (MCUBOOT_IMAGE_NUMBER GREATER 1)
+    if (TFM_NS_INDEPENDENT_SIG)
 
         add_custom_target(tfm_ns_signed_bin
             SOURCES ${CMAKE_BINARY_DIR}/bin/tfm_ns_signed.bin

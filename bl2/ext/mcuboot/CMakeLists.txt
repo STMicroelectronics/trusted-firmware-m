@@ -145,7 +145,7 @@ if (PLATFORM_DEFAULT_IMAGE_SIGNING)
 
     set(IMAGE_TYPE "S_IMAGE")
     set(FLASH_AREA_NUM ${MCUBOOT_S_IMAGE_FLASH_AREA_NUM})
-    if (MCUBOOT_IMAGE_NUMBER GREATER 1)
+    if (TFM_NS_INDEPENDENT_SIG)
         configure_file(signing_layout.c.in signing_layout_s.c @ONLY)
         add_library(signing_layout_s OBJECT ${CMAKE_CURRENT_BINARY_DIR}/signing_layout_s.c)
     else()
@@ -164,7 +164,7 @@ if (PLATFORM_DEFAULT_IMAGE_SIGNING)
     target_compile_definitions(signing_layout_s
         PRIVATE
             $<$<BOOL:${BL2}>:BL2>
-            $<$<BOOL:${MCUBOOT_IMAGE_NUMBER}>:MCUBOOT_IMAGE_NUMBER=${MCUBOOT_IMAGE_NUMBER}>
+            $<$<BOOL:${TFM_NS_INDEPENDENT_SIG}>:TFM_NS_INDEPENDENT_SIG=${TFM_NS_INDEPENDENT_SIG}>
             $<$<STREQUAL:${MCUBOOT_UPGRADE_STRATEGY},DIRECT_XIP>:IMAGE_ROM_FIXED>
     )
     target_link_libraries(signing_layout_s
@@ -217,7 +217,7 @@ if (PLATFORM_DEFAULT_IMAGE_SIGNING)
     target_compile_definitions(signing_layout_ns
         PRIVATE
             $<$<BOOL:${BL2}>:BL2>
-            $<$<BOOL:${MCUBOOT_IMAGE_NUMBER}>:MCUBOOT_IMAGE_NUMBER=${MCUBOOT_IMAGE_NUMBER}>
+            $<$<BOOL:${TFM_NS_INDEPENDENT_SIG}>:TFM_NS_INDEPENDENT_SIG=${TFM_NS_INDEPENDENT_SIG}>
             $<$<STREQUAL:${MCUBOOT_UPGRADE_STRATEGY},DIRECT_XIP>:IMAGE_ROM_FIXED>
     )
     target_link_libraries(signing_layout_ns

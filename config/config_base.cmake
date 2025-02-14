@@ -169,6 +169,13 @@ else()
     set(MCUBOOT_MEASURED_BOOT OFF)
 endif()
 
+# TODO Problem: MCUBOOT_IMAGE_NUMBER will be redifined in other platform...
+if(MCUBOOT_IMAGE_NUMBER GREATER 1)
+    set(TFM_NS_INDEPENDENT_SIG ON CACHE BOOL "Indicate if S and NS must be signed independently or not")
+else()
+    set(TFM_NS_INDEPENDENT_SIG OFF CAHCE BOOL "Indicate if S and NS must be signed independently or not")
+endif()
+
 ########################## TF-M Runtime Sanitization ###########################
 
 set(BL1_1_SANITIZE                      OFF         CACHE STRING    "Enable a runtime sanitizer for BL1_1")

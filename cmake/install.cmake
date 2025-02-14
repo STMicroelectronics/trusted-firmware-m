@@ -211,7 +211,7 @@ if(BL2 AND PLATFORM_DEFAULT_IMAGE_SIGNING)
     install(FILES $<TARGET_FILE_DIR:bl2>/image_s_signing_public_key.pem
             DESTINATION ${INSTALL_IMAGE_SIGNING_DIR}/keys)
 
-    if(MCUBOOT_IMAGE_NUMBER GREATER 1)
+    if(TFM_NS_INDEPENDENT_SIG)
         install(FILES $<TARGET_OBJECTS:signing_layout_ns>
                 DESTINATION ${INSTALL_IMAGE_SIGNING_DIR}/layout_files)
         install(FILES ${MCUBOOT_KEY_NS}
