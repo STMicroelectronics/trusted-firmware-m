@@ -254,7 +254,7 @@
 enum stpmic2_prop_id {
 	STPMIC2_MASK_RESET = 0,
 	STPMIC2_PULL_DOWN,
-	STPMIC2_BYPASS,
+	STPMIC2_BYPASS,		/* takes arg = bypass enable */
 	STPMIC2_SINK_SOURCE,
 	STPMIC2_OCP,
 	STPMIC2_PWRCTRL_EN,
@@ -262,7 +262,7 @@ enum stpmic2_prop_id {
 	STPMIC2_PWRCTRL_SEL,	/* takes arg = pwrctrl line number */
 	STPMIC2_MAIN_PREG_MODE,	/* takes arg = preg mode HP=1, CCM=2 */
 	STPMIC2_ALT_PREG_MODE,	/* takes arg = preg mode HP=1, CCM=2 */
-	STPMIC2_BYPASS_UV,
+	STPMIC2_BYPASS_UV,	/* takes arg = bypass voltage in uV */
 };
 
 struct regu_stpmic2_desc {
@@ -484,16 +484,16 @@ static int stpmic2_set_prop(const struct device *dev,
 		if (!regu_desc->has_bypass)
 			return -ENOTSUP;
 
-		/* clear sink source mode */
-		if (regu_desc->has_sink) {
+		/* clear sink source mode if set bypass */
+		if (arg && regu_desc->has_sink) {
 			err = stpmic2_update_en_crs(dev, LDO3_SNK_SRC, 0);
 			if (err)
 				return err;
 		}
 
+		/* set or clear bypass depending on arg value */
 		return stpmic2_update_en_crs(dev, LDO_BYPASS,
-					     drv_data->st_bypass ?
-					     LDO_BYPASS : 0);
+					     arg ? LDO_BYPASS : 0);
 	case STPMIC2_SINK_SOURCE:
 		if (!regu_desc->has_sink)
 			return -ENOTSUP;
@@ -612,17 +612,29 @@ static int stpmic2_reg_set_voltage(const struct device *dev, int32_t min_uv,
 	if (err)
 		return -EINVAL;
 
-	if (val_uv == drv_data->st_bypass_uv) {
-		err = stpmic2_set_prop(dev, STPMIC2_BYPASS, 0);
+	/* if st_bypass_uv value is requested, set bypass and return */
+	if (drv_data->st_bypass_uv && val_uv == drv_data->st_bypass_uv) {
+		err = stpmic2_set_prop(dev, STPMIC2_BYPASS, 1);
 		if (err)
 			return err;
 	}
 
 	reg_idx = (idx << regu_desc->volt_shift) & regu_desc->volt_mask;
 
-	return i2c_reg_update_byte_dt(&drv_cfg->i2c,
-				      regu_desc->volt_cr,
-				      regu_desc->volt_mask, reg_idx);
+	err = i2c_reg_update_byte_dt(&drv_cfg->i2c,
+				     regu_desc->volt_cr,
+				     regu_desc->volt_mask, reg_idx);
+	if (err)
+		return err;
+
+	/* maybe clear bypass after set voltage */
+	if (drv_data->st_bypass_uv && val_uv != drv_data->st_bypass_uv) {
+		err = stpmic2_set_prop(dev, STPMIC2_BYPASS, 0);
+		if (err)
+			return err;
+	}
+
+	return 0;
 }
 
 static int stpmic2_reg_get_voltage(const struct device *dev, int32_t *volt_uv)
@@ -711,7 +723,7 @@ static int stpmic2_parse_prop(const struct device *dev)
 		err |= stpmic2_set_prop(dev, STPMIC2_PWRCTRL_EN, 0);
 
 	if (drv_data->st_bypass)
-		err |= stpmic2_set_prop(dev, STPMIC2_BYPASS, 0);
+		err |= stpmic2_set_prop(dev, STPMIC2_BYPASS, 1);
 
 	if (drv_data->st_sink_source)
 		err |= stpmic2_set_prop(dev, STPMIC2_SINK_SOURCE, 0);
