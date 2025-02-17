@@ -27,6 +27,10 @@
 #include <stm32_dcache.h>
 
 extern ARM_DRIVER_FLASH FLASH_DEV_FW_DDR_NAME;
+#ifdef STM32_BOOT_DEV_OSPI
+extern ARM_DRIVER_FLASH FLASH_DEV_NAME_0;
+extern ARM_DRIVER_FLASH FLASH_DEV_NAME_2;
+#endif
 
 REGION_DECLARE(Image$$, ER_DATA, $$Base)[];
 REGION_DECLARE(Image$$, ARM_LIB_HEAP, $$ZI$$Limit)[];
