@@ -26,6 +26,10 @@
 #include <stm32_bsec3.h>
 #include <stm32_dcache.h>
 
+#ifdef CRYPTO_HW_ACCELERATOR
+#include "crypto_hw.h"
+#endif /* CRYPTO_HW_ACCELERATOR */
+
 extern ARM_DRIVER_FLASH FLASH_DEV_FW_DDR_NAME;
 #ifdef STM32_BOOT_DEV_OSPI
 extern ARM_DRIVER_FLASH FLASH_DEV_NAME_0;
