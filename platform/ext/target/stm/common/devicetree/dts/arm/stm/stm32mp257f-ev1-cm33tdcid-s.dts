@@ -379,6 +379,12 @@
 	mbox-names = "rx", "tx";
 };
 
+&psa_mbox {
+	status = "okay";
+	mboxes = <&ipcc1 IPCC_CHANNEL(3)>, <&ipcc1 IPCC_CHANNEL(3)>;
+	mbox-names = "rx", "tx";
+};
+
 &rtc {
 	status = "okay";
 };
