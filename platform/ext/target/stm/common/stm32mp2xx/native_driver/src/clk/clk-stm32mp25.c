@@ -1947,21 +1947,29 @@ static int clk_stm32_pll3_enable(struct clk *clk)
 	stm32_gate_enable(priv, GATE_GPU);
 
 	if (clk_stm32_pll_init(priv, PLL3_ID, pll_conf)) {
-		stm32_gate_disable(priv, GATE_GPU);
-		return -EBUSY;
+		res = -EBUSY;
+		goto out;
 	}
 
 	res = stm32_gate_rdy_enable(priv, cfg->gate_id);
-	if (res)
+	if (res) {
 		EMSG("%s timeout\n", clk_get_name(clk));
+		goto out;
+	}
 
 	/* Update parent */
 	pidx = clk_stm32_pll_get_parent(clk);
 	parent = clk_get_parent_by_index(clk, pidx);
 
 	res = clk_reparent(clk, parent);
-	if (res)
+	if (res) {
 		EMSG("fail to reparent PLL3\n");
+		clk_stm32_pll_disable(clk);
+	}
+
+out:
+	if (res)
+		stm32_gate_disable(priv, GATE_GPU);
 
 	return res;
 }
