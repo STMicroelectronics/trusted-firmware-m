@@ -42,6 +42,12 @@ target_compile_definitions(tfm_config
         STM32_PROV_FAKE=${STM32_PROV_FAKE}
 )
 
+target_include_directories(tfm_config
+    INTERFACE
+        $<BUILD_INTERFACE:${STM_FAMILLY_DIR}>
+        $<BUILD_INTERFACE:${STM_SOC_DIR}>
+)
+
 target_include_directories(platform_region_defs
 	INTERFACE
 		include
@@ -371,6 +377,7 @@ install(FILES
     ${STM_FAMILLY_DIR}/config.cmake
     ${STM_FAMILLY_DIR}/cpuarch.cmake
     ${STM_FAMILLY_DIR}/CMakeLists.txt
+    ${STM_FAMILLY_DIR}/config_tfm_stm32mp2.h
     ${STM_FAMILLY_DIR}/tfm_ns_plat_init.c
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx
 )

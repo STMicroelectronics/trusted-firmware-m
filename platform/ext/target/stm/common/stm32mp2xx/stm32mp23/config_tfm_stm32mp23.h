@@ -1,0 +1,11 @@
+/*
+ * Copyright (c) 2025, Arm Limited. All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ */
+#ifndef __CONFIG_TFM_STM32MP23_H__
+#define __CONFIG_TFM_STM32MP23_H__
+
+#include <config_tfm_stm32mp2.h>
+#endif /* __CONFIG_TFM_STM32MP23_H__ */
