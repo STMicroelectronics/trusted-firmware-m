@@ -39,7 +39,7 @@ void sys_init_run_level(enum init_level level)
 
 			err = entry->init_fn.sys();
 			if (err)
-				EMSG("oops sysinit");
+				EMSG("oops sysinit\n");
 			continue;
 		}
 
@@ -55,7 +55,7 @@ void sys_init_run_level(enum init_level level)
 			dev->state->init_res = entry->init_fn.dev(dev);
 			dev->state->initialized = true;
 			if (dev->state->init_res)
-				EMSG("device:%s err:%d",
+				EMSG("device:%s err:%d\n",
 				     dev->name, dev->state->init_res);
 		}
 	}
