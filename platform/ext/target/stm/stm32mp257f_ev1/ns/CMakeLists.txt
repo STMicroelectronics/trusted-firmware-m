@@ -40,6 +40,12 @@ target_include_directories(platform_region_defs
         ${STM_FAMILLY_DIR}/cmsis_driver/include
 )
 
+target_include_directories(tfm_config
+    INTERFACE
+        $<BUILD_INTERFACE:${STM_FAMILLY_DIR}>
+        $<BUILD_INTERFACE:${STM_SOC_DIR}>
+)
+
 target_link_libraries(platform_region_defs
     INTERFACE
         dt_platform_ns_defs
