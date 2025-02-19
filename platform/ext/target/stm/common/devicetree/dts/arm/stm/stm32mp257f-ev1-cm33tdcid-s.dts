@@ -426,3 +426,7 @@
 	enable-method = "remoteproc";
 	remoteprocs = <&a35_rproc>;
 };
+
+&rng {
+	status = "okay";
+};
