@@ -86,3 +86,8 @@ child-binding:
       type: boolean
       description: |
         enable sink-source mode if it's available on this regulator.
+
+    st,alternate-input-source:
+      type: boolean
+      description: |
+        enable secondary input source on LDO1.
