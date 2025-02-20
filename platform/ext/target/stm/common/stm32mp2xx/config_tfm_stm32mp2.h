@@ -14,11 +14,7 @@
 /* For size optimization, set CLK_MINIMAL_SZ (no clock name defined e.g.) */
 #ifndef CLK_MINIMAL_SZ
 #define CLK_MINIMAL_SZ	1
-
 #endif
-/* Set ddr4 type */
-#undef STM32MP_DDR4_TYPE
-#define STM32MP_DDR4_TYPE 1
 
 #define SCP_STACK_SIZE 0x2000
 #define IPCC_STACK_SIZE 0x2000
