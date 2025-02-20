@@ -78,6 +78,12 @@
 			compatible = "fixed-clock";
 			clock-frequency = <0>;
 		};
+
+		clk_rcbsec: clk-rcbsec {
+			#clock-cells = <0>;
+			compatible = "fixed-clock";
+			clock-frequency = <64000000>;
+		};
 	};
 
 	soc {
