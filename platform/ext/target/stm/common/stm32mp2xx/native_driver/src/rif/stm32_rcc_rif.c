@@ -15,8 +15,12 @@
 #include <errno.h>
 
 #include <device.h>
-#include <stm32mp25_clk.h>
+#include <stm32mp2_clk.h>
+#if defined(STM32MP21xxxx)
+#include <stm32mp21_rcc.h>
+#else
 #include <stm32mp25_rcc.h>
+#endif
 #include <stm32_rif.h>
 #include <firewall.h>
 
