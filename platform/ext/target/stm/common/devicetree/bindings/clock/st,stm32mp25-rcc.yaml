@@ -10,7 +10,7 @@ description: |
   =================
 
   All available clocks are defined as preprocessor macros in
-  dt-bindings/clock/stm32mp25-clks.h and can be used in device
+  dt-bindings/clock/st,stm32mp25-rcc.h and can be used in device
   tree sources.
 
   Specifying softreset control of devices
