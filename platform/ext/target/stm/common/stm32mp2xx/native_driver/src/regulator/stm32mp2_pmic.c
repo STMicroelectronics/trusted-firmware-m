@@ -263,6 +263,7 @@ enum stpmic2_prop_id {
 	STPMIC2_MAIN_PREG_MODE,	/* takes arg = preg mode HP=1, CCM=2 */
 	STPMIC2_ALT_PREG_MODE,	/* takes arg = preg mode HP=1, CCM=2 */
 	STPMIC2_BYPASS_UV,	/* takes arg = bypass voltage in uV */
+	STPMIC2_ALTERNATE_SOURCE,
 };
 
 struct regu_stpmic2_desc {
@@ -286,6 +287,7 @@ struct regu_stpmic2_desc {
 	bool has_bypass;
 	bool has_sink;
 	bool has_preg;
+	bool has_alternate_source;
 };
 
 /* Voltage tables in uV */
@@ -336,6 +338,7 @@ static const struct linear_range __maybe_unused refddr_ranges[] = {
 	.has_bypass		= false,			\
 	.has_sink		= false,			\
 	.has_preg		= true,				\
+	.has_alternate_source	= false,			\
 }
 
 #define DEFINE_LDO_BYPASS(_regu_name, _id, _pd, _ranges) {	\
@@ -358,6 +361,7 @@ static const struct linear_range __maybe_unused refddr_ranges[] = {
 	.ocp_mask		= FS_OCP_ ## _id,		\
 	.has_bypass		= true,				\
 	.has_sink		= false,			\
+	.has_alternate_source	= false,			\
 }
 
 #define DEFINE_LDO_BYPASS_SINK(_regu_name, _id, _pd, _ranges) {	\
@@ -380,6 +384,7 @@ static const struct linear_range __maybe_unused refddr_ranges[] = {
 	.ocp_mask		= FS_OCP_ ## _id,		\
 	.has_bypass		= true,				\
 	.has_sink		= true,				\
+	.has_alternate_source	= false,			\
 }
 
 #define DEFINE_LDO(_regu_name, _id, _pd, _ranges) {		\
@@ -402,6 +407,30 @@ static const struct linear_range __maybe_unused refddr_ranges[] = {
 	.ocp_mask		= FS_OCP_ ## _id,		\
 	.has_bypass		= false,			\
 	.has_sink		= false,			\
+	.has_alternate_source	= false,			\
+}
+
+#define DEFINE_LDO1(_regu_name, _id, _pd, _ranges) {		\
+	.name			= _regu_name,			\
+	.ranges			= _ranges,			\
+	.nranges		= ARRAY_SIZE(_ranges),		\
+	.volt_shift		= LDO_VOUT_SHIFT,		\
+	.volt_mask		= 0x0,				\
+	.en_cr			= _id ## _MAIN_CR,		\
+	.volt_cr		= _id ## _MAIN_CR,		\
+	.alt_en_cr		= _id ## _ALT_CR,		\
+	.alt_volt_cr		= _id ## _ALT_CR,		\
+	.pwrctrl_cr		= _id ## _PWRCTRL_CR,		\
+	.msrt_reg		= LDOS_MRST_CR,			\
+	.msrt_mask		= _id ## _MRST,			\
+	.pd_reg			= LDOS_PD_CR1,			\
+	.pd_val			= _id ## _PD,			\
+	.pd_mask		= _id ## _PD,			\
+	.ocp_reg		= FS_OCP_CR2,			\
+	.ocp_mask		= FS_OCP_ ## _id,		\
+	.has_bypass		= false,			\
+	.has_sink		= false,			\
+	.has_alternate_source	= true,				\
 }
 
 #define DEFINE_REFDDR(_regu_name, _id, _pd, _ranges) {		\
@@ -422,6 +451,7 @@ static const struct linear_range __maybe_unused refddr_ranges[] = {
 	.ocp_mask		= FS_OCP_ ## _id,		\
 	.has_bypass		= false,			\
 	.has_sink		= false,			\
+	.has_alternate_source	= false,			\
 }
 
 struct regu_stpmic2_config {
@@ -439,6 +469,7 @@ struct regu_stpmic2_data {
 	bool st_pwrctrl;
 	bool st_pwrctrl_reset;
 	bool st_sink_source;
+	bool st_alternate_source;
 	int32_t st_pwrctrl_sel;
 	int32_t	st_bypass_uv;
 };
@@ -504,6 +535,11 @@ static int stpmic2_set_prop(const struct device *dev,
 			return err;
 
 		return stpmic2_update_en_crs(dev, LDO3_SNK_SRC, LDO3_SNK_SRC);
+	case STPMIC2_ALTERNATE_SOURCE:
+		if (!regu_desc->has_alternate_source)
+			return -ENOTSUP;
+
+		return stpmic2_update_en_crs(dev, LDO1_INPUT_SRC, LDO1_INPUT_SRC);
 	case STPMIC2_OCP:
 		return i2c_reg_update_byte_dt(&drv_cfg->i2c,
 					      regu_desc->ocp_reg,
@@ -728,6 +764,9 @@ static int stpmic2_parse_prop(const struct device *dev)
 	if (drv_data->st_sink_source)
 		err |= stpmic2_set_prop(dev, STPMIC2_SINK_SOURCE, 0);
 
+	if (drv_data->st_alternate_source)
+		err |= stpmic2_set_prop(dev, STPMIC2_ALTERNATE_SOURCE, 0);
+
 	return err ? -EINVAL : 0;
 }
 
@@ -778,6 +817,7 @@ static const struct regulator_driver_api stpmic2_api = {
 		.st_pwrctrl_sel = DT_PROP_OR(node_id, st_pwrctrl_sel, 0),		\
 		.st_bypass_uv = DT_PROP_OR(node_id, st_regulator_bypass_microvolt, 0),	\
 		.st_sink_source = DT_PROP(node_id, st_regulator_sink_source),		\
+		.st_alternate_source = DT_PROP(node_id, st_alternate_input_source),	\
 	};										\
 											\
 	static const struct regu_stpmic2_config cfg_##id = {				\
@@ -813,7 +853,7 @@ static const struct regulator_driver_api stpmic2_api = {
 				      BUCK7, BUCKS_PD_CR2, buck457_ranges)		\
 	REGULATOR_STPMIC2_DEFINE_COND(inst, refddr, DEFINE_REFDDR,			\
 				      REFDDR, NULL, refddr_ranges)			\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, ldo1, DEFINE_LDO,				\
+	REGULATOR_STPMIC2_DEFINE_COND(inst, ldo1, DEFINE_LDO1,				\
 				      LDO1, NULL, ldo1_ranges)				\
 	REGULATOR_STPMIC2_DEFINE_COND(inst, ldo2, DEFINE_LDO_BYPASS,			\
 				      LDO2, NULL, ldo235678_ranges)			\
