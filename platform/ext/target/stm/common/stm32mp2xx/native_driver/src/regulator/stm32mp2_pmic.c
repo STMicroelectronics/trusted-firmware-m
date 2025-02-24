@@ -763,9 +763,9 @@ static const struct regulator_driver_api stpmic2_api = {
 		.st_bypass = DT_PROP(node_id, st_regulator_bypass),			\
 		.st_pwrctrl = DT_PROP(node_id, st_pwrctrl_enable),			\
 		.st_pwrctrl_reset = DT_PROP(node_id, st_pwrctrl_reset),			\
-		.st_pwrctrl_sel = DT_PROP_OR(node_id, st_regulator_bypass_microvolt, 0),\
-		.st_bypass_uv = DT_PROP_OR(node_id, st_pwrctrl_sel, 0),			\
-		.st_sink_source = DT_PROP(node_id, st_sink_source),			\
+		.st_pwrctrl_sel = DT_PROP_OR(node_id, st_pwrctrl_sel, 0),		\
+		.st_bypass_uv = DT_PROP_OR(node_id, st_regulator_bypass_microvolt, 0),	\
+		.st_sink_source = DT_PROP(node_id, st_regulator_sink_source),		\
 	};										\
 											\
 	static const struct regu_stpmic2_config cfg_##id = {				\
