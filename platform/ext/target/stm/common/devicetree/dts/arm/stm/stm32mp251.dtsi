@@ -2,8 +2,8 @@
 /*
  * Copyright (C) STMicroelectronics 2023 - All Rights Reserved
  */
-#include <dt-bindings/clock/stm32mp25-clks.h>
-#include <dt-bindings/reset/stm32mp25-resets.h>
+#include <dt-bindings/clock/st,stm32mp25-rcc.h>
+#include <dt-bindings/reset/st,stm32mp25-rcc.h>
 #include <dt-bindings/scmi/stm32mp25-agents.h>
 
 / {
