@@ -116,6 +116,7 @@
 				regulator-max-microvolt = <1800000>;
 				regulator-always-on;
 				st,mask-reset;
+				st,alternate-input-source;
 			};
 			vdd_emmc: ldo2 {
 				regulator-name = "vdd_emmc";
