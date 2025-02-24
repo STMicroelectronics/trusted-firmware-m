@@ -25,7 +25,7 @@
 #include <syscon.h>
 
 #include <dt-bindings/clock/stm32mp25-clksrc.h>
-#include <dt-bindings/clock/stm32mp25-clks.h>
+#include <dt-bindings/clock/st,stm32mp25-rcc.h>
 
 #include "clk-stm32-core.h"
 
