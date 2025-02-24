@@ -21,8 +21,7 @@
 #include <reset.h>
 #include <firewall.h>
 #include <syscon.h>
-#include <dt-bindings/scmi/stm32mp25-agents.h>
-#include "dt-bindings/clock/stm32mp25-clks.h"
+#include <dt-bindings/scmi/stm32mp2-agents.h>
 #include <stdlib.h>
 #include "clk-stm32-core.h"
 #include "tfm_sp_log.h"
