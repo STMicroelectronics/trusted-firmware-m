@@ -154,5 +154,6 @@ struct stm32mp_ddr_config {
 };
 
 void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv, struct stm32mp_ddr_config *config);
+int stm32mp2_ddr_dt_init(void);
 
 #endif /* STM32MP2_DDR_H */

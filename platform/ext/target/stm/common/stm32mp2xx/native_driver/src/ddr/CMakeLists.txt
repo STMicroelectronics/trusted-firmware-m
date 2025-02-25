@@ -61,8 +61,64 @@ target_compile_definitions(platform_bl2
 		$<$<STREQUAL:${STM32_DDR_PHY_FILE},lpddr4_pmu_train.bin>:STM32MP_LPDDR4_TYPE=1>
 )
 
-install(PROGRAMS
-	${DDR_PHY_BIN_SRC_PATH}/stm32mp2/${STM32_DDR_PHY_FILE}
-	DESTINATION $<TARGET_FILE_DIR:bl2>
-	RENAME ddr_phy.bin
+# Custom command to install the ddr_phy.bin file
+add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/bin/ddr_phy.bin
+    COMMAND ${CMAKE_COMMAND} -E copy ${DDR_PHY_BIN_SRC_PATH}/stm32mp2/${STM32_DDR_PHY_FILE} ${CMAKE_BINARY_DIR}/bin/ddr_phy.bin
+    DEPENDS ${DDR_PHY_BIN_SRC_PATH}/stm32mp2/${STM32_DDR_PHY_FILE}
+    COMMENT "Installing ddr_phy.bin"
+)
+
+# Custom target to generate ddr_phy.bin
+add_custom_target(ddr_phy_bin_target ALL DEPENDS ${CMAKE_BINARY_DIR}/bin/ddr_phy.bin)
+
+############################### SIGNING ddr_phy.bin ##################################
+find_package(Python3)
+
+set(BL2_SOURCE ${CMAKE_SOURCE_DIR}/bl2)
+set(API_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/api_ns)
+
+configure_file(signing_layout.c.in ${CMAKE_CURRENT_BINARY_DIR}/signing_layout.c @ONLY)
+add_library(signing_layout_for_ddr_phy OBJECT ${CMAKE_CURRENT_BINARY_DIR}/signing_layout.c)
+
+target_link_libraries(signing_layout_for_ddr_phy
+    PRIVATE
+		platform_bl2
+)
+
+target_compile_options(signing_layout_for_ddr_phy
+	PRIVATE
+		$<$<C_COMPILER_ID:GNU>:-E\;-xc>
+		$<$<C_COMPILER_ID:ARMClang>:-E\;-xc>
+)
+
+add_custom_target(ddr_phy_signed_bin
+	ALL
+	SOURCES ddr_phy_signed.bin
+)
+add_custom_command(OUTPUT ddr_phy_signed.bin
+	DEPENDS $<TARGET_FILE_DIR:bl2>/ddr_phy.bin
+	DEPENDS platform_bl2 signing_layout_for_ddr_phy
+	DEPENDS $<IF:$<BOOL:${MCUBOOT_GENERATE_SIGNING_KEYPAIR}>,generated_private_key,>
+	WORKING_DIRECTORY ${MCUBOOT_PATH}/scripts
+
+	#Sign secure binary image with provided secret key
+	COMMAND ${Python3_EXECUTABLE} ${BL2_SOURCE}/ext/mcuboot/scripts/wrapper/wrapper.py
+		-v ${DDR_IMAGE_VERSION}
+		--layout $<TARGET_OBJECTS:signing_layout_for_ddr_phy>
+		-k ${MCUBOOT_KEY_S}
+		--public-key-format $<IF:$<BOOL:${MCUBOOT_HW_KEY}>,full,hash>
+		--align ${MCUBOOT_ALIGN_VAL}
+                --pad
+                --pad-header
+                -H ${BL2_HEADER_SIZE}
+                -s ${DDRFW_SECURITY_COUNTER_S}
+                -L ${MCUBOOT_ENC_KEY_LEN}
+		$<$<STREQUAL:${MCUBOOT_UPGRADE_STRATEGY},OVERWRITE_ONLY>:--overwrite-only>
+                $<$<BOOL:${MCUBOOT_CONFIRM_IMAGE}>:--confirm>
+                $<$<BOOL:${MCUBOOT_ENC_IMAGES}>:-E${API_SOURCE}/image_signing/keys/image_enc_key.pem>
+                $<$<BOOL:${MCUBOOT_MEASURED_BOOT}>:--measured-boot-record>
+		$<TARGET_FILE_DIR:bl2>/ddr_phy.bin
+		${CMAKE_CURRENT_BINARY_DIR}/ddr_phy_signed.bin
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/ddr_phy_signed.bin $<TARGET_FILE_DIR:bl2>
 )

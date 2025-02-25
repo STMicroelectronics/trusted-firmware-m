@@ -23,6 +23,7 @@
 #include <partition.h>
 #include "flash_map/flash_map.h"
 
+#include <stm32mp2_ddr.h>
 #include <stm32_bsec3.h>
 #include <stm32_dcache.h>
 
@@ -30,11 +31,10 @@
 #include "crypto_hw.h"
 #endif /* CRYPTO_HW_ACCELERATOR */
 
-extern ARM_DRIVER_FLASH FLASH_DEV_FW_DDR_NAME;
-#ifdef STM32_BOOT_DEV_OSPI
+extern ARM_DRIVER_FLASH FLASH_DEV_NAME_1;
 extern ARM_DRIVER_FLASH FLASH_DEV_NAME_0;
 extern ARM_DRIVER_FLASH FLASH_DEV_NAME_2;
-#endif
+extern ARM_DRIVER_FLASH FLASH_DEV_NAME_3;
 
 REGION_DECLARE(Image$$, ER_DATA, $$Base)[];
 REGION_DECLARE(Image$$, ARM_LIB_HEAP, $$ZI$$Limit)[];
@@ -77,40 +77,11 @@ int stm32mp2_init_debug(void)
 }
 SYS_INIT(stm32mp2_init_debug, CORE, 11);
 
-#ifdef STM32_BOOT_DEV_OSPI
-static int stm32mp2_prepare_ddr_fw(void)
-{
-	int err, count;
-
-	if (FLASH_DEV_FW_DDR_NAME.Initialize(NULL) != ARM_DRIVER_OK) {
-		err = -ENODEV;
-		goto error;
-	}
-
-	count = FLASH_DEV_FW_DDR_NAME.ReadData(FLASH_DEV_FW_DDR_OFFSET,
-					(void*) DDR_FW_DEST_ADDR,
-					DDR_FW_SIZE);
-	if (count != DDR_FW_SIZE) {
-		err = -EIO;
-		goto error;
-	}
-
-	return 0;
-
-error:
-	EMSG("%s fail", __func__);
-	return err;
-}
-SYS_INIT(stm32mp2_prepare_ddr_fw, CORE, 15);
-#endif
-
 #if defined(STM32_BOOT_DEV_SDMMC1) || defined(STM32_BOOT_DEV_SDMMC2)
 extern struct flash_area flash_map[];
-extern ARM_DRIVER_FLASH FLASH_DEV_NAME;
 
 static int stm32mp2_prepare_fw(void)
 {
-	int count;
 	const partition_entry_t *tfm_entry;
 
         tfm_entry = get_partition_entry("m33fw-a");
@@ -137,13 +108,17 @@ static int stm32mp2_prepare_fw(void)
 		return -EINVAL;
 	}
 
-	count = FLASH_DEV_NAME.ReadData(tfm_entry->start,
-					(void*) DDR_FW_DEST_ADDR,
-					DDR_FW_SIZE);
-	if (count != DDR_FW_SIZE) {
-		BOOT_LOG_ERR("Failed to load ddr fw primary partition");
+	flash_map[2].fa_off = tfm_entry->start;
+	flash_map[2].fa_size = tfm_entry->length;
+
+	tfm_entry = get_partition_entry("m33ddr-b");
+	if (tfm_entry == NULL) {
+		BOOT_LOG_ERR("Could not find partition ddr fw secondary partition");
 		return -EINVAL;
 	}
+
+	flash_map[3].fa_off = tfm_entry->start;
+	flash_map[3].fa_size = tfm_entry->length;
 
 	return 0;
 }
@@ -203,8 +178,14 @@ void boot_platform_quit(struct boot_arm_vector_table *vt)
 	}
 	#endif /* CRYPTO_HW_ACCELERATOR */
 
-	#ifdef FLASH_DEV_NAME
-	result = FLASH_DEV_NAME.Uninitialize();
+	#ifdef FLASH_DEV_NAME_0
+	result = FLASH_DEV_NAME_0.Uninitialize();
+	if (result != ARM_DRIVER_OK) {
+		while(1) {}
+	}
+	#endif /* FLASH_DEV_NAME */
+	#ifdef FLASH_DEV_NAME_1
+	result = FLASH_DEV_NAME_1.Uninitialize();
 	if (result != ARM_DRIVER_OK) {
 		while(1) {}
 	}
@@ -255,3 +236,14 @@ void boot_platform_quit(struct boot_arm_vector_table *vt)
 	boot_jump_to_next_image(vt_cpy->reset);
 }
 #endif
+
+int boot_platform_post_load(uint32_t image_id)
+{
+	uint32_t aera_id = image_id + 1;
+	if (aera_id == FLASH_AREA_IMAGE_PRIMARY(1) ||
+		aera_id == FLASH_AREA_IMAGE_SECONDARY(1)) {
+		BOOT_LOG_INF("BL2: image %d, enable DDR-FW", image_id);
+		stm32mp2_ddr_dt_init();
+	}
+	return 0;
+}

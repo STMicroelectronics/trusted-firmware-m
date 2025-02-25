@@ -241,6 +241,11 @@ if(BL2)
 		dt_platform_bl2_defs
 	)
 
+	target_compile_definitions(bootutil
+		PRIVATE
+			MULTIPLE_EXECUTABLE_RAM_REGIONS
+	)
+
 	target_include_directories(platform_bl2
 		PUBLIC
 			${PLATFORM_DIR}/include
@@ -260,6 +265,7 @@ if(BL2)
 			$<$<STREQUAL:${STM32_BOOT_DEV},ospi>:${STM_FAMILLY_DIR}/cmsis_driver/src/driver_spi_flash.c>
 			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_FAMILLY_DIR}/cmsis_driver/src/driver_mmc_flash.c>
 			${STM_FAMILLY_DIR}/bl2/boot_hal.c
+			${STM_FAMILLY_DIR}/bl2/flash_map_bl2.c
 			${STM_FAMILLY_DIR}/cmsis_driver/src/driver_flash_mm.c
 			${STM_FAMILLY_DIR}/native_driver/src/core/mpu_armv8m_drv.c
 			${STM_FAMILLY_DIR}/native_driver/src/power/stm32mp2_pwr.c
@@ -314,8 +320,6 @@ if(BL2)
             bl2_mbedcrypto_config
 	)
 
-	add_subdirectory(${STM_FAMILLY_DIR}/native_driver/src/ddr native_driver/src/ddr)
-
 	# GNU ld has some strange behaviour to do with weak functions, and does not deal
 	# well with strong functions in static libraries overriding weak functions in
 	# object files.
@@ -355,6 +359,8 @@ if(BL2)
 		-v_maj ${STM32_HEADER_MAJOR_VER}
 		-v_min ${STM32_HEADER_MINOR_VER}
 	)
+
+	add_subdirectory(${STM_FAMILLY_DIR}/native_driver/src/ddr native_driver/src/ddr)
 
 endif()
 #========================= Files for building NS side platform ================#

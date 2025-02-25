@@ -156,7 +156,7 @@ int stm32mp_board_ddr_power_init(enum ddr_type ddr_type)
 #define DDR_CLK_DEV	DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(0))
 #define DDR_CLK_ID	DT_INST_CLOCKS_CELL(0, bits)
 
-static int stm32mp2_ddr_dt_init(void)
+int stm32mp2_ddr_dt_init(void)
 {
 	unsigned long ret;
 	struct clk *clk;
@@ -268,5 +268,3 @@ BUILD_ASSERT(CHECK_DT_VS_STRUCT(st_ctl_map, stm32mp2_ddrctrl_map),
 	     "st,ctl-map property not match with stm32mp2_ddrctrl_map size");
 BUILD_ASSERT(CHECK_DT_VS_STRUCT(st_ctl_perf, stm32mp2_ddrctrl_perf),
 	     "st,ctl-perf property not match with stm32mp2_ddrctrl_perf size");
-
-SYS_INIT(stm32mp2_ddr_dt_init, CORE, 20);
