@@ -6,7 +6,7 @@
 /dts-v1/;
 
 #include <dt-bindings/clock/stm32mp25-clksrc.h>
-#include <dt-bindings/reset/stm32mp25-resets.h>
+#include <dt-bindings/reset/st,stm32mp25-rcc.h>
 
 #include "stm32mp257.dtsi"
 #include "stm32mp257f-ev1-cm33tdcid-resmem.dtsi"
