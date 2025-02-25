@@ -91,3 +91,15 @@ properties:
   vtt-supply:
     type: phandle
     description: Reference to the regulator that controls vtt power
+
+  vdd1-supply:
+    type: phandle
+    description: Reference to the regulator that controls vdd1 power
+
+  vdd2-supply:
+    type: phandle
+    description: Reference to the regulator that controls vdd2 power
+
+  vddq-supply:
+    type: phandle
+    description: Reference to the regulator that controls vddq power
