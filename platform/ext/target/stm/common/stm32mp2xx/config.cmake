@@ -63,8 +63,9 @@ if (TFM_PARTITION_SCP)
 	list(APPEND MANIFEST_LISTS ${CMAKE_CURRENT_LIST_DIR}/manifest/tfm_manifest_list.yaml)
 endif()
 
-set(SCP_FW_VERSION                      "a8cfaf31f0016a7130bc7" CACHE STRING    "The version of SCP-firmware to use")
-set(SCP_FW_PATH                         "DOWNLOAD"              CACHE PATH      "Path to SCP-firmware (or DOWNLOAD to fetch automatically")
+set(SCP_FW_VERSION                      "6d7254855f022642d4e2f" CACHE STRING    "The version of SCP-firmware to use")
+set(SCP_FW_PATH                         "DOWNLOAD"              CACHE PATH      "Path to SCP-firmware or DOWNLOAD to fetch automatically")
+set(CFG_SCPFW_MOD_POWER_DOMAIN          ON                      CACHE BOOL      "Set ON to enaable Power domain modules")
 set(PLATFORM_SLIH_IRQ_TEST_SUPPORT      OFF                     CACHE BOOL      "Platform supports SLIH IRQ tests")
 set(PLATFORM_FLIH_IRQ_TEST_SUPPORT      OFF                     CACHE BOOL      "Platform supports FLIH IRQ tests")
 
@@ -76,3 +77,4 @@ endif()
 set(DTS_BOARD_BL2	"${DTS_BOARD_BASE}-bl2.dts"     CACHE STRING "set bl2 board devicetree file")
 set(DTS_BOARD_S		"${DTS_BOARD_BASE}-s.dts"       CACHE STRING "set s board devicetree file")
 set(DTS_BOARD_NS	"${DTS_BOARD_BASE}-ns.dts"      CACHE STRING "set ns board devicetree file")
+
