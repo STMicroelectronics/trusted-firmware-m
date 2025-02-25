@@ -253,4 +253,4 @@
 #define DDR_UIS_SWIZZLE_42 0x00000000
 #define DDR_UIS_SWIZZLE_43 0x00000000
 
-#include "stm32mp25-ddr.dtsi"
+#include "stm32mp2-ddr.dtsi"
