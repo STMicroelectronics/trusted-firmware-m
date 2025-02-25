@@ -228,7 +228,7 @@ static void ddr_reset(struct stm32mp_ddr_priv *priv)
 
 	udelay(DDR_DELAY_1US);
 
-	//mmio_setbits_32(priv->rcc + RCC_DDRITFCFGR, RCC_DDRITFCFGR_DDRRST);
+	mmio_setbits_32(priv->rcc + RCC_DDRITFCFGR, RCC_DDRITFCFGR_DDRRST);
 	mmio_write_32(priv->rcc + RCC_DDRPHYCAPBCFGR,
 		      RCC_DDRPHYCAPBCFGR_DDRPHYCAPBEN | RCC_DDRPHYCAPBCFGR_DDRPHYCAPBLPEN);
 	mmio_write_32(priv->rcc + RCC_DDRCAPBCFGR,
@@ -242,10 +242,8 @@ static void ddr_standby_reset(struct stm32mp_ddr_priv *priv)
 {
 	udelay(DDR_DELAY_1US);
 
-	mmio_setbits_32(priv->rcc + RCC_DDRCPCFGR, RCC_DDRCPCFGR_DDRCPRST);
-
-//	mmio_write_32(priv->rcc + RCC_DDRCPCFGR,
-//		      RCC_DDRCPCFGR_DDRCPEN | RCC_DDRCPCFGR_DDRCPLPEN | RCC_DDRCPCFGR_DDRCPRST);
+	mmio_write_32(priv->rcc + RCC_DDRCPCFGR,
+		      RCC_DDRCPCFGR_DDRCPEN | RCC_DDRCPCFGR_DDRCPLPEN | RCC_DDRCPCFGR_DDRCPRST);
 	mmio_setbits_32(priv->rcc + RCC_DDRITFCFGR, RCC_DDRITFCFGR_DDRRST);
 	mmio_write_32(priv->rcc + RCC_DDRPHYCAPBCFGR,
 		      RCC_DDRPHYCAPBCFGR_DDRPHYCAPBEN | RCC_DDRPHYCAPBCFGR_DDRPHYCAPBLPEN |
@@ -264,8 +262,7 @@ static void ddr_standby_reset_release(struct stm32mp_ddr_priv *priv)
 {
 	udelay(DDR_DELAY_1US);
 
-//	mmio_write_32(priv->rcc + RCC_DDRCPCFGR, RCC_DDRCPCFGR_DDRCPEN | RCC_DDRCPCFGR_DDRCPLPEN);
-	mmio_clrbits_32(priv->rcc + RCC_DDRCPCFGR, RCC_DDRCPCFGR_DDRCPRST);
+	mmio_write_32(priv->rcc + RCC_DDRCPCFGR, RCC_DDRCPCFGR_DDRCPEN | RCC_DDRCPCFGR_DDRCPLPEN);
 	mmio_clrbits_32(priv->rcc + RCC_DDRITFCFGR, RCC_DDRITFCFGR_DDRRST);
 	mmio_clrbits_32(priv->rcc + RCC_DDRPHYCAPBCFGR, RCC_DDRPHYCAPBCFGR_DDRPHYCAPBRST);
 	mmio_write_32(priv->rcc + RCC_DDRCFGR, RCC_DDRCFGR_DDRCFGEN | RCC_DDRCFGR_DDRCFGLPEN);
