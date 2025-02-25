@@ -346,9 +346,7 @@ static int stm32_risaf_init(const struct device *dev)
 
 
 #define RISAF_ADDR(_n, _mem_region)							\
-	COND_CODE_1(CONFIG_STM32MP25X_REVA,						\
-		    (_mem_region),							\
-		    (_mem_region - DT_INST_PROP_BY_IDX(_n, st_mem_map, 1)))
+	(_mem_region - DT_INST_PROP_BY_IDX(_n, st_mem_map, 1))
 
 #define RISAF_MR_DT_REG_ADDR(_node_id, _prop, _idx, _n)					\
 	RISAF_ADDR(_n, DT_REG_ADDR(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx)))

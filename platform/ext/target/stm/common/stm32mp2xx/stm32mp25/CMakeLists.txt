@@ -12,13 +12,6 @@ include(${STM_FAMILLY_DIR}/CMakeLists.txt)
 
 # specific for stm32mp25
 
-#========================= tfm config ===============================#
-target_compile_definitions(tfm_config
-    INTERFACE
-        $<$<STREQUAL:${STM32_STM32MP25_SOC_REV},revA>:CONFIG_STM32MP25X_REVA=1>
-        $<$<STREQUAL:${STM32_STM32MP25_SOC_REV},revB>:CONFIG_STM32MP25X_REVB=1>
-)
-
 #========================= Platform Secure ====================================#
 target_sources(platform_s
     PRIVATE
