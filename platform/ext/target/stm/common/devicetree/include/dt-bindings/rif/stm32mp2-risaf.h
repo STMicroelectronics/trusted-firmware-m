@@ -3,8 +3,8 @@
  * Copyright (C) 2020-2025, STMicroelectronics - All Rights Reserved
  */
 
-#ifndef _DT_BINDINGS_STM32MP25_RISAF_H
-#define _DT_BINDINGS_STM32MP25_RISAF_H
+#ifndef _DT_BINDINGS_STM32MP2_RISAF_H
+#define _DT_BINDINGS_STM32MP2_RISAF_H
 
 /* RISAF region IDs */
 #define RISAF_REG_ID(idx)	(idx)
@@ -15,9 +15,8 @@
 
 /* RISAF encryption modes */
 #define RIF_ENC_DIS		0x0
-#ifdef STM32MP21xxxx
-#define RIF_ENC_MCE_EN		0x1 /* Side-channel attack protection */
-#endif
+
+#define RIF_ENC_MCE_EN		0x1 /* used for RISAF MCE extension */
 #define RIF_ENC_EN		0x2
 
 #define DT_RISAF_ID_SHIFT	0
@@ -57,4 +56,4 @@
 	 (risaf_region))
 
 
-#endif /* _DT_BINDINGS_STM32MP25_RISAF_H */
+#endif /* _DT_BINDINGS_STM32MP2_RISAF_H */
