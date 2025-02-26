@@ -2,8 +2,8 @@
 stm32mp257f_ev1
 ###############
 
-The stm32mp257f_ev1 board is dedicated to evaluate and experimentation
-on :doc:`STM32MP2 SoC of stmicroelectronics </platform/stm/common/stm32mp2xx/readme>`
+The `stm32mp257f_ev1`_ evaluation board is designed as a complete demonstration and development platform for evaluating
+the capabilities of the `STM32MP25`_ microprocessor devices.
 
 *****
 Build
@@ -24,7 +24,6 @@ These build generate:
 
     * Profile supported:
 
-      - :doc:`TF-M Profile small design </configuration/profiles/tfm_profile_small>`: ``-DTFM_PROFILE=profile_small``
       - :doc:`TF-M Profile medium design </configuration/profiles/tfm_profile_medium>`: ``-DTFM_PROFILE=profile_medium``
 
     * **M33TDCID** boot device (bl2 dt file must be aligned):
@@ -42,8 +41,8 @@ These build generate:
       - ``-DDTS_BOARD_NS=<dts_file_non_secure>``
       - ``-DDTS_BOARD_BL2=<dts_file_bl2>``
 
-Building TF-M demo with|out regression tests
-============================================
+Building TF-M secure and non secure with|out regression tests
+=============================================================
 
 clone the tf-m-tests repository in ``<TF-M-TESTS_DIRECTORY>``.
 
@@ -91,10 +90,11 @@ clone the tf-m-tests repository in ``<TF-M-TESTS_DIRECTORY>``.
 
     * To activate or disable S and|or NS regression tests modify ``-DTEST_S=ON|OFF`` ``-DTEST_NS=ON|OFF``.
 
-Building TF-M
-=============
+Building TF-M secure only
+=========================
 
 Used this build if you used your own non secure binary.
+The secure and non secure binaries must be assembled then signed (see CubeIDE process).
 
 .. tabs::
 
@@ -146,7 +146,7 @@ Flashing, run and debugging
       * In developpment, gdb/openocd can load and debug M33 firmware but the
         debug port must be open.
 
-      * The Secure and Non Secure log are mixed on uart5 of stm32mp257 soc.
+      * The Secure and Non Secure log are mixed on uart5 of soc.
         You could setup a terminal with options 115200,8N1, no HW flow control.
 
       .. code::
@@ -162,7 +162,7 @@ Flashing, run and debugging
 
       * To debug, add this flag ``-DDEBUG_AUTHENTICATION=FULL`` at build command line. With this flag, BL2 opens debug port and waits a debugger connection.
 
-      * The Secure and Non Secure log are mixed on uart5 of stm32mp257 soc.
+      * The Secure and Non Secure log are mixed on uart5 of soc.
         You could setup a terminal with options 115200,8N1, no HW flow control.
 
       .. code::
@@ -191,3 +191,6 @@ Flashing, run and debugging
 
 *Copyright (c) 2021 STMicroelectronics. All rights reserved.*
 *SPDX-License-Identifier: BSD-3-Clause*
+
+.. _stm32mp257f_ev1: https://www.st.com/en/evaluation-tools/stm32mp257f-ev1.html
+.. _STM32MP25: https://www.st.com/en/microcontrollers-microprocessors/stm32mp2-series.html
