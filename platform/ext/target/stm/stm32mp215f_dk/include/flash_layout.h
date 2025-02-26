@@ -206,14 +206,21 @@
 					  IMAGE_NS_CODE_SIZE) / \
 					 TFM_HAL_FLASH_PROGRAM_UNIT)
 
-#if !defined(MCUBOOT_IMAGE_NUMBER) || (MCUBOOT_IMAGE_NUMBER == 1)
+#if !defined(MCUBOOT_IMAGE_NUMBER) || (MCUBOOT_IMAGE_NUMBER == 2)
 #if STM32_BL2
 
 #define FLASH_AREA_0_ID			(1)
 #define FLASH_DEVICE_ID_0		100
-#define FLASH_AREA_2_ID			(FLASH_AREA_0_ID + 1)
+#define FLASH_AREA_1_ID			(FLASH_AREA_0_ID + 1)
+#define FLASH_DEVICE_ID_1		101
+#define FLASH_AREA_2_ID			(FLASH_AREA_1_ID + 1)
 #define FLASH_DEVICE_ID_2		102
+#define FLASH_AREA_3_ID			(FLASH_AREA_2_ID + 1)
+#define FLASH_DEVICE_ID_3		103
 
+#define FLASH_DEV_FW_DDR_NAME		DT_CMSIS_FIXED_PARTITIONS_DRIVER_BY_LABEL(ddr_fw_primary_partition)
+#define FLASH_DEV_FW_DDR_OFFSET		DT_CMSIS_FIXED_PARTITIONS_ADDR_BY_LABEL(ddr_fw_primary_partition)
+#define FLASH_DEV_FW_DDR_SIZE		DT_CMSIS_FIXED_PARTITIONS_SIZE_BY_LABEL(ddr_fw_primary_partition)
 
 #ifdef STM32_BOOT_DEV_SDMMC1
 #define STM32_FLASH_SDMMC1
@@ -237,13 +244,29 @@
 #define FLASH_AREA_2_OFFSET		0
 #define FLASH_AREA_2_SIZE		IMAGE_EXECUTABLE_RAM_SIZE
 #define TFM_HAL_FLASH_PROGRAM_UNIT	512
+/* DDR Firmware primary slot */
+#define FLASH_DEV_NAME_1		FLASH_DEV_NAME
+#define FLASH_AREA_1_OFFSET		0
+#define FLASH_AREA_1_SIZE		STM32MP_DDR_FW_MAX_SIZE
+/* DDR Firmware secondary slot */
+#define FLASH_DEV_NAME_3		FLASH_DEV_NAME
+#define FLASH_AREA_3_OFFSET	        0
+#define FLASH_AREA_3_SIZE		STM32MP_DDR_FW_MAX_SIZE
 #endif
+
+#define FLASH_AREA_IMAGE_PRIMARY(x)     (((x) == 0) ? FLASH_AREA_0_ID : \
+                                         ((x) == 1) ? FLASH_AREA_1_ID : \
+                                                      255 )
+#define FLASH_AREA_IMAGE_SECONDARY(x)   (((x) == 0) ? FLASH_AREA_2_ID : \
+                                         ((x) == 1) ? FLASH_AREA_3_ID : \
+                                                      255 )
 
 /*
  * On stm32mp2, only the RAM loading firmware upgrade operation
  * is supported. The scratch area is not used
  */
 #define FLASH_AREA_SCRATCH_ID		(FLASH_AREA_2_ID + 1)
+#define FLASH_AREA_IMAGE_SCRATCH        255
 
 /*
  * DDR firmware is copied from boot device to mcuram memory
@@ -254,14 +277,11 @@
  */
 #define DDR_FW_SIZE			DT_REG_SIZE(DT_NODELABEL(ddr_fw_buffer)) /* exclusif for ddr */
 #define DDR_FW_DEST_ADDR		DT_REG_ADDR(DT_NODELABEL(ddr_fw_buffer))
-#define FLASH_DEV_FW_DDR_NAME		DT_CMSIS_FIXED_PARTITIONS_DRIVER_BY_LABEL(ddr_fw_primary_partition)
-#define FLASH_DEV_FW_DDR_OFFSET		DT_CMSIS_FIXED_PARTITIONS_ADDR_BY_LABEL(ddr_fw_primary_partition)
-#define FLASH_DEV_FW_DDR_SIZE		DT_CMSIS_FIXED_PARTITIONS_SIZE_BY_LABEL(ddr_fw_primary_partition)
 
 #endif /* STM32_BL2 */
 
-#else /* MCUBOOT_IMAGE_NUMBER > 1 */
-#error "Only MCUBOOT_IMAGE_NUMBER 1 is supported!"
+#else /* MCUBOOT_IMAGE_NUMBER > 2 */
+#error "Only MCUBOOT_IMAGE_NUMBER 2 is supported!"
 #endif /* MCUBOOT_IMAGE_NUMBER */
 
 #endif /* STM32_M33TDCID */
