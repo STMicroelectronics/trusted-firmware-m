@@ -385,8 +385,6 @@ static int sr_hsr_exit(void)
 	mmio_write_32(stm32mp_rcc_base() + RCC_DDRCPCFGR,
 		      RCC_DDRCPCFGR_DDRCPLPEN | RCC_DDRCPCFGR_DDRCPEN);
 
-	/* TODO: check if ddr_sr_exit_loop() is needed here */
-
 	return 0;
 }
 
@@ -410,13 +408,6 @@ static int sr_asr_entry(void)
 static int sr_asr_exit(void)
 {
 	return ddr_sr_exit_loop();
-}
-
-uint32_t ddr_get_io_calibration_val(void)
-{
-	/* TODO create related service */
-
-	return 0U;
 }
 
 int ddr_sr_entry(bool standby)

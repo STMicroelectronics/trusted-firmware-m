@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024, STMicroelectronics - All Rights Reserved
+ * Copyright (c) 2021-2025, STMicroelectronics - All Rights Reserved
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -25,7 +25,6 @@ int ddr_sr_exit_loop(void);
 bool is_ddr_cid_filtering_enabled(void);
 void ddr_enable_cid_filtering(void);
 void ddr_disable_cid_filtering(void);
-uint32_t ddr_get_io_calibration_val(void);
 int ddr_sr_entry(bool standby);
 int ddr_sr_exit(void);
 enum stm32mp2_ddr_sr_mode ddr_read_sr_mode(void);
