@@ -359,6 +359,11 @@ if(BL2)
 endif()
 #========================= Files for building NS side platform ================#
 install(DIRECTORY
+    ${STM_FAMILLY_DIR}/tests
+    DESTINATION ${INSTALL_PLATFORM_NS_DIR}
+)
+
+install(DIRECTORY
     ${STM_DEVICETREE_DIR}
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common
 )
