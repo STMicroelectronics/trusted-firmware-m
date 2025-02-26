@@ -95,7 +95,7 @@
 	st,protreg = <RISABPROT(RIF_DDCID_DIS, 0, RIF_SEC, RIF_PRIV, RIF_CFDIS, 0, 0, 0)>;
 };
 
-&cm33_sram2 {
+&ddr_fw_buffer {
 	st,protreg = <RISABPROT(RIF_DDCID_DIS, 0, RIF_SEC, RIF_PRIV, RIF_CFDIS, 0, 0, 0)>;
 };
 
@@ -117,7 +117,7 @@
 &risab4 {
 	st,errata-ahbrisab;
 	st,srwiad;
-	memory-region = <&cm33_sram2>;
+	memory-region = <&ddr_fw_buffer>;
 	status = "okay";
 };
 

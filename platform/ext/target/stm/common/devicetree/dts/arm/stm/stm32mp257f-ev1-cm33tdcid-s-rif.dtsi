@@ -723,14 +723,14 @@
 	status = "okay";
 };
 
-&cm33_sram2 {
+&ddr_fw_buffer {
 	st,protreg = <RISABPROT(RIF_DDCID_DIS, RIF_UNUSED, RIF_NSEC, RIF_UNUSED, RIF_CFDIS, RIF_CID0_BF, RIF_CID0_BF, RIF_CID0_BF)>;
 };
 
 &risab4 {
 	st,errata-ahbrisab;
 	st,srwiad;
-	memory-region = <&cm33_sram2>;
+	memory-region = <&ddr_fw_buffer>;
 	status = "okay";
 };
 
