@@ -22,6 +22,16 @@
           "version": 1,
           "version_policy": "STRICT",
           "mm_iovec": "disable",
-      }
+      },
+      {
+          "name": "TFM_SCP_SERVICE_NS",
+          "sid": "0x000000F2",
+          "non_secure_clients": true,
+          "connection_based": false,
+          "version": 1,
+          "version_policy": "STRICT",
+          "mm_iovec": "enable",
+      },
+
   ],
   }

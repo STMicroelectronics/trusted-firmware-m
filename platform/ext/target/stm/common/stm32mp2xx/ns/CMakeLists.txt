@@ -81,6 +81,7 @@ target_sources(platform_ns
         ${STM_FAMILLY_DIR}/native_driver/src/uart/console.c
         ${STM_FAMILLY_DIR}/native_driver/src/uart/stm32_uart.c
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
+        $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_scmi_api.c>
 )
 
 target_compile_definitions(platform_ns
@@ -114,4 +115,5 @@ target_sources(tfm_ns
         ${STM_FAMILLY_DIR}/native_driver/src/uart/console.c
         ${STM_FAMILLY_DIR}/native_driver/src/uart/stm32_uart.c
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
+        $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_scmi_api.c>
 )

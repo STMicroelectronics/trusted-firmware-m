@@ -409,6 +409,7 @@ install(FILES
 )
 
 install(FILES
+    ${STM_FAMILLY_DIR}/secure/services/src/tfm_scmi_api.c
     ${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx/secure/services/src
 )
