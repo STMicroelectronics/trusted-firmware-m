@@ -508,6 +508,7 @@
 			clocks = <&rcc CK_BUS_HPDMA1>;
 			resets = <&rcc_reset HPDMA1_R>;
 			#dma-cells = <4>;
+			st,syscfg-arcr = <&syscfg 0x2050 0x1>;
 			status = "disabled";
 		};
 
@@ -517,6 +518,7 @@
 			clocks = <&rcc CK_BUS_HPDMA2>;
 			resets = <&rcc_reset HPDMA2_R>;
 			#dma-cells = <4>;
+			st,syscfg-arcr = <&syscfg 0x2050 0x2>;
 			status = "disabled";
 		};
 
@@ -526,6 +528,7 @@
 			clocks = <&rcc CK_BUS_HPDMA3>;
 			resets = <&rcc_reset HPDMA3_R>;
 			#dma-cells = <4>;
+			st,syscfg-arcr = <&syscfg 0x2050 0x4>;
 			status = "disabled";
 		};
 
