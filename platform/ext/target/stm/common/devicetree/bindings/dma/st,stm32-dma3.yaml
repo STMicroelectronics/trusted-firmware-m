@@ -13,6 +13,9 @@ include:
   - base.yaml
   - reset-device.yaml
   - st,stm32mp25-rif.yaml
+  - name: st,stm32mp21-syscfg-properties.yaml
+    property-allowlist:
+      - st,syscfg-arcr
 
 properties:
   reg:
