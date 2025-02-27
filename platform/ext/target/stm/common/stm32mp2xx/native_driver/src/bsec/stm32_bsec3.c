@@ -990,7 +990,8 @@ static int stm32_bsec_dt_init(const struct device *dev)
 
 	drv_data->p_mirror = (struct bsec_mirror *)drv_cfg->mirror_addr;
 
-	stm32_bsec_mirror_init(dev, true);
+	if (IS_ENABLED(STM32_M33TDCID))
+		stm32_bsec_mirror_init(dev, true);
 
 	if (drv_data->p_mirror->magic != BSEC_MAGIC)
 		return -ENOSYS;
