@@ -17,6 +17,7 @@
 #include <device.h>
 #include <stm32_rif.h>
 #include <clk.h>
+#include <syscon.h>
 
 /* HPDMA offset register */
 #define _HPDMA_SECCFGR		U(0x00)
@@ -61,6 +62,9 @@ struct stm32_hpdma_config {
 	const struct rifprot_controller *rif_ctl;
 	const struct device *clk_dev;
 	const clk_subsys_t clk_subsys;
+	const struct device *syscfg_dev;
+	uint16_t arcr_reg;
+	uint8_t arcr_mask;
 	const bool errata_ahbrisab;
 };
 
@@ -148,6 +152,25 @@ int stm32_hpdma_rif_set_conf(const struct rifprot_controller *ctl,
 	return 0;
 }
 
+static int stm32_hpdma_syscfg_set_arcr(const struct device *dev)
+{
+	const struct stm32_hpdma_config *cfg = dev_get_config(dev);
+	int err = 0;
+
+	if (IS_ENABLED(STM32MP21xxxx)) {
+
+		if (!cfg->syscfg_dev)
+			return 0;
+
+		if (!cfg->arcr_reg || !cfg->arcr_mask)
+			return -EINVAL;
+
+		err = syscon_setbits(cfg->syscfg_dev, cfg->arcr_reg, cfg->arcr_mask);
+	}
+
+	return err;
+}
+
 static __unused int stm32_hpdma_init(const struct device *dev)
 {
 	const struct stm32_hpdma_config *cfg = dev_get_config(dev);
@@ -166,40 +189,48 @@ static __unused int stm32_hpdma_init(const struct device *dev)
 		return err;
 
 	err = stm32_rifprot_init(cfg->rif_ctl);
+	if (err)
+		goto out;
 
+	err = stm32_hpdma_syscfg_set_arcr(dev);
+
+out:
 	clk_disable(clk);
 
 	return err;
 }
 
-#define STM32_HPDMA_INIT(n)						\
-									\
-static __unused const struct rif_base rbase_##n = {			\
-	.sec = DT_INST_REG_ADDR(n) + _HPDMA_SECCFGR,			\
-	.priv = DT_INST_REG_ADDR(n) + _HPDMA_PRIVCFGR,			\
-	.cid = DT_INST_REG_ADDR(n) + _HPDMA_CIDCFGR,			\
-	.sem = DT_INST_REG_ADDR(n) + _HPDMA_SEMCR,			\
-	.lock = DT_INST_REG_ADDR(n) + _HPDMA_RCFGLOCKR,			\
-};									\
-									\
-static __unused struct rif_ops rops_##n = {				\
-	.set_conf = stm32_hpdma_rif_set_conf,				\
-	.acquire_sem = stm32_hpdma_rif_acquire_sem,			\
-	.release_sem = stm32_hpdma_rif_release_sem,			\
-};									\
-									\
-DT_INST_RIFPROT_CTRL_DEFINE(n, &rbase_##n, &rops_##n, HPDMA_RIF_RES);	\
-									\
-static const struct stm32_hpdma_config hpdma_cfg_##n = {		\
-	.base = DT_INST_REG_ADDR(n),					\
-	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),		\
-	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),	\
-	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),				\
-	.errata_ahbrisab = DT_INST_PROP_OR(n, st_errata_ahbrisab, false)\
-};									\
-									\
-DEVICE_DT_INST_DEFINE(n, &stm32_hpdma_init,				\
-		      NULL, &hpdma_cfg_##n,				\
+#define STM32_HPDMA_INIT(n)							\
+										\
+static __unused const struct rif_base rbase_##n = {				\
+	.sec = DT_INST_REG_ADDR(n) + _HPDMA_SECCFGR,				\
+	.priv = DT_INST_REG_ADDR(n) + _HPDMA_PRIVCFGR,				\
+	.cid = DT_INST_REG_ADDR(n) + _HPDMA_CIDCFGR,				\
+	.sem = DT_INST_REG_ADDR(n) + _HPDMA_SEMCR,				\
+	.lock = DT_INST_REG_ADDR(n) + _HPDMA_RCFGLOCKR,				\
+};										\
+										\
+static __unused struct rif_ops rops_##n = {					\
+	.set_conf = stm32_hpdma_rif_set_conf,					\
+	.acquire_sem = stm32_hpdma_rif_acquire_sem,				\
+	.release_sem = stm32_hpdma_rif_release_sem,				\
+};										\
+										\
+DT_INST_RIFPROT_CTRL_DEFINE(n, &rbase_##n, &rops_##n, HPDMA_RIF_RES);		\
+										\
+static const struct stm32_hpdma_config hpdma_cfg_##n = {			\
+	.base = DT_INST_REG_ADDR(n),						\
+	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),			\
+	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),		\
+	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),					\
+	.syscfg_dev = DEVICE_DT_GET_OR_NULL(DT_INST_PHANDLE(n, st_syscfg_arcr)),\
+	.arcr_reg = DT_INST_PHA_OR(n, st_syscfg_arcr, offset, 0),		\
+	.arcr_mask = DT_INST_PHA_OR(n, st_syscfg_arcr, mask, 0),		\
+	.errata_ahbrisab = DT_INST_PROP_OR(n, st_errata_ahbrisab, false)	\
+};										\
+										\
+DEVICE_DT_INST_DEFINE(n, &stm32_hpdma_init,					\
+		      NULL, &hpdma_cfg_##n,					\
 		      CORE, 10, NULL);
 
 DT_INST_FOREACH_STATUS_OKAY(STM32_HPDMA_INIT)
