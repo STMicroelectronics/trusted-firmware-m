@@ -123,10 +123,10 @@ struct mbox_dt_spec {
  *
  * @return static initializer for a struct mbox_dt_spec
  */
-#define MBOX_DT_SPEC_GET(node_id)                                        \
+#define MBOX_DT_SPEC_GET(node_id, name)                                  \
 	{                                                                \
-		.dev = DEVICE_DT_GET(DT_MBOX_CTLR_BY_IDX(node_id, 0)),   \
-		.channel_id = DT_MBOX_CHANNEL_BY_IDX(node_id, 0),	 \
+		.dev = DEVICE_DT_GET(DT_MBOX_CTLR_BY_NAME(node_id, name)),\
+		.channel_id = DT_MBOX_CHANNEL_BY_NAME(node_id, name),	 \
 	}
 
 /**
@@ -137,6 +137,9 @@ struct mbox_dt_spec {
  *
  * @return static initializer for a struct mbox_dt_spec
  */
+#define MBOX_DT_SPEC_INST_GET(inst, name)                                      \
+	MBOX_DT_SPEC_GET(DT_DRV_INST(inst), name)
+
 /** @cond INTERNAL_HIDDEN */
 
 /**
