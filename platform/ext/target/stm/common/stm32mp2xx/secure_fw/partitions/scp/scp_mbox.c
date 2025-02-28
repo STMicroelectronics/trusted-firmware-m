@@ -20,7 +20,7 @@
 #include "scmi_server.h"
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
-const struct mbox_dt_spec channel = MBOX_DT_SPEC_GET(DT_DRV_INST(0));
+const struct mbox_dt_spec channel = MBOX_DT_SPEC_INST_GET(0, ns);
 /* function called by mailbox SLIH handler */
 void rx_scp(const struct device *dev,
 	    mbox_channel_id_t channel_id, void *user_data,

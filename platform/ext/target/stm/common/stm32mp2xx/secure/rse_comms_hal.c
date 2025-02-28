@@ -25,7 +25,7 @@
 
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,"one st,psa-mbox node may be present");
 
-static const struct mbox_dt_spec channel = MBOX_DT_SPEC_GET(DT_DRV_INST(0));
+static const struct mbox_dt_spec channel = MBOX_DT_SPEC_INST_GET(0, s);
 
 /* Declared statically to avoid using huge amounts of stack space. Maybe revisit
  * if functions not being reentrant becomes a problem.
