@@ -11,7 +11,6 @@ Flags to add on cmake config command (cmake command without --build):
 <ul>
     <li>Profile supported:
         <ul>
-	        <li>TF-M Profile small design: -DTFM_PROFILE=profile_small</li>
             <li>TF-M Profile medium design: -DTFM_PROFILE=profile_medium</li>
         </ul>
     </li>
@@ -111,9 +110,9 @@ $ cmake -S &lt;TF-M-TESTS_DIRECTORY&gt;/tests_reg -B &lt;BUILD_DIRECTORY&gt;/bui
 $ cmake --build &lt;BUILD_DIRECTORY&gt;/build_ns
 </div>
 
-<h1>Building TF-M</h1>
+<h1>Building TF-M secure only</h1>
 
-Generate only the secure side to concatenate with your non-secure application.
+Used this build if you used your own non secure binary. The secure and non secure binaries must be assembled then signed (see CubeIDE process).
 
 <h2>M33tdcid</h2>
 <div class="st_block_code marge_h2">
