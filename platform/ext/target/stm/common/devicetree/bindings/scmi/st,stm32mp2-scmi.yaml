@@ -23,16 +23,16 @@ properties:
     required: true
 
   rst-list:
-    required: true
+    required: false
 
   rst-id-max:
-    required: true
+    required: false
 
   clk-list:
-    required: true
+    required: false
 
   clk-id-max:
-    required: true
+    required: false
 
   regu-list:
     required: true
