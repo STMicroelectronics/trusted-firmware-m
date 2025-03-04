@@ -6,9 +6,6 @@
 #-------------------------------------------------------------------------------
 cmake_policy(SET CMP0076 NEW)
 
-# Generate board model
-configure_file(${STM_FAMILLY_DIR}/stm_version.h.in
-               ${CMAKE_BINARY_DIR}/generated/stm_version.h)
 #========================= Device tree ========================================#
 include(${STM_DEVICETREE_DIR}/gen_dt.cmake)
 
@@ -252,6 +249,7 @@ if(BL2)
 	target_include_directories(platform_bl2
 		PUBLIC
 			${PLATFORM_DIR}/include
+			${CMAKE_BINARY_DIR}/generated
 			${STM_FAMILLY_DIR}/native_driver
 			${STM_FAMILLY_DIR}/native_driver/include
 			${STM_FAMILLY_DIR}/cmsis_driver/include
@@ -369,6 +367,10 @@ if(BL2)
 	add_subdirectory(${STM_FAMILLY_DIR}/native_driver/src/ddr native_driver/src/ddr)
 
 endif()
+
+#========================= Generate board model ===============================#
+include(${STM_FAMILLY_DIR}/stm_version.cmake)
+
 #========================= Files for building NS side platform ================#
 install(DIRECTORY
     ${STM_FAMILLY_DIR}/tests

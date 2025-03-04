@@ -47,7 +47,9 @@ enum tfm_hal_status_t tfm_hal_platform_init(void)
 
 	stdio_init();
 
-	INFO("welcome to "MODEL_FULLSTR "\n");
+	INFO("welcome to TF-M: "MODEL_VERSION"\n");
+	INFO("board: "MODEL_BOARD"\n");
+	INFO("dts: "MODEL_S_DTS"\n");
 
 	plat_err = nvic_interrupt_target_state_cfg();
 	if (plat_err != TFM_PLAT_ERR_SUCCESS) {

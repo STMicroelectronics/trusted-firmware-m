@@ -26,6 +26,7 @@
 #include <stm32mp2_ddr.h>
 #include <stm32_bsec3.h>
 #include <stm32_dcache.h>
+#include <stm_version.h>
 
 #ifdef CRYPTO_HW_ACCELERATOR
 #include "crypto_hw.h"
@@ -144,7 +145,10 @@ int32_t boot_platform_init(void)
 
 	sys_init_run_level(INIT_LEVEL_CORE);
 
-	BOOT_LOG_INF("welcome");
+	BOOT_LOG_INF("welcome to MCUboot: "MODEL_VERSION);
+	BOOT_LOG_INF("board: "MODEL_BOARD);
+	BOOT_LOG_INF("dts: "MODEL_BL2_DTS);
+	BOOT_LOG_INF("boot device: "MODEL_BOOT_DEV);
 	BOOT_LOG_INF("mcu sysclk: %d", SystemCoreClock);
 
 	return 0;

@@ -10,8 +10,17 @@
 /*
  * Defines for board model.
  */
-#cmakedefine STM32_BOARD_MODEL   "@STM32_BOARD_MODEL@"
+#cmakedefine STM32_BOARD_MODEL      "@STM32_BOARD_MODEL@"
+#cmakedefine STM32_VERSION_FULL     "@STM32_VERSION_FULL@"
+#cmakedefine STM32_VER_BL2_DTS      "@STM32_VER_BL2_DTS@"
+#cmakedefine STM32_VER_S_DTS        "@STM32_VER_S_DTS@"
+#cmakedefine STM32_BOOT_DEV         "@STM32_BOOT_DEV@"
 
-#define MODEL_FULLSTR    STM32_BOARD_MODEL
+#define MODEL_FULLSTR       STM32_BOARD_MODEL
+#define MODEL_VERSION       STM32_VERSION_FULL
+#define MODEL_BOARD         STM32_BOARD_MODEL
+#define MODEL_BL2_DTS       STM32_VER_BL2_DTS
+#define MODEL_S_DTS         STM32_VER_S_DTS
+#define MODEL_BOOT_DEV      STM32_BOOT_DEV
 
 #endif /* __STM_VERSION_H__ */
