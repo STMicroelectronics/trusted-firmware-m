@@ -102,6 +102,8 @@
 #define OTP_MAX_SIZE			(STM32MP2_OTP_MAX_ID + 1U)
 #endif
 
+#define STM32MP2_UPPER_BASE		256
+
 struct nvmem_cell {
 	uint32_t otp_id;
 	uint32_t n_otp;
@@ -127,7 +129,6 @@ struct stm32_bsec_config {
 };
 
 struct stm32_bsec_variant {
-	uint32_t upper_base;
 	uint32_t max_id;
 	unsigned int oem_key_first_otp;
 };
@@ -401,10 +402,10 @@ static int _otp_read(uint32_t offset, size_t len, size_t out_len, uint8_t *out)
 	 * In dummy provisionning case, just load dummy keys from the dummy_mirror area.
 	 */
 #if defined(STM32_BL2)
-	if (!mirror && (offset >= drv_data->variant->upper_base ||
+	if (!mirror && (offset >= STM32MP2_UPPER_BASE ||
 		       offset == OTP_OFFSET(bl2_rotpk_0) / sizeof(uint32_t))) {
 #else
-	if (!mirror && offset >= drv_data->variant->upper_base) {
+	if (!mirror && offset >= STM32MP2_UPPER_BASE) {
 #endif
 		struct bsec_mirror *dummy_mirror;
 		int ret = 0;
@@ -510,10 +511,10 @@ static int __maybe_unused _otp_write(uint32_t offset, size_t len,
 	 * In dummy provisionning case, just use the dummy_mirror area to store dummy keys.
 	 */
 #if defined(STM32_BL2)
-	if (!mirror && (offset >= drv_data->variant->upper_base ||
+	if (!mirror && (offset >= STM32MP2_UPPER_BASE ||
 		       offset == OTP_OFFSET(bl2_rotpk_0) / sizeof(uint32_t))) {
 #else
-	if (!mirror && offset >= drv_data->variant->upper_base) {
+	if (!mirror && offset >= STM32MP2_UPPER_BASE) {
 #endif
 		struct bsec_mirror *dummy_mirror;
 		int ret = 0;
@@ -861,7 +862,7 @@ static void stm32_bsec_mirror_load(const struct device *dev, uint32_t status)
 
 	/* HIDEUP: read and write not possible in upper region */
 	if (status & _BSEC_OTPSR_HIDEUP) {
-		for (otp = drv_data->variant->upper_base;
+		for (otp = STM32MP2_UPPER_BASE;
 		     otp <= drv_data->variant->max_id ; otp++) {
 			drv_data->p_mirror->otp[otp].status |= _HIDEUP_ERROR;
 #ifdef TFM_DUMMY_PROVISIONING
@@ -875,7 +876,7 @@ static void stm32_bsec_mirror_load(const struct device *dev, uint32_t status)
 #endif
 			drv_data->p_mirror->otp[otp].value = 0x0U;
 		}
-		max_id = drv_data->variant->upper_base - 1;
+		max_id = STM32MP2_UPPER_BASE - 1;
 	}
 
 	for (bank = 0U; bank < _OTP_ACCESS_SIZE; bank++) {
@@ -1079,7 +1080,6 @@ static __unused struct stm32_bsec_variant variant_stm32mp21 = {
  * - HWKEY: 376 to 383 (never reloadable or readable)
  */
 	.oem_key_first_otp = 348,
-	.upper_base = 256,
 	.max_id = STM32MP2_OTP_MAX_ID,
 };
 
@@ -1091,7 +1091,6 @@ static __unused struct stm32_bsec_variant variant_stm32mp25 = {
  * - HWKEY: 376 to 383 (never reloadable or readable)
  */
 	.oem_key_first_otp = 360,
-	.upper_base = 256,
 	.max_id = STM32MP2_OTP_MAX_ID,
 };
 
