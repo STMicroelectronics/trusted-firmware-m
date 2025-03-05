@@ -375,7 +375,6 @@ enum enum_gate_cfg {
 	GATE_HASH2,
 	GATE_CRYP1,
 	GATE_CRYP2,
-	GATE_CCB,
 	GATE_IWDG1,
 	GATE_IWDG2,
 	GATE_IWDG3,
@@ -557,7 +556,6 @@ static const struct gate_cfg gates_mp21[GATE_NB] = {
 	GATE_CFG(GATE_HASH2,		RCC_HASH2CFGR,		1,	0),
 	GATE_CFG(GATE_CRYP1,		RCC_CRYP1CFGR,		1,	0),
 	GATE_CFG(GATE_CRYP2,		RCC_CRYP2CFGR,		1,	0),
-	GATE_CFG(GATE_CCB,		RCC_CCBCFGR,		1,	0),
 	GATE_CFG(GATE_IWDG1,		RCC_IWDG1CFGR,		1,	0),
 	GATE_CFG(GATE_IWDG2,		RCC_IWDG2CFGR,		1,	0),
 	GATE_CFG(GATE_IWDG3,		RCC_IWDG3CFGR,		1,	0),
@@ -2662,7 +2660,6 @@ static STM32_GATE(ck_icn_p_cryp1, &ck_icn_ls_mcu, 0, GATE_CRYP1);
 static STM32_GATE(ck_icn_p_cryp2, &ck_icn_ls_mcu, 0, GATE_CRYP2);
 static STM32_GATE(ck_icn_p_saes, &ck_icn_ls_mcu, 0, GATE_SAES);
 static STM32_GATE(ck_icn_p_pka, &ck_icn_ls_mcu, 0, GATE_PKA);
-static STM32_GATE(ck_icn_p_ccb, &ck_icn_ls_mcu, 0, GATE_CCB);
 static STM32_GATE(ck_icn_p_eth1, &ck_icn_ls_mcu, 0, GATE_ETH1);
 static STM32_GATE(ck_icn_p_eth2, &ck_icn_ls_mcu, 0, GATE_ETH2);
 static STM32_GATE(ck_icn_p_adc1, &ck_icn_ls_mcu, 0, GATE_ADC1);
@@ -2972,7 +2969,6 @@ static struct clk *stm32mp21_clk_provided[STM32MP21_ALL_CLK_NB] = {
 	[CK_BUS_CRYP2]		= &ck_icn_p_cryp2,
 	[CK_BUS_SAES]		= &ck_icn_p_saes,
 	[CK_BUS_PKA]		= &ck_icn_p_pka,
-	[CK_BUS_CCB]		= &ck_icn_p_ccb,
 	[CK_BUS_GPIOA]		= &ck_icn_p_gpioa,
 	[CK_BUS_GPIOB]		= &ck_icn_p_gpiob,
 	[CK_BUS_GPIOC]		= &ck_icn_p_gpioc,
