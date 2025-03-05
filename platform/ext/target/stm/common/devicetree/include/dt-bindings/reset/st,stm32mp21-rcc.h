@@ -115,7 +115,6 @@
 #define HASH2_R		17440
 #define CRYP1_R		17472
 #define CRYP2_R		17504
-#define CCB_R		17536
 #define WWDG1_R		17696
 #define VREF_R		17760
 #define DTS_R		17792
