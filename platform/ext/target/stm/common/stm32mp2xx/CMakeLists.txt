@@ -385,6 +385,7 @@ install(DIRECTORY
 install(DIRECTORY
     ${STM_FAMILLY_DIR}/native_driver
     ${STM_FAMILLY_DIR}/cmsis_driver
+    ${STM_FAMILLY_DIR}/ns
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx
 )
 

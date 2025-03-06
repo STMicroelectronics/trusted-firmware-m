@@ -56,6 +56,11 @@ install(FILES
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx/stm32mp25
 )
 
+install(DIRECTORY
+    ${STM_SOC_DIR}/ns
+    DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx/stm32mp25
+)
+
 install(FILES
     ${STM_SOC_DIR}/src/startup_stm32mp2_ns.c
     ${STM_SOC_DIR}/src/system_stm32mp2xx_m33.c
