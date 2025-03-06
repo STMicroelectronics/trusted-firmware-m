@@ -38,8 +38,4 @@ int32_t scmi_server_msg_process_thread(unsigned int channel_id, void *in_buf,
  */
 int32_t scmi_server_get_channel(unsigned int channel_id, int *handle);
 
-/* Get number of channels supported by the SCMI platform/server */
-int scmi_server_get_channels_count(void);
-
-
 #endif /* SCMI_SERVER_H */

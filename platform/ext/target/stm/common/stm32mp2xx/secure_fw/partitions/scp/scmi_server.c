@@ -17,10 +17,6 @@
 /*
  * SCMI server APIs exported to TF-M core
  */
-int scmi_server_get_channels_count(void)
-{
-	return scmi_get_devices_count();
-}
 
 int32_t scmi_server_get_channel(unsigned int channel_id, int *handle)
 {
