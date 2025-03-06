@@ -2863,11 +2863,11 @@ static RIF_GATE(ck_icn_p_hpdma3, &ck_icn_ls_mcu, 0, GATE_HPDMA3,
 		RCC_RIF_HPDMA3);
 static RIF_GATE(ck_icn_p_lpdma, &ck_icn_ls_mcu, 0, GATE_LPDMA,
 		RCC_RIF_LPDMA);
-static RIF_GATE(ck_icn_p_lpdma_am, &ck_msi_ker, 0, GATE_LPDMAAM,
+static RIF_GATE(ck_icn_p_lpdma_am, &ck_icn_p_lpdma, 0, GATE_LPDMAAM,
 		RCC_RIF_LPDMA);
 static RIF_GATE(ck_icn_p_ipcc1, &ck_icn_ls_mcu, 0, GATE_IPCC1, RCC_RIF_IPCC1);
 static RIF_GATE(ck_icn_p_ipcc2, &ck_icn_ls_mcu, 0, GATE_IPCC2, RCC_RIF_IPCC2);
-static RIF_GATE(ck_icn_p_ipcc2_am, &ck_icn_ls_mcu, 0, GATE_IPCC2AM,
+static RIF_GATE(ck_icn_p_ipcc2_am, &ck_icn_p_ipcc2, 0, GATE_IPCC2AM,
 		RCC_RIF_IPCC2);
 static RIF_GATE(ck_icn_p_hsem, &ck_icn_ls_mcu, 0, GATE_HSEM, RCC_RIF_HSEM);
 static RIF_GATE(ck_icn_p_gpioa, &ck_icn_ls_mcu, 0, GATE_GPIOA, RCC_RIF_GPIOA);
@@ -2882,9 +2882,11 @@ static RIF_GATE(ck_icn_p_gpioi, &ck_icn_ls_mcu, 0, GATE_GPIOI, RCC_RIF_GPIOI);
 static RIF_GATE(ck_icn_p_gpioj, &ck_icn_ls_mcu, 0, GATE_GPIOJ, RCC_RIF_GPIOJ);
 static RIF_GATE(ck_icn_p_gpiok, &ck_icn_ls_mcu, 0, GATE_GPIOK, RCC_RIF_GPIOK);
 static RIF_GATE(ck_icn_p_gpioz, &ck_icn_ls_mcu, 0, GATE_GPIOZ, RCC_RIF_GPIOZ);
-static RIF_GATE(ck_icn_p_gpioz_am, &ck_msi_ker, 0, GATE_GPIOZAM, RCC_RIF_GPIOZ);
+static RIF_GATE(ck_icn_p_gpioz_am, &ck_icn_p_gpioz, 0, GATE_GPIOZAM,
+		RCC_RIF_GPIOZ);
 static RIF_GATE(ck_icn_p_rtc, &ck_icn_ls_mcu, 0, GATE_RTC, RCC_RIF_RTC_TAMP);
-static RIF_GATE(ck_icn_p_rtc_am, &ck_msi_ker, 0, GATE_RTCAM, RCC_RIF_RTC_TAMP);
+static RIF_GATE(ck_icn_p_rtc_am, &ck_icn_p_rtc, 0, GATE_RTCAM,
+		RCC_RIF_RTC_TAMP);
 static RIF_COMPOSITE(ck_rtc, 4, PARENTS(&ck_off, &ck_lse, &ck_lsi, &ck_hse_rtc),
 		     0, GATE_RTCCK, NO_DIV, MUX_RTC, RCC_RIF_RTC_TAMP);
 static RIF_GATE(ck_icn_p_bsec, &ck_icn_apb3, 0, GATE_BSEC, RCC_RIF_BSEC);
