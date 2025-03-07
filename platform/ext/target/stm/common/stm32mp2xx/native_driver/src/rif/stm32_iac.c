@@ -140,6 +140,7 @@ static bool stm32_iac_discarded(uint32_t iac)
 	 * on STM32MP25X/STM32MP23X RevY and STM32MP21X RevA
 	 */
 	switch (iac) {
+	case 108:
 	case 156:
 	case 177:
 		return true;
