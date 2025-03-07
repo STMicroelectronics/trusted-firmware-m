@@ -138,28 +138,40 @@ void IAC_IRQHandler(void)
 	struct stm32_iac_data *drv_data = &iac_data;
 	int nreg = div_round_up(drv_data->num_ilac, _PERIPH_IDS_PER_REG);
 	uint32_t isr = 0;
+	uint32_t iac = 0;
 	char tmp[50];
-	int i = 0;
+	int i = 0, j = 0;
+	bool error = false;
 
 	for (i = 0; i < nreg; i++) {
 		uint32_t offset = sizeof(uint32_t) * i;
 
 		isr = io_read32(drv_cfg->base + _IAC_ISR0 + offset);
 		isr &= io_read32(drv_cfg->base + _IAC_IER0 + offset);
-		if (isr) {
-			snprintf(tmp, sizeof(tmp),
-				 "\r\niac exceptions: [%d:%d]=%#08x\r\n",
-				 IAC_EXCEPT_MSB_BIT(i),
-				 IAC_EXCEPT_LSB_BIT(i), isr);
-
+		if (!isr)
+			continue;
+		snprintf(tmp, sizeof(tmp),
+			 "\r\niac exceptions: [%d:%d]=%#08x\r\n",
+			 IAC_EXCEPT_MSB_BIT(i),
+			 IAC_EXCEPT_LSB_BIT(i), isr);
+		IAC_LOG(tmp);
+		for (j = 0; j < 32; j++) {
+			if (!(isr & BIT(j))) {
+				continue;
+			}
+			iac = IAC_EXCEPT_LSB_BIT(i) + j;
+			error = true;
+			snprintf(tmp, sizeof(tmp), "IAC exception ID: %03d\r\n", iac);
 			IAC_LOG(tmp);
-			io_write32(drv_cfg->base + _IAC_ICR0 + offset, isr);
 		}
+		io_write32(drv_cfg->base + _IAC_ICR0 + offset, isr);
+
 	}
 
 	NVIC_ClearPendingIRQ(drv_cfg->irq);
 
-	access_violation_handler();
+	if (error)
+		access_violation_handler();
 }
 
 static void stm32_iac_setup(void)
