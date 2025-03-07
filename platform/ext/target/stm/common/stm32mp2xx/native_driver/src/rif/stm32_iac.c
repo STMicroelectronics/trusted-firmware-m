@@ -132,6 +132,25 @@ __weak void access_violation_handler(void)
 	}
 }
 
+static bool stm32_iac_discarded(uint32_t iac)
+{
+#if defined(CONFIG_STM32MP25X_REVY) || defined(CONFIG_STM32MP21X_REVA)
+	/*
+	 * Discard some IAC as workaround for ROM code issues
+	 * on STM32MP25X/STM32MP23X RevY and STM32MP21X RevA
+	 */
+	switch (iac) {
+	case 156:
+	case 177:
+		return true;
+	default:
+		return false;
+	}
+#else
+	return false;
+#endif
+}
+
 void IAC_IRQHandler(void)
 {
 	const struct stm32_iac_config *drv_cfg = &iac_cfg;
@@ -160,8 +179,12 @@ void IAC_IRQHandler(void)
 				continue;
 			}
 			iac = IAC_EXCEPT_LSB_BIT(i) + j;
-			error = true;
-			snprintf(tmp, sizeof(tmp), "IAC exception ID: %03d\r\n", iac);
+			if (stm32_iac_discarded(iac)) {
+				snprintf(tmp, sizeof(tmp), "Discarded IAC ID: %03d\r\n", iac);
+			} else {
+				error = true;
+				snprintf(tmp, sizeof(tmp), "IAC exception ID: %03d\r\n", iac);
+			}
 			IAC_LOG(tmp);
 		}
 		io_write32(drv_cfg->base + _IAC_ICR0 + offset, isr);
