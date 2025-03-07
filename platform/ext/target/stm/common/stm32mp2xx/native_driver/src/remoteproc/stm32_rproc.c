@@ -139,7 +139,7 @@ static __unused int stm32mp2_a35_stop(const struct device *dev)
 	/* clear event if pending */
 	EXTI1->RPR3 = BIT(0);
 	/* send CPU2 SEV event to cpu1 (exti 64)*/
-	EXTI1->SWIER3 |= BIT(0);
+	EXTI1->SWIER3 = BIT(0);
 	/* reset cpu */
 	reset_control_assert(&cfg->rst_ctl);
 	/* check cpu in hold boot */
