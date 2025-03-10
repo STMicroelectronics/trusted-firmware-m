@@ -129,6 +129,10 @@ struct regulator_common_config {
 	int32_t min_ua;
 	/** Maximum allowed current, in microamps. */
 	int32_t max_ua;
+	/** Voltage level change delay in uV/s. */
+	uint32_t ramp_delay_uv_per_us;
+	/** Off after enable, in microseconds (us). */
+	uint32_t enable_ramp_delay_us;
 	/** Allowed modes */
 	const regulator_mode_t *allowed_modes;
 	/** Number of allowed modes */
@@ -156,6 +160,8 @@ struct regulator_common_config {
 				     INT32_MIN),                               \
 		.max_ua = DT_PROP_OR(node_id, regulator_max_microamp,          \
 				     INT32_MAX),                               \
+		.ramp_delay_uv_per_us = DT_PROP_OR(node_id, regulator_ramp_delay, 0),           \
+		.enable_ramp_delay_us = DT_PROP_OR(node_id, regulator_enable_ramp_delay, 0),    \
 		.allowed_modes = (const regulator_mode_t [])                   \
 			DT_PROP_OR(node_id, regulator_allowed_modes, {}),      \
 		.allowed_modes_cnt =                                           \

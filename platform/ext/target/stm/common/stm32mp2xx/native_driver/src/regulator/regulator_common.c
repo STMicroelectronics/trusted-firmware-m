@@ -6,7 +6,15 @@
  * fork from zephyr
  */
 
+#include <lib/delay.h>
 #include <regulator.h>
+
+static void regulator_delay(uint32_t delay_us)
+{
+	if (delay_us > 0U) {
+		udelay(delay_us);
+	}
+}
 
 void regulator_common_data_init(const struct device *dev)
 {
@@ -67,6 +75,7 @@ int regulator_common_init(const struct device *dev, bool is_enabled)
 			return ret;
 		}
 
+		regulator_delay(config->enable_ramp_delay_us);
 		data->refcnt++;
 	}
 
@@ -96,6 +105,8 @@ int regulator_enable(const struct device *dev)
 		ret = api->enable(dev);
 		if (ret < 0) {
 			data->refcnt--;
+		} else {
+			regulator_delay(config->enable_ramp_delay_us);
 		}
 	}
 
@@ -178,6 +189,8 @@ int regulator_set_voltage(const struct device *dev, int32_t min_uv,
 {
 	const struct regulator_common_config *config = dev->config;
 	const struct regulator_driver_api *api = dev->api;
+	int32_t current_uv;
+	int err;
 
 	if (api->set_voltage == NULL) {
 		return -ENOSYS;
@@ -188,7 +201,34 @@ int regulator_set_voltage(const struct device *dev, int32_t min_uv,
 		return -EINVAL;
 	}
 
-	return api->set_voltage(dev, min_uv, max_uv);
+	err = regulator_get_voltage(dev, &current_uv);
+	if (err < 0) {
+		return err;
+	}
+
+	if ( (current_uv >= min_uv && current_uv <= max_uv))
+		return 0;
+
+	err = api->set_voltage(dev, min_uv, max_uv);
+	if (err) {
+		return err;
+	}
+
+	if (config->ramp_delay_uv_per_us > 0U) {
+		unsigned int d = 0;
+
+		/* difference for worst case with min_uv <= current_uv <= max_uv */
+		if (current_uv > max_uv)
+			d = current_uv - min_uv;
+		else
+			d = max_uv - current_uv;
+
+		d /= config->ramp_delay_uv_per_us;
+
+		udelay(d);
+	}
+
+	return err;
 }
 
 int regulator_get_voltage(const struct device *dev,
