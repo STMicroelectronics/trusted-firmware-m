@@ -47,6 +47,7 @@ child-binding:
         - regulator-max-microvolt
         - regulator-allowed-modes
         - regulator-over-current-protection
+        - regulator-ramp-delay
         - regulator-enable-ramp-delay
 
   properties:
