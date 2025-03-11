@@ -105,6 +105,7 @@
 #define STM32MP2_UPPER_BASE		256
 
 struct nvmem_cell {
+	const char *cell_label;
 	uint32_t otp_id;
 	uint32_t n_otp;
 	const uint32_t *shadow_value;
@@ -332,52 +333,28 @@ void stm32_bsec_write_debug_conf(uint32_t val)
 	bsec_unlock();
 }
 
-/*
- * TDCID populate a memory area with bsec otp.
- * A filter is apply to not miror all otp.
- * This area is read only and share whith cortex A and M.
- */
- #ifdef STM32MP215Cxx
-__PACKED_STRUCT otp_shadow_layout_t {
-	uint32_t reserved1[5];
-	uint32_t implementation_id[3];		/* otp 5..7 */
-	uint32_t reserved2[10];
-	uint32_t bootrom_config_9[1];		/* otp 18  */
-	uint32_t reserved3[105];
-	uint32_t hconf1[1];			/* otp 124 */
-	uint32_t reserved4[55];
-	uint32_t bl2_rotpk_0[8];		/* otp 180 */
-	uint32_t bl2_rotpk_1[8];		/* otp 188 */
-	uint32_t reserved5[128];
-	uint32_t entropy_seed[16];		/* otp 323 */
-	uint32_t iak[8];			/* otp 340 */
-};
-#else
-__PACKED_STRUCT otp_shadow_layout_t {
-	uint32_t reserved1[5];
-	uint32_t implementation_id[3];		/* otp 5..7 */
-	uint32_t reserved2[10];
-	uint32_t bootrom_config_9[1];		/* otp 18  */
-	uint32_t reserved3[105];
-	uint32_t hconf1[1];			/* otp 124 */
-	uint32_t reserved4[51];
-	uint32_t bl2_rotpk_0[8];		/* otp 176 */
-	uint32_t bl2_rotpk_1[8];		/* otp 184 */
-	uint32_t reserved5[140];
-	uint32_t entropy_seed[16];		/* otp 332 */
-	uint32_t iak[8];			/* otp 348 */
-};
-#endif
-
-#define OTP_OFFSET(x)		(offsetof(struct otp_shadow_layout_t, x))
-#define OTP_SIZE(x)		(sizeof(((struct otp_shadow_layout_t *)0)->x))
-
-#define BOOTROM_CFG_9_SEC_BOOT	GENMASK(3,0)
-#define BOOTROM_CFG_9_PROV_DONE	GENMASK(7,4)
-#define HCONF1_DISABLE_SCAN	BIT(20)
-
 static inline int _otp_is_valid(uint32_t status){
 	return !(status & (STATUS_SECURE | LOCK_ERROR));
+}
+
+int stm32_bsec_get_otp_cell_by_label(char* label, uint32_t *cell_start,
+				     uint32_t *cell_size)
+{
+	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
+	struct nvmem_cell cell;
+
+	for (int i = 0; i < drv_cfg->n_otp_cell; i++) {
+		cell = drv_cfg->otp_cell[i];
+
+		if (!strcmp(cell.cell_label, label)) {
+			if (cell_start)
+				*cell_start = cell.otp_id;
+			if (cell_size)
+				*cell_size = cell.n_otp;
+			return 0;
+		}
+	}
+	return -ENOENT;
 }
 
 static int _otp_read(uint32_t offset, size_t len, size_t out_len, uint8_t *out)
@@ -388,13 +365,8 @@ static int _otp_read(uint32_t offset, size_t len, size_t out_len, uint8_t *out)
 	uint32_t *p_out_w = (uint32_t *)out;
 	uint32_t idx;
 
-	if (offset % (sizeof(uint32_t)))
-		return -EINVAL;
-
 	if (copy_size % (sizeof(uint32_t)))
 		return -EINVAL;
-
-	offset /= sizeof(uint32_t);
 
 #ifdef TFM_DUMMY_PROVISIONING
 	/*
@@ -402,30 +374,45 @@ static int _otp_read(uint32_t offset, size_t len, size_t out_len, uint8_t *out)
 	 * In dummy provisionning case, just load dummy keys from the dummy_mirror area.
 	 */
 #if defined(STM32_BL2)
+	uint32_t bl2_rotpk_0_start;
+	int ret;
+	ret = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_0",
+						&bl2_rotpk_0_start,
+						NULL);
+	if (ret)
+		return ret;
 	if (!mirror && (offset >= STM32MP2_UPPER_BASE ||
-		       offset == OTP_OFFSET(bl2_rotpk_0) / sizeof(uint32_t))) {
+			offset == bl2_rotpk_0_start)) {
 #else
 	if (!mirror && offset >= STM32MP2_UPPER_BASE) {
 #endif
+		uint32_t iak_start, entropy_seed_start;
 		struct bsec_mirror *dummy_mirror;
-		int ret = 0;
 
-		switch (offset) {
-		case OTP_OFFSET(iak) / sizeof(uint32_t):
-		case OTP_OFFSET(entropy_seed) / sizeof(uint32_t):
+		ret = stm32_bsec_get_otp_cell_by_label("entropy_seed",
+						       &entropy_seed_start,
+						       NULL);
+		if (ret)
+			return ret;
+
+		ret = stm32_bsec_get_otp_cell_by_label("iak", &iak_start, NULL);
+		if (ret)
+			return ret;
+
 #if defined(STM32_BL2)
-		case OTP_OFFSET(bl2_rotpk_0) / sizeof(uint32_t):
+		if (offset == entropy_seed_start || offset == iak_start ||
+		    offset == bl2_rotpk_0_start) {
+
+#else
+		if (offset == entropy_seed_start || offset == iak_start) {
 #endif
 			dummy_mirror = &drv_data->mirror_dummy;
 
 			for (idx = 0; idx < (copy_size / sizeof(uint32_t)); idx++) {
 				p_out_w[idx] = dummy_mirror->otp[offset + idx].value;
 			}
-			break;
-
-		default:
-			ret = -EINVAL;
-			break;
+		} else {
+			return -EINVAL;
 		}
 
 		return ret;
@@ -455,29 +442,42 @@ static int _otp_read(uint32_t offset, size_t len, size_t out_len, uint8_t *out)
 	return 0;
 }
 
-static int _otp_read_lcs(uint32_t out_len, uint8_t *out)
+#define BOOTROM_CFG_9_SEC_BOOT	GENMASK(3,0)
+#define BOOTROM_CFG_9_PROV_DONE	GENMASK(7,4)
+#define HCONF1_DISABLE_SCAN	BIT(20)
+static int _read_lcs(uint32_t out_len, uint8_t *out)
 {
 	uint32_t secure_boot, disable_scan, prov_done;
 	enum plat_otp_lcs_t *lcs = (enum plat_otp_lcs_t*) out;
-	uint32_t btrom_cfg_9, hconf1;
-	int err;
+	uint32_t bootrom_cfg_9, hconf1;
+	uint32_t cell_start, cell_size;
+	int res;
 
 	*lcs = PLAT_OTP_LCS_ASSEMBLY_AND_TEST;
 
-	err = _otp_read(OTP_OFFSET(bootrom_config_9),
-			OTP_SIZE(bootrom_config_9),
-			sizeof(btrom_cfg_9), (uint8_t*)&btrom_cfg_9);
-	if (err)
-		return err;
+	res = stm32_bsec_get_otp_cell_by_label("bootrom_config_9", &cell_start,
+					       &cell_size);
+	if (res)
+		return res;
 
-	err = _otp_read(OTP_OFFSET(hconf1), OTP_SIZE(hconf1),
-			sizeof(hconf1), (uint8_t*)&hconf1);
-	if (err)
-		return err;
+	res = _otp_read(cell_start, cell_size * sizeof(uint32_t),
+			sizeof(bootrom_cfg_9), (uint8_t *)&bootrom_cfg_9);
+	if (res)
+		return res;
 
-	/* true if any bit of field is set */
-	secure_boot = !!(btrom_cfg_9 & BOOTROM_CFG_9_SEC_BOOT);
-	prov_done = !!(btrom_cfg_9 & BOOTROM_CFG_9_PROV_DONE);
+	res = stm32_bsec_get_otp_cell_by_label("hconf1_otp", &cell_start,
+					       &cell_size);
+	if (res)
+		return res;
+
+	res = _otp_read(cell_start, cell_size * sizeof(uint32_t),
+			sizeof(hconf1), (uint8_t *)&hconf1);
+	if (res)
+		return res;
+
+	/* true if all bit of field are set */
+	secure_boot = !!(bootrom_cfg_9 & BOOTROM_CFG_9_SEC_BOOT);
+	prov_done = !!(bootrom_cfg_9 & BOOTROM_CFG_9_PROV_DONE);
 	disable_scan = !!(hconf1 & HCONF1_DISABLE_SCAN);
 
 	if (secure_boot && prov_done && disable_scan)
@@ -494,16 +494,11 @@ static int __maybe_unused _otp_write(uint32_t offset, size_t len,
 	uint32_t *p_in_w = (uint32_t *)in;
 	uint32_t idx;
 
-	if (offset % (sizeof(uint32_t)))
-		return -EINVAL;
-
 	if (len != in_len)
 		return -EINVAL;
 
 	if (len % (sizeof(uint32_t)))
 		return -EINVAL;
-
-	offset /= sizeof(uint32_t);
 
 #ifdef TFM_DUMMY_PROVISIONING
 	/*
@@ -511,37 +506,53 @@ static int __maybe_unused _otp_write(uint32_t offset, size_t len,
 	 * In dummy provisionning case, just use the dummy_mirror area to store dummy keys.
 	 */
 #if defined(STM32_BL2)
+	uint32_t bl2_rotpk_0_start;
+	int ret;
+
+	ret = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_0",
+						&bl2_rotpk_0_start,
+						NULL);
+	if (ret)
+		return ret;
 	if (!mirror && (offset >= STM32MP2_UPPER_BASE ||
-		       offset == OTP_OFFSET(bl2_rotpk_0) / sizeof(uint32_t))) {
+			offset == bl2_rotpk_0_start)) {
 #else
 	if (!mirror && offset >= STM32MP2_UPPER_BASE) {
 #endif
 		struct bsec_mirror *dummy_mirror;
-		int ret = 0;
+		uint32_t entropy_seed_start, iak_start;
 
-		switch (offset) {
-		case OTP_OFFSET(iak) / sizeof(uint32_t):
-		case OTP_OFFSET(entropy_seed) / sizeof(uint32_t):
+		ret = stm32_bsec_get_otp_cell_by_label("entropy_seed",
+						       &entropy_seed_start,
+						       NULL);
+		if (ret)
+			return ret;
+
+		ret = stm32_bsec_get_otp_cell_by_label("iak", &iak_start, NULL);
+		if (ret)
+			return ret;
+
+
 #if defined(STM32_BL2)
-		case OTP_OFFSET(bl2_rotpk_0) / sizeof(uint32_t):
+		if (offset == entropy_seed_start || offset == iak_start ||
+		    offset == bl2_rotpk_0_start) {
+#else
+		if (offset == entropy_seed_start || offset == iak_start) {
 #endif
 			dummy_mirror = &drv_data->mirror_dummy;
 
 			for (idx = 0; idx < (len / sizeof(uint32_t)); idx++) {
 				dummy_mirror->otp[offset + idx].value = p_in_w[idx];
 			}
-			break;
-
-		default:
-			ret = -EINVAL;
-			break;
+		} else {
+			return -EINVAL;
 		}
 
 		return ret;
 	}
 #endif
 
-	for (idx = 0; idx < (len / sizeof(uint32_t)); idx++) {
+	for (idx = 0; idx < len / sizeof(uint32_t); idx++) {
 		if (mirror) {
 			if (!_otp_is_valid(mirror->otp[offset + idx].status))
 				return -EPERM;
@@ -549,10 +560,7 @@ static int __maybe_unused _otp_write(uint32_t offset, size_t len,
 			mirror->otp[offset + idx].value = p_in_w[idx];
 			mirror->otp[offset + idx].status = LOCK_SHADOW_R;
 		} else {
-			int res;
-
-			res = stm32_bsec_write_otp(p_in_w[idx], offset + idx);
-			if (res)
+			if (stm32_bsec_write_otp(p_in_w[idx], offset + idx))
 				return -EIO;
 		}
 	}
@@ -563,44 +571,50 @@ static int __maybe_unused _otp_write(uint32_t offset, size_t len,
 static int __maybe_unused _otp_write_lcs(uint32_t in_len, const uint8_t *in)
 {
 	enum plat_otp_lcs_t *lcs = (enum plat_otp_lcs_t*) in;
-	uint32_t btrom_cfg_9, hconf1;
-	int err;
+	uint32_t bootrom_cfg_9, cfg9_start, cfg9_size;
+	uint32_t hconf1, hconf1_start, hconf1_size;
+	int res;
 
-	err = _otp_read(OTP_OFFSET(bootrom_config_9),
-			OTP_SIZE(bootrom_config_9),
-			sizeof(btrom_cfg_9), (uint8_t*)&btrom_cfg_9);
-	if (err)
-		return err;
+	res = stm32_bsec_get_otp_cell_by_label("bootrom_config_9", &cfg9_start,
+					       &cfg9_size);
+	if (res)
+		return res;
 
-	err = _otp_read(OTP_OFFSET(hconf1), OTP_SIZE(hconf1),
-			sizeof(hconf1), (uint8_t*)&hconf1);
-	if (err)
-		return err;
+	res = _otp_read(cfg9_start, cfg9_size * sizeof(uint32_t),
+			sizeof(bootrom_cfg_9), (uint8_t *)&bootrom_cfg_9);
+	if (res)
+		return res;
+
+	res = stm32_bsec_get_otp_cell_by_label("hconf1_otp", &hconf1_start,
+					       &hconf1_size);
+	if (res)
+		return res;
+
+	res = _otp_read(hconf1_start, hconf1_size * sizeof(uint32_t),
+			sizeof(hconf1), (uint8_t *)&hconf1);
+	if (res)
+		return res;
 
 	if (*lcs == PLAT_OTP_LCS_SECURED) {
-		if (!(btrom_cfg_9 & BOOTROM_CFG_9_SEC_BOOT))
-			btrom_cfg_9 |= BOOTROM_CFG_9_SEC_BOOT;
-
-		if (!(btrom_cfg_9 & BOOTROM_CFG_9_PROV_DONE))
-			btrom_cfg_9 |= BOOTROM_CFG_9_PROV_DONE;
-
+		if (!(bootrom_cfg_9 & BOOTROM_CFG_9_SEC_BOOT))
+			bootrom_cfg_9 |= BOOTROM_CFG_9_SEC_BOOT;
+		if (!(bootrom_cfg_9 & BOOTROM_CFG_9_PROV_DONE))
+			bootrom_cfg_9 |= BOOTROM_CFG_9_PROV_DONE;
 		if (!(hconf1 & HCONF1_DISABLE_SCAN))
 			hconf1 |= HCONF1_DISABLE_SCAN;
-	}
-	else {
-		btrom_cfg_9 &= ~BOOTROM_CFG_9_PROV_DONE;
+	} else {
+		bootrom_cfg_9 &= ~BOOTROM_CFG_9_PROV_DONE;
 	}
 
-	err = _otp_write(OTP_OFFSET(bootrom_config_9),
-			 OTP_SIZE(bootrom_config_9),
-			 sizeof(btrom_cfg_9), (uint8_t*)&btrom_cfg_9);
-	if (err)
-		return err;
+	res = _otp_write(cfg9_start, cfg9_size * sizeof(uint32_t),
+			 sizeof(bootrom_cfg_9), (uint8_t*)&bootrom_cfg_9);
+	if (res)
+		return res;
 
-	err = _otp_write(OTP_OFFSET(hconf1), OTP_SIZE(hconf1),
+	res = _otp_write(hconf1_start, hconf1_size * sizeof(uint32_t),
 			 sizeof(hconf1), (uint8_t*)&hconf1);
-	if (err)
-		return err;
+	if (res)
+		return res;
 
 	return 0;
 }
@@ -666,65 +680,97 @@ int stm32_bsec_write(uint32_t otp, uint32_t value)
 int stm32_bsec_otp_read_by_id(enum tfm_otp_element_id_t id, size_t out_len,
 			      uint8_t *out)
 {
+	int res;
+	uint32_t cell_start;
+	uint32_t cell_size;
+
 	switch (id) {
 	case PLAT_OTP_ID_LCS:
-		return _otp_read_lcs(out_len, out);
-	case PLAT_OTP_ID_IAK:
-		return _otp_read(OTP_OFFSET(iak), OTP_SIZE(iak), out_len, out);
+		return _read_lcs(out_len, out);
 	case PLAT_OTP_ID_IAK_LEN:
-		*out = OTP_SIZE(iak);
+		res = stm32_bsec_get_otp_cell_by_label("iak", NULL, &cell_size);
+		*out = cell_size * sizeof(uint32_t);
+
+		return res;
+
+	case PLAT_OTP_ID_IAK:
+		res = stm32_bsec_get_otp_cell_by_label("iak", &cell_start,
+						       &cell_size);
 		break;
 	case PLAT_OTP_ID_IMPLEMENTATION_ID:
-		return _otp_read(OTP_OFFSET(implementation_id),
-				 OTP_SIZE(implementation_id), out_len, out);
+		res = stm32_bsec_get_otp_cell_by_label("implementation_id",
+						       &cell_start, &cell_size);
+		break;
 	case PLAT_OTP_ID_ENTROPY_SEED:
-		return _otp_read(OTP_OFFSET(entropy_seed),
-				 OTP_SIZE(entropy_seed), out_len, out);
+		res = stm32_bsec_get_otp_cell_by_label("entropy_seed",
+						       &cell_start, &cell_size);
+		break;
 #if defined(STM32_BL2)
 	case PLAT_OTP_ID_BL2_ROTPK_0:
-		return _otp_read(OTP_OFFSET(bl2_rotpk_0),
-				 OTP_SIZE(bl2_rotpk_0), out_len, out);
 	case PLAT_OTP_ID_BL2_ROTPK_1:
 		/* Image id 1 (supposed to use rotpk1) is DDR Firmware.
 		 * We choose to use the Secure world key to sign it
 		 * (rotpk0).
 		 */
-		return _otp_read(OTP_OFFSET(bl2_rotpk_0),
-				 OTP_SIZE(bl2_rotpk_0), out_len, out);
+		res = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_0",
+						       &cell_start, &cell_size);
+		break;
 #endif
 	default:
 		return -ENOTSUP;
 	}
 
-	return 0;
+	if (res)
+		return res;
+
+	return _otp_read(cell_start, cell_size * sizeof(uint32_t), out_len,
+			 out);
+
 }
 
 int stm32_bsec_otp_size_by_id(enum tfm_otp_element_id_t id, size_t *size)
 {
+	int res = 0;
+	uint32_t cell_size;
+
 	switch (id) {
 	case PLAT_OTP_ID_LCS:
 		*size = sizeof(uint32_t);
 		break;
 	case PLAT_OTP_ID_IAK:
-		*size = OTP_SIZE(iak);
+		res = stm32_bsec_get_otp_cell_by_label("iak", NULL, &cell_size);
+
 		break;
 	case PLAT_OTP_ID_IMPLEMENTATION_ID:
-		*size = OTP_SIZE(implementation_id);
+		res = stm32_bsec_get_otp_cell_by_label("implementation_id",
+						       NULL, &cell_size);
+
 		break;
 	case PLAT_OTP_ID_ENTROPY_SEED:
-		*size = OTP_SIZE(entropy_seed);
+		res = stm32_bsec_get_otp_cell_by_label("entropy_seed", NULL,
+						       &cell_size);
+
 		break;
 #if defined(STM32_BL2)
 	case PLAT_OTP_ID_BL2_ROTPK_0:
-		*size = OTP_SIZE(bl2_rotpk_0);
+		res = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_0", NULL,
+						       &cell_size);
+
 		break;
 	case PLAT_OTP_ID_BL2_ROTPK_1:
-		*size = OTP_SIZE(bl2_rotpk_1);
+		res = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_1", NULL,
+						       &cell_size);
+
 		break;
 #endif
 	default:
 		return -ENOTSUP;
 	}
+
+	if (res)
+		return res;
+
+	*size = cell_size * sizeof(uint32_t);
 
 	return 0;
 }
@@ -733,28 +779,44 @@ int stm32_bsec_otp_size_by_id(enum tfm_otp_element_id_t id, size_t *size)
 int stm32_bsec_otp_write_by_id(enum tfm_otp_element_id_t id, size_t in_len,
 			       const uint8_t *in)
 {
+	int res = 0;
+	uint32_t cell_start;
+	uint32_t cell_size;
+
 	switch (id) {
 	case PLAT_OTP_ID_LCS:
 		return _otp_write_lcs(in_len, in);
 	case PLAT_OTP_ID_IMPLEMENTATION_ID:
-		return _otp_write(OTP_OFFSET(implementation_id),
-				  OTP_SIZE(implementation_id), in_len, in);
+		res = stm32_bsec_get_otp_cell_by_label("implementation_id",
+						       &cell_start, &cell_size);
+		break;
 	case PLAT_OTP_ID_ENTROPY_SEED:
-		return _otp_write(OTP_OFFSET(entropy_seed),
-				  OTP_SIZE(entropy_seed), in_len, in);
+		res = stm32_bsec_get_otp_cell_by_label("entropy_seed",
+						       &cell_start, &cell_size);
+		break;
 	case PLAT_OTP_ID_IAK:
-		return _otp_write(OTP_OFFSET(iak), OTP_SIZE(iak),in_len, in);
+		res = stm32_bsec_get_otp_cell_by_label("iak", &cell_start,
+						       &cell_size);
+
+		break;
 #if defined(STM32_BL2)
 	case PLAT_OTP_ID_BL2_ROTPK_0:
-		return _otp_write(OTP_OFFSET(bl2_rotpk_0),
-				  OTP_SIZE(bl2_rotpk_0), in_len, in);
+		res = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_0",
+						       &cell_start, &cell_size);
+		break;
 	case PLAT_OTP_ID_BL2_ROTPK_1:
-		return _otp_write(OTP_OFFSET(bl2_rotpk_1),
-				  OTP_SIZE(bl2_rotpk_1), in_len, in);
+		res = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_1",
+						       &cell_start, &cell_size);
+		break;
 #endif
 	default:
 		return -ENOTSUP;
 	}
+
+	if (res)
+		return res;
+
+	return _otp_write(cell_start, cell_size * sizeof(uint32_t), in_len, in);
 }
 
 int stm32_bsec_dummy_switch(void)
@@ -1033,7 +1095,11 @@ static int stm32_bsec_dt_init(const struct device *dev)
 static const uint32_t shadow_value_##node_id[] =				\
 	DT_PROP_OR(node_id, shadow_provisionning, {});				\
 										\
+static const char * const stm32_otp_label_##node_id[] = 			\
+	DT_NODELABEL_STRING_ARRAY(node_id); 					\
+										\
 static const struct nvmem_cell stm32_otp_cell_##node_id = {			\
+	.cell_label = stm32_otp_label_##node_id[0],				\
 	.otp_id = (DT_REG_ADDR(node_id) / 4),					\
 	.n_otp = (DT_REG_SIZE(node_id) / 4),					\
 	.shadow_value = shadow_value_##node_id,					\

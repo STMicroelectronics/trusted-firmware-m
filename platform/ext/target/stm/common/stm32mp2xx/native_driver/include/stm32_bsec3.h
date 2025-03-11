@@ -42,6 +42,9 @@ int stm32_bsec_read_sw_lock(uint32_t otp, bool *value);
 
 int stm32_bsec_write(uint32_t otp_num, uint32_t otp_val);
 
+int stm32_bsec_get_otp_cell_by_label(char* label, uint32_t *cell_start,
+				     uint32_t *cell_size);
+
 /*
  * Interface with TFM
  */
