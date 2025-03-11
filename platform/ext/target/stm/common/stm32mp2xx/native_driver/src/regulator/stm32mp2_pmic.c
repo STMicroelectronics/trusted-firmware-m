@@ -865,6 +865,12 @@ static const struct regulator_driver_api stpmic2_api = {
 											\
 	static const struct regu_stpmic2_config cfg_##id = {				\
 		.common = REGULATOR_DT_COMMON_CONFIG_INIT(node_id),			\
+		.common.ramp_delay_uv_per_us = DT_PROP_OR(node_id,			\
+							  regulator_ramp_delay,		\
+							  U(2200)),			\
+		.common.enable_ramp_delay_us = DT_PROP_OR(node_id,			\
+							  regulator_enable_ramp_delay,	\
+							  U(1000)),			\
 		.i2c = I2C_DT_SPEC_GET(DT_GPARENT(node_id)),				\
 		.desc = macro_desc(STRINGIFY(id), reg_id, pd, ranges),			\
 	};										\
