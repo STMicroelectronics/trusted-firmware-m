@@ -1099,10 +1099,10 @@ static __unused struct stm32_bsec_variant variant_stm32mp25 = {
 #define DT_DRV_COMPAT		st_stm32mp21_bsec
 
 DT_FOREACH_STATUS_OKAY_VARGS(st_stm32mp21_bsec, STM32_BSEC3_INIT,
-			     &variant_stm32mp21);
+			     &variant_stm32mp21)
 
 #undef DT_DRV_COMPAT
 #define DT_DRV_COMPAT		st_stm32mp25_bsec
 
 DT_FOREACH_STATUS_OKAY_VARGS(st_stm32mp25_bsec, STM32_BSEC3_INIT,
-			     &variant_stm32mp25);
+			     &variant_stm32mp25)
