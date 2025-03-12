@@ -333,8 +333,39 @@ void stm32_bsec_write_debug_conf(uint32_t val)
 	bsec_unlock();
 }
 
-static inline int _otp_is_valid(uint32_t status){
+static inline int _otp_is_valid(uint32_t status)
+{
 	return !(status & (STATUS_SECURE | LOCK_ERROR));
+}
+
+static int __maybe_unused stm32_is_otp_dummy_provisionable(uint32_t otp_id)
+{
+	uint32_t iak_start, entropy_seed_start;
+	uint32_t __maybe_unused bl2_rotpk_0_start;
+	uint32_t ret;
+
+	ret = stm32_bsec_get_otp_cell_by_label("entropy_seed",
+					       &entropy_seed_start, NULL);
+	if (ret)
+		return ret;
+
+	ret = stm32_bsec_get_otp_cell_by_label("iak", &iak_start, NULL);
+	if (ret)
+		return ret;
+
+	if (otp_id == entropy_seed_start || otp_id == iak_start)
+		return true;
+
+#if defined(STM32_BL2)
+	ret = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_0", &bl2_rotpk_0_start, NULL);
+	if (ret)
+		return ret;
+
+	if (otp_id == bl2_rotpk_0_start)
+		return true;
+#endif
+
+	return false;
 }
 
 int stm32_bsec_get_otp_cell_by_label(char* label, uint32_t *cell_start,
@@ -357,7 +388,7 @@ int stm32_bsec_get_otp_cell_by_label(char* label, uint32_t *cell_start,
 	return -ENOENT;
 }
 
-static int _otp_read(uint32_t offset, size_t len, size_t out_len, uint8_t *out)
+static int _otp_read(uint32_t otp_id, size_t len, size_t out_len, uint8_t *out)
 {
 	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
 	struct bsec_mirror *mirror = drv_data->p_mirror;
@@ -381,55 +412,37 @@ static int _otp_read(uint32_t offset, size_t len, size_t out_len, uint8_t *out)
 						NULL);
 	if (ret)
 		return ret;
-	if (!mirror && (offset >= STM32MP2_UPPER_BASE ||
-			offset == bl2_rotpk_0_start)) {
+	if (!mirror && (otp_id >= STM32MP2_UPPER_BASE ||
+			otp_id == bl2_rotpk_0_start)) {
 #else
-	if (!mirror && offset >= STM32MP2_UPPER_BASE) {
+	if (!mirror && otp_id >= STM32MP2_UPPER_BASE) {
 #endif
-		uint32_t iak_start, entropy_seed_start;
 		struct bsec_mirror *dummy_mirror;
 
-		ret = stm32_bsec_get_otp_cell_by_label("entropy_seed",
-						       &entropy_seed_start,
-						       NULL);
-		if (ret)
-			return ret;
-
-		ret = stm32_bsec_get_otp_cell_by_label("iak", &iak_start, NULL);
-		if (ret)
-			return ret;
-
-#if defined(STM32_BL2)
-		if (offset == entropy_seed_start || offset == iak_start ||
-		    offset == bl2_rotpk_0_start) {
-
-#else
-		if (offset == entropy_seed_start || offset == iak_start) {
-#endif
-			dummy_mirror = &drv_data->mirror_dummy;
-
-			for (idx = 0; idx < (copy_size / sizeof(uint32_t)); idx++) {
-				p_out_w[idx] = dummy_mirror->otp[offset + idx].value;
-			}
-		} else {
+		if (!stm32_is_otp_dummy_provisionable(otp_id))
 			return -EINVAL;
+
+		dummy_mirror = &drv_data->mirror_dummy;
+
+		for (idx = 0; idx < (copy_size / sizeof(uint32_t)); idx++) {
+			p_out_w[idx] = dummy_mirror->otp[otp_id + idx].value;
 		}
 
-		return ret;
+		return 0;
 	}
 #endif
 
 	for (idx = 0; idx < (copy_size / sizeof(uint32_t)); idx++) {
 		if (mirror) {
-			if (!_otp_is_valid(mirror->otp[offset + idx].status))
+			if (!_otp_is_valid(mirror->otp[otp_id + idx].status))
 				return -EPERM;
 
-			p_out_w[idx] = mirror->otp[offset + idx].value;
+			p_out_w[idx] = mirror->otp[otp_id + idx].value;
 		} else {
 			uint32_t val;
 			int res;
 
-			res = stm32_bsec_shadow_read_otp(&val, offset + idx);
+			res = stm32_bsec_shadow_read_otp(&val, otp_id + idx);
 			if (res) {
 				memset(p_out_w, 0, copy_size);
 				return -EIO;
@@ -486,7 +499,7 @@ static int _read_lcs(uint32_t out_len, uint8_t *out)
 	return 0;
 }
 
-static int __maybe_unused _otp_write(uint32_t offset, size_t len,
+static int __maybe_unused _otp_write(uint32_t otp_id, size_t len,
 				     size_t in_len, const uint8_t *in)
 {
 	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
@@ -514,53 +527,35 @@ static int __maybe_unused _otp_write(uint32_t offset, size_t len,
 						NULL);
 	if (ret)
 		return ret;
-	if (!mirror && (offset >= STM32MP2_UPPER_BASE ||
-			offset == bl2_rotpk_0_start)) {
+	if (!mirror && (otp_id >= STM32MP2_UPPER_BASE ||
+			otp_id == bl2_rotpk_0_start)) {
 #else
-	if (!mirror && offset >= STM32MP2_UPPER_BASE) {
+	if (!mirror && otp_id >= STM32MP2_UPPER_BASE) {
 #endif
 		struct bsec_mirror *dummy_mirror;
-		uint32_t entropy_seed_start, iak_start;
 
-		ret = stm32_bsec_get_otp_cell_by_label("entropy_seed",
-						       &entropy_seed_start,
-						       NULL);
-		if (ret)
-			return ret;
-
-		ret = stm32_bsec_get_otp_cell_by_label("iak", &iak_start, NULL);
-		if (ret)
-			return ret;
-
-
-#if defined(STM32_BL2)
-		if (offset == entropy_seed_start || offset == iak_start ||
-		    offset == bl2_rotpk_0_start) {
-#else
-		if (offset == entropy_seed_start || offset == iak_start) {
-#endif
-			dummy_mirror = &drv_data->mirror_dummy;
-
-			for (idx = 0; idx < (len / sizeof(uint32_t)); idx++) {
-				dummy_mirror->otp[offset + idx].value = p_in_w[idx];
-			}
-		} else {
+		if (!stm32_is_otp_dummy_provisionable(otp_id))
 			return -EINVAL;
+
+		dummy_mirror = &drv_data->mirror_dummy;
+
+		for (idx = 0; idx < (len / sizeof(uint32_t)); idx++) {
+			dummy_mirror->otp[otp_id + idx].value = p_in_w[idx];
 		}
 
-		return ret;
+		return 0;
 	}
 #endif
 
 	for (idx = 0; idx < len / sizeof(uint32_t); idx++) {
 		if (mirror) {
-			if (!_otp_is_valid(mirror->otp[offset + idx].status))
+			if (!_otp_is_valid(mirror->otp[otp_id + idx].status))
 				return -EPERM;
 
-			mirror->otp[offset + idx].value = p_in_w[idx];
-			mirror->otp[offset + idx].status = LOCK_SHADOW_R;
+			mirror->otp[otp_id + idx].value = p_in_w[idx];
+			mirror->otp[otp_id + idx].status = LOCK_SHADOW_R;
 		} else {
-			if (stm32_bsec_write_otp(p_in_w[idx], offset + idx))
+			if (stm32_bsec_write_otp(p_in_w[idx], otp_id + idx))
 				return -EIO;
 		}
 	}
