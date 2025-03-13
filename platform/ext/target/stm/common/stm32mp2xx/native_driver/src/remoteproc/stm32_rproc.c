@@ -30,6 +30,7 @@ struct clock_control {
 struct stm32_rproc_variant {
 	int (*init_fn)(const struct device *dev);
 	int (*start_fn)(const struct device *dev);
+	int (*is_running_fn)(const struct device *dev);
 	int (*stop_fn)(const struct device *dev);
 	void (*irq_handler)(const struct device *dev);
 };
@@ -45,8 +46,23 @@ struct stm32_rproc_config {
 
 struct stm32_rproc_data {
 	struct rproc_spec rproc;
+	uint32_t running;
 	const struct stm32_rproc_variant *variant;
 };
+
+static void stm32_rproc_running_set(const struct device *dev, uint32_t running)
+{
+	struct stm32_rproc_data *data = dev_get_data(dev);
+
+	data->running = running;
+}
+
+static uint32_t stm32_rproc_running_get(const struct device *dev)
+{
+	struct stm32_rproc_data *data = dev_get_data(dev);
+
+	return data->running;
+}
 
 /*
  * FIXME
@@ -54,111 +70,9 @@ struct stm32_rproc_data {
  * Wait the interrupt framework to enable or mask a specific interrupt
  */
 #define PWR_CPU1D1SR_DSTATE_STANDBY ( 0x4 << PWR_CPU1D1SR_DSTATE_Pos)
-/*
- * Stop procedure is setting the cortex A in reset on holboot.
- * At cold start the cortexA is in standby reset and all exti are masked.
- * so before send event we must:
- * - unmask cpu2_sev (exti1 64) of cortexA (C1)
- * - apply rif access on exti (exti driver)
- * - send event by exti software interrupt
- * At cold start When the m33 debug wrapper is used (cortexA is in standby stop)
- * or when cortex A is running :
- */
-static __unused int stm32mp2_a35_stop(const struct device *dev)
-{
-	const struct stm32_rproc_config *cfg = dev_get_config(dev);
-	uint32_t cfgr;
-
-	/* the deassert release hold boot and set hold boot */
-	reset_control_deassert(&cfg->rst_ctl);
-
-	/* clear event if pending */
-	EXTI1->RPR3 = BIT(0);
-	/* send CPU2 SEV event to cpu1 (exti 64)*/
-	EXTI1->SWIER3 |= BIT(0);
-	/* reset cpu */
-	reset_control_assert(&cfg->rst_ctl);
-	/* check cpu in holdboot */
-
-	return  mmio_read32_poll_timeout(((uint32_t)&PWR_S->CPU1D1SR), cfgr,
-					 (cfgr & PWR_CPU1D1SR_HOLD_BOOT_Msk) &&
-					 ((cfgr & PWR_CPU1D1SR_DSTATE)
-					  != PWR_CPU1D1SR_DSTATE_STANDBY), 10);
-}
-
-static __unused int stm32mp2_a35_init(const struct device *dev)
-{
-	const struct stm32_rproc_config *cfg = dev_get_config(dev);
-
-	/* unmask event before rif has initialized CID1 filtering on EXTI1_C1CIDCFGR*/
-	EXTI1->C1IMR3 |= BIT(0);
-
-	if (cfg->irq_ack != IRQ_INVALID){
-		/* enable rising trigger */
-		EXTI1->RTSR3 |= BIT(1);
-		NVIC_SetPriority(cfg->irq_ack, 1);
-	}
-
-	return stm32mp2_a35_stop(dev);
-}
-
 #define IAC_BIT(_id) BIT(_id % 32)
 
-static __unused int stm32mp2_a35_start(const struct device *dev)
-{
-	const struct stm32_rproc_config *cfg = dev_get_config(dev);
-	struct firewall_spec *firewall;
-	uint32_t cfgr;
-	int i, err;
-
-	if (((PWR_S->CPU1D1SR & PWR_CPU1D1SR_DSTATE) == PWR_CPU1D1SR_DSTATE_STANDBY)
-	    ||!(PWR_S->CPU1D1SR & PWR_CPU1D1SR_HOLD_BOOT_Msk)) {
-		err = stm32mp2_a35_stop(dev);
-		if (err)
-			return err;
-	}
-
-	if (cfg->irq_ack != IRQ_INVALID) {
-		/* clear rising pending register */
-		EXTI1->RPR3 = BIT(1);
-		/* unmask C2 int & event C1SEV (65) */
-		EXTI1->C2IMR3 |= BIT(1);
-		EXTI1->C2EMR3 |= BIT(1);
-		NVIC_EnableIRQ(cfg->irq_ack);
-	}
-
-	/* set bootrom access controller configuration */
-	for_each_firewall(cfg->firewall_ctrls, firewall,
-			  cfg->n_firewall_ctrls, i) {
-		err = firewall_set_configuration(firewall);
-		if (err != 0) {
-			DMSG("[%s] fail to set firewall conf %d\n", __func__, i);
-			return err;
-		}
-	}
-
-	/*
-	 * IAC workaround
-	 * mask:
-	 * RAMCFG(108), TAMP(152), PWR(155), RCC(156)
-	 */
-	IAC->IER[3] &= ~(IAC_BIT(108));
-	IAC->IER[4] &= ~(IAC_BIT(152) | IAC_BIT(155) | IAC_BIT(156));
-
-	/*  power up cpu, in case it is in standby */
-	err = reset_control_deassert(&cfg->rst_ctl);
-	if (err)
-		return err;
-
-	/*  check cpu is not in holbot */
-	return mmio_read32_poll_timeout(((uint32_t)&PWR_S->CPU1D1SR), cfgr,
-					!(cfgr & PWR_CPU1D1SR_HOLD_BOOT_Msk) ||
-					((cfgr & PWR_CPU1D1SR_DSTATE)
-					 == PWR_CPU1D1SR_DSTATE_STANDBY), 10);
-
-}
-
-static __unused int stm32mp2_a35_release(const struct device *dev)
+static __unused int stm32mp2_a35_restore(const struct device *dev)
 {
 	const struct stm32_rproc_config *cfg = dev_get_config(dev);
 	const struct clock_control *clock_ctl;
@@ -195,6 +109,128 @@ static __unused int stm32mp2_a35_release(const struct device *dev)
 			WMSG("%s: get clock[%d] fail\n", __func__, i);
 	}
 
+	return ret;
+}
+
+/*
+ * Stop procedure is setting the cortex A in reset on holboot.
+ * At cold start the cortexA is in standby reset and all exti are masked.
+ * so before send event we must:
+ * - unmask cpu2_sev (exti1 64) of cortexA (C1)
+ * - apply rif access on exti (exti driver)
+ * - send event by exti software interrupt
+ * At cold start When the m33 debug wrapper is used (cortexA is in standby stop)
+ * or when cortex A is running :
+ */
+static __unused int stm32mp2_a35_stop(const struct device *dev)
+{
+	const struct stm32_rproc_config *cfg = dev_get_config(dev);
+	uint32_t cfgr;
+
+	/* when ack not received (not running), restore the configuration */
+	if (stm32_rproc_running_get(dev))
+		stm32_rproc_running_set(dev, 0);
+	else
+		stm32mp2_a35_restore(dev);
+
+	/* the deassert release hold boot and set hold boot */
+	reset_control_deassert(&cfg->rst_ctl);
+
+	/* clear event if pending */
+	EXTI1->RPR3 = BIT(0);
+	/* send CPU2 SEV event to cpu1 (exti 64)*/
+	EXTI1->SWIER3 |= BIT(0);
+	/* reset cpu */
+	reset_control_assert(&cfg->rst_ctl);
+	/* check cpu in hold boot */
+
+	return  mmio_read32_poll_timeout(((uint32_t)&PWR_S->CPU1D1SR), cfgr,
+					 (cfgr & PWR_CPU1D1SR_HOLD_BOOT_Msk) &&
+					 ((cfgr & PWR_CPU1D1SR_DSTATE)
+					  != PWR_CPU1D1SR_DSTATE_STANDBY), 10);
+}
+
+static __unused int stm32mp2_a35_init(const struct device *dev)
+{
+	const struct stm32_rproc_config *cfg = dev_get_config(dev);
+
+	stm32_rproc_running_set(dev, 0);
+
+	/* unmask event before rif has initialized CID1 filtering on EXTI1_C1CIDCFGR*/
+	EXTI1->C1IMR3 |= BIT(0);
+
+	if (cfg->irq_ack != IRQ_INVALID){
+		/* enable rising trigger */
+		EXTI1->RTSR3 |= BIT(1);
+		NVIC_SetPriority(cfg->irq_ack, 1);
+	}
+
+	return stm32mp2_a35_stop(dev);
+}
+
+static __unused int stm32mp2_a35_start(const struct device *dev)
+{
+	const struct stm32_rproc_config *cfg = dev_get_config(dev);
+	struct firewall_spec *firewall;
+	uint32_t cfgr;
+	int i, err;
+
+	if (((PWR_S->CPU1D1SR & PWR_CPU1D1SR_DSTATE) == PWR_CPU1D1SR_DSTATE_STANDBY)
+	    ||!(PWR_S->CPU1D1SR & PWR_CPU1D1SR_HOLD_BOOT_Msk)) {
+		err = stm32mp2_a35_stop(dev);
+		if (err)
+			return err;
+	}
+
+	if (cfg->irq_ack != IRQ_INVALID) {
+		/* clear rising pending register */
+		EXTI1->RPR3 = BIT(1);
+		/* unmask C2 int & event C1SEV (65) */
+		EXTI1->C2IMR3 |= BIT(1);
+		EXTI1->C2EMR3 |= BIT(1);
+		NVIC_EnableIRQ(cfg->irq_ack);
+	} else {
+		stm32_rproc_running_set(dev, 1);
+	}
+
+	/* set bootrom access controller configuration */
+	for_each_firewall(cfg->firewall_ctrls, firewall,
+			  cfg->n_firewall_ctrls, i) {
+		err = firewall_set_configuration(firewall);
+		if (err != 0) {
+			DMSG("[%s] fail to set firewall conf %d\n", __func__, i);
+			return err;
+		}
+	}
+
+	/*
+	 * IAC workaround
+	 * mask:
+	 * RAMCFG(108), TAMP(152), PWR(155), RCC(156)
+	 */
+	IAC->IER[3] &= ~(IAC_BIT(108));
+	IAC->IER[4] &= ~(IAC_BIT(152) | IAC_BIT(155) | IAC_BIT(156));
+
+	/*  power up cpu, in case it is in standby */
+	err = reset_control_deassert(&cfg->rst_ctl);
+	if (err)
+		return err;
+
+	/*  check cpu is not in holbot */
+	return mmio_read32_poll_timeout(((uint32_t)&PWR_S->CPU1D1SR), cfgr,
+					!(cfgr & PWR_CPU1D1SR_HOLD_BOOT_Msk) ||
+					((cfgr & PWR_CPU1D1SR_DSTATE)
+					 == PWR_CPU1D1SR_DSTATE_STANDBY), 10);
+
+}
+
+static __unused int stm32mp2_a35_release(const struct device *dev)
+{
+	const struct stm32_rproc_config *cfg = dev_get_config(dev);
+	int ret;
+
+	ret = stm32mp2_a35_restore(dev);
+
 	if (cfg->irq_ack != IRQ_INVALID) {
 		NVIC_DisableIRQ(cfg->irq_ack);
 		NVIC_ClearPendingIRQ(cfg->irq_ack);
@@ -205,9 +241,15 @@ static __unused int stm32mp2_a35_release(const struct device *dev)
 		EXTI1->RPR3 = BIT(1);
 	}
 
+	stm32_rproc_running_set(dev, 1);
+
 	return ret;
 }
 
+static __unused bool stm32mp2_a35_is_running(const struct device *dev)
+{
+	return stm32_rproc_running_get(dev);
+}
 
 static __unused void stm32mp2_a35_irq_ack(const struct device *dev)
 {
@@ -229,6 +271,16 @@ int stm32_rproc_start(struct rproc_spec *rproc)
 		return -ENOTSUP;
 
 	return data->variant->start_fn(rproc->dev);
+}
+
+static bool stm32_rproc_is_running(struct rproc_spec *rproc)
+{
+	struct stm32_rproc_data *data = dev_get_data(rproc->dev);
+
+	if (!data->variant->is_running_fn)
+		return true;
+
+	return data->variant->is_running_fn(rproc->dev);
 }
 
 int stm32_rproc_stop(struct rproc_spec *rproc)
@@ -257,6 +309,7 @@ static __unused int stm32_rproc_init(const struct device *dev)
 static __unused const struct  stm32_rproc_variant stm32mp2_a35_var = {
 	.init_fn = stm32mp2_a35_init,
 	.start_fn = stm32mp2_a35_start,
+	.is_running_fn = stm32mp2_a35_is_running,
 	.stop_fn = stm32mp2_a35_stop,
 	.irq_handler = stm32mp2_a35_irq_ack,
 };
@@ -264,6 +317,7 @@ static __unused const struct  stm32_rproc_variant stm32mp2_a35_var = {
 static struct remoteproc_driver_api stm32_rproc_api = {
 	.get_rproc = stm32_rproc_get,
 	.start = stm32_rproc_start,
+	.is_running = stm32_rproc_is_running,
 	.stop = stm32_rproc_stop,
 };
 
