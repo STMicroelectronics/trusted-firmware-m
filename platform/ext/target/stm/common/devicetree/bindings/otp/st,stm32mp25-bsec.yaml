@@ -8,7 +8,7 @@ description: |
 
 compatible: "st,stm32mp25-bsec"
 
-include: [base.yaml, memory-region.yaml]
+include: [base.yaml, memory-region.yaml, access-device.yaml]
 
 properties:
   reg:

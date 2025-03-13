@@ -13,6 +13,7 @@
 
 #include <device.h>
 #include <debug.h>
+#include <firewall.h>
 #include <lib/mmio.h>
 #include <lib/mmiopoll.h>
 #include <lib/utils_def.h>
@@ -125,6 +126,8 @@ struct stm32_bsec_config {
 	uintptr_t base;
 	uintptr_t mirror_addr;
 	size_t mirror_size;
+	const struct firewall_spec *firewall_ctrls;
+	const int n_firewall_ctrls;
 	const struct nvmem_cell *otp_cell;
 	int n_otp_cell;
 };
@@ -1111,10 +1114,14 @@ static const struct nvmem_cell stm32_otp_cells_##node_id [] = {			\
 	DT_FOREACH_CHILD(node_id, NVMEM_CELL_CHILD_GET)				\
 };										\
 										\
+DT_ACCESS_CTRLS_DEFINE(node_id);						\
+										\
 static const struct stm32_bsec_config stm32_bsec3_cfg_ ## node_id = {		\
 	.base = DT_REG_ADDR(node_id),						\
 	.mirror_addr = DT_REG_ADDR(DT_PHANDLE(node_id, memory_region)),		\
 	.mirror_size = DT_REG_SIZE(DT_PHANDLE(node_id, memory_region)),		\
+	.firewall_ctrls = DT_ACCESS_CTRLS_GET(node_id),				\
+	.n_firewall_ctrls = DT_ACCESS_CTRLS_NUM(node_id),			\
 	.otp_cell = stm32_otp_cells_##node_id,					\
 	.n_otp_cell = ARRAY_SIZE(stm32_otp_cells_##node_id),			\
 };										\
