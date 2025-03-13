@@ -68,7 +68,11 @@ int rproc_boot(const struct device *dev)
 		return err;
 	}
 
-	rproc->state = CPU_RUNNING;
+	if (api->is_running) {
+		rproc->state = CPU_STARTED;
+	} else {
+		rproc->state = CPU_RUNNING;
+	}
 
 	return 0;
 }
@@ -105,10 +109,18 @@ int rproc_shutdown(const struct device *dev)
 
 int rproc_status(const struct device *dev)
 {
+	const struct remoteproc_driver_api *api;
 	struct rproc_spec *rproc = _is_valid_rproc(dev);
 
 	if (!rproc)
 		return -EINVAL;
+
+	api = rproc->dev->api;
+
+	if (api->is_running && rproc->state == CPU_STARTED) {
+		if (api->is_running(rproc))
+			rproc->state = CPU_RUNNING;
+	}
 
 	return rproc->state;
 }

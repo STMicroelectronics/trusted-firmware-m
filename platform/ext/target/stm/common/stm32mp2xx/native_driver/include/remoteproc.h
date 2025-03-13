@@ -30,11 +30,13 @@ struct rproc_spec {
  * struct remoteproc_driver_api - platform-specific device handlers
  * @get_rproc	return remoteproc specification of device
  * @start:	power on the device and boot it
+ * @is_running:	check running state after start request (optional)
  * @stop:	power off the device
  */
 struct remoteproc_driver_api {
 	struct rproc_spec *(*get_rproc)(const struct device *dev);
 	int (*start)(struct rproc_spec *rproc);
+	bool (*is_running)(struct rproc_spec *rproc);
 	int (*stop)(struct rproc_spec *rproc);
 };
 

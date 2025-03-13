@@ -12,6 +12,7 @@
  * @CPU_OFFLINE:	device is powered off
  * @CPU_SUSPENDED:	device is suspended; needs to be woken up
  *			to receive a message.
+ * @CPU_STARTED:	device is started (temporary state before running)
  * @CPU_RUNNING:	device is up and running
  * @CPU_CRASHED:	device has crashed; need to start recovery
  * @CPU_LAST:		just keep this one at the end
@@ -19,6 +20,7 @@
 enum cpu_state_t {
 	CPU_OFFLINE = 0,
 	CPU_SUSPENDED,
+	CPU_STARTED,
 	CPU_RUNNING,
 	CPU_CRASHED,
 	CPU_LAST,
