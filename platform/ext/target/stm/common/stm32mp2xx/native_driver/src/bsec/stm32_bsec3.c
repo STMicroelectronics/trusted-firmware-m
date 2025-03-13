@@ -148,16 +148,37 @@ struct stm32_bsec_data {
 
 static const struct device *bsec_dev;
 
-static void bsec_lock(void)
+static int bsec_get_semaphore(void)
 {
-	/* Not yet available */
-	return;
+	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
+	struct firewall_spec *firewall;
+	int i, ret;
+
+	for_each_firewall(drv_cfg->firewall_ctrls, firewall, drv_cfg->n_firewall_ctrls, i){
+		ret = firewall_acquire_access(firewall);
+		if(ret && ret != -ENODEV){
+			EMSG("Error aquire sem\n");
+			return ret;
+		}
+	}
+
+	return 0;
 }
 
-static void bsec_unlock(void)
+static int bsec_release_semaphore(void)
 {
-	/* Not yet available */
-	return;
+	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
+	struct firewall_spec *firewall;
+	int i, ret;
+
+	for_each_firewall(drv_cfg->firewall_ctrls, firewall, drv_cfg->n_firewall_ctrls, i){
+		ret = firewall_release_access(firewall);
+		if(ret && ret != -ENODEV){
+			EMSG("Error release sem\n");
+			return ret;
+		}
+	}
+	return 0;
 }
 
 static bool is_bsec_write_locked(void)
@@ -245,15 +266,22 @@ static int __maybe_unused stm32_bsec_read_otp(uint32_t *val, uint32_t otp)
 {
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
 	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
-	int ret;
+	int ret, sem_ret;
 
 	if (!val || otp > drv_data->variant->max_id)
 		return -EINVAL;
 
+	sem_ret = bsec_get_semaphore();
+	if (sem_ret)
+		return sem_ret;
 	*val = 0U;
 	ret = shadow_otp(bsec_dev, otp);
 	if (!ret)
 		*val = io_read32(drv_cfg->base + _BSEC_FVR(otp));
+
+	sem_ret = bsec_release_semaphore();
+	if (sem_ret)
+		return sem_ret;
 
 	return ret;
 }
@@ -269,16 +297,23 @@ static int __maybe_unused stm32_bsec_shadow_read_otp(uint32_t *val,
 {
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
 	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
-	int ret = 0;
+	int sem_ret, ret = 0;
 
 	if (!val || otp > drv_data->variant->max_id)
 		return -EINVAL;
 
+	sem_ret = bsec_get_semaphore();
+	if (sem_ret)
+		return sem_ret;
 	*val = 0U;
 	if (!is_fuse_shadowed(otp))
 		ret = shadow_otp(bsec_dev, otp);
 	if (!ret)
 		*val = io_read32(drv_cfg->base + _BSEC_FVR(otp));
+
+	sem_ret = bsec_release_semaphore();
+	if (sem_ret)
+		return sem_ret;
 
 	return ret;
 }
@@ -294,46 +329,61 @@ static int __maybe_unused stm32_bsec_write_otp(uint32_t val, uint32_t otp)
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
 	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
 	bool value = false;
-	int ret;
+	int ret, sem_ret;
 
 	if (otp > drv_data->variant->max_id)
 		return -EINVAL;
 
-	if (is_bsec_write_locked())
-		return -EPERM;
+	sem_ret = bsec_get_semaphore();
+	if (sem_ret)
+		return sem_ret;
+
+	if (is_bsec_write_locked()){
+		ret = -EPERM;
+		goto err;
+	}
 
 	/* for HW shadowed OTP, update value in FVR register */
 	if (is_fuse_shadowed(otp)) {
 		ret = stm32_bsec_read_sw_lock(otp, &value);
 		if (ret)
-			return ret;
+			goto err;
 
-		if (value)
-			return -EPERM;
-
-		bsec_lock();
+		if (value){
+			ret = -EPERM;
+			goto err;
+		}
 
 		io_write32(drv_cfg->base + _BSEC_FVR(otp), val);
-
-		bsec_unlock();
 	}
 
-	return 0;
+	ret = 0;
+
+err:
+	sem_ret = bsec_release_semaphore();
+	if (sem_ret)
+		return sem_ret;
+
+	return ret;
 }
 
 void stm32_bsec_write_debug_conf(uint32_t val)
 {
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
-
 	uint32_t masked_val = val & _BSEC_DENR_ALL_MSK;
+	int sem_ret;
 
+	sem_ret = bsec_get_semaphore();
+	if (sem_ret)
+		return sem_ret;
 	if (is_bsec_write_locked())
 		panic();
 
-	bsec_lock();
 	mmio_write_32(drv_cfg->base + _BSEC_DENR,
 		      _BSEC_DENR_KEY | masked_val);
-	bsec_unlock();
+	sem_ret = bsec_release_semaphore();
+	if (sem_ret)
+		return sem_ret;
 }
 
 static inline int _otp_is_valid(uint32_t status)
@@ -624,6 +674,7 @@ int stm32_bsec_read_sw_lock(uint32_t otp, bool *value)
 {
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
 	const struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
+	int sem_ret;
 
 	if (!value)
 		return -EINVAL;
@@ -637,7 +688,15 @@ int stm32_bsec_read_sw_lock(uint32_t otp, bool *value)
 		uint32_t bank = _FLD_GET(_BSEC_OTP_BANK, otp);
 		uint32_t mask = BIT(_FLD_GET(_BSEC_OTP_BIT, otp));
 
+		sem_ret = bsec_get_semaphore();
+		if (sem_ret)
+			return sem_ret;
+
 		*value = !!(io_read32(drv_cfg->base + _BSEC_SWLOCK(bank)) & mask);
+
+		sem_ret = bsec_release_semaphore();
+		if (sem_ret)
+			return sem_ret;
 	}
 
 	return 0;
@@ -645,25 +704,10 @@ int stm32_bsec_read_sw_lock(uint32_t otp, bool *value)
 
 int stm32_bsec_write(uint32_t otp, uint32_t value)
 {
-	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
 	const struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
-	bool sw_lock = false;
-	int ret;
 
-	if (is_bsec_write_locked())
-		return -EINVAL;
-
-	/* for HW shadowed OTP, update value in FVR register */
-	ret = stm32_bsec_read_sw_lock(otp, &sw_lock);
-	if (ret)
-		return ret;
-
-	if (sw_lock) {
-		DMSG("BSEC: OTP %d is write locked, write ignored\n", otp);
-		return -EACCES;
-	}
-
-	mmio_write_32(drv_cfg->base + _BSEC_FVR(otp), value);
+	if (stm32_bsec_write_otp(value, otp))
+		return -EIO;
 
 	/* update bsec mirror */
 	if (drv_data->p_mirror)
@@ -918,8 +962,6 @@ static void stm32_bsec_mirror_load(const struct device *dev, uint32_t status)
 	drv_data->p_mirror->magic = BSEC_MAGIC;
 	drv_data->p_mirror->state = BSEC_STATE_INVALID;
 
-	//exceptions = bsec_lock();
-
 	/* HIDEUP: read and write not possible in upper region */
 	if (status & _BSEC_OTPSR_HIDEUP) {
 		for (otp = STM32MP2_UPPER_BASE;
@@ -972,6 +1014,7 @@ static void stm32_bsec_mirror_load(const struct device *dev, uint32_t status)
 
 		if (!(drv_data->p_mirror->otp[otp].status & LOCK_SHADOW_R)) {
 			/* reload shadow to read Permanent Programing Lock Flag */
+
 			ret = shadow_otp(dev, otp);
 			if (ret) {
 				EMSG("Shadowing failed (%d)\n", ret);
@@ -983,7 +1026,6 @@ static void stm32_bsec_mirror_load(const struct device *dev, uint32_t status)
 							   _BSEC_FVR(otp));
 	}
 
-	//bsec_unlock(exceptions);
 }
 
 static void stm32_bsec_mirror_init(const struct device *dev, bool force_load)
@@ -992,6 +1034,9 @@ static void stm32_bsec_mirror_init(const struct device *dev, bool force_load)
 	struct stm32_bsec_data *drv_data = dev_get_data(dev);
 	struct bsec_mirror *mirror = drv_data->p_mirror;
 	uint32_t status;
+
+	if (bsec_get_semaphore())
+		return;
 
 	status = io_read32(drv_cfg->base + _BSEC_OTPSR);
 	stm32_bsec_check_error(status);
@@ -1006,6 +1051,8 @@ static void stm32_bsec_mirror_init(const struct device *dev, bool force_load)
 		EMSG("BSEC invalid state\n");
 		panic();
 	}
+
+	bsec_release_semaphore();
 }
 
 static int stm32_bsec_shadow_init(const struct device *dev)
