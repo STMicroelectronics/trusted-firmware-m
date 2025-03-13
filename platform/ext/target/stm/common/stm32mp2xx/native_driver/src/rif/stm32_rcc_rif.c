@@ -47,9 +47,36 @@ static int stm32_rcc_rif_firewall_release_conf(const struct firewall_spec *spec)
 	return stm32_rifprot_release_conf(dev_cfg->rif_ctl, rifprot_cfg.id);
 }
 
+static int stm32_rcc_rif_firewall_acquire_access(const struct firewall_spec *spec)
+{
+	const struct stm32_rcc_rif_config *dev_cfg = dev_get_config(spec->dev);
+	struct rifprot_config rifprot_cfg = RIFPROT_CFG(spec->args[0]);
+
+	return stm32_rifprot_acquire_sem(dev_cfg->rif_ctl, rifprot_cfg.id);
+}
+
+static int stm32_rcc_rif_firewall_release_access(const struct firewall_spec *spec)
+{
+	const struct stm32_rcc_rif_config *dev_cfg = dev_get_config(spec->dev);
+	struct rifprot_config rifprot_cfg = RIFPROT_CFG(spec->args[0]);
+
+	return stm32_rifprot_release_sem(dev_cfg->rif_ctl, rifprot_cfg.id);
+}
+
+static int stm32_rcc_rif_firewall_check_access(const struct firewall_spec *spec)
+{
+	const struct stm32_rcc_rif_config *dev_cfg = dev_get_config(spec->dev);
+	struct rifprot_config rifprot_cfg = RIFPROT_CFG(spec->args[0]);
+
+	return stm32_rifprot_check_access(dev_cfg->rif_ctl, rifprot_cfg.id);
+}
+
 static const struct firewall_controller_api stm32_rcc_rif_firewall_api = {
 	.set_conf = stm32_rcc_rif_firewall_set_conf,
 	.release_conf = stm32_rcc_rif_firewall_release_conf,
+	.acquire_access = stm32_rcc_rif_firewall_acquire_access,
+	.release_access = stm32_rcc_rif_firewall_release_access,
+	.check_access = stm32_rcc_rif_firewall_check_access,
 };
 
 static int stm32_rcc_rif_init(const struct device *dev)
