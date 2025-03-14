@@ -159,12 +159,7 @@ static int stm32_rng_acquire_sem(const struct stm32_rng_config *drv_cfg)
 	struct firewall_spec *firewall;
 	int err, i;
 
-	for_each_firewall(drv_cfg->firewall, firewall, drv_cfg->n_firewall, i) {
-		err = firewall_acquire_access(firewall);
-		if (err != 0)
-			break;
-	}
-
+	err = acquire_sem_for_each_firewall(drv_cfg->firewall, firewall, drv_cfg->n_firewall, i);
 	if (err)
 		ERROR("Could not acquire firewall access.\n");
 
@@ -176,12 +171,7 @@ static int stm32_rng_release_sem(const struct stm32_rng_config *drv_cfg)
 	struct firewall_spec *firewall;
 	int err, i;
 
-	for_each_firewall(drv_cfg->firewall, firewall, drv_cfg->n_firewall, i) {
-		err = firewall_release_access(firewall);
-		if (err != 0)
-			break;
-	}
-
+	err = release_sem_for_each_firewall(drv_cfg->firewall, firewall, drv_cfg->n_firewall, i);
 	if (err)
 		ERROR("Could not release firewall access.\n");
 
