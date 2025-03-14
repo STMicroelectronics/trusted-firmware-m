@@ -62,6 +62,12 @@ struct firewall_spec {
 #define release_for_each_firewall(fwall_tbl, fwall, n_fwall, i) \
 	_fn_for_each_fwall(firewall_release_configuration, fwall_tbl, fwall, n_fwall, i)
 
+#define acquire_sem_for_each_firewall(fwall_tbl, fwall, n_fwall, i) \
+	_fn_for_each_fwall(firewall_acquire_access, fwall_tbl, fwall, n_fwall, i)
+
+#define release_sem_for_each_firewall(fwall_tbl, fwall, n_fwall, i) \
+	_fn_for_each_fwall(firewall_release_access, fwall_tbl, fwall, n_fwall, i)
+
 typedef int (*firewall_controller_set_conf_t)(const struct firewall_spec *spec);
 typedef int (*firewall_controller_release_conf_t)(const struct firewall_spec *spec);
 typedef int (*firewall_controller_check_access_t)(const struct firewall_spec *spec);
