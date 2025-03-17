@@ -1,4 +1,4 @@
-# Copyright (c) 2023, STMicroelectronics
+# Copyright (c) 2023-2025, STMicroelectronics
 # SPDX-License-Identifier: Apache-2.0
 
 description: |
@@ -31,3 +31,8 @@ properties:
     type: array
     description: |
       protection value of rif peripherals, each entry is defined by a 32 bit.
+
+  memory-region:
+    type: phandle-array
+    specifier-space: memory-region
+    description: List of memory region phandles
