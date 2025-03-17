@@ -19,6 +19,29 @@
 #define RIF_ENC_MCE_EN		0x1 /* used for RISAF MCE extension */
 #define RIF_ENC_EN		0x2
 
+/* RISAF subregion IDs */
+#define RISAF_SUBREG_ID(idx)	(idx)
+
+/* RISAF subregion enable modes */
+#define RIF_SREN_DIS		0x0
+#define RIF_SREN_EN		0x1
+
+/* RISAF subregion read enable modes */
+#define RIF_RDEN_DIS		0x0
+#define RIF_RDEN_EN		0x1
+
+/* RISAF subregion write enable modes */
+#define RIF_WREN_DIS		0x0
+#define RIF_WREN_EN		0x1
+
+/* RISAF subregion delegation control modes */
+#define RIF_DCEN_DIS		0x0
+#define RIF_DCEN_EN		0x1
+
+/* RISAF subregion resource lock modes */
+#define RIF_RLOCK_DIS		0x0
+#define RIF_RLOCK_EN		0x1
+
 #define DT_RISAF_ID_SHIFT	0
 #define DT_RISAF_ID_MASK	GENMASK_32(3, 0)
 #define DT_RISAF_EN_SHIFT	4
@@ -55,5 +78,52 @@
 	 ((enabled) << DT_RISAF_EN_SHIFT) |		\
 	 (risaf_region))
 
+#define DT_RISAF_SUB_ID_SHIFT		0
+#define DT_RISAF_SUB_ID_MASK	        BIT(DT_RISAF_SUB_ID_SHIFT)
+#define DT_RISAF_SUB_EN_SHIFT		1
+#define DT_RISAF_SUB_EN_MASK		BIT(DT_RISAF_SUB_EN_SHIFT)
+#define DT_RISAF_SUB_SEC_SHIFT		2
+#define DT_RISAF_SUB_SEC_MASK		BIT(DT_RISAF_SUB_SEC_SHIFT)
+#define DT_RISAF_SUB_PRIV_SHIFT		3
+#define DT_RISAF_SUB_PRIV_MASK		BIT(DT_RISAF_SUB_PRIV_SHIFT)
+#define DT_RISAF_SUB_SRCID_SHIFT	4
+#define DT_RISAF_SUB_SRCID_MASK		GENMASK_32(6, DT_RISAF_SUB_SRCID_SHIFT)
+#define DT_RISAF_SUB_RDEN_SHIFT		8
+#define DT_RISAF_SUB_RDEN_MASK		BIT(DT_RISAF_SUB_RDEN_SHIFT)
+#define DT_RISAF_SUB_WREN_SHIFT		9
+#define DT_RISAF_SUB_WREN_MASK		BIT(DT_RISAF_SUB_WREN_SHIFT)
+#define DT_RISAF_SUB_DCEN_SHIFT		16
+#define DT_RISAF_SUB_DCEN_MASK		BIT(DT_RISAF_SUB_DCEN_SHIFT)
+#define DT_RISAF_SUB_DCCID_SHIFT	17
+#define DT_RISAF_SUB_DCCID_MASK		GENMASK_32(19, DT_RISAF_SUB_DCCID_SHIFT)
+#define DT_RISAF_SUB_RLOCK_SHIFT	31
+#define DT_RISAF_SUB_RLOCK_MASK		BIT(DT_RISAF_SUB_RLOCK_SHIFT)
+
+#define DT_RISAF_SUB_CFG_SHIFT	        0
+#define DT_RISAF_SUB_CFG_MASK	        \
+	DT_RISAF_SUB_WREN_MASK |	\
+	DT_RISAF_SUB_RDEN_MASK |	\
+	DT_RISAF_SUB_PRIV_MASK |	\
+	DT_RISAF_SUB_SEC_MASK |	        \
+	DT_RISAF_SUB_SRCID_MASK |	\
+	DT_RISAF_SUB_RLOCK_MASK |	\
+	DT_RISAF_SUB_EN_MASK
+
+#define DT_RISAF_SUB_NEST_SHIFT	        0
+#define DT_RISAF_SUB_NEST_MASK	        \
+	DT_RISAF_SUB_DCCID_MASK |	\
+	DT_RISAF_SUB_DCEN_MASK
+
+#define RISAFSUBPROT(risaf_subregion, dccid, dcen, rden, wren, srcid, priv, sec, enabled, rlock) \
+	(((rlock) << DT_RISAF_SUB_RLOCK_SHIFT) |	\
+	 ((dccid) << DT_RISAF_SUB_DCCID_SHIFT) |	\
+	 ((dcen) << DT_RISAF_SUB_DCEN_SHIFT) |		\
+	 ((wren) << DT_RISAF_SUB_WREN_SHIFT) |		\
+	 ((rden) << DT_RISAF_SUB_RDEN_SHIFT) |		\
+	 ((srcid) << DT_RISAF_SUB_SRCID_SHIFT) |	\
+	 ((priv) << DT_RISAF_SUB_PRIV_SHIFT) |		\
+	 ((sec) << DT_RISAF_SUB_SEC_SHIFT) |		\
+	 ((enabled) << DT_RISAF_SUB_EN_SHIFT) |		\
+	 (risaf_subregion))
 
 #endif /* _DT_BINDINGS_STM32MP2_RISAF_H */
