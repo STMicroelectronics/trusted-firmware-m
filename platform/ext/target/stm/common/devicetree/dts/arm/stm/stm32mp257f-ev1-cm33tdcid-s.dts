@@ -376,6 +376,14 @@
 	pd-id-max = <STM32MP25_PD_SCMI_MAX>;
 };
 
+&scmi_bl31 {
+	status = "okay";
+	memory-region = <&scmi_cid1_s>;
+	mboxes = <&ipcc1 IPCC_CHANNEL(5)>;
+	regu-list = <&scmi_vddcpu>;
+	regu-id-max = <(VOLTD_SCMI_STPMIC2_BUCK1 + 1)>;
+};
+
 &psa_mbox {
 	status = "okay";
 	mboxes = <&ipcc1 IPCC_CHANNEL(3)>;

@@ -672,6 +672,11 @@
 	};
 
 	stm32mp25-scmi-regu {
+		scmi_vddcpu:voltd-vddcpu {
+			compatible = "st,stm32mp25-scmi-regu";
+			regu = <&vddcpu>;
+			scmi-id = <VOLTD_SCMI_STPMIC2_BUCK1>;
+		};
 		scmi_vddcore:voltd-vddcore {
 			compatible = "st,stm32mp25-scmi-regu";
 			regu = <&vddcore>;

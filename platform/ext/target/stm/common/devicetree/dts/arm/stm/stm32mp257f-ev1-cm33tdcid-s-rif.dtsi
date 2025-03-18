@@ -708,6 +708,14 @@
 	st,protreg = <RISABPROT(RIF_DDCID_DIS, RIF_UNUSED, RIF_SEC, RIF_UNUSED, RIF_CFEN, RIF_CID1_BF|RIF_CID2_BF, RIF_CID2_BF, RIF_CID1_BF|RIF_CID2_BF)>;
 };
 
+&scmi_cid1_s {
+	st,protreg = <RISABPROT(RIF_DDCID_DIS, RIF_UNUSED, RIF_SEC, RIF_PRIV, RIF_CFEN, RIF_CID1_BF|RIF_CID2_BF, RIF_CID1_BF|RIF_CID2_BF, RIF_CID1_BF|RIF_CID2_BF)>;
+};
+
+&psa_buffer_cid1_s {
+	st,protreg = <RISABPROT(RIF_DDCID_DIS, RIF_UNUSED, RIF_SEC, RIF_NPRIV, RIF_CFEN, RIF_CID1_BF|RIF_CID2_BF, RIF_CID1_BF|RIF_CID2_BF, RIF_CID1_BF|RIF_CID2_BF)>;
+};
+
 &scmi_cid1_ns {
 	st,protreg =  <RISABPROT(RIF_DDCID_DIS, RIF_UNUSED, RIF_NSEC, RIF_UNUSED, RIF_CFEN, RIF_CID1_BF|RIF_CID2_BF, RIF_CID1_BF|RIF_CID2_BF, RIF_CID1_BF|RIF_CID2_BF)>;
 };
@@ -719,7 +727,7 @@
 &risab3 {
 	st,errata-ahbrisab;
 	st,srwiad;
-	memory-region = <&bsec_mirror>, <&scmi_cid1_ns>, <&tfm_shared_data>;
+	memory-region = <&bsec_mirror>, <&scmi_cid1_s>, <&scmi_cid1_ns>, <&psa_buffer_cid1_s>, <&tfm_shared_data>;
 	status = "okay";
 };
 

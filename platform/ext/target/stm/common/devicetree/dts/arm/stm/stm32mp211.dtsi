@@ -117,6 +117,13 @@
 			status = "disabled";
 		};
 
+		scmi_bl31: scmi-srv-ca35@1 {
+			compatible = "st,stm32mp2-scmi";
+			agent-id = <STM32MP25_AGENT_ID_CA35_BL31>;
+			agent-name = "agent ca35 bl31";
+			status = "disabled";
+		};
+
 		psa_mbox: psa-mbox@0 {
 			compatible = "st,psa-mbox";
 			status = "disabled";

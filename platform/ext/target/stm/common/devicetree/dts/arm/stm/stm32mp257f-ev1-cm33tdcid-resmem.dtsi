@@ -35,6 +35,12 @@
 			#memory-region-cells = <0>;
 		};
 
+		scmi_cid1_s: scmi_cid1_s@e041000 {
+			compatible = "reserved-memory";
+			reg = <0x0 0xe041000 0x0 0x1000>;
+			#memory-region-cells = <0>;
+		};
+
 		scmi_cid1_ns: scmi_cid1_ns@e042000 {
 			compatible = "reserved-memory";
 			reg = <0x0 0xe042000 0x0 0x1000>;
