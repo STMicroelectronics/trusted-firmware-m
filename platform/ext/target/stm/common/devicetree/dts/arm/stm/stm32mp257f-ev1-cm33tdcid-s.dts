@@ -277,6 +277,7 @@
 &scmi_ca35 {
 	status = "okay";
 	memory-region = <&scmi_cid1_ns>;
+	mboxes = <&ipcc1 IPCC_CHANNEL(4)>;
 	regu-list = <&scmi_vddcore>, <&scmi_v1v8>, <&scmi_v3v3> , <&scmi_vdd_emmc>,
 		     <&scmi_vdd3v3_usb>, <&scmi_vdd_sdcard>, <&scmi_vddio1>,
          <&scmi_vddio2>, <&scmi_vddio3>,  <&scmi_vddio4>,
@@ -373,12 +374,6 @@
 
 	pd-list = <&scmi_pd_gpu>;
 	pd-id-max = <STM32MP25_PD_SCMI_MAX>;
-};
-
-&scp_mbox {
-	status = "okay";
-	mboxes = <&ipcc1 IPCC_CHANNEL(4)>;
-	mbox-names = "ns";
 };
 
 &psa_mbox {

@@ -117,11 +117,6 @@
 			status = "disabled";
 		};
 
-		scp_mbox: scp-mbox@0 {
-			compatible = "st,scp-mbox";
-			status = "disabled";
-		};
-
 		psa_mbox: psa-mbox@0 {
 			compatible = "st,psa-mbox";
 			status = "disabled";
