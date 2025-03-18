@@ -148,6 +148,24 @@
 				interrupts = <80 0>;
 			};
 
+			rng2: rng@52020000 {
+				compatible = "st,stm32mp25-rng";
+				reg = <0x52020000 0x400>;
+				clocks = <&clk_rcbsec>, <&rcc CK_BUS_RNG2>;
+				clock-names = "rng_clk", "rng_hclk";
+				resets = <&rcc_reset RNG2_R>;
+				status = "disabled";
+			};
+
+			rng1: rng@52030800 {
+				compatible = "st,stm32mp25-rng";
+				reg = <0x52030800 0x400>;
+				clocks = <&clk_rcbsec>, <&rcc CK_BUS_RNG1>;
+				clock-names = "rng_clk", "rng_hclk";
+				resets = <&rcc_reset RNG1_R>;
+				status = "disabled";
+			};
+
 			i2c3: i2c@56040000 {
 				compatible = "st,stm32mp25-i2c";
 				reg = <0x56040000 0x400>;
@@ -255,6 +273,7 @@
 			reg = <0x520d0000 0x1000>;
 			clocks = <&rcc CK_BUS_RISAF4>;
 			st,mem-map = <0x0 0x80000000 0x1 0x00000000>;
+			entropy = <&rng1>;
 			status = "disabled";
 		};
 
