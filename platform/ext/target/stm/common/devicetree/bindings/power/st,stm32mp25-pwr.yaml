@@ -53,3 +53,9 @@ child-binding:
     vin-supply:
       type: phandle
       description: Reference to the regulator supply
+
+    st,iocomp:
+      type: array
+      description: |
+        Defines the pmos and nmos value for an IO domain.
+        For STM32MP2x platforms, it corresponds to <pmos nmos>
