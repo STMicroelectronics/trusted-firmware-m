@@ -110,6 +110,8 @@ enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
 #if defined(STM32_BL2)
 	case PLAT_OTP_ID_BL2_ROTPK_0:
 	case PLAT_OTP_ID_BL2_ROTPK_1:
+	case PLAT_OTP_ID_BL2_ROTPK_2:
+	case PLAT_OTP_ID_BL2_ROTPK_3:
 #endif
 	case PLAT_OTP_ID_LCS:
 	case PLAT_OTP_ID_IAK:
@@ -158,6 +160,8 @@ enum tfm_plat_err_t tfm_plat_otp_get_size(enum tfm_otp_element_id_t id,
 #if defined(STM32_BL2)
 	case PLAT_OTP_ID_BL2_ROTPK_0:
 	case PLAT_OTP_ID_BL2_ROTPK_1:
+	case PLAT_OTP_ID_BL2_ROTPK_2:
+	case PLAT_OTP_ID_BL2_ROTPK_3:
 #endif
 	case PLAT_OTP_ID_LCS:
 	case PLAT_OTP_ID_IAK:

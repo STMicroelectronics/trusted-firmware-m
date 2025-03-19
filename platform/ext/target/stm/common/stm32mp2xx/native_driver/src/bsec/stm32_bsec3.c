@@ -747,8 +747,14 @@ int stm32_bsec_otp_read_by_id(enum tfm_otp_element_id_t id, size_t out_len,
 						       &cell_start, &cell_size);
 		break;
 #if defined(STM32_BL2)
+	/*
+	 * For now, we use the same key for each software image loaded by
+	 * MCUBoot.
+	 */
 	case PLAT_OTP_ID_BL2_ROTPK_0:
 	case PLAT_OTP_ID_BL2_ROTPK_1:
+	case PLAT_OTP_ID_BL2_ROTPK_2:
+	case PLAT_OTP_ID_BL2_ROTPK_3:
 		/* Image id 1 (supposed to use rotpk1) is DDR Firmware.
 		 * We choose to use the Secure world key to sign it
 		 * (rotpk0).
@@ -794,6 +800,8 @@ int stm32_bsec_otp_size_by_id(enum tfm_otp_element_id_t id, size_t *size)
 		break;
 #if defined(STM32_BL2)
 	case PLAT_OTP_ID_BL2_ROTPK_0:
+	case PLAT_OTP_ID_BL2_ROTPK_2:
+	case PLAT_OTP_ID_BL2_ROTPK_3:
 		res = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_0", NULL,
 						       &cell_size);
 
