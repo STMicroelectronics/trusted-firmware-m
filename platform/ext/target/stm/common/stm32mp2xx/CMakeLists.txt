@@ -427,3 +427,54 @@ install(FILES
     ${STM_FAMILLY_DIR}/linker_scripts/gcc/stm32mp2_ns.ld
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}/linker_scripts
 )
+
+#========================= SIGNING CA35 FW ====================================#
+if (EXISTS ${STM32_CA35_FW})
+	set(BL2_SOURCE ${CMAKE_SOURCE_DIR}/bl2)
+	set(API_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/api_ns)
+
+	configure_file(${STM_FAMILLY_DIR}/bl2/ca35fw_signing_layout.c.in ${STM_FAMILLY_DIR}/bl2/ca35fw_signing_layout.c @ONLY)
+	add_library(signing_layout_for_ca35_fw OBJECT ${STM_FAMILLY_DIR}/bl2/ca35fw_signing_layout.c)
+
+	target_link_libraries(signing_layout_for_ca35_fw
+	PRIVATE
+			platform_bl2
+	)
+
+	target_compile_options(signing_layout_for_ca35_fw
+		PRIVATE
+			$<$<C_COMPILER_ID:GNU>:-E\;-xc>
+			$<$<C_COMPILER_ID:ARMClang>:-E\;-xc>
+	)
+
+	add_custom_target(ca35_fw_signed_bin
+		ALL
+		SOURCES ca35_fw_signed.bin
+	)
+	add_custom_command(OUTPUT ca35_fw_signed.bin
+		DEPENDS ${STM32_CA35_FW}
+		DEPENDS platform_bl2 signing_layout_for_ca35_fw
+		DEPENDS $<IF:$<BOOL:${MCUBOOT_GENERATE_SIGNING_KEYPAIR}>,generated_private_key,>
+		WORKING_DIRECTORY ${MCUBOOT_PATH}/scripts
+
+		#Sign secure binary image with provided secret key
+		COMMAND ${Python3_EXECUTABLE} ${BL2_SOURCE}/ext/mcuboot/scripts/wrapper/wrapper.py
+			--layout $<TARGET_OBJECTS:signing_layout_for_ca35_fw>
+			-k ${MCUBOOT_KEY_S}
+			--public-key-format $<IF:$<BOOL:${MCUBOOT_HW_KEY}>,full,hash>
+			--align ${MCUBOOT_ALIGN_VAL}
+			--pad
+			--pad-header
+			-H ${BL2_HEADER_SIZE}
+			-s ${CA35FW_SECURITY_COUNTER_S}
+			-v ${CA35FW_IMAGE_VERSION}
+			-L ${MCUBOOT_ENC_KEY_LEN}
+			$<$<STREQUAL:${MCUBOOT_UPGRADE_STRATEGY},OVERWRITE_ONLY>:--overwrite-only>
+			$<$<BOOL:${MCUBOOT_CONFIRM_IMAGE}>:--confirm>
+			$<$<BOOL:${MCUBOOT_ENC_IMAGES}>:-E${API_SOURCE}/image_signing/keys/image_enc_key.pem>
+			$<$<BOOL:${MCUBOOT_MEASURED_BOOT}>:--measured-boot-record>
+			${STM32_CA35_FW}
+			${CMAKE_CURRENT_BINARY_DIR}/ca35_fw_signed.bin
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/ca35_fw_signed.bin $<TARGET_FILE_DIR:bl2>
+	)
+endif()

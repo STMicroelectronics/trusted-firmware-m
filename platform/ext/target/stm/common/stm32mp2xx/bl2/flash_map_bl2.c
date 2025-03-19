@@ -34,6 +34,20 @@
 #define FLASH_DEVICE_ID_3 FLASH_DEVICE_ID
 #endif
 
+#if (MCUBOOT_IMAGE_NUMBER == 3)
+/* When undefined FLASH_DEV_NAME_4 or FLASH_DEVICE_ID_4 , default */
+#if !defined(FLASH_DEV_NAME_4) || !defined(FLASH_DEVICE_ID_4)
+#define FLASH_DEV_NAME_4  FLASH_DEV_NAME
+#define FLASH_DEVICE_ID_4 FLASH_DEVICE_ID
+#endif
+
+/* When undefined FLASH_DEV_NAME_5 or FLASH_DEVICE_ID_5 , default */
+#if !defined(FLASH_DEV_NAME_5) || !defined(FLASH_DEVICE_ID_5)
+#define FLASH_DEV_NAME_5  FLASH_DEV_NAME
+#define FLASH_DEVICE_ID_5 FLASH_DEVICE_ID
+#endif
+#endif /* (MCUBOOT_IMAGE_NUMBER == 3) */
+
 #define ARRAY_SIZE(arr) (sizeof(arr)/sizeof((arr)[0]))
 
 /* Flash device names must be specified by target */
@@ -41,6 +55,10 @@ extern ARM_DRIVER_FLASH FLASH_DEV_NAME_0;
 extern ARM_DRIVER_FLASH FLASH_DEV_NAME_1;
 extern ARM_DRIVER_FLASH FLASH_DEV_NAME_2;
 extern ARM_DRIVER_FLASH FLASH_DEV_NAME_3;
+#if (MCUBOOT_IMAGE_NUMBER == 3)
+extern ARM_DRIVER_FLASH FLASH_DEV_NAME_4;
+extern ARM_DRIVER_FLASH FLASH_DEV_NAME_5;
+#endif /* (MCUBOOT_IMAGE_NUMBER == 3) */
 
 #if !defined(FLASH_DRIVER_LIST)
 /* Default Drivers list */
@@ -55,14 +73,17 @@ const ARM_DRIVER_FLASH *flash_driver[] = {
 #if FLASH_DEV_NAME_2 != FLASH_DEV_NAME
     &FLASH_DEV_NAME_2,
 #endif
-#if (MCUBOOT_IMAGE_NUMBER == 2)
-#if FLASH_DEV_NAME_1 != FLASH_DEV_NAME
-    &FLASH_DEV_NAME_1,
-#endif
 #if FLASH_DEV_NAME_3 != FLASH_DEV_NAME
     &FLASH_DEV_NAME_3,
 #endif
-#endif /* (MCUBOOT_IMAGE_NUMBER == 2) */
+#if (MCUBOOT_IMAGE_NUMBER == 3)
+#if FLASH_DEV_NAME_4 != FLASH_DEV_NAME
+    &FLASH_DEV_NAME_4,
+#endif
+#if FLASH_DEV_NAME_5 != FLASH_DEV_NAME
+    &FLASH_DEV_NAME_5,
+#endif
+#endif /* (MCUBOOT_IMAGE_NUMBER == 3) */
 };
 #else
 /* Platform driver list */
@@ -99,6 +120,22 @@ const struct flash_area flash_map[] = {
         .fa_off = FLASH_AREA_3_OFFSET,
         .fa_size = FLASH_AREA_3_SIZE,
     },
+#if (MCUBOOT_IMAGE_NUMBER == 3)
+    {
+        .fa_id = FLASH_AREA_4_ID,
+        .fa_device_id = FLASH_DEVICE_ID_4,
+        .fa_driver = &FLASH_DEV_NAME_4,
+        .fa_off = FLASH_AREA_4_OFFSET,
+        .fa_size = FLASH_AREA_4_SIZE,
+    },
+    {
+        .fa_id = FLASH_AREA_5_ID,
+        .fa_device_id = FLASH_DEVICE_ID_5,
+        .fa_driver = &FLASH_DEV_NAME_5,
+        .fa_off = FLASH_AREA_5_OFFSET,
+        .fa_size = FLASH_AREA_5_SIZE,
+    },
+#endif
 };
 
 const int flash_map_entry_num = ARRAY_SIZE(flash_map);
@@ -109,16 +146,25 @@ int boot_get_image_exec_ram_info(uint32_t image_id,
 {
     int32_t rc =  -1;
 
-    if (image_id == 0 || image_id == 2) {
+    if (image_id == TFM_S_NS_ID) {
         (*exec_ram_start) = IMAGE_EXECUTABLE_RAM_START;
         (*exec_ram_size) = IMAGE_EXECUTABLE_RAM_SIZE;
         rc = 0;
     }
-    else if (image_id == 1 || image_id == 3) {
+
+    if (image_id == DDR_FIRMWARE_ID) {
         (*exec_ram_start) = DDR_FW_DEST_ADDR;
         (*exec_ram_size) = FLASH_AREA_1_SIZE;
         rc = 0;
     }
+
+#if (MCUBOOT_IMAGE_NUMBER == 3)
+    if (image_id == CA35_FIRMWARE_ID) {
+        (*exec_ram_start) = CA35_FW_DEST_ADDR;
+        (*exec_ram_size) = FLASH_AREA_4_SIZE;
+        rc = 0;
+    }
+#endif /* (MCUBOOT_IMAGE_NUMBER == 3) */
 
     return rc;
 }
