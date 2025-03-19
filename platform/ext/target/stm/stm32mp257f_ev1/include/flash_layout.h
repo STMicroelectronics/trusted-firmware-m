@@ -17,6 +17,7 @@
 #ifndef __FLASH_LAYOUT_H__
 #define __FLASH_LAYOUT_H__
 
+#include "bl2_image_id.h"
 #include "region_defs.h"
 #include "device_cfg.h"
 #include "devicetree.h"
@@ -213,7 +214,7 @@
 					  IMAGE_NS_CODE_SIZE) / \
 					 SPI_NOR_FLASH_SECTOR_SIZE)
 
-#if !defined(MCUBOOT_IMAGE_NUMBER) || (MCUBOOT_IMAGE_NUMBER == 2)
+#if !defined(MCUBOOT_IMAGE_NUMBER) || (MCUBOOT_IMAGE_NUMBER == 2) || (MCUBOOT_IMAGE_NUMBER == 3)
 #if STM32_BL2
 
 #define FLASH_AREA_0_ID			(1)
@@ -224,6 +225,10 @@
 #define FLASH_DEVICE_ID_2		102
 #define FLASH_AREA_3_ID			(FLASH_AREA_2_ID + 1)
 #define FLASH_DEVICE_ID_3		103
+#define FLASH_AREA_4_ID			(FLASH_AREA_3_ID + 1)
+#define FLASH_DEVICE_ID_4		104
+#define FLASH_AREA_5_ID			(FLASH_AREA_4_ID + 1)
+#define FLASH_DEVICE_ID_5		105
 
 #ifdef STM32_BOOT_DEV_OSPI
 #define FLASH_DEV_NAME			FLASH_DEV_NAME_0
@@ -247,7 +252,14 @@
 #define FLASH_AREA_3_OFFSET	        DT_CMSIS_FIXED_PARTITIONS_ADDR_BY_LABEL(ddr_fw_secondary_partition)
 #define FLASH_AREA_3_SIZE		DT_CMSIS_FIXED_PARTITIONS_SIZE_BY_LABEL(ddr_fw_secondary_partition)
 
-
+/* Cortex A35 firmware primary slot */
+#define FLASH_DEV_NAME_4		DT_CMSIS_FIXED_PARTITIONS_DRIVER_BY_LABEL(ca35_fw_primary_partition)
+#define FLASH_AREA_4_OFFSET	        DT_CMSIS_FIXED_PARTITIONS_ADDR_BY_LABEL(ca35_fw_primary_partition)
+#define FLASH_AREA_4_SIZE		DT_CMSIS_FIXED_PARTITIONS_SIZE_BY_LABEL(ca35_fw_primary_partition)
+/* Cortex A35 firmware secondary slot */
+#define FLASH_DEV_NAME_5		DT_CMSIS_FIXED_PARTITIONS_DRIVER_BY_LABEL(ca35_fw_secondary_partition)
+#define FLASH_AREA_5_OFFSET	        DT_CMSIS_FIXED_PARTITIONS_ADDR_BY_LABEL(ca35_fw_secondary_partition)
+#define FLASH_AREA_5_SIZE		DT_CMSIS_FIXED_PARTITIONS_SIZE_BY_LABEL(ca35_fw_secondary_partition)
 #endif
 
 #ifdef STM32_BOOT_DEV_SDMMC1
@@ -280,19 +292,42 @@
 #define FLASH_DEV_NAME_3		FLASH_DEV_NAME
 #define FLASH_AREA_3_OFFSET	        0
 #define FLASH_AREA_3_SIZE		STM32MP_DDR_FW_MAX_SIZE
+/* Cortex A35 firmware primary slot */
+#define FLASH_DEV_NAME_4		FLASH_DEV_NAME
+#define FLASH_AREA_4_OFFSET	        0
+#define FLASH_AREA_4_SIZE		STM32MP_CA35_FW_MAX_SIZE
+/* Cortex A35 firmware secondary slot */
+#define FLASH_DEV_NAME_5		FLASH_DEV_NAME
+#define FLASH_AREA_5_OFFSET	        0
+#define FLASH_AREA_5_SIZE		STM32MP_CA35_FW_MAX_SIZE
 #endif
 
-#define FLASH_AREA_IMAGE_PRIMARY(x)     (((x) == 0) ? FLASH_AREA_0_ID : \
-                                         ((x) == 1) ? FLASH_AREA_1_ID : \
-                                                      255 )
-#define FLASH_AREA_IMAGE_SECONDARY(x)   (((x) == 0) ? FLASH_AREA_2_ID : \
-                                         ((x) == 1) ? FLASH_AREA_3_ID : \
-                                                      255 )
+#if (MCUBOOT_IMAGE_NUMBER == 3)
+#define FLASH_AREA_IMAGE_PRIMARY(x)     (((x) == TFM_S_NS_ID) ? FLASH_AREA_0_ID : \
+                                         ((x) == DDR_FIRMWARE_ID) ? FLASH_AREA_1_ID : \
+                                         ((x) == CA35_FIRMWARE_ID) ? FLASH_AREA_4_ID : \
+                                         255 )
+#define FLASH_AREA_IMAGE_SECONDARY(x)   (((x) == TFM_S_NS_ID) ? FLASH_AREA_2_ID : \
+                                         ((x) == DDR_FIRMWARE_ID) ? FLASH_AREA_3_ID : \
+                                         ((x) == CA35_FIRMWARE_ID) ? FLASH_AREA_5_ID : \
+                                         255 )
+#else
+#define FLASH_AREA_IMAGE_PRIMARY(x)     (((x) == TFM_S_NS_ID) ? FLASH_AREA_0_ID : \
+                                         ((x) == DDR_FIRMWARE_ID) ? FLASH_AREA_1_ID : \
+                                         255 )
+#define FLASH_AREA_IMAGE_SECONDARY(x)   (((x) == TFM_S_NS_ID) ? FLASH_AREA_2_ID : \
+                                         ((x) == DDR_FIRMWARE_ID) ? FLASH_AREA_3_ID : \
+                                         255 )
+#endif
 /*
  * On stm32mp2, only the RAM loading firmware upgrade operation
  * is supported. The scratch area is not used
  */
+#if (MCUBOOT_IMAGE_NUMBER == 3)
+#define FLASH_AREA_SCRATCH_ID		(FLASH_AREA_5_ID + 1)
+#else
 #define FLASH_AREA_SCRATCH_ID		(FLASH_AREA_3_ID + 1)
+#endif
 #define FLASH_AREA_IMAGE_SCRATCH        255
 
 /*
@@ -302,10 +337,14 @@
 #define DDR_FW_SIZE			DT_REG_SIZE(DT_NODELABEL(ddr_fw_buffer)) /* exclusif for ddr */
 #define DDR_FW_DEST_ADDR		DT_REG_ADDR(DT_NODELABEL(ddr_fw_buffer))
 
+/* Cortex-A35 firmware */
+#define CA35_FW_SIZE			DT_REG_SIZE(DT_NODELABEL(ca35_cube_fw))
+#define CA35_FW_DEST_ADDR		DT_REG_ADDR(DT_NODELABEL(ca35_cube_fw))
+
 #endif /* STM32_BL2 */
 
-#else /* MCUBOOT_IMAGE_NUMBER > 2 */
-#error "Only MCUBOOT_IMAGE_NUMBER 2 is supported!"
+#else /* MCUBOOT_IMAGE_NUMBER > 3 */
+#error "Only MCUBOOT_IMAGE_NUMBER 2 or 3 is supported!"
 #endif /* MCUBOOT_IMAGE_NUMBER */
 
 #endif /* STM32_M33TDCID */
