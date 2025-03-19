@@ -13,6 +13,7 @@ include:
   - scmi-clk-list.yaml
   - scmi-regu-list.yaml
   - scmi-pd-list.yaml
+  - memory-region.yaml
 
 properties:
 
@@ -21,6 +22,9 @@ properties:
 
   agent-name:
     required: true
+
+  memory-region:
+    required: false
 
   rst-list:
     required: false
