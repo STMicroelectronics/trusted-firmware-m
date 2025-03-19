@@ -4,11 +4,14 @@
 description: psa mailbox consumer
 compatible: "st,psa-mbox"
 
-include: base.yaml
+include:
+  - base.yaml
+  - memory-region.yaml
 
 properties:
   mboxes:
     required: true
   mbox-names:
+    required: false
+  memory-region:
     required: true
-
