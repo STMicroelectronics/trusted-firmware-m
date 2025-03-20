@@ -30,6 +30,8 @@
 #define TIMEOUT_US_10MS		U(10000)
 #define DELAY_100US		U(100)
 
+#define IOCOMP_CODE_MAX		U(2)
+
 #define IO_VOLTAGE_THRESHOLD_UV	2700000
 
 /*
@@ -78,6 +80,9 @@ struct stm32_pwr_regu {
 	uint8_t rifsc_filtering_id;
 
 	const struct device *vin_supply;
+
+	const uint32_t iocomp_code[IOCOMP_CODE_MAX];
+	uint32_t n_iocomp_code;
 };
 
 struct stm32_pwr_regu_config {
@@ -96,7 +101,9 @@ struct stm32_pwr_regu_data {
 #define SYSCFG_CCCR_CS				BIT(9)
 #define SYSCFG_CCCR_EN				BIT(8)
 #define SYSCFG_CCCR_RAPSRC_MASK			GENMASK_32(7, 4)
+#define SYSCFG_CCCR_RAPSRC_SHIFT		4U
 #define SYSCFG_CCCR_RANSRC_MASK			GENMASK_32(3, 0)
+#define SYSCFG_CCCR_RANSRC_SHIFT		0U
 
 /* IO compensation CCSR registers bit definition */
 #define SYSCFG_CCSR_READY			BIT(8)
@@ -166,6 +173,23 @@ static int stm32_pwr_disable_io_compensation(const struct stm32_pwr_regu_config 
 	return 0;
 }
 
+static int stm32_pwr_fixed_io_compensation(const struct stm32_pwr_regu_config *drv_cfg)
+{
+	const struct stm32_pwr_regu *pwr_regu = &drv_cfg->pwr_regu;
+	uint32_t cccr_addr;
+	uint32_t value;
+
+	if (pwr_regu->n_iocomp_code != IOCOMP_CODE_MAX)
+		return -EINVAL;
+
+	cccr_addr = drv_cfg->syscfg_base + pwr_regu->iod_offset;
+	value = _FLD_PREP(SYSCFG_CCCR_RAPSRC, pwr_regu->iocomp_code[0]) |
+	        _FLD_PREP(SYSCFG_CCCR_RANSRC, pwr_regu->iocomp_code[1]);
+	syscon_write(drv_cfg->syscfg_dev, cccr_addr, value);
+
+	return 0;
+}
+
 static int stm32_pwr_enable_reg(const struct stm32_pwr_regu_config *drv_cfg)
 {
 	const struct stm32_pwr_regu *pwr_regu = &drv_cfg->pwr_regu;
@@ -228,7 +252,7 @@ static int stm32_pwr_enable(const struct device *dev)
 		return res;
 	}
 
-	if (pwr_regu->is_an_iod)  {
+	if (pwr_regu->is_an_iod && !pwr_regu->n_iocomp_code)  {
 		res = stm32_pwr_enable_io_compensation(drv_cfg);
 		if (res) {
 			stm32_pwr_disable_reg(drv_cfg);
@@ -252,7 +276,7 @@ static int stm32_pwr_disable(const struct device *dev)
 	const struct stm32_pwr_regu_config *drv_cfg = dev_get_config(dev);
 	const struct stm32_pwr_regu *pwr_regu = &drv_cfg->pwr_regu;
 
-	if (pwr_regu->is_an_iod)
+	if (pwr_regu->is_an_iod && !pwr_regu->n_iocomp_code)
 		stm32_pwr_disable_io_compensation(drv_cfg);
 
 	stm32_pwr_disable_reg(drv_cfg);
@@ -389,17 +413,22 @@ static int stm32_pwr_regulator_init(const struct device *dev)
 
 	if (pwr_regu->is_an_iod) {
 		int32_t level_uv = 0;
-		int res;
 
-		res = stm32_pwr_get_voltage(dev, &level_uv);
-		if (res)
-			return res;
+		if (pwr_regu->n_iocomp_code) {
+			err = stm32_pwr_fixed_io_compensation(drv_cfg);
+			if (err)
+				return err;
+		}
+
+		err = stm32_pwr_get_voltage(dev, &level_uv);
+		if (err)
+			return err;
 
 		if (level_uv < IO_VOLTAGE_THRESHOLD_UV) {
-			res = stm32_pwr_set_low_volt(drv_cfg, true);
-			if (res) {
+			err = stm32_pwr_set_low_volt(drv_cfg, true);
+			if (err) {
 				EMSG("%s: set VRSEL failed\n", dev->name);
-				return res;
+				return err;
 			}
 		}
 	}
@@ -416,6 +445,8 @@ static int stm32_pwr_regulator_init(const struct device *dev)
 	.vin_supply = DT_DEV_REGULATOR_SUPPLY(_node_id, vin),					\
 	.is_an_iod = true,									\
 	.iod_offset = _id ## _OFFSET,								\
+	.iocomp_code = DT_PROP_OR(_node_id, st_iocomp, {}),					\
+	.n_iocomp_code = DT_PROP_LEN_OR(_node_id, st_iocomp, 0),				\
 }
 
 #define DEFINE_REGU_VDD_IO(_node_id, _id, _reg) {						\
@@ -424,6 +455,8 @@ static int stm32_pwr_regulator_init(const struct device *dev)
 	.vin_supply = DT_DEV_REGULATOR_SUPPLY(_node_id, vin),					\
 	.is_an_iod = true,									\
 	.iod_offset = _id ## _OFFSET,								\
+	.iocomp_code = DT_PROP_OR(_node_id, st_iocomp, {}),					\
+	.n_iocomp_code = DT_PROP_LEN_OR(_node_id, st_iocomp, 0),				\
 }
 
 #define DEFINE_REGU_FIXED(_node_id, _id, _reg) {						\
