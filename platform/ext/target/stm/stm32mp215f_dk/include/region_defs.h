@@ -139,6 +139,8 @@
 #define STM32MP_DDR_FW_IMEM_OFFSET	0x800U
 #define STM32MP_DDR_FW_MAX_SIZE		DDR_FW_SIZE
 
+#define STM32MP_CA35_FW_MAX_SIZE	0x20000U
+
 /* Shared data area between bootloader and runtime firmware. */
 #if STM32_M33TDCID
 #define BOOT_TFM_SHARED_DATA_BASE	DT_REG_ADDR(DT_NODELABEL(tfm_shared_data))
