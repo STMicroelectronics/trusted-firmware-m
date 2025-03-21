@@ -1008,16 +1008,22 @@ static int stm32_bsec_dt_init(const struct device *dev)
 
 	drv_data->hw_key_valid = false;
 
-	drv_data->p_mirror = (struct bsec_mirror *)drv_cfg->mirror_addr;
+	if (IS_ENABLED(STM32_BL2)) {
+		drv_data->hw_key_valid = !!(io_read32(drv_cfg->base + _BSEC_SR) &
+					    _BSEC_SR_HVALID_MASK);
+		drv_data->p_mirror = NULL;
+	} else {
+		drv_data->p_mirror = (struct bsec_mirror *)drv_cfg->mirror_addr;
 
-	if (IS_ENABLED(STM32_M33TDCID))
-		stm32_bsec_mirror_init(dev, true);
+		if (IS_ENABLED(STM32_M33TDCID))
+			stm32_bsec_mirror_init(dev, true);
 
-	if (drv_data->p_mirror->magic != BSEC_MAGIC)
-		return -ENOSYS;
+		if (drv_data->p_mirror->magic != BSEC_MAGIC)
+			return -ENOSYS;
 
-	if (drv_data->p_mirror->state & BSEC_HARDWARE_KEY)
-		drv_data->hw_key_valid = true;
+		if (drv_data->p_mirror->state & BSEC_HARDWARE_KEY)
+			drv_data->hw_key_valid = true;
+	}
 
 	return stm32_bsec_shadow_init(dev);
 }
