@@ -734,6 +734,9 @@ static uint32_t init_state(const struct device *dev, uint32_t status)
 			if (mirror->otp[_OTP_SECURE_BOOT].value & _OTP_CLOSED_SECURE)
 				state = BSEC_STATE_SEC_CLOSED;
 		}
+
+		if (_FLD_GET(_BSEC_SR_HVALID, sr))
+			state |= BSEC_HARDWARE_KEY;
 	}
 
 	return state;
