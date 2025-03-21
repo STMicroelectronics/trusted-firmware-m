@@ -254,7 +254,7 @@ static const struct entropy_driver_api __maybe_unused stm32_rng_api = {
  * stm32_rng_init: Initialize rng from DT
  * return 0 on success, negative value on failure
  */
-static int stm32_rng_init(const struct device *dev)
+static int __maybe_unused stm32_rng_init(const struct device *dev)
 {
 	const struct stm32_rng_config *drv_cfg = dev_get_config(dev);
 	struct stm32_rng_data *drv_data = dev_get_data(dev);
