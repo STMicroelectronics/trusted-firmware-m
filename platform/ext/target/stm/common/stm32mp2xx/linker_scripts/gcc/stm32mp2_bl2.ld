@@ -30,11 +30,11 @@
 
 MEMORY
 {
-    RETRAM     (rx)  : ORIGIN = BL2_CODE_START,		LENGTH = BL2_CODE_SIZE
-    RAM        (rwx) : ORIGIN = BL2_DATA_START,		LENGTH = BL2_DATA_SIZE
+    CODE_RODATA (rx) : ORIGIN = BL2_CODE_START,		LENGTH = BL2_CODE_SIZE
+    RAM         (rw) : ORIGIN = BL2_DATA_START,		LENGTH = BL2_DATA_SIZE
 }
 
-REGION_ALIAS("FLASH", RETRAM);
+REGION_ALIAS("FLASH", CODE_RODATA);
 
 __heap_size__  = BL2_HEAP_SIZE;
 __msp_stack_size__ = BL2_MSP_STACK_SIZE;
@@ -76,9 +76,15 @@ SECTIONS
         /* .copy.table */
         . = ALIGN(4);
         __copy_table_start__ = .;
+#ifdef RELOCATE_DATA
         LONG (LOADADDR(.data))
         LONG (ADDR(.data))
         LONG (SIZEOF(.data) / 4)
+#else
+        LONG (0)
+        LONG (0)
+        LONG (0)
+#endif
         __copy_table_end__ = .;
 
         /* .zero.table */
@@ -124,13 +130,6 @@ SECTIONS
 
 #include <linker/devices.ld>
 
-    .tfm_bl2_shared_data : ALIGN(32)
-    {
-        . += BOOT_TFM_SHARED_DATA_SIZE;
-    } > RAM
-    Image$$SHARED_DATA$$RW$$Base = ADDR(.tfm_bl2_shared_data);
-    Image$$SHARED_DATA$$RW$$Limit = ADDR(.tfm_bl2_shared_data) + SIZEOF(.tfm_bl2_shared_data);
-
     .data : ALIGN(4)
     {
         *(vtable)
@@ -139,7 +138,10 @@ SECTIONS
         KEEP(*(.jcr*))
         . = ALIGN(4);
 
-    } > RAM AT > FLASH
+    } > RAM
+#ifdef RELOCATE_DATA
+ AT > FLASH
+#endif
     Image$$ER_DATA$$Base = ADDR(.data);
 
     .bss : ALIGN(4)

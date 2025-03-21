@@ -14,9 +14,10 @@ include(${STM_FAMILLY_DIR}/CMakeLists.txt)
 
 #========================= Platform region defs ===============================#
 # these flags are includes in bl2, tfm_s and tfm_ns
-#target_compile_definitions(platform_region_defs
-#	INTERFACE
-#)
+target_compile_definitions(platform_region_defs
+	INTERFACE
+		RELOCATE_DATA
+)
 
 #========================= Platform Secure ====================================#
 #target_sources(platform_s
