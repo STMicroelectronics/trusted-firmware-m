@@ -55,6 +55,12 @@
 
 		/*end of areas not used in bl2 */
 
+		ddr_fw_buffer: ddr-fw-buffer@e060000 {
+			compatible = "reserved-memory";
+			reg = <0x0 0xe060000 0x0 0x20000>;
+			#memory-region-cells = <0>;
+		};
+
 		cm33_sram2: cm33_sram2@e060000 {
 			compatible = "reserved-memory";
 			reg = <0x0 0xe060000 0x0 0x20000>;
