@@ -400,13 +400,21 @@ static int _otp_read(uint32_t offset, size_t len, size_t out_len, uint8_t *out)
 	 * Upper OTP fuses cannot be accessed if the chip is not in Secure Lock state.
 	 * In dummy provisionning case, just load dummy keys from the dummy_mirror area.
 	 */
+#if defined(STM32_BL2)
+	if (!mirror && (offset >= drv_data->variant->upper_base ||
+		       offset == OTP_OFFSET(bl2_rotpk_0) / sizeof(uint32_t))) {
+#else
 	if (!mirror && offset >= drv_data->variant->upper_base) {
+#endif
 		struct bsec_mirror *dummy_mirror;
 		int ret = 0;
 
 		switch (offset) {
 		case OTP_OFFSET(iak) / sizeof(uint32_t):
 		case OTP_OFFSET(entropy_seed) / sizeof(uint32_t):
+#if defined(STM32_BL2)
+		case OTP_OFFSET(bl2_rotpk_0) / sizeof(uint32_t):
+#endif
 			dummy_mirror = &drv_data->mirror_dummy;
 
 			for (idx = 0; idx < (copy_size / sizeof(uint32_t)); idx++) {
@@ -501,13 +509,21 @@ static int __maybe_unused _otp_write(uint32_t offset, size_t len,
 	 * Upper OTP fuses cannot be accessed if the chip is not in Secure Lock state.
 	 * In dummy provisionning case, just use the dummy_mirror area to store dummy keys.
 	 */
+#if defined(STM32_BL2)
+	if (!mirror && (offset >= drv_data->variant->upper_base ||
+		       offset == OTP_OFFSET(bl2_rotpk_0) / sizeof(uint32_t))) {
+#else
 	if (!mirror && offset >= drv_data->variant->upper_base) {
+#endif
 		struct bsec_mirror *dummy_mirror;
 		int ret = 0;
 
 		switch (offset) {
 		case OTP_OFFSET(iak) / sizeof(uint32_t):
 		case OTP_OFFSET(entropy_seed) / sizeof(uint32_t):
+#if defined(STM32_BL2)
+		case OTP_OFFSET(bl2_rotpk_0) / sizeof(uint32_t):
+#endif
 			dummy_mirror = &drv_data->mirror_dummy;
 
 			for (idx = 0; idx < (len / sizeof(uint32_t)); idx++) {
