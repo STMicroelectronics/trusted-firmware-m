@@ -376,14 +376,14 @@
 
 &scp_mbox {
 	status = "okay";
-	mboxes = <&ipcc1 IPCC_CHANNEL(4)>, <&ipcc1 IPCC_CHANNEL(4)>;
-	mbox-names = "rx", "tx";
+	mboxes = <&ipcc1 IPCC_CHANNEL(4)>;
+	mbox-names = "ns";
 };
 
 &psa_mbox {
 	status = "okay";
-	mboxes = <&ipcc1 IPCC_CHANNEL(3)>, <&ipcc1 IPCC_CHANNEL(3)>;
-	mbox-names = "rx", "tx";
+	mboxes = <&ipcc1 IPCC_CHANNEL(3)>;
+	mbox-names = "s";
 };
 
 &rtc {
