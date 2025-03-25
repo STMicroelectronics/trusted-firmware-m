@@ -112,9 +112,7 @@
 /* SCMI SHMEM */
 #define S_SCMI_ADDR			DT_REG_ADDR(DT_NODELABEL(scmi_cid1_ns))
 #define S_SCMI_SIZE			DT_REG_SIZE(DT_NODELABEL(scmi_cid1_ns))
-/* Secure RSS SHMEM */
-#define S_RSS_SHMEM_ADDR		DT_REG_ADDR(DT_NODELABEL(psa_buffer_cid1_s))
-#define S_RSS_SHMEM_SIZE		DT_REG_SIZE(DT_NODELABEL(psa_buffer_cid1_s))
+
 /* Non-secure regions */
 #define NS_CODE_START			(DDR_CAHB_ALIAS(NS_IMAGE_RAM_OFFSET))
 #define NS_CODE_SIZE			(IMAGE_NS_CODE_SIZE - BL2_TRAILER_SIZE)

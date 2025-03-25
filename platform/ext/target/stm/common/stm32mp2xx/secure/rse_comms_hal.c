@@ -23,10 +23,12 @@
 #include "psa_manifest/sid.h"
 #include "region_defs.h"
 
-BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,"one st,psa-mbox node may be present");
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,"only one st,psa-mbox node may be present");
+/* Secure RSS SHMEM */
+#define S_RSS_SHMEM_ADDR		DT_REG_ADDR(DT_INST_PHANDLE(0, memory_region))
+#define S_RSS_SHMEM_SIZE		DT_REG_SIZE(DT_INST_PHANDLE(0, memory_region))
 
-static const struct mbox_dt_spec channel = MBOX_DT_SPEC_INST_GET(0, s);
-
+static const struct mbox_dt_spec channel =  { MBOX_DT_SPEC_GET_IDX(DT_DRV_INST(0),0)};
 /* Declared statically to avoid using huge amounts of stack space. Maybe revisit
  * if functions not being reentrant becomes a problem.
  */
