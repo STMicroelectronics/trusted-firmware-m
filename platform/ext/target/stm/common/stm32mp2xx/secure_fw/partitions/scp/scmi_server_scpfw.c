@@ -274,19 +274,29 @@ DT_INST_FOREACH_STATUS_OKAY(STM32_SCMI_PD_INIT)
 	_PD_PH_GET(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx))
 
 #define _DT_INST_PD_LIST_NUM(n) DT_INST_PROP_LEN_OR(n, pd_list, 0)
+#define _DT_INST_CLK_LIST_NUM(n) DT_INST_PROP_LEN_OR(n, clk_list, 0)
+#define _DT_INST_RST_LIST_NUM(n) DT_INST_PROP_LEN_OR(n, rst_list, 0)
+
 
 #define STM32_SCMI_INIT(n)							\
 static const struct stm32_scmi_rd scmi_dt_resets_##n[] = {			\
-	DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, rst_list, RST_ELE, (), n)	\
+	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, rst_list),				\
+	(DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, rst_list, RST_ELE, (), n)),	\
+	())									\
 };										\
 static const struct stm32_scmi_clkd scmi_dt_clocks_##n[] = {			\
-	DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, clk_list, CLK_ELE, (), n)	\
+	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, clk_list),				\
+	(DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, clk_list, CLK_ELE, (), n)),	\
+	())									\
 };										\
 static const struct stm32_scmi_regud scmi_dt_regus_##n[] = {			\
 	DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, regu_list, REGU_ELE, (), n)	\
 };										\
 static struct clk plat_clk_##n[] = {						\
-	DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, clk_list, ZERO_ELE, (), n)	\
+	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, clk_list),				\
+		(DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, clk_list,		\
+						    ZERO_ELE, (), n)),		\
+		())								\
 };										\
 										\
 static const struct stm32_scmi_pd *scmi_dt_pd_##n[] = {				\
@@ -300,11 +310,11 @@ static const struct stm32_scmi_config stm32_scmi_cfg_##n = {			\
 	.dt_agent_id = DT_INST_PROP(n, agent_id),				\
 	.dt_agent_name =  DT_INST_PROP(n, agent_name),				\
 	.dt_resets = scmi_dt_resets_##n,					\
-	.ndt_resets = ARRAY_SIZE(scmi_dt_resets_##n),				\
-	.ndt_resets_max = DT_INST_PROP(n, rst_id_max),				\
+	.ndt_resets = _DT_INST_RST_LIST_NUM(n),				        \
+	.ndt_resets_max = DT_PROP_OR(DT_DRV_INST(n), rst_id_max, 0),		\
 	.dt_clocks = scmi_dt_clocks_##n,					\
-	.ndt_clocks = ARRAY_SIZE(scmi_dt_clocks_##n),				\
-	.ndt_clocks_max =  DT_INST_PROP(n, clk_id_max),				\
+	.ndt_clocks = _DT_INST_CLK_LIST_NUM(n), 				\
+	.ndt_clocks_max =  DT_PROP_OR(DT_DRV_INST(n), clk_id_max, 0),		\
 	.dt_regus  = scmi_dt_regus_##n,						\
 	.ndt_regus = ARRAY_SIZE(scmi_dt_regus_##n),				\
 	.ndt_regus_max = DT_INST_PROP(n, regu_id_max),				\
