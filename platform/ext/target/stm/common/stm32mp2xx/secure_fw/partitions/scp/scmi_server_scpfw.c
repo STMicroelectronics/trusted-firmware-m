@@ -8,6 +8,7 @@
 #define DT_DRV_COMPAT st_stm32mp2_scmi
 
 #include <device.h>
+#include <devicetree.h>
 #include "psa/service.h"
 #include <stdint.h>
 #include <string.h>
@@ -158,6 +159,7 @@ static const struct clk_ops plat_scmi_clk_ops = {
 struct stm32_scmi_config {
 	const int dt_agent_id;
 	const char *dt_agent_name;
+	const struct shared_mem *dt_shm;
 	const struct stm32_scmi_rd *dt_resets;
 	const int ndt_resets;
 	const int ndt_resets_max;
@@ -306,9 +308,21 @@ static const struct stm32_scmi_pd *scmi_dt_pd_##n[] = {				\
 		())								\
 };										\
 										\
+static const struct shared_mem scmi_dt_shmem_##n = {				\
+		.area = (uintptr_t *)COND_CODE_1(DT_INST_NODE_HAS_PROP(n,	\
+					memory_region),				\
+					(DT_REG_ADDR(				\
+					DT_INST_PHANDLE(n, memory_region))),	\
+					(0)),					\
+		.size = COND_CODE_1(DT_INST_NODE_HAS_PROP(n, memory_region),	\
+				(DT_REG_SIZE(					\
+				DT_INST_PHANDLE(n, memory_region))),(0)),	\
+};										\
+										\
 static const struct stm32_scmi_config stm32_scmi_cfg_##n = {			\
 	.dt_agent_id = DT_INST_PROP(n, agent_id),				\
 	.dt_agent_name =  DT_INST_PROP(n, agent_name),				\
+	.dt_shm = &scmi_dt_shmem_##n,						\
 	.dt_resets = scmi_dt_resets_##n,					\
 	.ndt_resets = _DT_INST_RST_LIST_NUM(n),				        \
 	.ndt_resets_max = DT_PROP_OR(DT_DRV_INST(n), rst_id_max, 0),		\
@@ -371,8 +385,8 @@ int32_t scmi_scpfw_cfg_early_init(void)
 		scpfw_cfg.agent_config[index].channel_count = 1;
 		channel_cfg = calloc(scpfw_cfg.agent_config[index].channel_count,
 				     sizeof(*scpfw_cfg.agent_config[index].channel_config));
-		channel_cfg->shm.area = (uintptr_t *)S_SCMI_ADDR;
-		channel_cfg->shm.size = S_SCMI_SIZE;
+		channel_cfg->shm.area = scmi_cfg[i]->dt_shm->area;
+		channel_cfg->shm.size = scmi_cfg[i]->dt_shm->size;
 
 		scpfw_cfg.agent_config[index].channel_config = channel_cfg;
 		channel_cfg->name = "channel";
