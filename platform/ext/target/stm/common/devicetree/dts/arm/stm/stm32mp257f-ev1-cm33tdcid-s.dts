@@ -387,7 +387,7 @@
 &psa_mbox {
 	status = "okay";
 	mboxes = <&ipcc1 IPCC_CHANNEL(3)>;
-	mbox-names = "s";
+	memory-region = <&psa_buffer_cid1_s>;
 };
 
 &rtc {

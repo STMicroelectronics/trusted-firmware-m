@@ -47,6 +47,12 @@
 			#memory-region-cells = <0>;
 		};
 
+		psa_buffer_cid1_s: psa-buffer-cid1-s@e043000 {
+			compatible = "reserved-memory";
+			reg = <0x0 0xe043000 0x0 0x1000>;
+			#memory-region-cells = <0>;
+		};
+
 		cm33_sram1: cm33_sram1@e043000 {
 			compatible = "reserved-memory";
 			reg = <0x0 0xe043000 0x0 0x1c000>;
