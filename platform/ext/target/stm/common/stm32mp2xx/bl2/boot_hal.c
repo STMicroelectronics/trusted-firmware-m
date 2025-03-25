@@ -37,27 +37,6 @@ extern ARM_DRIVER_FLASH FLASH_DEV_NAME_0;
 extern ARM_DRIVER_FLASH FLASH_DEV_NAME_2;
 extern ARM_DRIVER_FLASH FLASH_DEV_NAME_3;
 
-REGION_DECLARE(Image$$, ER_DATA, $$Base)[];
-REGION_DECLARE(Image$$, ARM_LIB_HEAP, $$ZI$$Limit)[];
-
-__attribute__((naked)) void boot_clear_bl2_ram_area(void)
-{
-    __ASM volatile(
-        "mov     r0, #0                              \n"
-        "subs    %1, %1, %0                          \n"
-        "Loop:                                       \n"
-        "subs    %1, #4                              \n"
-        "itt     ge                                  \n"
-        "strge   r0, [%0, %1]                        \n"
-        "bge     Loop                                \n"
-        "bx      lr                                  \n"
-        :
-        : "r" (REGION_NAME(Image$$, ER_DATA, $$Base)),
-          "r" (REGION_NAME(Image$$, ARM_LIB_HEAP, $$ZI$$Limit))
-        : "r0", "memory"
-    );
-}
-
 int stm32mp2_init_debug(void)
 {
 #if defined(DAUTH_NONE)
