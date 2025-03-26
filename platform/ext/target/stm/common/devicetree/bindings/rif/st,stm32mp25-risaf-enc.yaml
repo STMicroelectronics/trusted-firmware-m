@@ -2,7 +2,7 @@
 # SPDX -License-Identifier: Apache-2.0
 
 description: |
-        RISAF (enc:encode) managing DRR includes the DDR memory cipher engine (DDRMCE) feature.
+        RISAF (enc:encode) managing DDR includes the DDR memory cipher engine (DDRMCE) feature.
 
 compatible: "st,stm32mp25-risaf-enc"
 
