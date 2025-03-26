@@ -22,7 +22,6 @@
  * workaround: In waiting that dt prepocessing take account the
  * platform compile definition.
  */
-#define CONFIG_STM32MP25X_REVA		0
 #define STM32MP_DDR_DUAL_AXI_PORT	1
 
 #define DDR_MEM_NAME	"DDR4 2x16Gbits 2x16bits 1200MHz"
