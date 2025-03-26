@@ -9,7 +9,6 @@
 ########################## STM32 #######################################
 #Before Soc config
 set(STM32_STM32MP257f_EV1_REV   "revA"				    CACHE STRING	"Select ev1 board revision: revA" FORCE)
-set(STM32_STM32MP25_SOC_REV     "revB"				    CACHE STRING	"Set soc revision: revA, revB" FORCE)
 
 SET(DTS_BOARD_BASE "arm/stm/stm32mp257f-ev1")
 
