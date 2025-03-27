@@ -11,6 +11,17 @@ cmake_policy(SET CMP0076 NEW)
 include(${STM_FAMILLY_DIR}/CMakeLists.txt)
 
 # specific for stm32mp25
+if (NOT ${STM32_STM32MP25_SOC_REV} STREQUAL "revY" AND
+    NOT ${STM32_STM32MP25_SOC_REV} STREQUAL "revX")
+    Message(FATAL_ERROR "STM32_STM32MP25_SOC_REV=\"${STM32_STM32MP25_SOC_REV}\" not supported.")
+endif()
+
+#========================= tfm config ===============================#
+target_compile_definitions(tfm_config
+    INTERFACE
+        $<$<STREQUAL:${STM32_STM32MP25_SOC_REV},revY>:CONFIG_STM32MP25X_REVY=1>
+        $<$<STREQUAL:${STM32_STM32MP25_SOC_REV},revX>:CONFIG_STM32MP25X_REVX=1>
+)
 
 #========================= Platform region defs ===============================#
 # these flags are includes in bl2, tfm_s and tfm_ns

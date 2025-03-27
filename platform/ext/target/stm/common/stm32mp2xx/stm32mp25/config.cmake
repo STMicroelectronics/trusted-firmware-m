@@ -13,9 +13,10 @@ endif()
 
 # set specific stm32mp25 config
 ########################## STM32 #######################################
-set(STM32_BOARD_MODEL		    "stm32mp25xxxx"	CACHE STRING	"Define board model name" FORCE)
+set(STM32_BOARD_MODEL           "stm32mp25xxxx" CACHE STRING   "Define board model name" FORCE)
+set(STM32_STM32MP25_SOC_REV     "revY"          CACHE STRING   "Set soc revision: revY, revX")
 
-# set specific borad config
+# set specific board config
 set(STM32_IPC                   ON              CACHE BOOL     "Use IPC (rpmsg) to communicate with main processor" FORCE)
 set(TFM_DUMMY_PROVISIONING      ON              CACHE BOOL     "Provision with dummy values. NOT to be used in production" FORCE)
 set(STM32_PROV_FAKE             ON              CACHE BOOL     "Provisioning with dummy values. NOT to be used in production" FORCE)
