@@ -85,7 +85,7 @@
 #define _RISAF_REG_CIDCFGR_WRENC_SHIFT	U(16)
 #define _RISAF_REG_CIDCFGR_WRENC_MASK	GENMASK_32(23, 16)
 #define _RISAF_REG_CIDCFGR_ALL_MASK	(_RISAF_REG_CIDCFGR_RDENC_MASK | \
-                                         _RISAF_REG_CIDCFGR_WRENC_MASK)
+					 _RISAF_REG_CIDCFGR_WRENC_MASK)
 
 #define _RISAF_HWCFGR_CFG1_MASK		GENMASK_32(7, 0)
 #define _RISAF_HWCFGR_CFG1_SHIFT	0
@@ -219,7 +219,8 @@ static void stm32_risaf_tmp_disable(const struct device *dev)
 }
 
 static void stm32_risaf_dt_to_region(const struct device *dev,
-				     uint8_t idx, struct risaf_region *region)
+				     uint8_t idx, struct risaf_region *region,
+				     uint32_t *enc_mode)
 {
 	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
 	const struct risaf_dt_region *dt_region = &(drv_cfg->dt_regions[idx]);
@@ -229,6 +230,9 @@ static void stm32_risaf_dt_to_region(const struct device *dev,
 	region->cid_cfg = _RISAF_GET_REGION_CID_CFG(dt_region->st_protreg);
 	region->start_addr = dt_region->start_addr;
 	region->end_addr = dt_region->end_addr;
+
+	*enc_mode = _FLD_GET(DT_RISAF_ENC, dt_region->st_protreg) <<
+		    _RISAF_REG_CFGR_ENC_SHIFT;
 }
 
 static int stm32_risaf_region_cfg(const struct device *dev,
@@ -239,8 +243,9 @@ static int stm32_risaf_region_cfg(const struct device *dev,
 	struct risaf_region region;
 	uintptr_t base;
 	uint32_t enabled;
+	uint32_t enc_mode;
 
-	stm32_risaf_dt_to_region(dev, idx, &region);
+	stm32_risaf_dt_to_region(dev, idx, &region, &enc_mode);
 
 	/*
 	 * The last region is reserved like temporary region, to
@@ -249,12 +254,17 @@ static int stm32_risaf_region_cfg(const struct device *dev,
 	if (idx != (drv_cfg->ndt_regions - 1) && region.id >= drv_data->hw_nregions)
 		return -EINVAL;
 
-	if (region.cfg & _RISAF_REG_CFGR_ENC) {
+	if (enc_mode) {
 		if ((!drv_data->variant->has_enc) || !(region.cfg & _RISAF_REG_CFGR_SEC))
 			return -EINVAL;
 
-		if (!(mmio_read_32(drv_cfg->base + _RISAF_SR) & _RISAF_SR_KEYVALID) ||
-		    !(mmio_read_32(drv_cfg->base + _RISAF_SR) & _RISAF_SR_KEYRDY))
+		if ((enc_mode == RIF_ENC_EN) &&
+		    (!(mmio_read_32(drv_cfg->base + _RISAF_SR) & _RISAF_SR_KEYVALID) ||
+		     !(mmio_read_32(drv_cfg->base + _RISAF_SR) & _RISAF_SR_KEYRDY)))
+			return -EINVAL;
+
+		if ((enc_mode == RIF_ENC_MCE_EN) &&
+		    (!(mmio_read_32(drv_cfg->base + _RISAF_XSR) & _RISAF_XSR_MKVALID)))
 			return -EINVAL;
 	}
 
@@ -292,10 +302,27 @@ static void stm32_risaf_get_hwconfig(const struct device *dev)
 static bool stm32_risaf_region_need_encryption_key(const struct device *dev)
 {
 	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
+	struct stm32_risaf_data *drv_data = dev_get_data(dev);
+	const struct stm32_risaf_variant *variant = drv_data->variant;
 	uint32_t status = mmio_read_32(drv_cfg->base + _RISAF_SR);
 
-	if ((status & _RISAF_SR_KEYVALID) && (status & _RISAF_SR_KEYRDY) &&
-	   !(status & _RISAF_SR_ENCDIS))
+	if ((!variant->default_encryption_fn) ||
+	    ((status & _RISAF_SR_KEYVALID) && (status & _RISAF_SR_KEYRDY) &&
+	   !(status & _RISAF_SR_ENCDIS)))
+		return false;
+
+	return true;
+}
+
+static bool stm32_risaf_region_need_mce_encryption_key(const struct device *dev)
+{
+	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
+	struct stm32_risaf_data *drv_data = dev_get_data(dev);
+	const struct stm32_risaf_variant *variant = drv_data->variant;
+	uint32_t status = mmio_read_32(drv_cfg->base + _RISAF_XSR);
+
+	if ((!variant->mce_encryption_fn) ||
+	    ((status & _RISAF_XSR_MKVALID) && !(status & _RISAF_SR_ENCDIS)))
 		return false;
 
 	return true;
@@ -308,6 +335,9 @@ static __unused int stm32_risaf_install_encryption_key(const struct device *dev,
 	uint64_t sr;
 	uint32_t i;
 	int err;
+
+	if (!stm32_risaf_region_need_encryption_key(dev))
+		return 0;
 
 	for (i = 0U; i < key_size / BITS_PER_BYTES; i += sizeof(uint32_t)) {
 		uint32_t key_val = 0U;
@@ -334,6 +364,9 @@ static __unused int stm32_risaf_install_mce_encryption_key(const struct device *
 	uint32_t i;
 	int err;
 
+	if (!stm32_risaf_region_need_mce_encryption_key(dev))
+		return 0;
+
 	if (key_size == RISAF_KEY_128BITS)
 		mmio_write_32(drv_cfg->base + _RISAF_XCR,
 			      _RISAF_XCR_CIPHERSEL_AES128 << _RISAF_XCR_CIPHERSEL_SHIFT);
@@ -347,10 +380,10 @@ static __unused int stm32_risaf_install_mce_encryption_key(const struct device *
 		uint32_t key_val = 0U;
 
 		memcpy(&key_val, mkey + i, sizeof(uint32_t));
-                mmio_write_32(drv_cfg->base + _RISAF_MKEYR + i, key_val);
-        }
+		mmio_write_32(drv_cfg->base + _RISAF_MKEYR + i, key_val);
+	}
 
-        err = mmio_read32_poll_timeout(drv_cfg->base + _RISAF_XSR,
+	err = mmio_read32_poll_timeout(drv_cfg->base + _RISAF_XSR,
 				       xsr,
 				       (xsr & _RISAF_XSR_MKVALID),
 				       _RISAF_TIMEOUT_100MS_IN_US);
@@ -413,7 +446,7 @@ static int stm32_risaf_init(const struct device *dev)
 	if (drv_cfg->ndt_regions > drv_data->hw_nregions)
 		return -EINVAL;
 
-	if (drv_data->variant->has_enc && stm32_risaf_region_need_encryption_key(dev)) {
+	if (drv_data->variant->has_enc) {
 		if (!drv_cfg->entropy_dev)
 			return -EINVAL;
 
