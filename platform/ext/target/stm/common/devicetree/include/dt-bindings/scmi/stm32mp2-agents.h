@@ -11,7 +11,7 @@ extern "C" {
 
 #define STM32MP25_AGENT_ID_M33_NS        1
 #define STM32MP25_AGENT_ID_CA35          2
-
+#define STM32MP25_AGENT_ID_CA35_BL31     3
 #ifdef __cplusplus
 }
 #endif
