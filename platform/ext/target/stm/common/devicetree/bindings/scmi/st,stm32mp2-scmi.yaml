@@ -26,6 +26,9 @@ properties:
   memory-region:
     required: false
 
+  mboxes:
+    required: false
+
   rst-list:
     required: false
 
