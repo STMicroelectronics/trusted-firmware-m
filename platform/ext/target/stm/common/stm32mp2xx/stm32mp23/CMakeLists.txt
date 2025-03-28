@@ -20,44 +20,49 @@ target_compile_definitions(platform_region_defs
 )
 
 #========================= Platform Secure ====================================#
-#target_sources(platform_s
-#	PRIVATE
-#)
+target_sources(platform_s
+	PRIVATE
+		${STM_SOC_DIR}/src/system_stm32mp2xx_m33.c
+		${STM_FAMILLY_DIR}/native_driver/src/clk/clk-stm32mp25.c
+)
 
-#target_compile_definitions(platform_s
-#	PUBLIC
-#		STM32_SEC
-#		STM32_LOG_LEVEL=${STM32_LOG_LEVEL}
-#		STM32_PROV_FAKE=${STM32_PROV_FAKE}
-#		$<$<BOOL:${TFM_PARTITION_SCP}>:CLK_MINIMAL_SZ=0>
-#)
+target_sources(tfm_s
+	PRIVATE
+		${STM_SOC_DIR}/src/startup_stm32mp2_s.c
+)
 
 #========================= Platform BL2 =======================================#
 if(BL2)
 
-    #	target_include_directories(platform_bl2
-    #		PUBLIC
-    #	)
+	target_sources(platform_bl2
+		PRIVATE
+			${STM_SOC_DIR}/src/system_stm32mp2xx_m33.c
+			${STM_FAMILLY_DIR}/native_driver/src/clk/clk-stm32mp25.c
+	)
 
-    #	target_sources(platform_bl2
-    #		PRIVATE
-    #	)
-
-    #target_compile_options(platform_bl2
-    #	PUBLIC
-    #			${COMPILER_CMSE_FLAG}
-    #	)
-
-    #	target_compile_definitions(platform_bl2
-    #		PUBLIC
-    #	)
+	target_sources(bl2
+		PRIVATE
+			${STM_SOC_DIR}/src/startup_stm32mp2_bl2.c
+	)
 
 endif()
+
 #========================= Files for building NS side platform ================#
 install(FILES
-    ${STM_SOC_DIR}/config.cmake
-    ${STM_SOC_DIR}/cpuarch.cmake
-    ${STM_SOC_DIR}/CMakeLists.txt
-    ${STM_SOC_DIR}/config_tfm_stm32mp23.h
-    DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx/stm32mp23
+	${STM_SOC_DIR}/config.cmake
+	${STM_SOC_DIR}/cpuarch.cmake
+	${STM_SOC_DIR}/CMakeLists.txt
+	${STM_SOC_DIR}/config_tfm_stm32mp23.h
+	DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx/stm32mp23
+)
+
+install(DIRECTORY
+	${STM_SOC_DIR}/ns
+	DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx/stm32mp23
+)
+
+install(FILES
+	${STM_SOC_DIR}/src/startup_stm32mp2_ns.c
+	${STM_SOC_DIR}/src/system_stm32mp2xx_m33.c
+	DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx/stm32mp23/src
 )
