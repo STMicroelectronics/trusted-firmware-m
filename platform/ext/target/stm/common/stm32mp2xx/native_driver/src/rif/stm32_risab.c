@@ -358,7 +358,7 @@ static void stm32_risab_get_hwconfig(const struct device *dev)
 	drv_data->hw_block_sz = 1 << _FLD_GET(_RISAB_HWCFGR1_CFG5, regval);
 }
 
-static int stm32_risab_init(const struct device *dev)
+static int __maybe_unused stm32_risab_init(const struct device *dev)
 {
 	const struct stm32_risab_config *drv_cfg = dev_get_config(dev);
 	struct stm32_risab_data *drv_data = dev_get_data(dev);
