@@ -6,32 +6,12 @@
  * properties by non secure value (for soc devices)
  */
 
-&rifsc {
-	reg = <0x42080000 0x1000>;
-};
-
-&uart4 {
-	reg = <0x40100000 0x400>;
-};
-
-&iac {
-	reg = <0x42090000 0x400>;
-};
-
-&risaf4 {
-	reg = <0x420d0000 0x1000>;
-};
-
 &bsec {
 	reg = <0x44000000 0x1000>;
 };
 
-&serc {
-	reg = <0x44080000 0x1000>;
-};
-
-&rcc {
-	reg = <0x44200000 0x10000>;
+&iac {
+	reg = <0x42090000 0x400>;
 };
 
 &pinctrl {
@@ -40,4 +20,24 @@
 
 &pinctrl_z {
 	ranges = <0 0x46200000 0x400>;
+};
+
+&rcc {
+	reg = <0x44200000 0x10000>;
+};
+
+&risaf4 {
+	reg = <0x420d0000 0x1000>;
+};
+
+&rifsc {
+	reg = <0x42080000 0x1000>;
+};
+
+&serc {
+	reg = <0x44080000 0x1000>;
+};
+
+&uart4 {
+	reg = <0x40100000 0x400>;
 };
