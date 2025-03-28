@@ -4,7 +4,6 @@
  * Copyright (c) 2024, STMicroelectronics
  *
  */
-#define DT_DRV_COMPAT st_scp_mbox
 
 #include <device.h>
 #include <mbox.h>
@@ -17,7 +16,6 @@
 #include "load/interrupt_defs.h"
 #include "psa_manifest/tfm_ipcc.h"
 
-#if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
 extern void IPCC_HANDLE_0();
 extern struct irq_t ipcc_irq;
@@ -38,4 +36,3 @@ psa_status_t tfm_ipcc_entry(void)
 	} while(1);
 
 }
-#endif

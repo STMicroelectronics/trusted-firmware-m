@@ -15,6 +15,7 @@
 #include <lib/mmio.h>
 #include <lib/mmiopoll.h>
 #include <lib/utils_def.h>
+#include <mbox.h>
 #include <debug.h>
 #include <spi_mem.h>
 #include <clk.h>
@@ -160,6 +161,7 @@ struct stm32_scmi_config {
 	const int dt_agent_id;
 	const char *dt_agent_name;
 	const struct shared_mem *dt_shm;
+	const struct mbox_dt_spec *dt_chan;
 	const struct stm32_scmi_rd *dt_resets;
 	const int ndt_resets;
 	const int ndt_resets_max;
@@ -215,12 +217,6 @@ static int stm32_scmi_init(const struct device *dev)
 
 #define SCMI_DT_REGU(_node_id, _prop, _idx)					\
 	DEVICE_DT_GET(DT_PHANDLE_BY_IDX(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx), regu, 0))
-
-#define SCMI_DT_ACCESS_CTRLS_GET(_node_id, _prop, _idx)				\
-	DT_ACCESS_CTRLS_GET(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx))
-
-#define SCMI_DT_ACCESS_CTRLS_NUM(_node_id, _prop, _idx)				\
-	DT_ACCESS_CTRLS_NUM(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx))
 
 #define RST_ELE(_node_id, _prop, _idx, _n)					\
 	{									\
@@ -318,11 +314,15 @@ static const struct shared_mem scmi_dt_shmem_##n = {				\
 				(DT_REG_SIZE(					\
 				DT_INST_PHANDLE(n, memory_region))),(0)),	\
 };										\
+static const const struct mbox_dt_spec scmi_dt_chan_##n = {			\
+	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, mboxes),				\
+		(MBOX_DT_SPEC_GET_IDX(DT_DRV_INST(n), 0)),(0))};		\
 										\
 static const struct stm32_scmi_config stm32_scmi_cfg_##n = {			\
 	.dt_agent_id = DT_INST_PROP(n, agent_id),				\
 	.dt_agent_name =  DT_INST_PROP(n, agent_name),				\
 	.dt_shm = &scmi_dt_shmem_##n,						\
+	.dt_chan = &scmi_dt_chan_##n,						\
 	.dt_resets = scmi_dt_resets_##n,					\
 	.ndt_resets = _DT_INST_RST_LIST_NUM(n),				        \
 	.ndt_resets_max = DT_PROP_OR(DT_DRV_INST(n), rst_id_max, 0),		\
@@ -367,6 +367,7 @@ struct scpfw_config *scmi_scpfw_get_configuration(void)
 	return &scpfw_cfg;
 }
 static const char dummy[]="";
+extern int scp_com_init(const struct mbox_dt_spec *chan, void *user_data);
 
 int32_t scmi_scpfw_cfg_early_init(void)
 {
@@ -382,12 +383,20 @@ int32_t scmi_scpfw_cfg_early_init(void)
 		assert(index < AGENT_NUM);
 		scpfw_cfg.agent_config[index].name = scmi_cfg[i]->dt_agent_name;
 		scpfw_cfg.agent_config[index].agent_id = scmi_cfg[i]->dt_agent_id;
+		/*  initialialize mbox channel if some */
 		scpfw_cfg.agent_config[index].channel_count = 1;
 		channel_cfg = calloc(scpfw_cfg.agent_config[index].channel_count,
 				     sizeof(*scpfw_cfg.agent_config[index].channel_config));
-		channel_cfg->shm.area = scmi_cfg[i]->dt_shm->area;
-		channel_cfg->shm.size = scmi_cfg[i]->dt_shm->size;
-
+		/*  initialialize mbox channel if some */
+		if ((scmi_cfg[i]->dt_chan) && (scmi_cfg[i]->dt_shm->area) &&
+		    (scmi_cfg[i]->dt_shm->size)) {
+			/*  smt module  */
+			channel_cfg->shm.area = scmi_cfg[i]->dt_shm->area;
+			channel_cfg->shm.size = scmi_cfg[i]->dt_shm->size;
+			if (scp_com_init(scmi_cfg[i]->dt_chan, (void *)scmi_cfg[i]->dt_agent_id))
+				psa_panic();
+			channel_cfg->chan_mbx = (void *)(scmi_cfg[i]->dt_chan);
+		}
 		scpfw_cfg.agent_config[index].channel_config = channel_cfg;
 		channel_cfg->name = "channel";
 		channel_cfg->clock_count = scmi_cfg[i]->ndt_clocks_max;

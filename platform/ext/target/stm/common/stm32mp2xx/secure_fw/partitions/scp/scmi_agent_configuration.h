@@ -106,6 +106,7 @@ struct scpfw_channel_config {
 	struct scmi_pd *pd;
 	size_t pd_count;
 	struct shared_mem shm;
+	void *chan_mbx;
 };
 
 /*

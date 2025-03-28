@@ -130,6 +130,24 @@ struct mbox_dt_spec {
 	}
 
 /**
+ * @brief Structure initializer for struct mbox_dt_spec from devicetree
+ *
+ * @code{.c}
+ *     const struct mbox_dt_spec spec = {
+ *					MBOX_DT_SPEC_GET_IDX(DT_NODELABEL(n), 0)
+ *					};
+ * @endcode
+ *
+ * @param node_id Devicetree node identifier for the MBOX device
+ * @param name lowercase-and-underscores name of the mboxes element
+ *
+ * @return static initializer for a struct mbox_dt_spec
+ */
+#define MBOX_DT_SPEC_GET_IDX(node_id, idx)					\
+		.dev = DEVICE_DT_GET(DT_MBOX_CTLR_BY_IDX(node_id, idx)),	\
+		.channel_id = DT_MBOX_CHANNEL_BY_IDX(node_id, idx),
+
+/**
  * @brief Instance version of MBOX_DT_CHANNEL_GET()
  *
  * @param inst DT_DRV_COMPAT instance number

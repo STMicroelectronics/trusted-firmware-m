@@ -6,6 +6,7 @@
  */
 #define DT_DRV_COMPAT st_scp_mbox
 
+#include <assert.h>
 #include <device.h>
 #include <mbox.h>
 #include "region_defs.h"
@@ -19,31 +20,38 @@
 #include "psa_manifest/tfm_scp.h"
 #include "scmi_server.h"
 
-#if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
-const struct mbox_dt_spec channel = MBOX_DT_SPEC_INST_GET(0, ns);
+
 /* function called by mailbox SLIH handler */
 void rx_scp(const struct device *dev,
 	    mbox_channel_id_t channel_id, void *user_data,
 	    struct mbox_msg *data)
 {
-	psa_call(TFM_SCP_SERVICE_HANDLE, TFM_SCP_SERVICE_SID, NULL, 0, NULL, 0);
+	psa_call(TFM_SCP_SERVICE_HANDLE, (int32_t)user_data, NULL, 0, NULL, 0);
 }
 
 
-void scp_com_handle(void)
+int scp_mbox_raise(void *chan_mbx)
 {
-	scmi_server_smt_process_thread(DT_PROP(DT_NODELABEL(scmi_ca35),agent_id) - 1);
-	mbox_send_dt(&channel, NULL);
+	const struct mbox_dt_spec *chan = (const struct mbox_dt_spec *)chan_mbx;
+	return mbox_send_dt(chan, NULL);
 }
 
-void scp_com_init(void)
+void scp_com_handle(int type)
 {
-	if (mbox_register_callback_dt(&channel, rx_scp, NULL)) {
-		return;
+	scmi_server_smt_process_thread(type - 1);
+}
+
+int scp_com_init(const struct mbox_dt_spec *chan, void *user_data)
+{
+        /*  Initialize scmi channel for ca35 ns */
+	if (mbox_register_callback_dt(chan, rx_scp, user_data)) {
+		return -1;
 	}
 
-	if (mbox_set_enabled_dt(&channel, true)) {
-		return;
+	if (mbox_set_enabled_dt(chan, true)) {
+		return -2;
 	}
+
+	return 0;
 }
-#endif
+

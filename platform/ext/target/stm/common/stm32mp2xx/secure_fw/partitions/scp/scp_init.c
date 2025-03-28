@@ -16,20 +16,18 @@
 #include <assert.h>
 #include "scmi_server.h"
 #include "psa_manifest/tfm_scp.h"
-
+#include "psa/service.h"
 void __panic(void)
 {
 	psa_panic();
 }
 
-extern void scp_com_init(void);
-extern void scp_com_handle(void);
+extern void scp_com_handle(int type);
 
 psa_status_t tfm_scp_entry(void)
 {
 	int ret = 0;
 
-	scp_com_init();
 	ret = scmi_scpfw_cfg_early_init();
 	assert(ret == TFM_SCMI_SUCCESS);
 	ret = scmi_scpfw_cfg_init();
@@ -43,6 +41,7 @@ psa_status_t tfm_scp_entry(void)
 
 psa_status_t tfm_scp_service_sfn(const psa_msg_t *msg)
 {
-	scp_com_handle();
+	int type = msg->type;
+	scp_com_handle(type);
 	return PSA_SUCCESS;
 }
