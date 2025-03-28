@@ -138,7 +138,7 @@
 			status = "disabled";
 
 			tim2: timer@50000000 {
-				compatible = "st,stm32mp25-timer";
+				compatible = "st,stm32mp25-timers";
 				reg = <0x50000000 0x400>;
 				interrupts = <92 0>;
 				clocks = <&rcc CK_KER_TIM2>;
