@@ -172,8 +172,93 @@
 			tim2: timer@50000000 {
 				compatible = "st,stm32mp25-timers";
 				reg = <0x50000000 0x400>;
-				interrupts = <105  0>;
+				interrupts = <105 0>;
 				clocks = <&rcc CK_KER_TIM2>;
+				status = "disabled";
+			};
+
+			tim3: timer@50010000 {
+				compatible = "st,stm32mp25-timers";
+				reg = <0x50010000 0x400>;
+				interrupts = <106 0>;
+				clocks = <&rcc CK_KER_TIM3>;
+				status = "disabled";
+			};
+
+			tim4: timer@50020000 {
+				compatible = "st,stm32mp25-timers";
+				reg = <0x50020000 0x400>;
+				interrupts = <107 0>;
+				clocks = <&rcc CK_KER_TIM4>;
+				status = "disabled";
+			};
+
+			tim5: timer@50030000 {
+				compatible = "st,stm32mp25-timers";
+				reg = <0x50030000 0x400>;
+				interrupts = <124 0>;
+				clocks = <&rcc CK_KER_TIM5>;
+				status = "disabled";
+			};
+
+			tim6: timer@50040000 {
+				compatible = "st,stm32mp25-timers";
+				reg = <0x50040000 0x400>;
+				interrupts = <128 0>;
+				clocks = <&rcc CK_KER_TIM6>;
+				status = "disabled";
+			};
+
+			tim7: timer@50050000 {
+				compatible = "st,stm32mp25-timers";
+				reg = <0x50050000 0x400>;
+				interrupts = <129 0>;
+				clocks = <&rcc CK_KER_TIM7>;
+				status = "disabled";
+			};
+
+			tim12: timer@50060000 {
+				compatible = "st,stm32mp25-timers";
+				reg = <0x50060000 0x400>;
+				interrupts = <196 0>;
+				clocks = <&rcc CK_KER_TIM12>;
+				status = "disabled";
+			};
+
+			tim13: timer@50070000 {
+				compatible = "st,stm32mp25-timers";
+				reg = <0x50070000 0x400>;
+				interrupts = <203 0>;
+				clocks = <&rcc CK_KER_TIM13>;
+				status = "disabled";
+			};
+
+			tim14: timer@50080000 {
+				compatible = "st,stm32mp25-timers";
+				reg = <0x50080000 0x400>;
+				interrupts = <204 0>;
+				clocks = <&rcc CK_KER_TIM14>;
+				status = "disabled";
+			};
+
+			usart2: serial@500e0000 {
+				compatible = "st,stm32h7-uart";
+				reg = <0x500e0000 0x400>;
+				clocks = <&rcc CK_KER_USART2>;
+				status = "disabled";
+			};
+
+			usart3: serial@500f0000 {
+				compatible = "st,stm32h7-uart";
+				reg = <0x500f0000 0x400>;
+				clocks = <&rcc CK_KER_USART3>;
+				status = "disabled";
+			};
+
+			uart4: serial@50100000 {
+				compatible = "st,stm32h7-uart";
+				reg = <0x50100000 0x400>;
+				clocks = <&rcc CK_KER_UART4>;
 				status = "disabled";
 			};
 
@@ -181,6 +266,72 @@
 				compatible = "st,stm32h7-uart";
 				reg = <0x50110000 0x400>;
 				clocks = <&rcc CK_KER_UART5>;
+				status = "disabled";
+			};
+
+			i2c1: i2c@50120000 {
+				compatible = "st,stm32mp25-i2c";
+				reg = <0x50120000 0x400>;
+				clocks = <&rcc CK_KER_I2C1>;
+				resets = <&rcc_reset I2C1_R>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				i2c-analog-filter;
+				status = "disabled";
+			};
+
+			i2c2: i2c@50130000 {
+				compatible = "st,stm32mp25-i2c";
+				reg = <0x50130000 0x400>;
+				clocks = <&rcc CK_KER_I2C2>;
+				resets = <&rcc_reset I2C2_R>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				i2c-analog-filter;
+				status = "disabled";
+			};
+
+			i2c3: i2c@50140000 {
+				compatible = "st,stm32mp25-i2c";
+				reg = <0x50140000 0x400>;
+				clocks = <&rcc CK_KER_I2C3>;
+				resets = <&rcc_reset I2C3_R>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				i2c-analog-filter;
+				status = "disabled";
+			};
+
+			i2c4: i2c@50150000 {
+				compatible = "st,stm32mp25-i2c";
+				reg = <0x50150000 0x400>;
+				clocks = <&rcc CK_KER_I2C4>;
+				resets = <&rcc_reset I2C4_R>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				i2c-analog-filter;
+				status = "disabled";
+			};
+
+			i2c5: i2c@50160000 {
+				compatible = "st,stm32mp25-i2c";
+				reg = <0x50160000 0x400>;
+				clocks = <&rcc CK_KER_I2C5>;
+				resets = <&rcc_reset I2C5_R>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				i2c-analog-filter;
+				status = "disabled";
+			};
+
+			i2c6: i2c@50170000 {
+				compatible = "st,stm32mp25-i2c";
+				reg = <0x50170000 0x400>;
+				clocks = <&rcc CK_KER_I2C6>;
+				resets = <&rcc_reset I2C6_R>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				i2c-analog-filter;
 				status = "disabled";
 			};
 
@@ -192,6 +343,81 @@
 				#address-cells = <1>;
 				#size-cells = <0>;
 				i2c-analog-filter;
+				status = "disabled";
+			};
+
+			tim10: timer@501c0000 {
+				compatible = "st,stm32mp25-timers";
+				reg = <0x501c0000 0x400>;
+				interrupts = <205 0>;
+				clocks = <&rcc CK_KER_TIM10>;
+				status = "disabled";
+			};
+
+			tim11: timer@501d0000 {
+				compatible = "st,stm32mp25-timers";
+				reg = <0x501d0000 0x400>;
+				interrupts = <225 0>;
+				clocks = <&rcc CK_KER_TIM11>;
+				status = "disabled";
+			};
+
+			usart6: serial@50220000 {
+				compatible = "st,stm32h7-uart";
+				reg = <0x50220000 0x400>;
+				clocks = <&rcc CK_KER_USART6>;
+				status = "disabled";
+			};
+
+			tim15: timer@50250000 {
+				compatible = "st,stm32mp25-timers";
+				reg = <0x50250000 0x400>;
+				interrupts = <193 0>;
+				clocks = <&rcc CK_KER_TIM15>;
+				status = "disabled";
+			};
+
+			tim16: timer@50260000 {
+				compatible = "st,stm32mp25-timers";
+				reg = <0x50260000 0x400>;
+				interrupts = <194 0>;
+				clocks = <&rcc CK_KER_TIM16>;
+				status = "disabled";
+			};
+
+			tim17: timer@50270000 {
+				compatible = "st,stm32mp25-timers";
+				reg = <0x50270000 0x400>;
+				interrupts = <195 0>;
+				clocks = <&rcc CK_KER_TIM17>;
+				status = "disabled";
+			};
+
+			uart9: serial@502c0000 {
+				compatible = "st,stm32h7-uart";
+				reg = <0x502c0000 0x400>;
+				clocks = <&rcc CK_KER_UART9>;
+				status = "disabled";
+			};
+
+			usart1: serial@50330000 {
+				compatible = "st,stm32h7-uart";
+				reg = <0x50330000 0x400>;
+				clocks = <&rcc CK_KER_USART1>;
+				status = "disabled";
+			};
+
+			uart7: serial@50370000 {
+				compatible = "st,stm32h7-uart";
+				reg = <0x50370000 0x400>;
+				clocks = <&rcc CK_KER_UART7>;
+				status = "disabled";
+			};
+
+			uart8: serial@50380000 {
+				compatible = "st,stm32h7-uart";
+				reg = <0x50380000 0x400>;
+				clocks = <&rcc CK_KER_UART8>;
 				status = "disabled";
 			};
 
@@ -207,6 +433,17 @@
 				clocks = <&clk_rcbsec>, <&rcc CK_BUS_RNG>;
 				clock-names = "rng_clk", "rng_hclk";
 				resets = <&rcc_reset RNG_R>;
+				status = "disabled";
+			};
+
+			i2c8: i2c@56040000 {
+				compatible = "st,stm32mp25-i2c";
+				reg = <0x56040000 0x400>;
+				clocks = <&rcc CK_KER_I2C8>;
+				resets = <&rcc_reset I2C8_R>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				i2c-analog-filter;
 				status = "disabled";
 			};
 
