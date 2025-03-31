@@ -18,7 +18,6 @@ set(TFM_SYSTEM_ARCHITECTURE armv8-m.main)
 set(STM_COMMON_DIR ${STM_DIR}/common)
 set(STM_DEVICETREE_DIR ${STM_COMMON_DIR}/devicetree)
 set(STM_FAMILLY_DIR ${CMAKE_CURRENT_LIST_DIR})
-set(CRYPTO_HW_ACCELERATOR_TYPE stm32mp2)
 
 add_compile_definitions(
 	STM32MP2

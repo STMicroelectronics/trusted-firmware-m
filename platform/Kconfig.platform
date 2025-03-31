@@ -101,14 +101,10 @@ config CRYPTO_HW_ACCELERATOR_CC312
 config CRYPTO_HW_ACCELERATOR_STM
     def_bool n
 
-config CRYPTO_HW_ACCELERATOR_STM32MP2
-    def_bool n
-
 config CRYPTO_HW_ACCELERATOR_TYPE
     string
     default "cc312" if CRYPTO_HW_ACCELERATOR_CC312
     default "stm" if CRYPTO_HW_ACCELERATOR_STM
-    default "stm32mp2" if CRYPTO_HW_ACCELERATOR_STM32MP2
     default ""
 
 ################################# Platform default #############################
