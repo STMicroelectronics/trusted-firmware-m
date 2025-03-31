@@ -375,15 +375,14 @@ void stm32_bsec_write_debug_conf(uint32_t val)
 
 	sem_ret = bsec_get_semaphore();
 	if (sem_ret)
-		return sem_ret;
+		return;
 	if (is_bsec_write_locked())
 		panic();
 
 	mmio_write_32(drv_cfg->base + _BSEC_DENR,
 		      _BSEC_DENR_KEY | masked_val);
-	sem_ret = bsec_release_semaphore();
-	if (sem_ret)
-		return sem_ret;
+
+	bsec_release_semaphore();
 }
 
 static inline int _otp_is_valid(uint32_t status)
