@@ -3,7 +3,7 @@
 
 description: stm32 timer
 
-compatible: "st,stm32mp25-timer"
+compatible: "st,stm32mp25-timers"
 
 include: base.yaml
 
