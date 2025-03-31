@@ -133,17 +133,13 @@ static __unused int stm32mp2_a35_stop(const struct device *dev)
 	else
 		stm32mp2_a35_restore(dev);
 
-	/* the deassert release hold boot and set hold boot */
-	reset_control_deassert(&cfg->rst_ctl);
-
 	/* clear event if pending */
 	EXTI1->RPR3 = BIT(0);
-	/* send CPU2 SEV event to cpu1 (exti 64)*/
-	EXTI1->SWIER3 = BIT(0);
 	/* reset cpu */
 	reset_control_assert(&cfg->rst_ctl);
+	/* send CPU2 SEV event to cpu1 (exti 64)*/
+	EXTI1->SWIER3 = BIT(0);
 	/* check cpu in hold boot */
-
 	return  mmio_read32_poll_timeout(((uint32_t)&PWR_S->CPU1D1SR), cfgr,
 					 (cfgr & PWR_CPU1D1SR_HOLD_BOOT_Msk) &&
 					 ((cfgr & PWR_CPU1D1SR_DSTATE)

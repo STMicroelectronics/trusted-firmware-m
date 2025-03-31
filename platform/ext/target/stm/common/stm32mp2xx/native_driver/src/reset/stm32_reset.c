@@ -119,31 +119,36 @@ static int _cpu_assert(const struct device *dev, uint32_t id)
 {
 	const struct stm32_reset_config *drv_cfg = dev_get_config(dev);
 	uintptr_t base = drv_cfg->base;
+	uintptr_t addr = base + _RCC_CPUBOOTCR;
 	uint32_t rst_offset = RESET_OFFSET(id);
 	uint32_t rst_mask = RESET_BIT(id);
+	uint32_t cpu_mask = CPUBOOT_BIT(rst_offset);
+	uint32_t cfgr;
+	int err;
+
+	/*  Set hold boot to block execution after reset */
+	io_clrbits32(addr, cpu_mask);
+	err = mmio_read32_poll_timeout(addr, cfgr, (~cfgr & cpu_mask), 1);
 
 	io_setbits32(base + rst_offset, rst_mask);
 
-	return 0;
+	return err;
 }
 
 static int _cpu_deassert(const struct device *dev, uint32_t id)
 {
 	const struct stm32_reset_config *drv_cfg = dev_get_config(dev);
-	uintptr_t addr = drv_cfg->base +_RCC_CPUBOOTCR;
+	uintptr_t addr = drv_cfg->base + _RCC_CPUBOOTCR;
 	uint32_t rst_offset = RESET_OFFSET(id);
 	uint32_t cpu_mask = CPUBOOT_BIT(rst_offset);
 	uint32_t cfgr;
 	int err;
 
-	/* release HOLD: disable HOLD boot */
+	/* release CPU after the reset: disable HOLD boot */
 	io_setbits32(addr, cpu_mask);
 
 	/* 1 us timeout to get hold boot not set */
 	err = mmio_read32_poll_timeout(addr, cfgr, (cfgr & cpu_mask), 1);
-
-	/* cpu should start, set hold boot to avoid later an uncontrolled reset */
-	io_clrbits32(addr, cpu_mask);
 
 	return err;
 }
