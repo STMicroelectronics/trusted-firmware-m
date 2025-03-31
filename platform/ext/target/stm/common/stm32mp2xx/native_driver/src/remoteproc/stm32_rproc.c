@@ -30,7 +30,7 @@ struct clock_control {
 struct stm32_rproc_variant {
 	int (*init_fn)(const struct device *dev);
 	int (*start_fn)(const struct device *dev);
-	int (*is_running_fn)(const struct device *dev);
+	bool (*is_running_fn)(const struct device *dev);
 	int (*stop_fn)(const struct device *dev);
 	void (*irq_handler)(const struct device *dev);
 };
@@ -46,18 +46,18 @@ struct stm32_rproc_config {
 
 struct stm32_rproc_data {
 	struct rproc_spec rproc;
-	uint32_t running;
+	bool running;
 	const struct stm32_rproc_variant *variant;
 };
 
-static void stm32_rproc_running_set(const struct device *dev, uint32_t running)
+static void stm32_rproc_running_set(const struct device *dev, bool running)
 {
 	struct stm32_rproc_data *data = dev_get_data(dev);
 
 	data->running = running;
 }
 
-static uint32_t stm32_rproc_running_get(const struct device *dev)
+static bool stm32_rproc_running_get(const struct device *dev)
 {
 	struct stm32_rproc_data *data = dev_get_data(dev);
 
@@ -129,7 +129,7 @@ static __unused int stm32mp2_a35_stop(const struct device *dev)
 
 	/* when ack not received (not running), restore the configuration */
 	if (stm32_rproc_running_get(dev))
-		stm32_rproc_running_set(dev, 0);
+		stm32_rproc_running_set(dev, false);
 	else
 		stm32mp2_a35_restore(dev);
 
@@ -154,7 +154,7 @@ static __unused int stm32mp2_a35_init(const struct device *dev)
 {
 	const struct stm32_rproc_config *cfg = dev_get_config(dev);
 
-	stm32_rproc_running_set(dev, 0);
+	stm32_rproc_running_set(dev, false);
 
 	/* unmask event before rif has initialized CID1 filtering on EXTI1_C1CIDCFGR*/
 	EXTI1->C1IMR3 |= BIT(0);
@@ -190,7 +190,7 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 		EXTI1->C2EMR3 |= BIT(1);
 		NVIC_EnableIRQ(cfg->irq_ack);
 	} else {
-		stm32_rproc_running_set(dev, 1);
+		stm32_rproc_running_set(dev, true);
 	}
 
 	/* set bootrom access controller configuration */
@@ -241,7 +241,7 @@ static __unused int stm32mp2_a35_release(const struct device *dev)
 		EXTI1->RPR3 = BIT(1);
 	}
 
-	stm32_rproc_running_set(dev, 1);
+	stm32_rproc_running_set(dev, true);
 
 	return ret;
 }
