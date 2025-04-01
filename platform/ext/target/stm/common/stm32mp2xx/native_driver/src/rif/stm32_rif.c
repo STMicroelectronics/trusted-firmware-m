@@ -124,6 +124,7 @@ static int _rifprot_set_conf(const struct rifprot_controller *ctl,
 	uintptr_t offset = SEC_PRIV_X_OFFSET(cfg->id);
 	uint32_t shift = SEC_PRIV_X_SHIFT(cfg->id);
 	uint32_t lockr = 0;
+	bool sem_release = false;
 	int err = 0;
 
 	if (ctl->rbase->lock)
@@ -147,11 +148,18 @@ static int _rifprot_set_conf(const struct rifprot_controller *ctl,
 		err = stm32_rifprot_acquire_sem(ctl, cfg->id);
 		if (err)
 			return err;
+		sem_release = true;
 	}
 
 	if (ctl->rbase->lock)
 		io_clrsetbits32(ctl->rbase->lock + offset, BIT(shift),
 				cfg->lock << shift);
+
+	/* release semaphore if shared resource/not reserved for my CID */
+	if (sem_release &&
+	    ((_FLD_GET(_CIDCFGR_SEMWLC, cfg->cid_attr)) != BIT(MY_CID))) {
+		err = stm32_rifprot_release_sem(ctl, cfg->id);
+	}
 
 	return 0;
 }
@@ -163,6 +171,7 @@ static int _rifprot_set_conf(const struct rifprot_controller *ctl,
 	uintptr_t offset = SEC_PRIV_X_OFFSET(cfg->id);
 	uint32_t shift = SEC_PRIV_X_SHIFT(cfg->id);
 	bool write_cfg = false;
+	bool sem_release = false;
 	uint32_t cidcfgr;
 	int err = 0;
 
@@ -178,8 +187,10 @@ static int _rifprot_set_conf(const struct rifprot_controller *ctl,
 	if (ctl->rbase->sem &&
 	    SEMAPHORE_IS_AVAILABLE(cidcfgr, MY_CID)) {
 		err = stm32_rifprot_acquire_sem(ctl, cfg->id);
-		if (!err)
+		if (!err) {
 			write_cfg = true;
+			sem_release = true;
+		}
 	} else if (!_FLD_GET(_CIDCFGR_SEMEN, cidcfgr) &&
 		   (_FLD_GET(_CIDCFGR_SCID, cidcfgr) == MY_CID)) {
 		write_cfg = true;
@@ -193,6 +204,12 @@ static int _rifprot_set_conf(const struct rifprot_controller *ctl,
 		if (ctl->rbase->lock)
 			io_clrsetbits32(ctl->rbase->lock + offset, BIT(shift),
 					cfg->lock << shift);
+	}
+
+	/* release semaphore if shared resource/not reserved for my CID */
+	if (sem_release &&
+	    ((_FLD_GET(_CIDCFGR_SEMWLC, cidcfgr)) != BIT(MY_CID))) {
+		err = stm32_rifprot_release_sem(ctl, cfg->id);
 	}
 
 	return err;
