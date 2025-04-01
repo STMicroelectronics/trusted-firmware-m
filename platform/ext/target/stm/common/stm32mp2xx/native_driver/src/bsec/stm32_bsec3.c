@@ -57,9 +57,16 @@
 #define _BSEC_LOCKR_GWLOCK_MASK		BIT(0)
 
 /* BSEC_DENR register fields */
-#define _BSEC_DENR_ALL_MSK		GENMASK(15, 0)
-
-#define _BSEC_DENR_KEY			0xDEB60000
+/* Compute DENR_RCODE (SECDED ECC) as HAMMING(17,12) with parity */
+#define PARITY_4BIT(x)		((((x) >> 3) ^ ((x) >> 2) ^ ((x) >> 1) ^ (x)) & 1)
+#define PARITY_12BIT(x)		PARITY_4BIT(((x) >> 8) ^ ((x) >> 4) ^ (x))
+#define _BSEC_DENR_RCODE(x)	(((PARITY_12BIT((x) & 0x800)) << 17) | \
+				 ((PARITY_12BIT((x) & 0x7f0)) << 16) | \
+				 ((PARITY_12BIT((x) & 0x78e)) << 15) | \
+				 ((PARITY_12BIT((x) & 0x66d)) << 14) | \
+				 ((PARITY_12BIT((x) & 0xd5b)) << 13) | \
+				 ((PARITY_12BIT((x) ^ 0xcb7)) << 12))
+#define BSEC_DENR_v(x) (_BSEC_DENR_RCODE((x) & DBG_FULL) | ((x) & DBG_FULL))
 
 /* BSEC_SR register fields */
 #define _BSEC_SR_HVALID_MASK		BIT(1)
@@ -106,6 +113,8 @@
 
 #define STM32MP2_UPPER_BASE		256
 
+#define BSEC_VERR_1_2			U(0x00000012)
+
 struct nvmem_cell {
 	const char *cell_label;
 	uint32_t otp_id;
@@ -136,12 +145,15 @@ struct stm32_bsec_config {
 struct stm32_bsec_variant {
 	uint32_t max_id;
 	unsigned int oem_key_first_otp;
+	uint32_t denr_all_mask;
+	uint32_t denr_key;
 };
 
 struct stm32_bsec_data {
 	const struct stm32_bsec_variant *variant;
 	bool hw_key_valid;
 	struct bsec_mirror *p_mirror;
+	uint32_t verr;
 };
 
 static const struct device *bsec_dev;
@@ -368,7 +380,8 @@ err:
 void stm32_bsec_write_debug_conf(uint32_t val)
 {
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
-	uint32_t masked_val = val & _BSEC_DENR_ALL_MSK;
+	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
+	uint32_t masked_val = val & drv_data->variant->denr_all_mask;
 	int sem_ret;
 
 	sem_ret = bsec_get_semaphore();
@@ -377,8 +390,11 @@ void stm32_bsec_write_debug_conf(uint32_t val)
 	if (is_bsec_write_locked())
 		panic();
 
+	if (drv_data->verr >= BSEC_VERR_1_2)
+		masked_val = BSEC_DENR_v(masked_val);
+
 	mmio_write_32(drv_cfg->base + _BSEC_DENR,
-		      _BSEC_DENR_KEY | masked_val);
+		      drv_data->variant->denr_key | masked_val);
 
 	bsec_release_semaphore();
 }
@@ -773,6 +789,8 @@ static int stm32_bsec_dt_init(const struct device *dev)
 			drv_data->hw_key_valid = true;
 	}
 
+	drv_data->verr = io_read32(drv_cfg->base + _BSEC_VERR);
+
 	return stm32_bsec_shadow_init(dev);
 }
 
@@ -849,6 +867,8 @@ static __unused struct stm32_bsec_variant variant_stm32mp21 = {
  */
 	.oem_key_first_otp = 348,
 	.max_id = STM32MP2_OTP_MAX_ID,
+	.denr_all_mask = GENMASK(17, 0),
+	.denr_key = 0xdeb00000,
 };
 
 static __unused struct stm32_bsec_variant variant_stm32mp25 = {
@@ -860,6 +880,8 @@ static __unused struct stm32_bsec_variant variant_stm32mp25 = {
  */
 	.oem_key_first_otp = 360,
 	.max_id = STM32MP2_OTP_MAX_ID,
+	.denr_all_mask = GENMASK(15, 0),
+	.denr_key = 0xdeb60000,
 };
 
 #undef DT_DRV_COMPAT

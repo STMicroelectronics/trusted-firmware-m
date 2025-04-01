@@ -12,7 +12,7 @@
 #include <lib/utils_def.h>
 #include <tfm_plat_otp.h>
 
-#define DBG_FULL 0xFFF
+#define DBG_FULL GENMASK_32(11, 1)
 
 /* Magic use to indicated valid SHADOW = 'B' 'S' 'E' 'C' */
 #define BSEC_MAGIC			0x42534543
