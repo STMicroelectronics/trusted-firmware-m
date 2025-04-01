@@ -161,7 +161,7 @@ static __unused int stm32mp2_a35_init(const struct device *dev)
 		NVIC_SetPriority(cfg->irq_ack, 1);
 	}
 
-	return stm32mp2_a35_stop(dev);
+	return 0;
 }
 
 static __unused int stm32mp2_a35_start(const struct device *dev)
