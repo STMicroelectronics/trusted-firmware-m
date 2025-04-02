@@ -334,7 +334,7 @@ static const struct stm32mp2_pwr_config stm32mp2_pwr_cfg_##n = {	\
 	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),				\
 };									\
 									\
-DEVICE_DT_INST_DEFINE(n, &stm32mp2_pwr_init,				\
+DEVICE_DT_INST_DEFINE(n, &stm32mp2_pwr_init, NULL,			\
 		      NULL, &stm32mp2_pwr_cfg_##n,			\
 		      PRE_CORE, 1, &stm32mp2_pwr_firewall_api);
 

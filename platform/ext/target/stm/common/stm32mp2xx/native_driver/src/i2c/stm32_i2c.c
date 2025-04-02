@@ -863,7 +863,7 @@ static const struct stm32_i2c_config cfg_##n = {				\
 static struct stm32_i2c_data data_##n = {};					\
 										\
 DEVICE_DT_INST_DEFINE(n,							\
-		      &stm32_i2c_init,						\
+		      &stm32_i2c_init, NULL,					\
 		      &data_##n, &cfg_##n,					\
 		      CORE, 5,							\
 		      &stm32_i2c_api);

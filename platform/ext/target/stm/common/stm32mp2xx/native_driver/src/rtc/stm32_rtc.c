@@ -127,7 +127,7 @@ static const struct stm32_rtc_config rtc_cfg_##n = {					\
 	.rtc_clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL_BY_NAME(n, rtc_ck, bits),	\
 };											\
 											\
-DEVICE_DT_INST_DEFINE(n, &stm32_rtc_init,						\
+DEVICE_DT_INST_DEFINE(n, &stm32_rtc_init, NULL,						\
 		      NULL, &rtc_cfg_##n,						\
 		      CORE, 10, NULL);
 

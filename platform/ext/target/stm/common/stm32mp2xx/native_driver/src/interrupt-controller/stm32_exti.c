@@ -193,7 +193,7 @@ static const struct stm32_exti_config exti_cfg_##n = {			\
 									\
 static struct stm32_exti_data exti_data_##n = {};			\
 									\
-DEVICE_DT_INST_DEFINE(n, &stm32_exti_init,				\
+DEVICE_DT_INST_DEFINE(n, &stm32_exti_init, NULL,			\
 		      &exti_data_##n, &exti_cfg_##n,			\
 		      CORE, 10, NULL);
 

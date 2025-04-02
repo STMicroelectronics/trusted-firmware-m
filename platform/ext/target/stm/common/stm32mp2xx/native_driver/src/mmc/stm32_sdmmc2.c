@@ -700,7 +700,7 @@ static const struct stm32_sdmmc2_config stm32_sdmmc2_mmc_cfg_##n = {		\
 static struct stm32_sdmmc2_data stm32_sdmmc2_mmc_data_##n = {};			\
 										\
 DEVICE_DT_INST_DEFINE(n,							\
-		      &stm32_sdmmc2_mmc_init,					\
+		      &stm32_sdmmc2_mmc_init, NULL,				\
 		      &stm32_sdmmc2_mmc_data_##n, &stm32_sdmmc2_mmc_cfg_##n,	\
 		      CORE, 12,							\
 		      &stm32_sdmmc2_mmc_ops);

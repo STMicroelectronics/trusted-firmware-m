@@ -229,7 +229,7 @@ static const struct stm32_hpdma_config hpdma_cfg_##n = {			\
 	.errata_ahbrisab = DT_INST_PROP_OR(n, st_errata_ahbrisab, false)	\
 };										\
 										\
-DEVICE_DT_INST_DEFINE(n, &stm32_hpdma_init,					\
+DEVICE_DT_INST_DEFINE(n, &stm32_hpdma_init, NULL,				\
 		      NULL, &hpdma_cfg_##n,					\
 		      CORE, 10, NULL);
 

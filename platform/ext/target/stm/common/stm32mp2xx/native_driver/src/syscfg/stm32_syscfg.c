@@ -108,7 +108,7 @@ static const struct stm32_syscfg_config stm32_syscfg_cfg = {
 };
 
 DEVICE_DT_INST_DEFINE(0,
-		      NULL,
+		      NULL, NULL,
 		      NULL, &stm32_syscfg_cfg,
 		      PRE_CORE, 0,
 		      &stm32_syscfg_com_api);

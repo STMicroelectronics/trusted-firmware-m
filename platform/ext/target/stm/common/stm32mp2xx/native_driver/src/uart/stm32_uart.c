@@ -523,7 +523,7 @@ static struct stm32_uart_data stm32_uart_data_##n = {			\
 };									\
 									\
 DEVICE_DT_INST_DEFINE(n,						\
-		      &stm32_uart_dt_init,				\
+		      &stm32_uart_dt_init, NULL,			\
 		      &stm32_uart_data_##n,				\
 		      &stm32_uart_cfg_##n,				\
 		      CORE, 0,						\

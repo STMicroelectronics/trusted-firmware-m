@@ -441,7 +441,7 @@ static const struct stm32_risab_config stm32_risab_cfg_##n = {			\
 										\
 static struct stm32_risab_data stm32_risab_data_##n = {};			\
 										\
-DEVICE_DT_INST_DEFINE(n, &stm32_risab_init,					\
+DEVICE_DT_INST_DEFINE(n, &stm32_risab_init, NULL,				\
 		      &stm32_risab_data_##n,					\
 		      &stm32_risab_cfg_##n,					\
 		      CORE, 8,							\

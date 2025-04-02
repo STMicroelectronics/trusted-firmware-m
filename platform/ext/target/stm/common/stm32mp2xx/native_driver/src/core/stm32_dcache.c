@@ -319,7 +319,7 @@ static const struct stm32_dcache_config cfg_##n = {		\
 								\
 static struct dcache_driver_data data_##n = { };		\
 								\
-DEVICE_DT_INST_DEFINE(n, &stm32_dcache_init,			\
+DEVICE_DT_INST_DEFINE(n, &stm32_dcache_init, NULL,		\
 		      &data_##n, &cfg_##n,			\
 		      PRE_CORE, 17, NULL);
 

@@ -105,7 +105,7 @@ static const struct stm32_rcc_rif_config rcc_rif_cfg_##n = {			\
 	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),					\
 };										\
 										\
-DEVICE_DT_INST_DEFINE(n, &stm32_rcc_rif_init,					\
+DEVICE_DT_INST_DEFINE(n, &stm32_rcc_rif_init, NULL,				\
 		      NULL, &rcc_rif_cfg_##n,					\
 		      level, priority,						\
 		      &stm32_rcc_rif_firewall_api);

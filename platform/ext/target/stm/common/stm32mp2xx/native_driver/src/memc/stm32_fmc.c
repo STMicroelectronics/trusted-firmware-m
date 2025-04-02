@@ -167,7 +167,7 @@ static const struct stm32_fmc_config fmc_cfg_##n = {					\
 											\
 static struct stm32_fmc_data fmc_data_##n = {};						\
 											\
-DEVICE_DT_INST_DEFINE(n, &stm32_fmc_init,						\
+DEVICE_DT_INST_DEFINE(n, &stm32_fmc_init, NULL,						\
 		      &fmc_data_##n, &fmc_cfg_##n,					\
 		      CORE, 10, NULL);
 

@@ -306,7 +306,7 @@ static struct stm32_rng_data stm32_rng_data_##n = {					  \
 };											  \
 											  \
 DEVICE_DT_INST_DEFINE(n,								  \
-		 &stm32_rng_init,							  \
+		 &stm32_rng_init, NULL,							  \
 		 &stm32_rng_data_##n,							  \
 		 &stm32_rng_cfg_##n,							  \
 		 CORE, 6,								  \

@@ -853,7 +853,7 @@ static const struct nvmem_cell stm32_otp_cell_##node_id = {			\
 	.n_shadow_value = DT_PROP_LEN_OR(node_id, shadow_provisionning, 0)	\
 };										\
 										\
-DEVICE_DT_DEFINE(node_id, NULL,							\
+DEVICE_DT_DEFINE(node_id, NULL, NULL,						\
 		 NULL,								\
 		 &stm32_otp_cell_##node_id,					\
 		 CORE, 6,							\
@@ -888,7 +888,7 @@ static struct stm32_bsec_data stm32_bsec3_data_ ## node_id = {			\
 										\
 static const struct device *bsec_dev = DEVICE_DT_INST_GET(0);			\
 										\
-DEVICE_DT_DEFINE(node_id, &stm32_bsec_dt_init,					\
+DEVICE_DT_DEFINE(node_id, &stm32_bsec_dt_init, NULL,				\
 		 &stm32_bsec3_data_##node_id,					\
 		 &stm32_bsec3_cfg_##node_id,					\
 		 CORE, 5,							\

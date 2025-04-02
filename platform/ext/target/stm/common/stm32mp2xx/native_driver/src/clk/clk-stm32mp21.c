@@ -3379,6 +3379,7 @@ static struct clk_controller_api stm32mp21_clk_api = {
 
 DEVICE_DT_INST_DEFINE(0,
 		      &stm32mp21_clk_dt_init,
+		      NULL,
 		      &stm32mp21_clock_data,
 		      &stm32mp21_rcc_cfg,
 		      INITLEVEL_RCC, PRIORITY_RCC,

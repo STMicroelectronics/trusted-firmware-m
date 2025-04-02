@@ -348,7 +348,7 @@ static const struct stm32_omm_cfg stm32_omm_cfg_##n = {						\
 	.n_ospi_cfg = ARRAY_SIZE(stm32_ospi_cfg_##n),						\
 };												\
 												\
-DEVICE_DT_INST_DEFINE(n, &stm32_omm_init,							\
+DEVICE_DT_INST_DEFINE(n, &stm32_omm_init, NULL,							\
 		      NULL, &stm32_omm_cfg_##n,							\
 		      CORE, 11, NULL);
 

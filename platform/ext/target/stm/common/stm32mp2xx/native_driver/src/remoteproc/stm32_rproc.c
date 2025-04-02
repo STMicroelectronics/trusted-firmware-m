@@ -369,7 +369,7 @@ void _irqhandler(void)								\
 		_variant.irq_handler(DEVICE_DT_INST_GET(n));			\
 }										\
 										\
-DEVICE_DT_INST_DEFINE(n, &stm32_rproc_init,					\
+DEVICE_DT_INST_DEFINE(n, &stm32_rproc_init, NULL,				\
 		      &_##name##_data##n, &_##name##_cfg##n,			\
 		      CORE, 9, &stm32_rproc_api);
 

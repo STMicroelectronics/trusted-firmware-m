@@ -357,7 +357,7 @@ static struct stm32_tamp_data _##name##_data##n = {					\
 	.variant = &_variant,								\
 };											\
 											\
-DEVICE_DT_INST_DEFINE(n, &stm32_tamp_init,						\
+DEVICE_DT_INST_DEFINE(n, &stm32_tamp_init, NULL,					\
 		      &_##name##_data##n, &_##name##_cfg##n,				\
 		      CORE, 10, NULL);
 

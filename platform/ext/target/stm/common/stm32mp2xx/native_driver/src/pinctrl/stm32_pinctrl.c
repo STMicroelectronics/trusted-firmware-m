@@ -174,7 +174,7 @@ static const struct stm32_gpio_config stm32_gpio_cfg_##n = {				\
 };											\
 											\
 DEVICE_DT_INST_DEFINE(n,								\
-		      &stm32_gpio_init,							\
+		      &stm32_gpio_init, NULL,						\
 		      NULL, &stm32_gpio_cfg_##n,					\
 		      PRE_CORE, 10,							\
 		      NULL);

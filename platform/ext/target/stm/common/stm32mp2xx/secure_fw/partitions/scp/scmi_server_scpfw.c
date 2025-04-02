@@ -336,7 +336,7 @@ static const struct stm32_scmi_config stm32_scmi_cfg_##n = {			\
 	.ndt_pd = _DT_INST_PD_LIST_NUM(n),					\
 	.ndt_pd_max =  DT_PROP_OR(DT_DRV_INST(n), pd_id_max, 0),		\
 };										\
-DEVICE_DT_INST_DEFINE(n ,&stm32_scmi_init,					\
+DEVICE_DT_INST_DEFINE(n ,&stm32_scmi_init, NULL,				\
 		      &plat_clk_##n[0],						\
 		      &stm32_scmi_cfg_##n,					\
 		      CORE, 30,							\

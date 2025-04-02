@@ -520,7 +520,8 @@ __unused void stm32_pwr_regulator_restore(void)
 					     st_syscfg_vddio, 0, offset),			\
 	};											\
 												\
-	DEVICE_DT_DEFINE(node_id, &stm32_pwr_regulator_init, &stm32_data_##id, &stm32_cfg_##id,	\
+	DEVICE_DT_DEFINE(node_id, &stm32_pwr_regulator_init, NULL,				\
+			 &stm32_data_##id, &stm32_cfg_##id,					\
 			 CORE, 7, &ops);
 
 #define REGULATOR_PWR_DEFINE_COND(inst, child, macro_desc, name, reg)				\

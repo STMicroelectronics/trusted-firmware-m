@@ -611,7 +611,7 @@ static const struct stm32_rifsc_config stm32_rifsc_cfg_##n = {				\
 											\
 static struct rifsc_driver_data stm32_rifsc_data_##n = {};				\
 											\
-DEVICE_DT_INST_DEFINE(n, &stm32_rifsc_init,						\
+DEVICE_DT_INST_DEFINE(n, &stm32_rifsc_init, NULL,					\
 		      &stm32_rifsc_data_##n, &stm32_rifsc_cfg_##n,			\
 		      PRE_CORE, 0,							\
 		      &stm32_rifsc_firewall_api);

@@ -149,7 +149,7 @@ const struct systick_config systick_cfg = {
 };
 
 DEVICE_DT_INST_DEFINE(0,
-		      &systick_init,
+		      &systick_init, NULL,
 		      NULL,
 		      &systick_cfg,
 		      PRE_CORE, 10,

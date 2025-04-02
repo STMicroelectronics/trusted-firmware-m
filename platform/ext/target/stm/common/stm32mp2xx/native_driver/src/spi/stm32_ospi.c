@@ -861,7 +861,7 @@ static const struct stm32_omi_config stm32_omi_cfg_##n = {			\
 static struct stm32_omi_data stm32_omi_data_##n = {};				\
 										\
 DEVICE_DT_INST_DEFINE(n,							\
-		      &stm32_omi_init,						\
+		      &stm32_omi_init, NULL,					\
 		      &stm32_omi_data_##n, &stm32_omi_cfg_##n,			\
 		      CORE, 12,							\
 		      &stm32_ospi_bus_ops);

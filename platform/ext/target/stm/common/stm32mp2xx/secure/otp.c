@@ -464,8 +464,7 @@ static const struct nvmem_dt_spec stm32_otp_cfg_##n[DT_INST_PROP_LEN(n, nvmem_ce
 	DT_INST_FOREACH_PROP_ELEM_SEP(n, nvmem_cells, NVMEM_ELEM, (,))				\
 };												\
 												\
-DEVICE_DT_INST_DEFINE(n,									\
-		      NULL,									\
+DEVICE_DT_INST_DEFINE(n, NULL, NULL,								\
 		      NULL,									\
 		      &stm32_otp_cfg_##n,							\
 		      CORE, 7,									\

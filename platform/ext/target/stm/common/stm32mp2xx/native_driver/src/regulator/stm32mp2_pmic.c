@@ -875,7 +875,8 @@ static const struct regulator_driver_api stpmic2_api = {
 		.desc = macro_desc(STRINGIFY(id), reg_id, pd, ranges),			\
 	};										\
 											\
-	DEVICE_DT_DEFINE(node_id, &stpmic2_reg_init, &data_##id, &cfg_##id,		\
+	DEVICE_DT_DEFINE(node_id, &stpmic2_reg_init, NULL,				\
+			 &data_##id, &cfg_##id,						\
 			 CORE, 6, &stpmic2_api);
 
 #define REGULATOR_STPMIC2_DEFINE_COND(inst, child, macro_desc, reg_id, pd, ranges)	\

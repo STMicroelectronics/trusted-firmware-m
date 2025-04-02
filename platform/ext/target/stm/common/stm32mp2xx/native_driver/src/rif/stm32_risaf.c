@@ -537,7 +537,7 @@ static struct stm32_risaf_data stm32_risaf_data_##name####n = {				\
 	.variant = &_variant,								\
 };											\
 											\
-DEVICE_DT_INST_DEFINE(n, &stm32_risaf_init,						\
+DEVICE_DT_INST_DEFINE(n, &stm32_risaf_init, NULL,					\
 		      &stm32_risaf_data_##name####n,					\
 		      &stm32_risaf_cfg_##name####n,					\
 		      CORE, 30,								\

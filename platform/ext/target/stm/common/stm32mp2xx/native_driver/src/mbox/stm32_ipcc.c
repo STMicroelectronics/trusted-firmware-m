@@ -411,7 +411,7 @@ stm32_ipcc_mbox_rxo_isr(DEVICE_DT_GET(DT_DRV_INST(n)));				\
 static struct stm32_ipcc_data data_##n = {};					\
 										\
 DEVICE_DT_INST_DEFINE(n,							\
-		      &stm32_ipcc_init,						\
+		      &stm32_ipcc_init, NULL,					\
 		      &data_##n, &cfg_##n,					\
 		      CORE, 5,							\
 		      &stm32_ipcc_api);

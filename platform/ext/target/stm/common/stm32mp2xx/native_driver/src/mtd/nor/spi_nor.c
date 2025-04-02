@@ -701,7 +701,7 @@ static const struct spi_nor_config spi_nor_cfg_##n = {					\
 static struct spi_nor_data spi_nor_data_##n = {};					\
 											\
 DEVICE_DT_INST_DEFINE(n,								\
-		      &spi_nor_init,							\
+		      &spi_nor_init, NULL,						\
 		      &spi_nor_data_##n, &spi_nor_cfg_##n,				\
 		      CORE, 13,								\
 		      &spi_nor_ops);
