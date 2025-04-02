@@ -539,28 +539,24 @@
 			vddio1: vddio1 {
 				compatible = "st,stm32mp25-pwr-regu";
 				regulator-name = "vddio1";
-				st,iocomp = <8 7>;
 				status = "disabled";
 			};
 
 			vddio2: vddio2 {
 				compatible = "st,stm32mp25-pwr-regu";
 				regulator-name = "vddio2";
-				st,iocomp = <8 7>;
 				status = "disabled";
 			};
 
 			vddio3: vddio3 {
 				compatible = "st,stm32mp25-pwr-regu";
 				regulator-name = "vddio3";
-				st,iocomp = <8 7>;
 				status = "disabled";
 			};
 
 			vddio: vddio {
 				compatible = "st,stm32mp25-pwr-regu";
 				regulator-name = "vddio";
-				st,iocomp = <8 7>;
 				regulator-always-on;
 				status = "disabled";
 			};
