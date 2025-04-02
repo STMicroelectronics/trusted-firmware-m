@@ -436,6 +436,35 @@ static int stm32_pwr_regulator_init(const struct device *dev)
 	return 0;
 }
 
+#define STM32_REGU_RESTORE_VREL_DEV(node_id) DEVICE_DT_GET(node_id),
+
+#define STM32_REGU_RESTORE_VREL_INST(inst)							\
+	DT_INST_FOREACH_CHILD_STATUS_OKAY(inst, STM32_REGU_RESTORE_VREL_DEV)
+
+__unused void stm32_pwr_regulator_restore(void)
+{
+	static const struct device *const iod_devices[] = {
+		DT_INST_FOREACH_STATUS_OKAY(STM32_REGU_RESTORE_VREL_INST)
+	};
+
+	for (size_t i = 0; i < ARRAY_SIZE(iod_devices); i++) {
+		const struct device *dev = iod_devices[i];
+		const struct stm32_pwr_regu_config *drv_cfg = dev_get_config(dev);
+		const struct stm32_pwr_regu *pwr_regu = &drv_cfg->pwr_regu;
+
+		if (pwr_regu->is_an_iod) {
+			int32_t level_uv = 0;
+
+			stm32_pwr_get_voltage(dev, &level_uv);
+
+			if (level_uv < IO_VOLTAGE_THRESHOLD_UV) {
+				if (stm32_pwr_set_low_volt(drv_cfg, true))
+					EMSG("%s: set VRSEL failed\n", dev->name);
+			}
+		}
+	}
+}
+
 #define DEFINE_REGU_VDDIO(_node_id, _id, _reg) {						\
 	.enable_reg = _reg##_OFFSET,								\
 	.enable_mask = _reg ## _ ## _id ## VMEN,						\

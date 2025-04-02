@@ -462,4 +462,6 @@ enum d_state {
 
 enum c_state stm32_pwr_cpu_get_cstate(uint32_t cpu);
 enum d_state stm32_pwr_cpu_get_dstate(uint32_t cpu);
+
+void stm32_pwr_regulator_restore(void);
 #endif /* STM32MP2_PWR_H */

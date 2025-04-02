@@ -15,6 +15,7 @@
 
 #include <device.h>
 #include <firewall.h>
+#include <stm32mp2_pwr.h>
 #include <remoteproc.h>
 #include <reset.h>
 #include <clk.h>
@@ -236,6 +237,8 @@ static __unused int stm32mp2_a35_release(const struct device *dev)
 		/* clear rising pending register C1SEV */
 		EXTI1->RPR3 = BIT(1);
 	}
+
+	stm32_pwr_regulator_restore();
 
 	stm32_rproc_running_set(dev, true);
 
