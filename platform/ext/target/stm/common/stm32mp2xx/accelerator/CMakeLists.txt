@@ -42,7 +42,7 @@ if(BL2)
 
     target_link_libraries(bl2_mbedcrypto
         PUBLIC
-            dt_platform_s_defs
+            dt_platform_bl2_defs
     )
 endif()
 ############################ Crypto Service ####################################
