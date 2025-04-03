@@ -482,7 +482,7 @@ static __unused const struct stm32_risaf_variant stm32mp25_enc_variant = {
 
 static __unused const struct stm32_risaf_variant stm32mp21_enc_variant = {
 	.has_enc = true,
-	.default_encryption_fn = NULL,
+	.default_encryption_fn = &stm32_risaf_install_encryption_key,
 	.mce_encryption_fn = &stm32_risaf_install_mce_encryption_key,
 	.max_key_sz = RISAF_KEY_256BITS,
 };
