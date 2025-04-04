@@ -6,7 +6,7 @@ based on :doc:`tfm 1.7.0 </releases/1.7.0>`
 New major features
 ------------------
 
-- m33tdcid:
+- M33-TD flavor:
 
     - To enable access right filtering:
 
@@ -29,11 +29,11 @@ New major features
    If you would use your own NS firmware, add this flag ``-DNS=FALSE`` on cmake command
 
 .. warning::
-   In m33tdcid, CortexA must be started by Non secure firmware with specific CPU service.
+   With M33-TD flavor, Arm® Cortex®-A  must be started by nonsecure firmware with specific CPU service.
    An example is available on internal tf-m-test (file: main_ns.c function: tfm_ns_start_copro).
 
 .. warning::
-   If you build with tfm ns firmware (default configuration), you must clone stm32 tf-m-tests repository:
+   If you build with TF-M ns firmware (default configuration), you must clone stm32 tf-m-tests repository:
 
    - git-web: `tf-m-tests <https://gerrit.st.com/gitweb?p=mpu/oe/st/TF-M/tf-m-tests.git;a=summary>`_
    - tag: `v1.7.0-stm32mp25-r13-rc1 <https://gerrit.st.com/gitweb?p=mpu/oe/st/TF-M/tf-m-tests.git;a=shortlog;h=refs/tags/v1.7.0-stm32mp25-r13-rc1>`_

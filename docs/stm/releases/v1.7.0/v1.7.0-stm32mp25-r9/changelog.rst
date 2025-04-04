@@ -9,7 +9,7 @@ New major features
 - Use external repository to fetch ddr binary `stm32-ddr-phy-binary <https://github.com/STMicroelectronics/stm32-ddr-phy-binary>`_
 - Fix issue on external devicetree support
 - Regenerate the device tree if any of the dts, dtsi or .h dependencies are affected.
-- m33tdcid:
+- M33-TD flavor:
 
     - Update ddr: timming, remove deprecated code
     - Add rif aware support for: rcc, omm, pinctrl

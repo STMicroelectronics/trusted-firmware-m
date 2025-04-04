@@ -8,8 +8,8 @@ New major features
 
 - Add eval board with:
 
-    - Copro Mode, M33TDCID not supported
-    - In Copro mode: secure configuration (RIF) must be aligned with TDCID component
+    - Add A35 td flavor support (M33 td flavor not yet supported)
+    - In A35 td flavor: secure configuration (RIF) must be aligned with TDCID component
     - Profile supported: small (isolation level 1), medium (isolation level 2)
     - Protected Storage on spi nor (octospi2)
     - Internal Trusted Storage and Non-Volatile counter on RAM emulation

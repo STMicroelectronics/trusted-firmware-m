@@ -51,5 +51,5 @@ Branch plans
 
 --------------
 
-*Copyright (c) 2021 STMicroelectronics. All rights reserved.*
+*Copyright (c) 2025 STMicroelectronics. All rights reserved.*
 *SPDX-License-Identifier: BSD-3-Clause*

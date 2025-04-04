@@ -1,6 +1,5 @@
-###
 Ide
-###
+===
 
 .. toctree::
    :maxdepth: 1
@@ -10,5 +9,5 @@ Ide
 
 --------------
 
-*Copyright (c) 2023 STMicroelectronics. All rights reserved.*
+*Copyright (c) 2025 STMicroelectronics. All rights reserved.*
 *SPDX-License-Identifier: BSD-3-Clause*

@@ -6,7 +6,7 @@ Getting started
 Prerequisites
 *************
 
-- Follow the :doc:`SW requirements guide </getting_started/tfm_getting_started>` to set up your environment.
+- Follow the :doc:`Software requirements guide </getting_started/tfm_getting_started>` to set up your environment.
 
 ********
 Software
@@ -75,5 +75,5 @@ Instructions for your board:
 
 --------------
 
-*Copyright (c) 2021 STMicroelectronics. All rights reserved.*
+*Copyright (c) 2025 STMicroelectronics. All rights reserved.*
 *SPDX-License-Identifier: BSD-3-Clause*

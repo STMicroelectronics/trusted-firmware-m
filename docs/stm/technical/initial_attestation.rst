@@ -1,17 +1,17 @@
-###################
-Initial Attestation
-###################
+###########################
+Initial Attestation Service
+###########################
 
 ************
 Introduction
 ************
 
-Initial Attestation services are based on OTP ``BSEC`` registers.
+Initial Attestation Services are based on OTP ``BSEC`` registers.
 
 The TDCID owner is in charge to:
 
-- Shadow otp registers in sram memory (first 4K).
-- Protect this area (secure & RO).
+- Shadow OTP registers in SRAM memory (first 4K).
+- Protect this area (secure & Read Only).
 
 Shadow layout
 =============
@@ -38,7 +38,7 @@ The OTP mapping is defined in reference Manual.
 Services
 ********
 
-* Security lifecycle (LCS): return secured (``PLAT_OTP_LCS_SECURED``), if the chip is closed_locked and
+* Security lifecycle (LCS): return secured (``PLAT_OTP_LCS_SECURED``), if the device is closed_locked and
   provisioning_done and disable_scan (depend of otp 18 and 124).
 
 * Implementation ID: otp[5..7].
@@ -66,5 +66,5 @@ Exception
 
 --------------
 
-*Copyright (c) 2023 STMicroelectronics. All rights reserved.*
+*Copyright (c) 2025 STMicroelectronics. All rights reserved.*
 *SPDX-License-Identifier: BSD-3-Clause*

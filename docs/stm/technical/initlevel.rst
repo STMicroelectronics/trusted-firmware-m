@@ -13,7 +13,7 @@ Any driver will specify one of five initialization levels:
 ``EARLY``:
 
    Used very early in the boot process, no dependencies with system service.
-   Can be depend of previous component initialization (ex: debug console).
+   Can be depend on previous component initialization (ex: debug console).
 
 ``PRE_CORE``:
 

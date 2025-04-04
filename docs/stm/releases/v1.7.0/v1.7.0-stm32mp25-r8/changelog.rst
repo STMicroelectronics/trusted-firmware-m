@@ -8,8 +8,8 @@ New major features
 
 - Fix build issue without test s and test ns activated.
 - Remove ev1 revB support.
-- Add IOM configuration support for ospi (m33tdcid).
-- Cortex A is started in m33tdcid (Fix iac 137).
+- Add IOM configuration support for ospi (M33-TD flavor).
+- Cortex A is started in M33-TD flavor (Fix iac 137).
 
 .. warning::
    This device is **not secure**:

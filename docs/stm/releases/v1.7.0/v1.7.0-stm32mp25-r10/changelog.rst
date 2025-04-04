@@ -6,7 +6,7 @@ based on :doc:`tfm 1.7.0 </releases/1.7.0>`
 New major features
 ------------------
 
-- m33tdcid:
+- M33-TD flavor:
 
     - Integrate scp repository and implement scmi server
     - Add pwr regulator driver

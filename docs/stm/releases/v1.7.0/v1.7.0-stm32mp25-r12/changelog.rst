@@ -6,7 +6,7 @@ based on :doc:`tfm 1.7.0 </releases/1.7.0>`
 New major features
 ------------------
 
-- m33tdcid:
+- M33-TD flavor:
 
     - Add IPCC support
     - Add scmi server support for scp
@@ -25,7 +25,7 @@ New major features
    If you would use your own NS firmware, add this flag ``-DNS=FALSE`` on cmake command
 
 .. warning::
-   In m33tdcid, CortexA must be started by Non secure firmware with specific CPU service.
+   With M33-TD flavor, Arm® Cortex®-A  must be started by nonsecure firmware with specific CPU service.
    An example is available on internal tf-m-test (file: main_ns.c function: tfm_ns_start_copro).
 
 .. warning::

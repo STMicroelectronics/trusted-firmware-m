@@ -6,33 +6,33 @@ based on :doc:`tfm 1.7.0 </releases/1.7.0>`
 New major features
 ------------------
 
-- m33tdcid:
+-  M33-TD flavor:
 
-  - fix re-start sequence of cortexA
-  - fix Illegal access with SDMMC1/CIDx[1,2,etc.], Secure and Privilege writing to MCUSRAM2
+  - Correction of Arm® Cortex®-A re-start sequence 
+  - fix illegal access with SDMMC1/CIDx[1,2,etc.], secure and privilege writing to MCUSRAM2
 
 .. warning::
    This device is **not secure**:
 
-   - HUK depend of saes driver which is not yet implemented.
+   - HUK depends on SAES driver which is not yet implemented.
    - Profile definition is not defined (study on going).
 
 .. warning::
-   If you would use your own NS firmware, add this flag ``-DNS=FALSE`` on cmake command
+   If you would use your own nonsecure firmware, add this flag ``-DNS=FALSE`` on cmake command
 
 .. warning::
-   In m33tdcid, CortexA must be started by Non secure firmware with specific CPU service.
+   With M33-TD flavor, Arm® Cortex®-A  must be started by nonsecure firmware with specific CPU service.
    An example is available on internal tf-m-test (file: main_ns.c function: tfm_ns_start_copro).
 
 .. warning::
-   If you build with tfm ns firmware (default configuration), you must clone stm32 tf-m-tests repository:
+   If you build with TF-M nonsecure firmware (default configuration), you must clone stm32 tf-m-tests repository:
 
-   - git-web: `tf-m-tests <https://gerrit.st.com/gitweb?p=mpu/oe/st/TF-M/tf-m-tests.git;a=summary>`_
-   - tag: `v1.7.0-stm32mp25-alpha-r1-rc3 <https://gerrit.st.com/gitweb?p=mpu/oe/st/TF-M/tf-m-tests.git;a=shortlog;h=refs/tags/v1.7.0-stm32mp25-alpha-r1-rc3>`_
+   - git: tf-m-tests
+   - tag: v1.7.0-stm32mp25-alpha-r1-rc3
    - Add flag to cmake command line: ``-DTFM_TEST_REPO_PATH=<TF-M-tests PATH>``
 
 .. warning::
-   Only stm32mp257 soc revC is supported.
+   Only stm32mp25x lines-RevY are supported.
 
 Tested platforms
 ----------------
@@ -50,5 +50,5 @@ Tests result TEST_S & TEST_NS for:
 
 --------------
 
-*Copyright (c) 2021 STMicroelectronics. All rights reserved.*
+*Copyright (c) 2025 STMicroelectronics. All rights reserved.*
 *SPDX-License-Identifier: BSD-3-Clause*

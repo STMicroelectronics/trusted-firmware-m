@@ -8,7 +8,7 @@ New major features
 
 - hotfix release
 
-    - Copro Mode: fix rcc driver with last RIF setup
+    - a35_td_flavor: fix rcc driver with last RIF setup
       (aligned with  optee 3.16.0-stm32mp25-r1-rc18)
 
 Tested platforms

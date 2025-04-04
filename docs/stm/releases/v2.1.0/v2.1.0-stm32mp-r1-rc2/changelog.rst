@@ -9,7 +9,7 @@ based on :doc:`tfm 2.1.0 </releases/2.1.0>`
 New major features
 ******************
 
-- m33tdcid:
+- m33 td flavor:
 
   - Align bsec mirror structure.
   - Allow to share bsec information with other component.

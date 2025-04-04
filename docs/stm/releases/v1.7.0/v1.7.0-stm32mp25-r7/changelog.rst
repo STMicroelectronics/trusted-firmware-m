@@ -10,7 +10,7 @@ New major features
 - Add i2c framework and stm32 driver
 - Add stm32mp257 soc revB support
 
-- Add stm32mp257f ev1 m33tdcid support:
+- Add stm32mp257f ev1 m33 td flavor:
 
   - Move bl2 stack on sram1
   - Add regulator framework and stm32 driver
@@ -18,7 +18,7 @@ New major features
   - Add risab driver
   - Update rifsc, risaf, iac, serc driver
   - Add rif aware feature to gpio driver
-  - Update clock driver to support m33tdcid
+  - Update clock driver to support
   - Generate bsec_mirror in bl2
 
 .. warning::
@@ -35,7 +35,7 @@ New major features
    - Add flag to cmake command line: ``-DTFM_TEST_REPO_PATH=<TF-M-tests PATH>``
 
 .. warning::
-   Only stm32mp257 soc revB supports m33tdcid.
+   Only stm32mp257 soc revB supports m33 td flavor.
    Due to issue `174897 <https://intbugzilla.st.com/show_bug.cgi?id=174897>`_ the cortex A is not started.
 
 

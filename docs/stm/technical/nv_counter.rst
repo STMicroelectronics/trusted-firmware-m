@@ -17,7 +17,7 @@ Nv counters are stored in backup register (``TAMP``). 128 (32 bit) backup regist
 +------------------+-------------------------+
 
 If ``init value`` contains the right value, the counters are provisioned and
-can be used. complete mapping are available `here <https://wiki.st.com/stm32mpu-next/wiki/STM32MP25_backup_registers>`_
+can be used. complete mapping are available `here <https://wiki.st.com/stm32mpu/wiki/STM32MP2_backup_registers>`_
 
 .. note::
 
@@ -27,5 +27,5 @@ can be used. complete mapping are available `here <https://wiki.st.com/stm32mpu-
 
 --------------
 
-*Copyright (c) 2023 STMicroelectronics. All rights reserved.*
+*Copyright (c) 2025 STMicroelectronics. All rights reserved.*
 *SPDX-License-Identifier: BSD-3-Clause*

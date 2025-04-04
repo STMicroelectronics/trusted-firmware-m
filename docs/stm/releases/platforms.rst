@@ -21,5 +21,5 @@ This document contains SOC and boards supported by stm32.
 
 --------------
 
-*Copyright (c) 2021 STMicroelectronics. All rights reserved.*
+*Copyright (c) 2025 STMicroelectronics. All rights reserved.*
 *SPDX-License-Identifier: BSD-3-Clause*

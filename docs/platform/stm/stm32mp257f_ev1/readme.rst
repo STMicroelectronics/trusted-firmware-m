@@ -129,9 +129,9 @@ Flashing, run and debugging
 
 .. tabs::
 
-   .. group-tab:: copro
+   .. group-tab:: A35-TD flavor
 
-      The M33 copro firmware can be loaded by cortex A35 with these commands
+      In A35-TDCID flavor, the Arm® Cortex®-M33 firmware can be loaded by Arm® Cortex®-A35 with these commands
 
       .. code:: bash
 
@@ -143,10 +143,10 @@ Flashing, run and debugging
          - The firmware must be **signed**, refer to `How_to_protect_the_coprocessor_firmware`_ wiki page.
          - The firmware file must be in /lib/firmware
 
-      * In developpment, gdb/openocd can load and debug M33 firmware but the
+      * In developpment, gdb/openocd can load and debug Arm® Cortex®-M33 firmware firmware but the
         debug port must be open.
 
-      * The Secure and Non Secure log are mixed on uart5 of soc.
+      * The Secure and Non Secure log are mixed on uart5 of stm32mp257f_ev1 board.
         You could setup a terminal with options 115200,8N1, no HW flow control.
 
       .. code::
@@ -156,13 +156,13 @@ Flashing, run and debugging
          [INF] DUMMY_PROVISIONING is not suitable for production!
          [INF] This device is NOT SECURE
 
-   .. group-tab:: m33tdcid
+   .. group-tab:: M33-TD flavor
 
       * To start in m33tdcid, The :ref:`m33tdcid_flash_layout` must be loaded in external nor and the boot pin must be set to nor.
 
       * To debug, add this flag ``-DDEBUG_AUTHENTICATION=FULL`` at build command line. With this flag, BL2 opens debug port and waits a debugger connection.
 
-      * The Secure and Non Secure log are mixed on uart5 of soc.
+      * The Secure and Non Secure log are mixed on uart5 of stm32mp257f_ev1 board.
         You could setup a terminal with options 115200,8N1, no HW flow control.
 
       .. code::
@@ -189,7 +189,7 @@ Flashing, run and debugging
 
 -------------
 
-*Copyright (c) 2021 STMicroelectronics. All rights reserved.*
+*Copyright (c) 2025 STMicroelectronics. All rights reserved.*
 *SPDX-License-Identifier: BSD-3-Clause*
 
 .. _stm32mp257f_ev1: https://www.st.com/en/evaluation-tools/stm32mp257f-ev1.html

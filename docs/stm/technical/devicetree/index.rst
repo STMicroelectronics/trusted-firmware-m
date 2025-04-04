@@ -12,7 +12,7 @@ For general devicetree information some documentation are available:
 * `Devicetree Usage <https://elinux.org/Device_Tree_Usage>`_
 * `Devicetree Reference <https://elinux.org/Device_Tree_Reference>`_
 
-The pages in this section are a high-level guide to using devicetree in TFM:
+The pages in this section are a high-level guide to using devicetree in TF-M:
 
 .. toctree::
     :maxdepth: 1
@@ -22,5 +22,5 @@ The pages in this section are a high-level guide to using devicetree in TFM:
 
 --------------
 
-*Copyright (c) 2023 STMicroelectronics. All rights reserved.*
+*Copyright (c) 2025 STMicroelectronics. All rights reserved.*
 *SPDX-License-Identifier: BSD-3-Clause*

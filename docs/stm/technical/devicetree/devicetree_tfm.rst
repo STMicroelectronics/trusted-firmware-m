@@ -4,21 +4,21 @@
 Scope and purpose
 #################
 
-The devicetree (DT) allows to describe hardware available on supported boards.
+The device tree (DT) allows to describe hardware available on supported boards.
 This desciption defines inter dependencies between devices.
 
 Usually, the DT representation is created and passed to the kernel as a binary
-blob (dtb). At runtime the kernel use a library to parse this blob to look up
+blob (dtb). At runtime the kernel uses a library to parse this blob to look up
 the hardware informations. Like this, a kernel can be independant
 of hardware description and same kenel can be compatible with several boards, SoC...
 
-However This way has 2 disadvantages for small system:
+However, this way has 2 disadvantages for small system:
 
 * Increase embedded image size, which integrate parsing library and the blob.
 * Increase boot time: each device looks up in blob
 
 In 2016, Zephyr offers an alternative for small system, which uses the advantage of
-DT description whitout parse a blob. TFM is based on this alternative.
+DT description whitout parse a blob. TF-M is based on this alternative.
 
 #######
 Concept
@@ -53,14 +53,14 @@ Example of define's generated
         #define DT_N_S_first_node_S_second_node_10000000_STATUS_okay 1
         #define DT_N_S_first_node_S_second_node_10000000_P_foo_val 3
 
-The name is built from the devicetree path and word Key like (list is not exhaustive):
+The name is built from the devicetree path and word key like (list is not exhaustive):
 
 * ``DT_N`` header for devicetree node
 * ``S`` for ``/``
 * ``P`` for property
 
 To easily exploit the generated define, some macros are available in "devicetree.h" or framework include file (clk.h..).
-All macro names starts with ``DT_``.
+All macro names start with ``DT_``.
 
 Example:
 
@@ -79,7 +79,7 @@ Example:
 How to add device
 #################
 
-In this section we would to add and enable device using a new driver that require some ressources
+In this section we would to add and enable device using a new driver that requires some ressources
 (reg, int value).
 
 ************************************
@@ -88,7 +88,7 @@ Devicetree (dts) and bindings (yaml)
 
 Files location:
 
-- the devicetree source (dts, dtsi): ``devicetree/dts/<soc-familly>/<vendor>``
+- the devicetree source (dts, dtsi): ``devicetree/dts/<soc-family>/<vendor>``
 - bindings (yaml): ``devicetree/bindings/<framwork>/``
 
 .. code-block:: devicetree
@@ -117,8 +117,8 @@ Files location:
          type: int
          description: integer value
 
-By the ``compatible`` field, the build system match ``my-device`` node to its yaml file.
-Yaml file allows to check the ``properties:`` (type, required) and generate define adapted
+By the ``compatible`` field, the build system matches ``my-device`` node to its yaml file.
+Yaml file allows to check the ``properties:`` (type, required) and generates define adapted
 to type.
 
 Bindings can include other files, which can be used to share common property definitions between bindings.
@@ -197,5 +197,5 @@ For each instances with compatible ``foo-company,my-device`` and status
 
 --------------
 
-*Copyright (c) 2023 STMicroelectronics. All rights reserved.*
+*Copyright (c) 2025 STMicroelectronics. All rights reserved.*
 *SPDX-License-Identifier: BSD-3-Clause*

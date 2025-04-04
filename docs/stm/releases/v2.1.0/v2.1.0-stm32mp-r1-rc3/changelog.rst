@@ -9,7 +9,7 @@ based on :doc:`tfm 2.1.0 </releases/2.1.0>`
 New major features
 ******************
 
-- Add stm32mp21 support in m33tdcid and copro mode.
+- Add stm32mp21 support for m33 and a35 td flavor mode.
 - Add support of stm32mp215f dk board.
 - Update mailbox sharing, needed to PSA support.
 - Activate CACHE support

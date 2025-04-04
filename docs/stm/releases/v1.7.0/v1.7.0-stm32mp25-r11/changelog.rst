@@ -6,7 +6,7 @@ based on :doc:`tfm 1.7.0 </releases/1.7.0>`
 New major features
 ------------------
 
-- m33tdcid:
+- M33-TD flavor:
 
     - Add firewall support needed by omm
     - Add rifaware support for pwr, rtc, tamp, hpdma, exti, fmc
@@ -27,7 +27,7 @@ New major features
    - Add flag to cmake command line: ``-DTFM_TEST_REPO_PATH=<TF-M-tests PATH>``
 
 .. warning::
-   in m33tdcid, scmi server is not fully functional.
+   in m33 td flavor, scmi server is not fully functional.
    the cortexA generates illegal access.
    the tfm tests are passed without starting cortexA.
 

@@ -3,7 +3,7 @@ Change Log & Notes
 ##################
 
 This document contains a summary of the new features, changes, fixes and known
-issues in each release of Trusted Firmware-M of stmicroelectronics.
+issues in each release of Trusted Firmware-M of STMicroelectronics.
 
 The tag naming is defined by:
 
@@ -19,5 +19,5 @@ The tag naming is defined by:
 
 --------------
 
-*Copyright (c) 2021 STMicroelectronics. All rights reserved.*
+*Copyright (c) 2025 STMicroelectronics. All rights reserved.*
 *SPDX-License-Identifier: BSD-3-Clause*
