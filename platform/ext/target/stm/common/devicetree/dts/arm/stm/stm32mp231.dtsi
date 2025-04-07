@@ -512,8 +512,32 @@
 
 			#address-cells = <1>;
 			#size-cells = <1>;
+			implementation_id: otp5@14 {
+				reg = <0x14 0xc>;
+			};
+
+			bootrom_config_9: otp18@48 {
+				reg = <0x48 0x4>;
+			};
+
 			hconf1_otp: otp124@1f0 {
 				reg = <0x1f0 0x4>;
+			};
+
+			bl2_rotpk_0: otp176@2c0 {
+				reg = <0x2c0 0x20>;
+			};
+
+			bl2_rotpk_1: otp184@2e0 {
+				reg = <0x2e0 0x20>;
+			};
+
+			entropy_seed: otp332@530 {
+				reg = <0x530 0x40>;
+			};
+
+			iak: otp348@570 {
+				reg = <0x570 0x20>;
 			};
 		};
 
