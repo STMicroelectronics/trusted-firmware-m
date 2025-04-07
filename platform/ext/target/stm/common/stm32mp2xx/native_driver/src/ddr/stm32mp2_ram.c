@@ -103,22 +103,22 @@ int stm32mp_board_ddr_power_init(enum ddr_type ddr_type)
 	return regulator_enable(dev_vddq);
 
 #else
-	const struct device *dev_vpp, *dev_vdd, *dev_vref, *dev_vtt;
+	const struct device *dev_vpp, *dev_vref, *dev_vtt, *dev_vdd;
 	int err;
+
+	/*
+	 * LPDDR4 power on sequence is:
+	 * enable VPP_DDR
+	 * enable VREF_DDR
+	 * enable VPP_DDR
+	 * enable VDD_DDR
+	 */
 
 	dev_vpp = DT_INST_DEV_REGULATOR_SUPPLY(0, vpp);
 	if (!dev_vpp)
 		return -ENODEV;
 
 	err = regulator_common_set_min_voltage(dev_vpp);
-	if (err)
-		return err;
-
-	dev_vdd = DT_INST_DEV_REGULATOR_SUPPLY(0, vdd);
-	if (!dev_vdd)
-		return -ENODEV;
-
-	err = regulator_common_set_min_voltage(dev_vdd);
 	if (err)
 		return err;
 
@@ -130,6 +130,14 @@ int stm32mp_board_ddr_power_init(enum ddr_type ddr_type)
 	if (!dev_vtt)
 		return -ENODEV;
 
+	dev_vdd = DT_INST_DEV_REGULATOR_SUPPLY(0, vdd);
+	if (!dev_vdd)
+		return -ENODEV;
+
+	err = regulator_common_set_min_voltage(dev_vdd);
+	if (err)
+		return err;
+
 	err = regulator_enable(dev_vpp);
 	if (err)
 		return err;
@@ -137,15 +145,15 @@ int stm32mp_board_ddr_power_init(enum ddr_type ddr_type)
 	/* could be set via enable_ramp_delay on vpp_ddr */
 	udelay(2000);
 
-	err = regulator_enable(dev_vdd);
-	if (err)
-		return err;
-
 	err = regulator_enable(dev_vref);
 	if (err)
 		return err;
 
 	err = regulator_enable(dev_vtt);
+	if (err)
+		return err;
+
+	err = regulator_enable(dev_vdd);
 	if (err)
 		return err;
 
