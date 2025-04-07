@@ -586,6 +586,10 @@
 				reg = <0x48 0x4>;
 			};
 
+			id_otp: otp102@198 {
+				reg = <0x198 0x4>;
+			};
+
 			hconf1_otp: otp124@1f0 {
 				reg = <0x1f0 0x4>;
 			};
