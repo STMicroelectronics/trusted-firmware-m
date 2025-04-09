@@ -34,7 +34,12 @@
 #define _RISAF_REG_STARTR		0x44U
 #define _RISAF_REG_ENDR			0x48U
 #define _RISAF_REG_CIDCFGR		0x4CU
+#define _RISAF_SUBREG_CFGR		0x50U
+#define _RISAF_SUBREG_STARTR		0x54U
+#define _RISAF_SUBREG_ENDR		0x58U
+#define _RISAF_SUBREG_NESTR		0x5CU
 #define _RISAF_REGX_OFFSET(x)		(0x40 * (x - 1))
+#define _RISAF_SUBREGX_OFFSET(x, y)	((0x40 * (x - 1)) + (0x10 * (y)))
 
 /* RISAF MCE extension registers */
 #define _RISAF_XCR			U(0x1C00)
@@ -96,6 +101,37 @@
 #define _RISAF_HWCFGR_CFG4_MASK		GENMASK_32(31, 24)
 #define _RISAF_HWCFGR_CFG4_SHIFT	24
 
+/* _RISAF_SUBREG_CFGR(n, m) register fields */
+#define _RISAF_SUBREG_CFGR_SREN_SHIFT	U(0)
+#define _RISAF_SUBREG_CFGR_SREN		BIT(_RISAF_SUBREG_CFGR_SREN_SHIFT)
+#define _RISAF_SUBREG_CFGR_RLOCK_SHIFT	U(1)
+#define _RISAF_SUBREG_CFGR_RLOCK	BIT(_RISAF_SUBREG_CFGR_RLOCK_SHIFT)
+#define _RISAF_SUBREG_CFGR_SRCID_SHIFT	U(4)
+#define _RISAF_SUBREG_CFGR_SRCID	GENMASK_32(6, 4)
+#define _RISAF_SUBREG_CFGR_SEC_SHIFT	U(8)
+#define _RISAF_SUBREG_CFGR_SEC		BIT(_RISAF_SUBREG_CFGR_SEC_SHIFT)
+#define _RISAF_SUBREG_CFGR_PRIV_SHIFT	U(9)
+#define _RISAF_SUBREG_CFGR_PRIV		BIT(_RISAF_SUBREG_CFGR_PRIV_SHIFT)
+#define _RISAF_SUBREG_CFGR_RDEN_SHIFT	U(12)
+#define _RISAF_SUBREG_CFGR_RDEN		BIT(_RISAF_SUBREG_CFGR_RDEN_SHIFT)
+#define _RISAF_SUBREG_CFGR_WREN_SHIFT	U(13)
+#define _RISAF_SUBREG_CFGR_WREN		BIT(_RISAF_SUBREG_CFGR_WREN_SHIFT)
+#define _RISAF_SUBREG_CFGR_ALL_MASK	(_RISAF_SUBREG_CFGR_SREN | \
+					 _RISAF_SUBREG_CFGR_RLOCK | \
+					 _RISAF_SUBREG_CFGR_SRCID | \
+					 _RISAF_SUBREG_CFGR_SEC | \
+					 _RISAF_SUBREG_CFGR_PRIV | \
+					 _RISAF_SUBREG_CFGR_RDEN | \
+					 _RISAF_SUBREG_CFGR_WREN)
+
+/* _RISAF_SUBREG_NESTR(n, m) register fields */
+#define _RISAF_SUBREG_NESTR_DCEN_SHIFT	U(2)
+#define _RISAF_SUBREG_NESTR_DCEN	BIT(_RISAF_SUBREG_NESTR_DCEN_SHIFT)
+#define _RISAF_SUBREG_NESTR_DCCID_SHIFT	U(4)
+#define _RISAF_SUBREG_NESTR_DCCID	GENMASK_32(6, 4)
+#define _RISAF_SUBREG_NESTR_ALL_MASK	(_RISAF_SUBREG_NESTR_DCEN | \
+					 _RISAF_SUBREG_NESTR_DCCID)
+
 /* RISAF MCE extension register field description */
 /* _RISAF_XCR register fields */
 #define _RISAF_XCR_XLOCK		BIT(0)
@@ -117,10 +153,25 @@
 	((_FLD_GET(DT_RISAF_WRITE, cfg) << _RISAF_REG_CIDCFGR_WRENC_SHIFT) |	\
 	 (_FLD_GET(DT_RISAF_READ, cfg) << _RISAF_REG_CIDCFGR_RDENC_SHIFT))
 
+#define _RISAF_GET_SUBREGION_CFG(cfg)							\
+	((_FLD_GET(DT_RISAF_SUB_EN, cfg) << _RISAF_SUBREG_CFGR_SREN_SHIFT) |		\
+	 (_FLD_GET(DT_RISAF_SUB_RLOCK, cfg) << _RISAF_SUBREG_CFGR_RLOCK_SHIFT) |	\
+	 (_FLD_GET(DT_RISAF_SUB_SRCID, cfg) << _RISAF_SUBREG_CFGR_SRCID_SHIFT) |	\
+	 (_FLD_GET(DT_RISAF_SUB_SEC, cfg) << _RISAF_SUBREG_CFGR_SEC_SHIFT) |		\
+	 (_FLD_GET(DT_RISAF_SUB_PRIV, cfg) << _RISAF_SUBREG_CFGR_PRIV_SHIFT) |		\
+	 (_FLD_GET(DT_RISAF_SUB_RDEN, cfg) << _RISAF_SUBREG_CFGR_RDEN_SHIFT) |		\
+	 (_FLD_GET(DT_RISAF_SUB_WREN, cfg) <<  _RISAF_SUBREG_CFGR_WREN_SHIFT))
+
+#define _RISAF_GET_SUBREGION_NEST_CFG(cfg)						\
+	((_FLD_GET(DT_RISAF_SUB_DCEN, cfg) << _RISAF_SUBREG_NESTR_DCEN_SHIFT) |		\
+	 (_FLD_GET(DT_RISAF_SUB_DCCID, cfg) << _RISAF_SUBREG_NESTR_DCCID_SHIFT))
+
 #define _RISAF_TIMEOUT_1MS_IN_US	USEC_PER_MSEC
 #define _RISAF_TIMEOUT_100MS_IN_US	USEC_PER_MSEC * 100U
 #define _RISAF_TIMEOUT_STEP_10US	10U
 #define _RISAF_TIMEOUT_STEP_100US	100U
+
+#define _RISAF_MAX_SUBREGIONS	   2U
 
 #define BITS_PER_BYTES	8
 
@@ -139,10 +190,20 @@ struct risaf_region {
 	uint32_t end_addr;
 };
 
-struct risaf_dt_region{
+struct risaf_subregion {
+	uint32_t id;
+	uint32_t cfg;
+	uint32_t nest_cfg;
+	uint32_t start_addr;
+	uint32_t end_addr;
+};
+
+struct risaf_dt_region {
 	uint32_t st_protreg;
 	uint32_t start_addr;
 	uint32_t end_addr;
+	const struct risaf_dt_region *dt_regions;
+	const int ndt_regions;
 };
 
 struct stm32_risaf_variant {
@@ -171,7 +232,7 @@ struct stm32_risaf_data {
 };
 
 static void stm32_risaf_write_cfg(uintptr_t base,
-		const struct risaf_region *region)
+				  const struct risaf_region *region)
 {
 	mmio_write_32(base + _RISAF_REG_CFGR, 0);
 	__DSB();
@@ -184,6 +245,20 @@ static void stm32_risaf_write_cfg(uintptr_t base,
 	__ISB();
 }
 
+static void stm32_risaf_write_subcfg(uintptr_t base,
+				     const struct risaf_subregion *subregion)
+{
+	mmio_write_32(base + _RISAF_SUBREG_CFGR, 0);
+	__DSB();
+	__ISB();
+	mmio_write_32(base + _RISAF_SUBREG_STARTR, subregion->start_addr);
+	mmio_write_32(base + _RISAF_SUBREG_ENDR, subregion->end_addr);
+	mmio_write_32(base + _RISAF_SUBREG_CFGR, subregion->cfg);
+	mmio_write_32(base + _RISAF_SUBREG_NESTR, subregion->nest_cfg);
+	__DSB();
+	__ISB();
+}
+
 static void stm32_risaf_read_cfg(uintptr_t base, struct risaf_region *region)
 {
 	region->start_addr = mmio_read_32(base + _RISAF_REG_STARTR);
@@ -192,18 +267,36 @@ static void stm32_risaf_read_cfg(uintptr_t base, struct risaf_region *region)
 	region->cfg = mmio_read_32(base + _RISAF_REG_CFGR);
 }
 
+static void stm32_risaf_read_subcfg(uintptr_t base, struct risaf_subregion *subregion)
+{
+	subregion->start_addr = mmio_read_32(base + _RISAF_SUBREG_STARTR);
+	subregion->end_addr = mmio_read_32(base + _RISAF_SUBREG_ENDR);
+	subregion->nest_cfg = mmio_read_32(base + _RISAF_SUBREG_NESTR);
+	subregion->cfg = mmio_read_32(base + _RISAF_SUBREG_CFGR);
+}
+
 /* The copy is done in max_region */
 static void stm32_risaf_tmp_copy(const struct device *dev, uint8_t id)
 {
 	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
 	struct stm32_risaf_data *drv_data = dev_get_data(dev);
 	struct risaf_region tmp_region;
+	struct risaf_subregion tmp_subregion[_RISAF_MAX_SUBREGIONS];
+	int i;
 	uintptr_t base;
 
 	base = drv_cfg->base + _RISAF_REGX_OFFSET(id);
 	stm32_risaf_read_cfg(base, &tmp_region);
 	base = drv_cfg->base + _RISAF_REGX_OFFSET(drv_data->hw_nregions);
 	stm32_risaf_write_cfg(base, &tmp_region);
+
+	for (i = 0; i < _RISAF_MAX_SUBREGIONS; i++) {
+		base = drv_cfg->base + _RISAF_SUBREGX_OFFSET(id, i);
+		stm32_risaf_read_subcfg(base, &tmp_subregion[i]);
+		base = drv_cfg->base +
+		       _RISAF_SUBREGX_OFFSET(drv_data->hw_nregions, i);
+		stm32_risaf_write_subcfg(base, &tmp_subregion[i]);
+	}
 }
 
 static void stm32_risaf_tmp_disable(const struct device *dev)
@@ -216,6 +309,7 @@ static void stm32_risaf_tmp_disable(const struct device *dev)
 	mmio_write_32(base + _RISAF_REG_CFGR, 0);
 	__DSB();
 	__ISB();
+	/* Associated subregions are automatically disabled */
 }
 
 static void stm32_risaf_dt_to_region(const struct device *dev,
@@ -235,17 +329,49 @@ static void stm32_risaf_dt_to_region(const struct device *dev,
 		    _RISAF_REG_CFGR_ENC_SHIFT;
 }
 
+static int stm32_risaf_get_nbsubregions(const struct device *dev,
+					uint8_t idx, struct risaf_region *region)
+{
+	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
+	const struct risaf_dt_region *dt_region = &(drv_cfg->dt_regions[idx]);
+
+	return dt_region->ndt_regions;
+}
+
+static void stm32_risaf_dt_to_subregion(const struct device *dev, uint8_t idx,
+					uint8_t subidx, struct risaf_subregion *subregion)
+{
+	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
+	const struct risaf_dt_region *dt_subregion;
+
+	dt_subregion = &(drv_cfg->dt_regions[idx].dt_regions[subidx]);
+
+	subregion->id = _FLD_GET(DT_RISAF_SUB_ID, dt_subregion->st_protreg);
+	subregion->cfg = _RISAF_GET_SUBREGION_CFG(dt_subregion->st_protreg);
+	subregion->nest_cfg = _RISAF_GET_SUBREGION_NEST_CFG(dt_subregion->st_protreg);
+	subregion->start_addr = dt_subregion->start_addr;
+	subregion->end_addr = dt_subregion->end_addr;
+}
+
 static int stm32_risaf_region_cfg(const struct device *dev,
 				  uint8_t idx, bool update)
 {
 	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
 	struct stm32_risaf_data *drv_data = dev_get_data(dev);
 	struct risaf_region region;
+	struct risaf_subregion subregion[_RISAF_MAX_SUBREGIONS];
+	int nbsubregions, i;
 	uintptr_t base;
 	uint32_t enabled;
 	uint32_t enc_mode;
 
 	stm32_risaf_dt_to_region(dev, idx, &region, &enc_mode);
+
+	nbsubregions = stm32_risaf_get_nbsubregions(dev, idx, &region);
+
+	for (i = 0; i < nbsubregions; i++) {
+		stm32_risaf_dt_to_subregion(dev, idx, i, &subregion[i]);
+	}
 
 	/*
 	 * The last region is reserved like temporary region, to
@@ -277,6 +403,11 @@ static int stm32_risaf_region_cfg(const struct device *dev,
 		stm32_risaf_tmp_copy(dev, region.id);
 
 	stm32_risaf_write_cfg(base, &region);
+
+	for (i = 0; i < nbsubregions; i++) {
+		base = drv_cfg->base + _RISAF_SUBREGX_OFFSET(region.id, i);
+		stm32_risaf_write_subcfg(base, &subregion[i]);
+	}
 
 	if (enabled)
 		stm32_risaf_tmp_disable(dev);
@@ -456,6 +587,11 @@ static int stm32_risaf_init(const struct device *dev)
 	}
 
 
+	for (i = 0; i < drv_cfg->ndt_regions; i++) {
+		if (drv_cfg->dt_regions[i].ndt_regions > drv_data->hw_nsubregions)
+			return -EINVAL;
+	}
+
 	if (drv_data->variant->has_enc) {
 		if (!drv_cfg->entropy_dev) {
 			err = -EINVAL;
@@ -467,7 +603,7 @@ static int stm32_risaf_init(const struct device *dev)
 			goto out;
 	}
 
-	for(i = 0; i < drv_cfg->ndt_regions; i++) {
+	for (i = 0; i < drv_cfg->ndt_regions; i++) {
 		err = stm32_risaf_region_cfg(dev, i, true);
 		if (err)
 			break;
@@ -500,41 +636,68 @@ static __unused const struct stm32_risaf_variant stm32mp21_enc_variant = {
 	.max_key_sz = RISAF_KEY_256BITS,
 };
 
-#define RISAF_ADDR(_n, _mem_region)							\
-	(_mem_region - DT_INST_PROP_BY_IDX(_n, st_mem_map, 1))
+#define _RISAF_REGION_NAME(_node)							\
+	_CONCAT(DEVICE_DT_NAME_GET(_node), _risaf_dt_regions)
 
-#define RISAF_MR_DT_REG_ADDR(_node_id, _prop, _idx, _n)					\
-	RISAF_ADDR(_n, DT_REG_ADDR(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx)))
+#define _RISAF_REGIONS_GET(_node)							\
+	COND_CODE_1(DT_NODE_HAS_PROP(_node, memory_region),				\
+		    (_RISAF_REGION_NAME(_node)), (NULL))
 
-#define RISAF_MR_DT_REG_END_ADDR(_node_id, _prop, _idx, _n)				\
-	(RISAF_ADDR(_n, DT_REG_ADDR(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx))) +	\
-	 DT_REG_SIZE(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx)) - 1)
+#define _RISAF_REGION_NUM(_node)							\
+	DT_PROP_LEN_OR(_node, memory_region, 0)
 
-#define RISAF_MR_DT_PROTREG(_node_id, _prop, _idx)					\
-	DT_PROP_BY_IDX(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx), st_protreg, 0)
+#define _RISAF_ADDR(_mr_node, _mem_region, _root_node)					\
+	(_mem_region - DT_PROP_BY_IDX(_root_node, st_mem_map, 1))
 
-#define RISAF_PROT_FLD(_field, _node_id, _prop, _idx)					\
-	((RISAF_MR_DT_PROTREG(_node_id, _prop, _idx)) & (_field))
+#define _RISAF_REG_ADDR(_mr_node, _root_node)						\
+	_RISAF_ADDR(_mr_node, DT_REG_ADDR(_mr_node), _root_node)
 
-#define RISAF_REGION(_node_id, _prop, _idx, _n)						\
+#define _RISAF_END_ADDR(_mr_node, _root_node)						\
+	(_RISAF_ADDR(_mr_node, DT_REG_ADDR(_mr_node), _root_node) +			\
+	 DT_REG_SIZE(_mr_node) - 1)
+
+#define _RISAF_PROTREG(_mr_node) DT_PROP_BY_IDX(_mr_node, st_protreg, 0)
+
+#define __RISAF_MR_ELEM(_mr_node, _root_node)						\
 	{										\
-		.start_addr = RISAF_MR_DT_REG_ADDR(_node_id, _prop, _idx, _n),		\
-		.end_addr = RISAF_MR_DT_REG_END_ADDR(_node_id, _prop, _idx, _n),	\
-		.st_protreg = RISAF_MR_DT_PROTREG(_node_id, _prop, _idx),		\
-	},
+		.start_addr = _RISAF_REG_ADDR(_mr_node, _root_node),			\
+		.end_addr = _RISAF_END_ADDR(_mr_node, _root_node),			\
+		.st_protreg = _RISAF_PROTREG(_mr_node),					\
+		.dt_regions = _RISAF_REGIONS_GET(_mr_node),				\
+		.ndt_regions = _RISAF_REGION_NUM(_mr_node),				\
+	}
+
+#define _RISAF_MR_ELEM(_node, _prop, _idx, _root_node)					\
+	__RISAF_MR_ELEM(DT_PHANDLE_BY_IDX(_node, _prop, _idx), _root_node)
+
+#define __RISAF_REGIONS_DEFINE(_node, _root_node)					\
+	COND_CODE_1(DT_NODE_HAS_PROP(_node, memory_region),				\
+	(static __unused const struct risaf_dt_region _RISAF_REGION_NAME(_node)[] = {	\
+		DT_FOREACH_PROP_ELEM_SEP_VARGS(_node, memory_region, _RISAF_MR_ELEM,	\
+					       (,), _root_node)				\
+	 };), ())
+
+#define _RISAF_SUB_REGIONS_DEFINE(_node, _prop, _idx, _root_node)			\
+	__RISAF_REGIONS_DEFINE(DT_PHANDLE_BY_IDX(_node, _prop, _idx), _root_node)
+
+#define _RISAF_REGIONS_DEFINE(_node, _root_node)					\
+	DT_FOREACH_PROP_ELEM_VARGS(_node, memory_region,				\
+				   _RISAF_SUB_REGIONS_DEFINE, _root_node)		\
+	__RISAF_REGIONS_DEFINE(_node, _root_node)
+
+#define _INST_RISAF_REGIONS_DEFINE(inst)						\
+	_RISAF_REGIONS_DEFINE(DT_DRV_INST(inst), DT_DRV_INST(inst))
 
 #define STM32_RISAF_INIT(n, name, _variant)						\
 											\
-static const struct risaf_dt_region risaf_dt_regions_##name####n[] = {			\
-	DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, memory_region, RISAF_REGION, (), n)	\
-};											\
+_INST_RISAF_REGIONS_DEFINE(n)								\
 											\
 static const struct stm32_risaf_config stm32_risaf_cfg_##name####n = {			\
 	.base = DT_INST_REG_ADDR(n),							\
 	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),				\
 	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),			\
-	.dt_regions = risaf_dt_regions_##name####n,					\
-	.ndt_regions = ARRAY_SIZE(risaf_dt_regions_##name####n),			\
+	.dt_regions = _RISAF_REGIONS_GET(DT_DRV_INST(n)),				\
+	.ndt_regions = _RISAF_REGION_NUM(DT_DRV_INST(n)),				\
 	.entropy_dev = DEVICE_DT_GET_OR_NULL(DT_INST_ENTROPY_CTLR(n)),			\
 	.st_mce_keysize = DT_INST_PROP_OR(n, st_mce_keysize_bits,			\
 					  RISAF_KEY_128BITS)				\
