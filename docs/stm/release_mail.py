@@ -26,8 +26,8 @@ cwd_path = os.path.abspath(os.getcwd())
 
 AUTHOR = os.getenv('AUTHOR', 'Ludovic')
 
-TFM_USER_GUIDE_PATH = os.getenv('TFM_USER_GUIDE_PATH', 'https://stmicroelectronics-my.sharepoint.com/personal/ludovic_barre_st_com/Documents/tfm/user_guide/html')
-TFM_USER_GUIDE_EXTENSION = os.getenv('TFM_USER_GUIDE_EXTENSION', 'html.aspx')
+TFM_USER_GUIDE_PATH = os.getenv('TFM_USER_GUIDE_PATH', 'http://lmecxd0472.lme.st.com/trustedfirmware-m')
+TFM_USER_GUIDE_EXTENSION = os.getenv('TFM_USER_GUIDE_EXTENSION', 'html')
 
 RELEASES_DIR = os.getenv('RELEASES_DIR', cwd_path + '/releases')
 

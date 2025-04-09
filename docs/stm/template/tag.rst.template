@@ -9,8 +9,8 @@
 Documentation
 *************
 
--  Prerequisites and software build: `Getting started <https://stmicroelectronics-my.sharepoint.com/personal/ludovic_barre_st_com/Documents/tfm/user_guide/html/{{doc_release}}/stm/releases/getting_started.html.aspx>`_
--  `Trusted Firmware-M Documentation <https://stmicroelectronics-my.sharepoint.com/personal/ludovic_barre_st_com/Documents/tfm/user_guide/html/{{doc_release}}/index.html.aspx>`_
+-  Prerequisites and software build: `Getting started <http://lmecxd0472.lme.st.com/trustedfirmware-m/{{doc_release}}/stm/releases/getting_started.html>`_
+-  `Trusted Firmware-M Documentation <http://lmecxd0472.lme.st.com/trustedfirmware-m/{{doc_release}}/index.html>`_
 
 {{features_log}}
 

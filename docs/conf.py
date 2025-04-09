@@ -135,7 +135,7 @@ html_show_sphinx = False
 def setup(app):
     app.add_css_file('css/tfm_custom.css')
 
-html_file_suffix = ".html.aspx"
+html_file_suffix = ".html"
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
