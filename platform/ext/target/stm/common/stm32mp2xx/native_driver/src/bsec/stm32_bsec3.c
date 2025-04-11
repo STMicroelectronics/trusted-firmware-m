@@ -141,9 +141,6 @@ struct stm32_bsec_data {
 	const struct stm32_bsec_variant *variant;
 	bool hw_key_valid;
 	struct bsec_mirror *p_mirror;
-#ifdef TFM_DUMMY_PROVISIONING
-	__PACKED_STRUCT bsec_mirror mirror_dummy;
-#endif
 };
 
 static const struct device *bsec_dev;
@@ -451,39 +448,6 @@ static int _otp_read(uint32_t otp_id, size_t len, size_t out_len, uint8_t *out)
 	if (copy_size % (sizeof(uint32_t)))
 		return -EINVAL;
 
-#ifdef TFM_DUMMY_PROVISIONING
-	/*
-	 * Upper OTP fuses cannot be accessed if the chip is not in Secure Lock state.
-	 * In dummy provisionning case, just load dummy keys from the dummy_mirror area.
-	 */
-#if defined(STM32_BL2)
-	uint32_t bl2_rotpk_0_start;
-	int ret;
-	ret = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_0",
-						&bl2_rotpk_0_start,
-						NULL);
-	if (ret)
-		return ret;
-	if (!mirror && (otp_id >= STM32MP2_UPPER_BASE ||
-			otp_id == bl2_rotpk_0_start)) {
-#else
-	if (!mirror && otp_id >= STM32MP2_UPPER_BASE) {
-#endif
-		struct bsec_mirror *dummy_mirror;
-
-		if (!stm32_is_otp_dummy_provisionable(otp_id))
-			return -EINVAL;
-
-		dummy_mirror = &drv_data->mirror_dummy;
-
-		for (idx = 0; idx < (copy_size / sizeof(uint32_t)); idx++) {
-			p_out_w[idx] = dummy_mirror->otp[otp_id + idx].value;
-		}
-
-		return 0;
-	}
-#endif
-
 	for (idx = 0; idx < (copy_size / sizeof(uint32_t)); idx++) {
 		if (mirror) {
 			if (!_otp_is_valid(mirror->otp[otp_id + idx].status))
@@ -564,40 +528,6 @@ static int __maybe_unused _otp_write(uint32_t otp_id, size_t len,
 
 	if (len % (sizeof(uint32_t)))
 		return -EINVAL;
-
-#ifdef TFM_DUMMY_PROVISIONING
-	/*
-	 * Upper OTP fuses cannot be accessed if the chip is not in Secure Lock state.
-	 * In dummy provisionning case, just use the dummy_mirror area to store dummy keys.
-	 */
-#if defined(STM32_BL2)
-	uint32_t bl2_rotpk_0_start;
-	int ret;
-
-	ret = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_0",
-						&bl2_rotpk_0_start,
-						NULL);
-	if (ret)
-		return ret;
-	if (!mirror && (otp_id >= STM32MP2_UPPER_BASE ||
-			otp_id == bl2_rotpk_0_start)) {
-#else
-	if (!mirror && otp_id >= STM32MP2_UPPER_BASE) {
-#endif
-		struct bsec_mirror *dummy_mirror;
-
-		if (!stm32_is_otp_dummy_provisionable(otp_id))
-			return -EINVAL;
-
-		dummy_mirror = &drv_data->mirror_dummy;
-
-		for (idx = 0; idx < (len / sizeof(uint32_t)); idx++) {
-			dummy_mirror->otp[otp_id + idx].value = p_in_w[idx];
-		}
-
-		return 0;
-	}
-#endif
 
 	for (idx = 0; idx < len / sizeof(uint32_t); idx++) {
 		if (mirror) {
@@ -824,76 +754,6 @@ int stm32_bsec_otp_size_by_id(enum tfm_otp_element_id_t id, size_t *size)
 	return 0;
 }
 
-#ifdef TFM_DUMMY_PROVISIONING
-int stm32_bsec_otp_write_by_id(enum tfm_otp_element_id_t id, size_t in_len,
-			       const uint8_t *in)
-{
-	int res = 0;
-	uint32_t cell_start;
-	uint32_t cell_size;
-
-	switch (id) {
-	case PLAT_OTP_ID_LCS:
-		return _otp_write_lcs(in_len, in);
-	case PLAT_OTP_ID_IMPLEMENTATION_ID:
-		res = stm32_bsec_get_otp_cell_by_label("implementation_id",
-						       &cell_start, &cell_size);
-		break;
-	case PLAT_OTP_ID_ENTROPY_SEED:
-		res = stm32_bsec_get_otp_cell_by_label("entropy_seed",
-						       &cell_start, &cell_size);
-		break;
-	case PLAT_OTP_ID_IAK:
-		res = stm32_bsec_get_otp_cell_by_label("iak", &cell_start,
-						       &cell_size);
-
-		break;
-#if defined(STM32_BL2)
-	case PLAT_OTP_ID_BL2_ROTPK_0:
-		res = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_0",
-						       &cell_start, &cell_size);
-		break;
-	case PLAT_OTP_ID_BL2_ROTPK_1:
-		res = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_1",
-						       &cell_start, &cell_size);
-		break;
-#endif
-	default:
-		return -ENOTSUP;
-	}
-
-	if (res)
-		return res;
-
-	return _otp_write(cell_start, cell_size * sizeof(uint32_t), in_len, in);
-}
-
-int stm32_bsec_dummy_switch(void)
-{
-	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
-
-	if (drv_data->p_mirror) {
-		memcpy(&(drv_data->mirror_dummy), drv_data->p_mirror,
-		       sizeof(drv_data->mirror_dummy));
-		drv_data->p_mirror = &drv_data->mirror_dummy;
-	}
-
-	return 0;
-}
-#else
-int stm32_bsec_otp_write_by_id(enum tfm_otp_element_id_t id, size_t in_len,
-			       const uint8_t *in)
-{
-	return -ENOTSUP;
-}
-
-int stm32_bsec_dummy_switch(void)
-{
-	return -ENOTSUP;
-}
-#endif
-
-
 bool stm32_bsec_is_valid(void)
 {
 	return device_is_ready(bsec_dev);
@@ -974,15 +834,6 @@ static void stm32_bsec_mirror_load(const struct device *dev, uint32_t status)
 		for (otp = STM32MP2_UPPER_BASE;
 		     otp <= drv_data->variant->max_id ; otp++) {
 			drv_data->p_mirror->otp[otp].status |= _HIDEUP_ERROR;
-#ifdef TFM_DUMMY_PROVISIONING
-			/*
-			 * In dummy provisioning case, we will need to overwrite some upper OTP
-			 * values (for IAK and entropy seed). Those should then not have the
-			 * LOCK_ERROR flag, or else the dummy value won't be updated in the mirror
-			 * and the _otp_write/_otp_read will report errors.
-			 */
-			drv_data->p_mirror->otp[otp].status &= ~LOCK_ERROR;
-#endif
 			drv_data->p_mirror->otp[otp].value = 0x0U;
 		}
 		max_id = STM32MP2_UPPER_BASE - 1;

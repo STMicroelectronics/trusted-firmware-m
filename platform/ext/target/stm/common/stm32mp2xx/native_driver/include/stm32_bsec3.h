@@ -51,8 +51,5 @@ int stm32_bsec_get_otp_cell_by_label(char* label, uint32_t *cell_start,
 int stm32_bsec_otp_size_by_id(enum tfm_otp_element_id_t id, size_t *size);
 int stm32_bsec_otp_read_by_id(enum tfm_otp_element_id_t id,
 			size_t out_len, uint8_t *out);
-int stm32_bsec_otp_write_by_id(enum tfm_otp_element_id_t id,
-			 size_t in_len, const uint8_t *in);
-int stm32_bsec_dummy_switch(void);
 bool stm32_bsec_is_valid(void);
 #endif /* STM32_BSEC3_H */
