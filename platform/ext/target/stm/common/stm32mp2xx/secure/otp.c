@@ -19,7 +19,6 @@
 #include <config_tfm.h>
 #include <tfm_plat_provisioning.h>
 
-#include <stm32_bsec3.h>
 #include <devicetree.h>
 #include <devicetree/nvmem.h>
 #include <nvmem.h>
@@ -391,7 +390,7 @@ enum tfm_plat_err_t tfm_plat_otp_get_size(enum tfm_otp_element_id_t id, size_t *
 
 	switch (id) {
 	case PLAT_OTP_ID_LCS:
-		err = stm32_bsec_otp_size_by_id(id, size);
+		*size = sizeof(uint32_t);
 		break;
 	case PLAT_OTP_ID_IAK_LEN:
 		*size = sizeof(uint32_t);
