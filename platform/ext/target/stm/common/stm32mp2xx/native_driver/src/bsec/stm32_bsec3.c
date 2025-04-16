@@ -17,6 +17,7 @@
 #include <lib/mmio.h>
 #include <lib/mmiopoll.h>
 #include <lib/utils_def.h>
+#include <nvmem.h>
 
 #include <stm32_bsec3.h>
 #include <tfm_plat_otp.h>
@@ -754,6 +755,43 @@ int stm32_bsec_otp_size_by_id(enum tfm_otp_element_id_t id, size_t *size)
 	return 0;
 }
 
+static int stm32_bsec_nvmem_get_cell_size(const struct device *dev, size_t *size)
+{
+	const struct nvmem_cell *cell = dev_get_config(dev);
+
+	if (!cell)
+		return -EINVAL;
+
+	*size = cell->n_otp * sizeof(uint32_t);
+
+	return 0;
+}
+
+static int stm32_bsec_nvmem_read_cell(const struct device *dev, size_t out_len, uint8_t *out,
+			       size_t *read_len)
+{
+	const struct nvmem_cell *cell = dev_get_config(dev);
+	int res;
+
+	if (!cell ||  out_len > cell->n_otp * sizeof(uint32_t))
+		return -EINVAL;
+
+	res = _otp_read(cell->otp_id, cell->n_otp * sizeof(uint32_t), out_len, out);
+	if (res) {
+		memset(out, 0, out_len);
+		return res;
+	}
+
+	*read_len = out_len;
+
+	return 0;
+}
+
+static int stm32_bsec_nvmem_write_cell(const struct device *dev, size_t in_len, const uint8_t *in)
+{
+	return -ENOTSUP;
+}
+
 bool stm32_bsec_is_valid(void)
 {
 	return device_is_ready(bsec_dev);
@@ -994,12 +1032,18 @@ static int stm32_bsec_dt_init(const struct device *dev)
 	return stm32_bsec_shadow_init(dev);
 }
 
+static const struct nvmem_driver_api __maybe_unused stm32_bsec_nvmem_api = {
+	.get_cell_size = stm32_bsec_nvmem_get_cell_size,
+	.read_cell = stm32_bsec_nvmem_read_cell,
+	.write_cell = stm32_bsec_nvmem_write_cell,
+};
+
 #define NVMEM_CELL_CHILD_DEFINE(node_id)					\
 static const uint32_t shadow_value_##node_id[] =				\
 	DT_PROP_OR(node_id, shadow_provisionning, {});				\
 										\
-static const char * const stm32_otp_label_##node_id[] = 			\
-	DT_NODELABEL_STRING_ARRAY(node_id); 					\
+static const char * const stm32_otp_label_##node_id[] =				\
+	DT_NODELABEL_STRING_ARRAY(node_id);					\
 										\
 static const struct nvmem_cell stm32_otp_cell_##node_id = {			\
 	.cell_label = stm32_otp_label_##node_id[0],				\
@@ -1007,7 +1051,14 @@ static const struct nvmem_cell stm32_otp_cell_##node_id = {			\
 	.n_otp = (DT_REG_SIZE(node_id) / 4),					\
 	.shadow_value = shadow_value_##node_id,					\
 	.n_shadow_value = DT_PROP_LEN_OR(node_id, shadow_provisionning, 0)	\
-};
+};										\
+										\
+DEVICE_DT_DEFINE(node_id, NULL,							\
+		 NULL,								\
+		 &stm32_otp_cell_##node_id,					\
+		 CORE, 6,							\
+		 &stm32_bsec_nvmem_api);
+
 
 #define NVMEM_CELL_CHILD_GET(node_id) stm32_otp_cell_##node_id,
 
