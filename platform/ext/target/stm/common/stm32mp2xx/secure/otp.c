@@ -256,6 +256,57 @@ static enum tfm_plat_err_t stm32_set_default_value(enum tfm_otp_element_id_t id,
 }
 #endif
 
+static enum tfm_plat_err_t otp_read_by_nvmem(const struct device *dev_nvmem,
+					     size_t out_len, uint8_t *out)
+{
+	size_t read_len = 0;
+	int err;
+
+	if (!dev_nvmem)
+		return TFM_PLAT_ERR_UNSUPPORTED;
+
+	err = nvmem_read_cell(dev_nvmem, out_len, out, &read_len);
+	if (read_len != out_len) {
+		memset(out, 0, out_len);
+		return TFM_PLAT_ERR_NOT_PERMITTED;
+	}
+
+	return TFM_PLAT_ERR_SUCCESS;
+}
+
+#define BOOTROM_CFG_9_SEC_BOOT	GENMASK(3, 0)
+#define BOOTROM_CFG_9_PROV_DONE	GENMASK(7, 4)
+#define HCONF1_DISABLE_SCAN	BIT(20)
+static int otp_read_lcs(uint32_t out_len, uint8_t *out)
+{
+	uint32_t secure_boot, disable_scan, prov_done;
+	enum plat_otp_lcs_t *lcs = (enum plat_otp_lcs_t *)out;
+	uint32_t bootrom_cfg_9, hconf1;
+	int err;
+
+	*lcs = PLAT_OTP_LCS_ASSEMBLY_AND_TEST;
+
+	err = otp_read_by_nvmem(DT_INST_DEV_NVMEM(0, bootrom_config_9),
+				sizeof(uint32_t), (uint8_t *)&bootrom_cfg_9);
+	if (!err)
+		return err;
+
+	err = otp_read_by_nvmem(DT_INST_DEV_NVMEM(0, hconf1_otp),
+				sizeof(uint32_t), (uint8_t *)&hconf1);
+	if (!err)
+		return err;
+
+	/* true if all bit of field are set */
+	secure_boot = !!(bootrom_cfg_9 & BOOTROM_CFG_9_SEC_BOOT);
+	prov_done = !!(bootrom_cfg_9 & BOOTROM_CFG_9_PROV_DONE);
+	disable_scan = !!(hconf1 & HCONF1_DISABLE_SCAN);
+
+	if (secure_boot && prov_done && disable_scan)
+		*lcs = PLAT_OTP_LCS_SECURED;
+
+	return 0;
+}
+
 enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
                                       size_t out_len, uint8_t *out)
 {
@@ -265,6 +316,8 @@ enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
 
 	switch (id) {
 	case PLAT_OTP_ID_LCS:
+		err = otp_read_lcs(out_len, out);
+		break;
 	case PLAT_OTP_ID_IAK_LEN:
 		err = stm32_bsec_otp_read_by_id(id, out_len, out);
 #if TFM_DUMMY_PROVISIONING
