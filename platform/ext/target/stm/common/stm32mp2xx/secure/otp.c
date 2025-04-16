@@ -319,11 +319,14 @@ enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
 		err = otp_read_lcs(out_len, out);
 		break;
 	case PLAT_OTP_ID_IAK_LEN:
-		err = stm32_bsec_otp_read_by_id(id, out_len, out);
-#if TFM_DUMMY_PROVISIONING
-		if (!err && stm32_check_otp_check_value(out_len, out))
-			err = stm32_set_default_value(id, out_len, out);
-#endif
+		dev_nvmem = DT_INST_DEV_NVMEM(0, iak);
+		if (!dev_nvmem)
+			return TFM_PLAT_ERR_UNSUPPORTED;
+
+		err = nvmem_get_cell_size(dev_nvmem, &read_len);
+		if (!err)
+			memcpy(out, &read_len, sizeof(size_t));
+
 		break;
 	case PLAT_OTP_ID_IAK_TYPE:
 		err = otp_fake_read(FAKE_OFFSET(iak_type),
