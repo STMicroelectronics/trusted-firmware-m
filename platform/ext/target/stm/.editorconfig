@@ -1,0 +1,17 @@
+#
+# Copyright (c) 2025, STMicroelectronics - All Rights Reserved
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+#################################
+# C files in STM32MP2 directories
+[common/devicetree/**.{c,h}]
+indent_style = tab
+indent_size = 8
+[common/stm32mp2xx/**.{c,h}]
+indent_style = tab
+indent_size = 8
+[stm32mp2*/**.{c,h}]
+indent_style = tab
+indent_size = 8
