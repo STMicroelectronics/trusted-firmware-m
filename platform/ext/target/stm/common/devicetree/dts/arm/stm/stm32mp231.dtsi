@@ -95,7 +95,8 @@
 			      <&package_otp>,
 			      <&hconf1_otp>,
 			      <&bl2_rotpk_0>,
-			      <&bl2_rotpk_0>, /*keep the same key for slot1 */
+			      <&bl2_rotpk_1>,
+			      <&bl2_rotpk_2>,
 			      <&entropy_seed>,
 			      <&iak>;
 		nvmem-cell-names = "implementation_id",
@@ -106,6 +107,7 @@
 				   "hconf1_otp",
 				   "bl2_rotpk_0",
 				   "bl2_rotpk_1",
+				   "bl2_rotpk_2",
 				   "entropy_seed",
 				   "iak";
 		status = "okay";
@@ -567,14 +569,19 @@
 				reg = <0x1f0 0x4>;
 			};
 
-			bl2_rotpk_0: otp176@2c0 {
-				#nvmem-cell-cells = <0>;
-				reg = <0x2c0 0x20>;
-			};
-
-			bl2_rotpk_1: otp184@2e0 {
+			bl2_rotpk_0: otp184@2e0 {
 				#nvmem-cell-cells = <0>;
 				reg = <0x2e0 0x20>;
+			};
+
+			bl2_rotpk_1: otp192@300 {
+				#nvmem-cell-cells = <0>;
+				reg = <0x300 0x20>;
+			};
+
+			bl2_rotpk_2: otp200@320 {
+				#nvmem-cell-cells = <0>;
+				reg = <0x320 0x20>;
 			};
 
 			entropy_seed: otp332@530 {
@@ -582,9 +589,9 @@
 				reg = <0x530 0x40>;
 			};
 
-			iak: otp348@570 {
+			iak: otp352@580 {
 				#nvmem-cell-cells = <0>;
-				reg = <0x570 0x20>;
+				reg = <0x580 0x20>;
 			};
 		};
 
