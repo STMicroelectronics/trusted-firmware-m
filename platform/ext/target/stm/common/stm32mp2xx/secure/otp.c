@@ -4,18 +4,25 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
+
+#define DT_DRV_COMPAT st_stm32mp2_otp
+
 #include <errno.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
 #include <cmsis_compiler.h>
 
+#include <lib/utils_def.h>
 #include <tfm_plat_otp.h>
 #include <psa/crypto.h>
 #include <config_tfm.h>
 #include <tfm_plat_provisioning.h>
 
 #include <stm32_bsec3.h>
+#include <devicetree.h>
+#include <devicetree/nvmem.h>
+#include <nvmem.h>
 
 #ifdef TFM_DUMMY_PROVISIONING
 __PACKED_STRUCT tfm_psa_rot_provisioning_data_t {
@@ -151,6 +158,42 @@ otp_fake_write(uint32_t offset, uint32_t len, uint32_t in_len, uint8_t *in)
 }
 #endif
 
+static const struct device *nvmem_dev_from_otp_id(enum tfm_otp_element_id_t id)
+{
+	const struct device *dev;
+
+	switch (id) {
+#if defined(STM32_BL2)
+	case PLAT_OTP_ID_BL2_ROTPK_0:
+		dev = DT_INST_DEV_NVMEM(0, bl2_rotpk_0);
+		break;
+	case PLAT_OTP_ID_BL2_ROTPK_1:
+		dev = DT_INST_DEV_NVMEM(0, bl2_rotpk_1);
+		break;
+	case PLAT_OTP_ID_BL2_ROTPK_2:
+		dev = DT_INST_DEV_NVMEM(0, bl2_rotpk_2);
+		break;
+	case PLAT_OTP_ID_BL2_ROTPK_3:
+		dev = DT_INST_DEV_NVMEM(0, bl2_rotpk_3);
+		break;
+#endif
+	case PLAT_OTP_ID_IAK:
+		dev = DT_INST_DEV_NVMEM(0, iak);
+		break;
+	case PLAT_OTP_ID_IMPLEMENTATION_ID:
+		dev = DT_INST_DEV_NVMEM(0, implementation_id);
+		break;
+	case PLAT_OTP_ID_ENTROPY_SEED:
+		dev = DT_INST_DEV_NVMEM(0, entropy_seed);
+		break;
+	default:
+		dev = NULL;
+		break;
+	}
+
+	return dev;
+}
+
 #if TFM_DUMMY_PROVISIONING
 static enum tfm_plat_err_t stm32_check_otp_check_value(size_t out_len, uint8_t *out)
 {
@@ -216,20 +259,13 @@ static enum tfm_plat_err_t stm32_set_default_value(enum tfm_otp_element_id_t id,
 enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
                                       size_t out_len, uint8_t *out)
 {
+	const struct device *dev_nvmem;
+	size_t read_len = 0;
 	int err;
 
 	switch (id) {
-#if defined(STM32_BL2)
-	case PLAT_OTP_ID_BL2_ROTPK_0:
-	case PLAT_OTP_ID_BL2_ROTPK_1:
-	case PLAT_OTP_ID_BL2_ROTPK_2:
-	case PLAT_OTP_ID_BL2_ROTPK_3:
-#endif
 	case PLAT_OTP_ID_LCS:
-	case PLAT_OTP_ID_IAK:
 	case PLAT_OTP_ID_IAK_LEN:
-	case PLAT_OTP_ID_IMPLEMENTATION_ID:
-	case PLAT_OTP_ID_ENTROPY_SEED:
 		err = stm32_bsec_otp_read_by_id(id, out_len, out);
 #if TFM_DUMMY_PROVISIONING
 		if (!err && stm32_check_otp_check_value(out_len, out))
@@ -258,7 +294,20 @@ enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
 				    out_len, out);
 		break;
 	default:
-		return TFM_PLAT_ERR_UNSUPPORTED;
+		dev_nvmem = nvmem_dev_from_otp_id(id);
+		if (!dev_nvmem)
+			return TFM_PLAT_ERR_UNSUPPORTED;
+
+		err = nvmem_read_cell(dev_nvmem, out_len, out, &read_len);
+		if (read_len != out_len) {
+			memset(out, 0, out_len);
+			return TFM_PLAT_ERR_NOT_PERMITTED;
+		}
+#if TFM_DUMMY_PROVISIONING
+		if (!err && stm32_check_otp_check_value(out_len, out))
+			err = stm32_set_default_value(id, out_len, out);
+#endif
+		break;
 	}
 
 	if (err)
@@ -269,19 +318,11 @@ enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
 
 enum tfm_plat_err_t tfm_plat_otp_get_size(enum tfm_otp_element_id_t id, size_t *size)
 {
+	const struct device *dev;
 	int err = 0;
 
 	switch (id) {
-#if defined(STM32_BL2)
-	case PLAT_OTP_ID_BL2_ROTPK_0:
-	case PLAT_OTP_ID_BL2_ROTPK_1:
-	case PLAT_OTP_ID_BL2_ROTPK_2:
-	case PLAT_OTP_ID_BL2_ROTPK_3:
-#endif
 	case PLAT_OTP_ID_LCS:
-	case PLAT_OTP_ID_IAK:
-	case PLAT_OTP_ID_IMPLEMENTATION_ID:
-	case PLAT_OTP_ID_ENTROPY_SEED:
 		err = stm32_bsec_otp_size_by_id(id, size);
 		break;
 	case PLAT_OTP_ID_IAK_LEN:
@@ -303,7 +344,12 @@ enum tfm_plat_err_t tfm_plat_otp_get_size(enum tfm_otp_element_id_t id, size_t *
 		*size = FAKE_SIZE(profile_definition);
 		break;
 	default:
-		return TFM_PLAT_ERR_UNSUPPORTED;
+		dev = nvmem_dev_from_otp_id(id);
+		if (!dev)
+			return TFM_PLAT_ERR_UNSUPPORTED;
+
+		err = nvmem_get_cell_size(dev, size);
+		break;
 	}
 
 	if (err)
@@ -320,8 +366,26 @@ enum tfm_plat_err_t tfm_plat_otp_write(enum tfm_otp_element_id_t id, size_t in_l
 
 enum tfm_plat_err_t tfm_plat_otp_init(void)
 {
-	if (!stm32_bsec_is_valid())
-		return TFM_PLAT_ERR_SYSTEM_ERR;
-
 	return TFM_PLAT_ERR_SUCCESS;
 }
+
+#define NVMEM_ELEM(node_id, prop, idx)								\
+	DT_NVMEM_SPEC_GET_BY_IDX(node_id, idx)
+
+#define STM32_OTP_CONFIG(n)									\
+												\
+static const struct nvmem_dt_spec stm32_otp_cfg_##n[DT_INST_PROP_LEN(n, nvmem_cells)] = {	\
+	DT_INST_FOREACH_PROP_ELEM_SEP(n, nvmem_cells, NVMEM_ELEM, (,))				\
+};												\
+												\
+DEVICE_DT_INST_DEFINE(n,									\
+		      NULL,									\
+		      NULL,									\
+		      &stm32_otp_cfg_##n,							\
+		      CORE, 7,									\
+		      NULL);
+
+DT_INST_FOREACH_STATUS_OKAY(STM32_OTP_CONFIG)
+
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
+	     "only one otp compatible node is supported");
