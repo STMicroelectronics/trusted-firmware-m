@@ -31,6 +31,7 @@ __PACKED_STRUCT tfm_psa_rot_provisioning_data_t {
 #if defined(STM32_BL2)
 	uint8_t bl2_rotpk_0[32];
 	uint8_t bl2_rotpk_1[32];
+	uint8_t bl2_rotpk_2[32];
 #endif
 };
 
@@ -70,6 +71,12 @@ static const struct tfm_psa_rot_provisioning_data_t psa_rot_prov_data = {
 		0xb1, 0x66, 0xa9, 0xef, 0x6a, 0x6e, 0x4a, 0xa3,
 		0x7c, 0x19, 0x19, 0xed, 0x1f, 0xcc, 0xc0, 0x49,
 	},
+	.bl2_rotpk_2 = {
+		0xbf, 0xe6, 0xd8, 0x6f, 0x88, 0x26, 0xf4, 0xff,
+		0x97, 0xfb, 0x96, 0xc4, 0xe6, 0xfb, 0xc4, 0x99,
+		0x3e, 0x46, 0x19, 0xfc, 0x56, 0x5d, 0xa2, 0x6a,
+		0xdf, 0x34, 0xc3, 0x29, 0x48, 0x9a, 0xdc, 0x38,
+	},
 #elif defined(MCUBOOT_SIGN_EC256)
 	.bl2_rotpk_0 = {
 		0xe3, 0x04, 0x66, 0xf6, 0xb8, 0x47, 0x0c, 0x1f, \
@@ -82,6 +89,12 @@ static const struct tfm_psa_rot_provisioning_data_t psa_rot_prov_data = {
 		0xbf, 0x0f, 0xdd, 0x89, 0xa9, 0x14, 0xa5, 0xdc, \
 		0x16, 0xf8, 0x67, 0x54, 0x82, 0x07, 0xd7, 0x07, \
 		0x7e, 0x74, 0xd8, 0x0c, 0x06, 0x3e, 0xfd, 0xa9, \
+	},
+	.bl2_rotpk_2 = {
+		0xe3, 0x04, 0x66, 0xf6, 0xb8, 0x47, 0x0c, 0x1f, \
+		0x29, 0x07, 0x0b, 0x17, 0xf1, 0xe2, 0xd3, 0xe9, \
+		0x4d, 0x44, 0x5e, 0x3f, 0x60, 0x80, 0x87, 0xfd, \
+		0xc7, 0x11, 0xe4, 0x38, 0x2b, 0xb5, 0x38, 0xb6, \
 	},
 #else
 #error "TFM_DUMMY_PROVISIONING: Please choose between EC-P256 or RSA-3072 for image signatures."
@@ -262,18 +275,23 @@ static enum tfm_plat_err_t stm32_set_default_value(enum tfm_otp_element_id_t id,
 		memcpy((void *)out, psa_rot_prov_data.entropy_seed, out_len);
 		break;
 #if defined(STM32_BL2)
-		/*
-		 * For now, we use the same key for each software image loaded by
-		 * MCUBoot.
-		 */
 	case PLAT_OTP_ID_BL2_ROTPK_0:
-	case PLAT_OTP_ID_BL2_ROTPK_1:
-	case PLAT_OTP_ID_BL2_ROTPK_2:
-	case PLAT_OTP_ID_BL2_ROTPK_3:
 		if (out_len > sizeof(psa_rot_prov_data.bl2_rotpk_0))
 			return TFM_PLAT_ERR_INVALID_INPUT;
 
-		memcpy((void *)out, psa_rot_prov_data.bl2_rotpk_0, out_len);
+		memcpy((void*)out, psa_rot_prov_data.bl2_rotpk_0, out_len);
+		break;
+	case PLAT_OTP_ID_BL2_ROTPK_1:
+		if (out_len > sizeof(psa_rot_prov_data.bl2_rotpk_1))
+			return TFM_PLAT_ERR_INVALID_INPUT;
+
+		memcpy((void*)out, psa_rot_prov_data.bl2_rotpk_1, out_len);
+		break;
+	case PLAT_OTP_ID_BL2_ROTPK_2:
+		if (out_len > sizeof(psa_rot_prov_data.bl2_rotpk_2))
+			return TFM_PLAT_ERR_INVALID_INPUT;
+
+		memcpy((void *)out, psa_rot_prov_data.bl2_rotpk_2, out_len);
 		break;
 #endif
 	default:
