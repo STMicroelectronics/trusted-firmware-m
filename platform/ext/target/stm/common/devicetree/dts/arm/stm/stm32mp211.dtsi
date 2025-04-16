@@ -89,16 +89,20 @@
 	otp {
 		compatible = "st,stm32mp2-otp";
 		nvmem-cells = <&implementation_id>,
+			      <&rpn_otp>,
 			      <&bootrom_config_9>,
 			      <&id_otp>,
+			      <&package_otp>,
 			      <&hconf1_otp>,
 			      <&bl2_rotpk_0>,
 			      <&bl2_rotpk_0>, /*keep the same key for slot1 */
 			      <&entropy_seed>,
 			      <&iak>;
 		nvmem-cell-names = "implementation_id",
+				   "rpn_otp",
 				   "bootrom_config_9",
 				   "id_otp",
+				   "package_otp",
 				   "hconf1_otp",
 				   "bl2_rotpk_0",
 				   "bl2_rotpk_1",
@@ -480,6 +484,11 @@
 				reg = <0x14 0xc>;
 			};
 
+			rpn_otp: otp9@24 {
+				#nvmem-cell-cells = <0>;
+				reg = <0x24 0x4>;
+			};
+
 			bootrom_config_9: otp18@48 {
 				#nvmem-cell-cells = <0>;
 				reg = <0x48 0x4>;
@@ -488,6 +497,11 @@
 			id_otp: otp102@198 {
 				#nvmem-cell-cells = <0>;
 				reg = <0x198 0x4>;
+			};
+
+			package_otp: otp122@1e8 {
+				#nvmem-cell-cells = <0>;
+				reg = <0x1e8 0x4>;
 			};
 
 			hconf1_otp: otp124@1f0 {
