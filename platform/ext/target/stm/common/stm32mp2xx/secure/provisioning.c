@@ -57,6 +57,5 @@ int tfm_plat_provisioning_is_required(void)
 		return err;
 	}
 
-	return lcs == PLAT_OTP_LCS_ASSEMBLY_AND_TEST
-		|| lcs == PLAT_OTP_LCS_PSA_ROT_PROVISIONING;
+	return lcs == PLAT_OTP_LCS_PSA_ROT_PROVISIONING;
 }
