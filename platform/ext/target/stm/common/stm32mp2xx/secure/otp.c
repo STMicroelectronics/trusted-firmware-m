@@ -425,7 +425,9 @@ enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
 			return TFM_PLAT_ERR_NOT_PERMITTED;
 		}
 #if TFM_DUMMY_PROVISIONING
+#if !STM32_OVERRIDE_OTP
 		if (!err && stm32_check_otp_check_value(out_len, out))
+#endif
 			err = stm32_set_default_value(id, out_len, out);
 #endif
 		break;

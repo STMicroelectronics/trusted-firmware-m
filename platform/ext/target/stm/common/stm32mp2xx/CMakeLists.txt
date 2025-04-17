@@ -34,6 +34,7 @@ target_compile_definitions(tfm_config
         $<$<BOOL:${STM32_M33TDCID}>:STM32_M33TDCID>
         # this flag is not defined in tfm_s and needed by stm32_bsec3
         $<$<BOOL:${TFM_DUMMY_PROVISIONING}>:TFM_DUMMY_PROVISIONING>
+	$<$<BOOL:${STM32_OVERRIDE_OTP}>:STM32_OVERRIDE_OTP>
         $<$<BOOL:${TFM_PARTITION_SCP}>:S_HEAP_SIZE=0x00020000>
         $<$<BOOL:${STM32_CACHE_ENABLED}>:STM32_CACHE_ENABLED>
         STM32_PROV_FAKE=${STM32_PROV_FAKE}
