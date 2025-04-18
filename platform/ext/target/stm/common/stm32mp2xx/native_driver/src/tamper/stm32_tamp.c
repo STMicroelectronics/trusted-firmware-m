@@ -219,6 +219,7 @@ int stm32_tamp_bkpreg_read(const struct device *dev, unsigned int reg_id,
 	return 0;
 }
 
+#if defined(CONFIG_STM32MP25X_REVY) || defined(CONFIG_STM32MP21X_REVA)
 /*
  * Errata: This errata avoid a corteA stuck after reset.
  * When restarting after M33 TDCID, the ROM code read the bkpr11 and if it's valide
@@ -263,6 +264,7 @@ static __unused int _stm32mp25_bkpr11_errata(const struct device *dev)
 
 	return err;
 }
+#endif /* defined(CONFIG_STM32MP25X_REVY) || defined(CONFIG_STM32MP21X_REVA) */
 
 static void stm32_tamp_get_hwconfig(const struct device *dev)
 {
@@ -319,7 +321,7 @@ out:
 static __unused const struct  stm32_tamp_variant stm32_variant = {};
 
 static __unused const struct stm32_tamp_variant stm32mp25_variant = {
-#if defined(STM32_BL2)
+#if defined(STM32_BL2) && (defined(CONFIG_STM32MP25X_REVY) || defined(CONFIG_STM32MP21X_REVA))
 	.pre_init_fn = &_stm32mp25_bkpr11_errata,
 #endif
 	.init_bkpr_fn = &_stm32mp25_tamp_init_bkpr,
