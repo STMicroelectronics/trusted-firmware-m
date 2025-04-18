@@ -41,6 +41,11 @@ These build generate:
       - ``-DDTS_BOARD_NS=<dts_file_non_secure>``
       - ``-DDTS_BOARD_BL2=<dts_file_bl2>``
 
+    * If your board isn't provisionned with real secret you should enable dummy provisionning.
+      - ``-DTFM_DUMMY_PROVISIONING=ON``
+    * When dummy provisioning enabled you can also override OTP values with dummy provisionning.
+      - ``-DSTM32_OVERRIDE_OTP=ON``
+
 Building TF-M secure and non secure with|out regression tests
 =============================================================
 
