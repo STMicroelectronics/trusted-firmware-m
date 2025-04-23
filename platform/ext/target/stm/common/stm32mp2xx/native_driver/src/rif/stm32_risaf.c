@@ -289,12 +289,19 @@ static void stm32_risaf_get_hwconfig(const struct device *dev)
 	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
 	struct stm32_risaf_data *drv_data = dev_get_data(dev);
 	uint32_t regval;
+	uint8_t hw_generic2;
 
 	regval = io_read32(drv_cfg->base + _RISAF_HWCFGR);
 
 	/* hw_nregions take account the base0, which is not configurable */
 	drv_data->hw_nregions = _FLD_GET(_RISAF_HWCFGR_CFG1, regval) - 1;
-	drv_data->hw_nsubregions = _FLD_GET(_RISAF_HWCFGR_CFG2, regval);
+	/*
+	 * hw_nsubregions reflects the total number of subregions A and B.
+	 * Here again base0 is included, so decrement the read value.
+	 * Convert it to the number of subregions per region.
+	 */
+	hw_generic2 = _FLD_GET(_RISAF_HWCFGR_CFG2, regval) - 1;
+	drv_data->hw_nsubregions = (hw_generic2 * 2) / drv_data->hw_nregions;
 	drv_data->hw_granularity = _FLD_GET(_RISAF_HWCFGR_CFG3, regval);
 	drv_data->hw_naddr_bits = _FLD_GET(_RISAF_HWCFGR_CFG4, regval);
 }
