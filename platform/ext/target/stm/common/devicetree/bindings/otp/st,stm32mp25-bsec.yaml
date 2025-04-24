@@ -18,21 +18,18 @@ properties:
     required: true
 
 child-binding:
+  include: [nvmem-provider.yaml]
+
   description: |
     Each child node describes an OTP area.
     The area can look like this :
 
       hconf1_otp: otp124@1f0 {
+        #nvmem-cell-cells = <0>;
         reg = <0x1f0 0x4>;
       };
 
   properties:
-    reg:
-      type: array
-      description: |
-        This follow the format <OFFSET SIZE> with OFFSET and SIZE in bytes.
-      required: true
-
     shadow-provisionning:
       type: array
       description: |
