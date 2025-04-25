@@ -3,8 +3,6 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#define DT_DRV_COMPAT st_stm32mp25_rng
-
 
 #include "lib/delay.h"
 #include "lib/mmio.h"
@@ -22,6 +20,7 @@
 #define _RNG_CR			0x00U
 #define _RNG_SR			0x04U
 #define _RNG_DR			0x08U
+#define _RNG_NSCR		0x0CU
 #define _RNG_HTCR		0x10U
 
 #define _CR_RNGEN		0x4U
@@ -34,17 +33,12 @@
 #define _SR_SECS		0x4U
 #define _SR_SEIS		0x40U
 
-#define _HTCR_CONFIG		0x00006688U
-
 #define RNG_TIMEOUT_US		100000U
 #define RNG_TIMEOUT_STEP_US	10U
 
 #define TIMEOUT_US_1MS		1000U
 
-#define RNG_NIST_CONFIG_A	0x00F40F00U
-#define RNG_NIST_CONFIG_B	0x01801000U
-#define RNG_NIST_CONFIG_C	0x00F00D00U
-#define RNG_NIST_CONFIG_MASK	GENMASK(25, 8)
+#define RNG_NIST_CONFIG_MASK	GENMASK(27, 8)
 
 #define RNG_MAX_NOISE_CLK_FREQ	48000000U
 
@@ -57,7 +51,15 @@ struct stm32_rng_config {
 	const int n_firewall;
 };
 
+struct stm32_rng_variant {
+	uint32_t max_noise_clk_freq;
+	uint32_t cr;
+	uint32_t nscr;
+	uint32_t htcr;
+};
+
 struct stm32_rng_data {
+	const struct stm32_rng_variant *variant;
 	struct clk *clk;
 };
 
@@ -89,7 +91,7 @@ static uint32_t stm32_rng_clock_freq_restrain(const struct device *dev)
 	 * No need to handle the case when clock-div > 0xF as it is physically
 	 * impossible.
 	 */
-	while ((clock_rate >> clock_div) > RNG_MAX_NOISE_CLK_FREQ)
+	while ((clock_rate >> clock_div) > drv_data->variant->max_noise_clk_freq)
 		clock_div++;
 
 	VERBOSE("[%s] RNG clk rate : %lu\n", dev->name, clk_get_rate(drv_data->clk) >> clock_div);
@@ -133,6 +135,7 @@ static int check_data_integrity(const struct device *dev)
 static int stm32_rng_enable(const struct device *dev)
 {
 	const struct stm32_rng_config *drv_cfg = dev_get_config(dev);
+	struct stm32_rng_data *drv_data = dev_get_data(dev);
 	uint32_t clock_div;
 
 	/* Reset internal block and disable CED bit */
@@ -140,12 +143,14 @@ static int stm32_rng_enable(const struct device *dev)
 
 	/* Update configuration fields */
 	mmio_clrsetbits_32(drv_cfg->base + _RNG_CR, RNG_NIST_CONFIG_MASK,
-			   RNG_NIST_CONFIG_A | _CR_CONDRST | _CR_CED);
+			   drv_data->variant->cr | _CR_CONDRST | _CR_CED);
 
 	mmio_clrsetbits_32(drv_cfg->base + _RNG_CR, _CR_CLKDIV,
 			   (clock_div << _CR_CLKDIV_Pos));
 
-	mmio_write_32(drv_cfg->base + _RNG_HTCR, _HTCR_CONFIG);
+	mmio_write_32(drv_cfg->base + _RNG_HTCR, drv_data->variant->htcr);
+
+	mmio_write_32(drv_cfg->base + _RNG_NSCR, drv_data->variant->nscr);
 
 	mmio_clrsetbits_32(drv_cfg->base + _RNG_CR, _CR_CONDRST, _CR_RNGEN);
 
@@ -283,7 +288,7 @@ static int __maybe_unused stm32_rng_init(const struct device *dev)
 	return stm32_rng_release_sem(drv_cfg);
 }
 
-#define STM32_RNG_INIT(n)								  \
+#define STM32_RNG_INIT(n, _variant)							  \
 											  \
 DT_INST_ACCESS_CTRLS_DEFINE(n);								  \
 											  \
@@ -296,7 +301,9 @@ static const struct stm32_rng_config stm32_rng_cfg_##n = {				  \
 	.n_firewall = DT_INST_ACCESS_CTRLS_NUM(n),					  \
 };											  \
 											  \
-static struct stm32_rng_data stm32_rng_data_##n = {};					  \
+static struct stm32_rng_data stm32_rng_data_##n = {					  \
+	.variant = _variant,								  \
+};											  \
 											  \
 DEVICE_DT_INST_DEFINE(n,								  \
 		 &stm32_rng_init,							  \
@@ -305,4 +312,28 @@ DEVICE_DT_INST_DEFINE(n,								  \
 		 CORE, 6,								  \
 		 &stm32_rng_api);
 
-DT_INST_FOREACH_STATUS_OKAY(STM32_RNG_INIT)
+/* MP21 configuration default values */
+static __unused struct stm32_rng_variant variant_stm32mp21 = {
+	.max_noise_clk_freq	= 40000000U,
+	.cr			= 0x00F01F00U,
+	.nscr			= 0x000001FFU,
+	.htcr			= 0x0000AAC7U,
+};
+
+/* MP23 and MP25 configuration default values */
+static __unused struct stm32_rng_variant variant_stm32mp25 = {
+	.max_noise_clk_freq	= 48000000U,
+	.cr			= 0x08F01E00U,
+	.nscr			= 0x0002E649U,
+	.htcr			= 0x00006688U,
+};
+
+#undef DT_DRV_COMPAT
+#define DT_DRV_COMPAT st_stm32mp21_rng
+
+DT_INST_FOREACH_STATUS_OKAY_VARGS(STM32_RNG_INIT, &variant_stm32mp21)
+
+#undef DT_DRV_COMPAT
+#define DT_DRV_COMPAT st_stm32mp25_rng
+
+DT_INST_FOREACH_STATUS_OKAY_VARGS(STM32_RNG_INIT, &variant_stm32mp25)
