@@ -140,7 +140,7 @@ Flashing, run and debugging
          $ echo start > state
 
       .. Note::
-         - The firmware must be **signed**, refer to OPTEE documentation.
+         - The firmware must be **signed**, refer to `How_to_protect_the_coprocessor_firmware`_ wiki page.
          - The firmware file must be in /lib/firmware
 
       * In developpment, gdb/openocd can load and debug M33 firmware but the
@@ -194,3 +194,4 @@ Flashing, run and debugging
 
 .. _stm32mp257f_ev1: https://www.st.com/en/evaluation-tools/stm32mp257f-ev1.html
 .. _STM32MP25: https://www.st.com/en/microcontrollers-microprocessors/stm32mp2-series.html
+.. _How_to_protect_the_coprocessor_firmware: https://wiki.st.com/stm32mpu/wiki/How_to_protect_the_coprocessor_firmware
