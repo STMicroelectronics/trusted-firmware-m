@@ -323,6 +323,7 @@ enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
 {
 	const struct device *dev_nvmem;
 	size_t read_len = 0;
+	size_t cell_size = 0;
 	int err;
 
 	switch (id) {
@@ -338,6 +339,24 @@ enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
 		if (!err)
 			memcpy(out, &read_len, sizeof(size_t));
 
+		break;
+	case PLAT_OTP_ID_IMPLEMENTATION_ID:
+		dev_nvmem = DT_INST_DEV_NVMEM(0, implementation_id);
+		if (!dev_nvmem)
+			return TFM_PLAT_ERR_UNSUPPORTED;
+
+		/*
+		 * On STM32MP2 platform, the Implementation ID is lower than the max size
+		 * (currently 12 bytes vs. 32 bytes for the max).
+		 */
+		err = nvmem_get_cell_size(dev_nvmem, &cell_size);
+		if (!err) {
+			err = nvmem_read_cell(dev_nvmem, cell_size, out, &read_len);
+#if TFM_DUMMY_PROVISIONING
+			if (!err && stm32_check_otp_check_value(cell_size, out))
+				err = stm32_set_default_value(id, cell_size, out);
+#endif
+		}
 		break;
 	case PLAT_OTP_ID_IAK_TYPE:
 		err = otp_fake_read(FAKE_OFFSET(iak_type),
