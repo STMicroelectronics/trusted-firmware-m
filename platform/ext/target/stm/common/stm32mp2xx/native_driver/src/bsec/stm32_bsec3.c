@@ -388,56 +388,6 @@ static inline int _otp_is_valid(uint32_t status)
 	return !(status & (STATUS_SECURE | LOCK_ERROR));
 }
 
-static int __maybe_unused stm32_is_otp_dummy_provisionable(uint32_t otp_id)
-{
-	uint32_t iak_start, entropy_seed_start;
-	uint32_t __maybe_unused bl2_rotpk_0_start;
-	uint32_t ret;
-
-	ret = stm32_bsec_get_otp_cell_by_label("entropy_seed",
-					       &entropy_seed_start, NULL);
-	if (ret)
-		return ret;
-
-	ret = stm32_bsec_get_otp_cell_by_label("iak", &iak_start, NULL);
-	if (ret)
-		return ret;
-
-	if (otp_id == entropy_seed_start || otp_id == iak_start)
-		return true;
-
-#if defined(STM32_BL2)
-	ret = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_0", &bl2_rotpk_0_start, NULL);
-	if (ret)
-		return ret;
-
-	if (otp_id == bl2_rotpk_0_start)
-		return true;
-#endif
-
-	return false;
-}
-
-int stm32_bsec_get_otp_cell_by_label(char* label, uint32_t *cell_start,
-				     uint32_t *cell_size)
-{
-	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
-	struct nvmem_cell cell;
-
-	for (int i = 0; i < drv_cfg->n_otp_cell; i++) {
-		cell = drv_cfg->otp_cell[i];
-
-		if (!strcmp(cell.cell_label, label)) {
-			if (cell_start)
-				*cell_start = cell.otp_id;
-			if (cell_size)
-				*cell_size = cell.n_otp;
-			return 0;
-		}
-	}
-	return -ENOENT;
-}
-
 static int _otp_read(uint32_t otp_id, size_t len, size_t out_len, uint8_t *out)
 {
 	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
@@ -472,50 +422,6 @@ static int _otp_read(uint32_t otp_id, size_t len, size_t out_len, uint8_t *out)
 	return 0;
 }
 
-#define BOOTROM_CFG_9_SEC_BOOT	GENMASK(3,0)
-#define BOOTROM_CFG_9_PROV_DONE	GENMASK(7,4)
-#define HCONF1_DISABLE_SCAN	BIT(20)
-static int _read_lcs(uint32_t out_len, uint8_t *out)
-{
-	uint32_t secure_boot, disable_scan, prov_done;
-	enum plat_otp_lcs_t *lcs = (enum plat_otp_lcs_t*) out;
-	uint32_t bootrom_cfg_9, hconf1;
-	uint32_t cell_start, cell_size;
-	int res;
-
-	*lcs = PLAT_OTP_LCS_ASSEMBLY_AND_TEST;
-
-	res = stm32_bsec_get_otp_cell_by_label("bootrom_config_9", &cell_start,
-					       &cell_size);
-	if (res)
-		return res;
-
-	res = _otp_read(cell_start, cell_size * sizeof(uint32_t),
-			sizeof(bootrom_cfg_9), (uint8_t *)&bootrom_cfg_9);
-	if (res)
-		return res;
-
-	res = stm32_bsec_get_otp_cell_by_label("hconf1_otp", &cell_start,
-					       &cell_size);
-	if (res)
-		return res;
-
-	res = _otp_read(cell_start, cell_size * sizeof(uint32_t),
-			sizeof(hconf1), (uint8_t *)&hconf1);
-	if (res)
-		return res;
-
-	/* true if all bit of field are set */
-	secure_boot = !!(bootrom_cfg_9 & BOOTROM_CFG_9_SEC_BOOT);
-	prov_done = !!(bootrom_cfg_9 & BOOTROM_CFG_9_PROV_DONE);
-	disable_scan = !!(hconf1 & HCONF1_DISABLE_SCAN);
-
-	if (secure_boot && prov_done && disable_scan)
-		*lcs = PLAT_OTP_LCS_SECURED;
-
-	return 0;
-}
-
 static int __maybe_unused _otp_write(uint32_t otp_id, size_t len,
 				     size_t in_len, const uint8_t *in)
 {
@@ -542,57 +448,6 @@ static int __maybe_unused _otp_write(uint32_t otp_id, size_t len,
 				return -EIO;
 		}
 	}
-
-	return 0;
-}
-
-static int __maybe_unused _otp_write_lcs(uint32_t in_len, const uint8_t *in)
-{
-	enum plat_otp_lcs_t *lcs = (enum plat_otp_lcs_t*) in;
-	uint32_t bootrom_cfg_9, cfg9_start, cfg9_size;
-	uint32_t hconf1, hconf1_start, hconf1_size;
-	int res;
-
-	res = stm32_bsec_get_otp_cell_by_label("bootrom_config_9", &cfg9_start,
-					       &cfg9_size);
-	if (res)
-		return res;
-
-	res = _otp_read(cfg9_start, cfg9_size * sizeof(uint32_t),
-			sizeof(bootrom_cfg_9), (uint8_t *)&bootrom_cfg_9);
-	if (res)
-		return res;
-
-	res = stm32_bsec_get_otp_cell_by_label("hconf1_otp", &hconf1_start,
-					       &hconf1_size);
-	if (res)
-		return res;
-
-	res = _otp_read(hconf1_start, hconf1_size * sizeof(uint32_t),
-			sizeof(hconf1), (uint8_t *)&hconf1);
-	if (res)
-		return res;
-
-	if (*lcs == PLAT_OTP_LCS_SECURED) {
-		if (!(bootrom_cfg_9 & BOOTROM_CFG_9_SEC_BOOT))
-			bootrom_cfg_9 |= BOOTROM_CFG_9_SEC_BOOT;
-		if (!(bootrom_cfg_9 & BOOTROM_CFG_9_PROV_DONE))
-			bootrom_cfg_9 |= BOOTROM_CFG_9_PROV_DONE;
-		if (!(hconf1 & HCONF1_DISABLE_SCAN))
-			hconf1 |= HCONF1_DISABLE_SCAN;
-	} else {
-		bootrom_cfg_9 &= ~BOOTROM_CFG_9_PROV_DONE;
-	}
-
-	res = _otp_write(cfg9_start, cfg9_size * sizeof(uint32_t),
-			 sizeof(bootrom_cfg_9), (uint8_t*)&bootrom_cfg_9);
-	if (res)
-		return res;
-
-	res = _otp_write(hconf1_start, hconf1_size * sizeof(uint32_t),
-			 sizeof(hconf1), (uint8_t*)&hconf1);
-	if (res)
-		return res;
 
 	return 0;
 }
@@ -649,112 +504,6 @@ int stm32_bsec_write(uint32_t otp, uint32_t value)
 /*
  * Interface with TFM
  */
-int stm32_bsec_otp_read_by_id(enum tfm_otp_element_id_t id, size_t out_len,
-			      uint8_t *out)
-{
-	int res;
-	uint32_t cell_start;
-	uint32_t cell_size;
-
-	switch (id) {
-	case PLAT_OTP_ID_LCS:
-		return _read_lcs(out_len, out);
-	case PLAT_OTP_ID_IAK_LEN:
-		res = stm32_bsec_get_otp_cell_by_label("iak", NULL, &cell_size);
-		*out = cell_size * sizeof(uint32_t);
-
-		return res;
-
-	case PLAT_OTP_ID_IAK:
-		res = stm32_bsec_get_otp_cell_by_label("iak", &cell_start,
-						       &cell_size);
-		break;
-	case PLAT_OTP_ID_IMPLEMENTATION_ID:
-		res = stm32_bsec_get_otp_cell_by_label("implementation_id",
-						       &cell_start, &cell_size);
-		break;
-	case PLAT_OTP_ID_ENTROPY_SEED:
-		res = stm32_bsec_get_otp_cell_by_label("entropy_seed",
-						       &cell_start, &cell_size);
-		break;
-#if defined(STM32_BL2)
-	/*
-	 * For now, we use the same key for each software image loaded by
-	 * MCUBoot.
-	 */
-	case PLAT_OTP_ID_BL2_ROTPK_0:
-	case PLAT_OTP_ID_BL2_ROTPK_1:
-	case PLAT_OTP_ID_BL2_ROTPK_2:
-	case PLAT_OTP_ID_BL2_ROTPK_3:
-		/* Image id 1 (supposed to use rotpk1) is DDR Firmware.
-		 * We choose to use the Secure world key to sign it
-		 * (rotpk0).
-		 */
-		res = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_0",
-						       &cell_start, &cell_size);
-		break;
-#endif
-	default:
-		return -ENOTSUP;
-	}
-
-	if (res)
-		return res;
-
-	return _otp_read(cell_start, cell_size * sizeof(uint32_t), out_len,
-			 out);
-
-}
-
-int stm32_bsec_otp_size_by_id(enum tfm_otp_element_id_t id, size_t *size)
-{
-	int res = 0;
-	uint32_t cell_size;
-
-	switch (id) {
-	case PLAT_OTP_ID_LCS:
-		*size = sizeof(uint32_t);
-		break;
-	case PLAT_OTP_ID_IAK:
-		res = stm32_bsec_get_otp_cell_by_label("iak", NULL, &cell_size);
-
-		break;
-	case PLAT_OTP_ID_IMPLEMENTATION_ID:
-		res = stm32_bsec_get_otp_cell_by_label("implementation_id",
-						       NULL, &cell_size);
-
-		break;
-	case PLAT_OTP_ID_ENTROPY_SEED:
-		res = stm32_bsec_get_otp_cell_by_label("entropy_seed", NULL,
-						       &cell_size);
-
-		break;
-#if defined(STM32_BL2)
-	case PLAT_OTP_ID_BL2_ROTPK_0:
-	case PLAT_OTP_ID_BL2_ROTPK_2:
-	case PLAT_OTP_ID_BL2_ROTPK_3:
-		res = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_0", NULL,
-						       &cell_size);
-
-		break;
-	case PLAT_OTP_ID_BL2_ROTPK_1:
-		res = stm32_bsec_get_otp_cell_by_label("bl2_rotpk_1", NULL,
-						       &cell_size);
-
-		break;
-#endif
-	default:
-		return -ENOTSUP;
-	}
-
-	if (res)
-		return res;
-
-	*size = cell_size * sizeof(uint32_t);
-
-	return 0;
-}
-
 static int stm32_bsec_nvmem_get_cell_size(const struct device *dev, size_t *size)
 {
 	const struct nvmem_cell *cell = dev_get_config(dev);
@@ -790,11 +539,6 @@ static int stm32_bsec_nvmem_read_cell(const struct device *dev, size_t out_len, 
 static int stm32_bsec_nvmem_write_cell(const struct device *dev, size_t in_len, const uint8_t *in)
 {
 	return -ENOTSUP;
-}
-
-bool stm32_bsec_is_valid(void)
-{
-	return device_is_ready(bsec_dev);
 }
 
 static void stm32_bsec_check_error(uint32_t opt_status)
