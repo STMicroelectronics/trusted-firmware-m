@@ -23,6 +23,7 @@
 #include <debug.h>
 #include <partition.h>
 #include "flash_map/flash_map.h"
+#include <lib/utils_def.h>
 
 #include <stm32mp2_ddr.h>
 #include <stm32_bsec3.h>
@@ -344,6 +345,47 @@ static enum tfm_plat_err_t get_chip_info(char name[STM32_SOC_NAME_SIZE])
 	return TFM_PLAT_ERR_SUCCESS;
 }
 
+/* Internal layout of the 32bit OTP word board_id */
+#define BOARD_ID_BOARD_NB_MASK		GENMASK_32(31, 16)
+#define BOARD_ID_BOARD_NB_SHIFT		16
+#define BOARD_ID_VARCPN_MASK		GENMASK_32(15, 12)
+#define BOARD_ID_VARCPN_SHIFT		12
+#define BOARD_ID_REVISION_MASK		GENMASK_32(11, 8)
+#define BOARD_ID_REVISION_SHIFT		8
+#define BOARD_ID_VARFG_MASK		GENMASK_32(7, 4)
+#define BOARD_ID_VARFG_SHIFT		4
+#define BOARD_ID_BOM_MASK		GENMASK_32(3, 0)
+#define BOARD_ID_BOM_SHIFT		0
+
+enum tfm_plat_err_t get_board_info(char name[STM32_SOC_NAME_SIZE])
+{
+	enum tfm_plat_err_t ret;
+	uint32_t board_id;
+
+	memset(name, 0, STM32_SOC_NAME_SIZE);
+
+	ret = tfm_plat_otp_read(PLAT_OTP_ID_BOARD_ID,
+				sizeof(uint32_t), (uint8_t *)&board_id);
+	if (ret != TFM_PLAT_ERR_SUCCESS)
+		return ret;
+
+	/*
+	 * The provisioning of this OTP is not mandatory, but return an error to avoid displaying
+	 * an empty trace.
+	 */
+	if (!board_id)
+		return TFM_PLAT_ERR_INVALID_INPUT;
+
+	snprintf(name, STM32_SOC_NAME_SIZE, "MB%04x Var%u.%u Rev.%c-%02u",
+		 _FLD_GET(BOARD_ID_BOARD_NB, board_id),
+		 _FLD_GET(BOARD_ID_VARCPN, board_id),
+		 _FLD_GET(BOARD_ID_VARFG, board_id),
+		 (char)_FLD_GET(BOARD_ID_REVISION, board_id) - 1 + 'A',
+		 _FLD_GET(BOARD_ID_BOM, board_id));
+
+	return TFM_PLAT_ERR_SUCCESS;
+}
+
 int stm32mp2_init_debug(void)
 {
 #if defined(DAUTH_NONE)
@@ -468,6 +510,10 @@ int32_t boot_platform_init(void)
 		BOOT_LOG_INF("cpu: %s", name);
 
 	BOOT_LOG_INF("board: "MODEL_BOARD);
+
+	if (get_board_info(name) == TFM_PLAT_ERR_SUCCESS)
+		BOOT_LOG_INF("board ID: %s", name);
+
 	BOOT_LOG_INF("dts: "MODEL_BL2_DTS);
 	BOOT_LOG_INF("boot device: "MODEL_BOOT_DEV);
 	BOOT_LOG_INF("mcu sysclk: %d", SystemCoreClock);
