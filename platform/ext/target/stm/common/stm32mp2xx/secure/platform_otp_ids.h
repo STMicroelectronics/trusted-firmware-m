@@ -54,6 +54,11 @@ enum tfm_otp_element_id_t {
 
     PLAT_OTP_ID_SECURE_DEBUG_PK,
 
+    PLAT_OTP_ID_RPN,
+    PLAT_OTP_ID_REV_ID,
+    PLAT_OTP_ID_PACKAGE,
+    PLAT_OTP_ID_BOARD_ID,
+
     PLAT_OTP_ID_MAX = UINT32_MAX,
 };
 

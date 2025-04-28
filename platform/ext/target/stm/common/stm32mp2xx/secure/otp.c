@@ -186,6 +186,18 @@ static const struct device *nvmem_dev_from_otp_id(enum tfm_otp_element_id_t id)
 	case PLAT_OTP_ID_ENTROPY_SEED:
 		dev = DT_INST_DEV_NVMEM(0, entropy_seed);
 		break;
+	case PLAT_OTP_ID_RPN:
+		dev = DT_INST_DEV_NVMEM(0, rpn_otp);
+		break;
+	case PLAT_OTP_ID_REV_ID:
+		dev = DT_INST_DEV_NVMEM(0, id_otp);
+		break;
+	case PLAT_OTP_ID_PACKAGE:
+		dev = DT_INST_DEV_NVMEM(0, package_otp);
+		break;
+	case PLAT_OTP_ID_BOARD_ID:
+		dev = DT_INST_DEV_NVMEM(0, board_id);
+		break;
 	default:
 		dev = NULL;
 		break;
