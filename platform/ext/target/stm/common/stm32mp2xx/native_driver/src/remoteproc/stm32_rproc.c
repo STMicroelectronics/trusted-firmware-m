@@ -91,6 +91,7 @@ static __unused int stm32mp2_a35_restore(const struct device *dev)
 		}
 	}
 
+#if defined(CONFIG_STM32MP25X_REVY) || defined(CONFIG_STM32MP21X_REVA)
 	/*
 	 * IAC workaround
 	 * clear and unmask:
@@ -100,6 +101,7 @@ static __unused int stm32mp2_a35_restore(const struct device *dev)
 	IAC->ICR[4] = (IAC_BIT(152) | IAC_BIT(155) | IAC_BIT(156));
 	IAC->IER[3] |= IAC_BIT(108);
 	IAC->IER[4] |= (IAC_BIT(152) | IAC_BIT(155) | IAC_BIT(156));
+#endif
 
 	/* restore clocks touched by bootrom */
 	for (i = 0, clock_ctl = cfg->clk_ctl; i < cfg->n_clk; i++, clock_ctl++) {
@@ -201,6 +203,7 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 		}
 	}
 
+#if defined(CONFIG_STM32MP25X_REVY) || defined(CONFIG_STM32MP21X_REVA)
 	/*
 	 * IAC workaround
 	 * mask:
@@ -208,6 +211,7 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 	 */
 	IAC->IER[3] &= ~(IAC_BIT(108));
 	IAC->IER[4] &= ~(IAC_BIT(152) | IAC_BIT(155) | IAC_BIT(156));
+#endif
 
 	/*  power up cpu, in case it is in standby */
 	err = reset_control_deassert(&cfg->rst_ctl);
