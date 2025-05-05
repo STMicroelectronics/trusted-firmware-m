@@ -35,6 +35,9 @@
 #define _BSEC_DENR			U(0xE20)
 #define _BSEC_SR			U(0xE40)
 #define _BSEC_OTPSR			U(0xE44)
+#define _BSEC_DBGMCR			U(0xE8C)
+#define _BSEC_AP_UNLOCK			U(0xE90)
+#define _BSEC_DBGACR			U(0xEAC)
 #define _BSEC_VERR			U(0xFF4)
 #define _BSEC_IPIDR			U(0xFF8)
 
@@ -114,6 +117,10 @@
 #define STM32MP2_UPPER_BASE		256
 
 #define BSEC_VERR_1_2			U(0x00000012)
+
+/* Dummy value for ADAC emulation on BSEC_DBGMCR and BSEC_DBGACR */
+#define BSEC_DBGxCR_DUMMY_ADAC		U(0xb4b4b400)
+#define BSEC_AP_UNLOCK_DUMMY_ADAC	U(0x000000b4)
 
 struct nvmem_cell {
 	const char *cell_label;
@@ -395,6 +402,12 @@ void stm32_bsec_write_debug_conf(uint32_t val)
 
 	mmio_write_32(drv_cfg->base + _BSEC_DENR,
 		      drv_data->variant->denr_key | masked_val);
+
+	if (drv_data->verr >= BSEC_VERR_1_2) {
+		mmio_write_32(drv_cfg->base + _BSEC_DBGACR, BSEC_DBGxCR_DUMMY_ADAC);
+		mmio_write_32(drv_cfg->base + _BSEC_DBGMCR, BSEC_DBGxCR_DUMMY_ADAC);
+		mmio_write_32(drv_cfg->base + _BSEC_AP_UNLOCK, BSEC_AP_UNLOCK_DUMMY_ADAC);
+	}
 
 	bsec_release_semaphore();
 }

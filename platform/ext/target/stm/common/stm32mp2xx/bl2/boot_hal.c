@@ -396,7 +396,7 @@ int stm32mp2_init_debug(void)
 	BOOT_LOG_WRN("\033[1;31m* wait debugger interrupt     *\033[0m");
 	BOOT_LOG_WRN("\033[1;31m*******************************\033[0m");
 	stm32_bsec_write_debug_conf(DBG_FULL);
-        __WFI();
+	__WFI();
 #else
 #if !defined(DAUTH_CHIP_DEFAULT)
 #error "No debug authentication setting is provided."
