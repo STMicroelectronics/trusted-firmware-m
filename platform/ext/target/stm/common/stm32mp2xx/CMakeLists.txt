@@ -181,6 +181,7 @@ if(TFM_PARTITION_CRYPTO)
 		PUBLIC
 			dt_platform_s_defs
 			platform_region_defs
+			platform_s
 	)
 endif()
 
