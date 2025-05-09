@@ -1,0 +1,29 @@
+/*
+ * Copyright (c) 2019-2022, Arm Limited. All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ */
+
+/***********{{utilities.donotedit_warning}}***********/
+
+#ifndef __NS_EVT_H__
+#define __NS_EVT_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
+{% set mask = namespace(value=0) %}
+{% for partition in partitions %}
+    {% if partition.manifest.ns_evts %}
+        {% for evt in partition.manifest.ns_evts %}
+#define {{"%-58s"|format(evt.name + "_NS_EVT")}} ({{"0x%8.8x"|format(evt.evt_value)}})
+        {% set mask.value =  mask.value + evt.evt_value  %}
+        {% endfor %}
+    {% endif %}
+{% endfor %}
+#define {{"%-55s"|format("NS_EVT_MASK")}} ({{"0x%x"|format(mask.value)}})
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __NS_EVT_H__ */

@@ -100,6 +100,9 @@ struct partition_load_info_t {
     uint32_t        nservices;          /* Service number                   */
     uint32_t        nassets;            /* Asset numbers                    */
     uint32_t        nirqs;              /* Number of IRQ owned by Partition */
+#if PLATFORM_HAS_NS_NOTIF
+    uint32_t        ns_evt_owned;       /* NS Event owned by Partition      */
+#endif
     int32_t         client_id_base;     /* The min translated client ID     */
     int32_t         client_id_limit;    /* The max translated client ID     */
 } __attribute__((aligned(4)));

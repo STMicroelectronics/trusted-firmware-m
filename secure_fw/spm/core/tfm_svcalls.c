@@ -21,6 +21,7 @@
 #include "tfm_hal_isolation.h"
 #include "tfm_hal_spm_logdev.h"
 #include "tfm_core_trustzone.h"
+#include "tfm_ns_notif.h"
 #include "utilities.h"
 #include "ffm/backend.h"
 #include "ffm/psa_api.h"
@@ -78,6 +79,9 @@ static psa_api_svc_func_t psa_api_svc_func_table[] = {
     (psa_api_svc_func_t)tfm_spm_agent_psa_call,
     (psa_api_svc_func_t)tfm_spm_agent_psa_connect,
     (psa_api_svc_func_t)tfm_spm_agent_psa_close,
+#if PLATFORM_HAS_NS_NOTIF
+   (psa_api_svc_func_t)ns_notif,
+#endif
 };
 
 static uint32_t thread_mode_spm_return(uint32_t result)
@@ -238,6 +242,11 @@ static uint32_t handle_spm_svc_requests(uint32_t svc_number, uint32_t exc_return
     case TFM_SVC_THREAD_MODE_SPM_RETURN:
         exc_return = thread_mode_spm_return(svc_args[0]);
         break;
+#endif
+#if PLATFORM_HAS_NS_NOTIF
+    case TFM_SVC_NS_NOTIF:
+	svc_args[0] = ns_notif(svc_args[0]);
+	break;
 #endif
     default:
         SPMLOG_ERRMSGVAL("Unknown SPM SVC requested: ", svc_number);

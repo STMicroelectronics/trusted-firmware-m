@@ -12,6 +12,7 @@
 #include "spm.h"
 #include "svc_num.h"
 #include "tfm_psa_call_pack.h"
+#include "tfm_ns_notif.h"
 #include "psa/client.h"
 #include "psa/lifecycle.h"
 #include "psa/service.h"
@@ -276,4 +277,7 @@ const struct psa_api_tbl_t psa_api_thread_fn_call = {
                                 agent_psa_close_thread_fn_call,
 #endif /* CONFIG_TFM_CONNECTION_BASED_SERVICE_API == 1 */
 #endif /* TFM_PARTITION_NS_AGENT_MAILBOX */
+#if PLATFORM_HAS_NS_NOTIF
+                                ns_notif,
+#endif /* PLATFORM_HAS_NS_NOTIF */
                             };

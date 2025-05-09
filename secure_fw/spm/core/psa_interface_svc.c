@@ -186,6 +186,14 @@ __naked psa_status_t agent_psa_close_svc(psa_handle_t handle, int32_t ns_client_
 
 #endif /* CONFIG_TFM_CONNECTION_BASED_SERVICE_API == 1 */
 #endif /* TFM_PARTITION_NS_AGENT_MAILBOX */
+#if PLATFORM_HAS_NS_NOTIF
+__naked psa_status_t ns_notif_svc(uint32_t event)
+{
+    __asm volatile("svc     "M2S(TFM_SVC_NS_NOTIFY)"           \n"
+                   "bx      lr                                 \n");
+}
+
+#endif
 
 const struct psa_api_tbl_t psa_api_svc = {
                                 tfm_psa_call_pack_svc,
@@ -225,4 +233,7 @@ const struct psa_api_tbl_t psa_api_svc = {
                                 agent_psa_close_svc,
 #endif /* CONFIG_TFM_CONNECTION_BASED_SERVICE_API == 1 */
 #endif /* TFM_PARTITION_NS_AGENT_MAILBOX */
+#if PLATFORM_HAS_NS_NOTIF
+				ns_notif_svc,
+#endif
                             };

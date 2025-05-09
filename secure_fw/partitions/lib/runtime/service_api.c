@@ -10,6 +10,7 @@
 #include "psa/service.h"
 #include "svc_num.h"
 #include "utilities.h"
+#include "tfm_ns_notif.h"
 
 __attribute__((naked))
 psa_status_t tfm_core_get_boot_data(uint8_t major_type,
@@ -21,6 +22,17 @@ psa_status_t tfm_core_get_boot_data(uint8_t major_type,
         "BX     lr                                         \n"
         );
 }
+
+#if PLATFORM_HAS_NS_NOTIF
+__attribute__((naked))
+psa_status_t tfm_ns_notif_flih(uint32_t event)
+{
+    __ASM volatile(
+        "SVC    "M2S(TFM_SVC_NS_NOTIF)"           \n"
+        "BX     lr                                \n"
+        );
+}
+#endif
 
 #if TFM_ISOLATION_LEVEL != 1
 /* Entry point when Partition FLIH functions return */

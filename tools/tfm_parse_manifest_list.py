@@ -36,7 +36,7 @@ sid_list = []
 
 # Summary of manifest attributes defined by FFM for use in the Secure Partition manifest file.
 ffm_manifest_attributes = ['psa_framework_version', 'name', 'type', 'priority', 'model', 'entry_point', \
-'stack_size', 'description', 'entry_init', 'heap_size', 'mmio_regions', 'services', 'irqs', 'dependencies',\
+'stack_size', 'description', 'entry_init', 'heap_size', 'mmio_regions', 'services', 'irqs', 'ns_evts', 'dependencies',\
 'client_id_base', 'client_id_limit', 'overload']
 
 class TemplateLoader(BaseLoader):
@@ -260,6 +260,7 @@ def process_partition_manifests(manifest_lists, configs):
     pid_replaceable_list = []
     no_pid_manifest_idx = []
     service_partition_map = {}
+    ns_notification_map = {}
     partition_statistics = {
         'connection_based_srv_num': 0,
         'ipc_partitions': [],
@@ -282,6 +283,9 @@ def process_partition_manifests(manifest_lists, configs):
         'HIGH'                : '03',
         'HIGHEST'             : '04'
     }
+    # Set initial value to -1 to make (evt + 1) reflect the correct
+    # number (0) when there are no irqs.
+    event_used = 0
 
     isolation_level = int(configs['TFM_ISOLATION_LEVEL'], base = 10)
     backend = configs['CONFIG_TFM_SPM_BACKEND']
@@ -399,7 +403,7 @@ def process_partition_manifests(manifest_lists, configs):
                 service['signal_value'] = (1 << srv_idx)
             if service['connection_based']:
                 partition_statistics['connection_based_srv_num'] += 1
-        logging.debug('{} has {} services'.format(manifest['name'], srv_idx +1))
+        logging.debug('{} has {} services'.format(manifest['name'], srv_idx + 1))
 
         # Calculate the number of mmio region
         mmio_region_list = manifest.get('mmio_regions', [])
@@ -420,6 +424,17 @@ def process_partition_manifests(manifest_lists, configs):
         if ((srv_idx + 1) + (irq_idx + 1)) > 28:
             raise Exception('Total number of Services and IRQs of {} exceeds the limit (28)'
                             .format(manifest['name']))
+
+        event_idx=-1
+        for event_idx, evt in enumerate(manifest.get('ns_evts', [])):
+            ns_notification_map[evt['name']] = manifest['name']
+            # Assign signal value, from the most significant bit
+            if (event_idx + event_used) >= 32:
+                raise Exception('Total number of event  {} exceeds the limit(32)')
+            evt['evt_value'] = (1 << (31 - (event_idx + event_used)))
+            evt['name'] = manifest['name'] + "_" + evt['name']
+        event_used = event_used+event_idx+1
+        logging.debug('{} has {} NS EVT'.format(manifest['name'], event_idx +1))
 
         manifest_out_basename = os.path.splitext(os.path.basename(manifest_path))[0]
 

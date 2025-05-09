@@ -42,6 +42,10 @@ struct partition_head_t partition_listhead;
 extern uintptr_t spm_boundary;
 #endif
 
+#if PLATFORM_HAS_NS_NOTIF
+extern uint32_t ns_evt_owned;
+#endif
+
 #ifdef CONFIG_TFM_USE_TRUSTZONE
 /* Instance for SPM_THREAD_CONTEXT */
 struct context_ctrl_t *p_spm_thread_context;
@@ -559,6 +563,9 @@ uint64_t ipc_schedule(uint32_t exc_return)
         tfm_core_panic();
     }
     p_partition_metadata = (uintptr_t)(p_part_next->p_metadata);
+#if PLATFORM_HAS_NS_NOTIF
+    ns_evt_owned = p_part_next->p_ldinf->ns_evt_owned;
+#endif
 
     /*
      * ctx_ctrl is set from struct thread_t's p_context_ctrl, and p_part_curr

@@ -134,6 +134,16 @@ const struct partition_{{manifest.name|lower}}_load_info_t {{manifest.name|lower
         .client_id_base             = {{manifest.client_id_base}},
         .client_id_limit            = {{manifest.client_id_limit}},
 {% endif %}
+#if PLATFORM_HAS_NS_NOTIF
+{% set mask = namespace(value=0) %}
+{% if manifest.ns_evts %}
+   {% for evt in manifest.ns_evts %}
+        {% set mask.value =  mask.value + evt.evt_value  %}
+   {% endfor %}
+{% endif %}
+      .ns_evt_owned = ({{"0x%x"|format(mask.value)}}),
+#endif
+
     },
 {% if config_impl['CONFIG_TFM_SPM_BACKEND_IPC'] == '1' or manifest.model == "IPC" %}
     .stack_addr                     = (uintptr_t){{manifest.name|lower}}_stack,

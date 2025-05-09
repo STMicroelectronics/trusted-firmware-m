@@ -36,6 +36,12 @@
         "description": "CMake variables generated",
         "template": "tools/config_impl.cmake.template",
         "output": "tools/config_impl.cmake"
-    }
+    },
+    {
+        "description": "NS EVENT H file",
+        "template": "interface/include/ns_evt.h.template",
+        "output": "interface/include/ns_evt.h"
+    },
+
   ]
 }

@@ -49,6 +49,10 @@ install(FILES       ${INTERFACE_INC_DIR}/tfm_psa_call_pack.h
 install(FILES       ${CMAKE_BINARY_DIR}/generated/interface/include/psa/framework_feature.h
         DESTINATION ${INSTALL_INTERFACE_INC_DIR}/psa)
 
+install(FILES       ${INTERFACE_INC_DIR}/tfm_ns_notif_api.h
+                    ${CMAKE_BINARY_DIR}/generated/interface/include/ns_evt.h
+        DESTINATION ${INSTALL_INTERFACE_INC_DIR})
+
 if (TFM_PARTITION_NS_AGENT_MAILBOX)
     install(FILES       ${INTERFACE_INC_DIR}/multi_core/tfm_multi_core_api.h
                         ${INTERFACE_INC_DIR}/multi_core/tfm_ns_mailbox.h
@@ -132,6 +136,11 @@ if(PLATFORM_DEFAULT_CRYPTO_KEYS)
 endif()
 
 ####################### export sources #########################################
+
+if (PLATFORM_HAS_NS_NOTIF)
+install(FILES       ${INTERFACE_SRC_DIR}/tfm_ns_notif_api.c
+        DESTINATION ${INSTALL_INTERFACE_SRC_DIR})
+endif()
 
 if (TFM_PARTITION_NS_AGENT_MAILBOX)
     install(FILES       ${INTERFACE_SRC_DIR}/multi_core/tfm_ns_mailbox.c

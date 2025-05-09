@@ -59,6 +59,20 @@ int32_t tfm_ns_interface_dispatch(veneer_fn fn,
  */
 uint32_t tfm_ns_interface_init(void);
 
+/**
+ * \brief Secure Event initialization function
+ *
+ * \details This function initializes the ns element involved in ns notifcation
+ * from secure
+ *
+ * \note    NSPE can use default implementation of this function or implement
+ *          this function according to NS specific implementation and actual
+ *          usage scenario.
+ *
+ * \return \ref OS_WRAPPER_SUCCESS on success or \ref OS_WRAPPER_ERROR on error
+ */
+uint32_t tfm_ns_init_secure_event(void);
+
 #ifdef __cplusplus
 }
 #endif

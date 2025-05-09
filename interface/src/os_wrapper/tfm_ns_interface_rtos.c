@@ -13,10 +13,11 @@
  */
 
 #include <stdint.h>
-
+#include <stdio.h>
 #include "os_wrapper/mutex.h"
-
+#include "os_wrapper/semaphore.h"
 #include "tfm_ns_interface.h"
+#include "tfm_plat_ns.h"
 
 /**
  * \brief the ns_lock ID
@@ -54,3 +55,50 @@ uint32_t tfm_ns_interface_init(void)
     ns_lock_handle = handle;
     return OS_WRAPPER_SUCCESS;
 }
+
+#if PLATFORM_HAS_NS_NOTIF
+#define MAX_NS_CTX_QUEUE 1
+#define NS_SEC_CTX_STACK 0x2000
+static void *semaphore_ns_sec_ctx;
+
+/*
+ * function called in non secure handler executed following non secure
+ * interruption raised by secure .
+ */
+void tfm_ns_post_sem_sec_ctx(void)
+{
+    os_wrapper_semaphore_release(semaphore_ns_sec_ctx);
+}
+
+void tfm_ns_sec_process(void *arg)
+{
+    uint32_t err;
+
+    if (tfm_ns_platform_post_init()) {
+        printf("\r\nns plat post init failed\r\n");
+        /* Avoid undefined behavior if platform init failed */
+        while (1);
+    }
+
+    /*  Call the test service , that triggers the 1st interrupt */
+    do {
+
+        err = os_wrapper_semaphore_acquire(semaphore_ns_sec_ctx, OS_WRAPPER_WAIT_FOREVER);
+
+        /*  psa api call */
+        if (err == OS_WRAPPER_SUCCESS) {
+            if (tfm_ns_platform_sec_ctx_call())
+                printf("\r\nSec ctx Call failed\r\n");
+        }
+        else {
+            printf("\r\nSemaphore %x Error\r\n", err);
+	}
+    } while (1);
+}
+
+uint32_t tfm_ns_init_secure_event(void)
+{
+    semaphore_ns_sec_ctx = os_wrapper_semaphore_create(MAX_NS_CTX_QUEUE, 0, "ns_sec_ctx");
+    return OS_WRAPPER_SUCCESS;
+}
+#endif

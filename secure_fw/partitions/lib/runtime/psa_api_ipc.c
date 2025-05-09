@@ -183,3 +183,10 @@ psa_status_t agent_psa_close(psa_handle_t handle, int32_t ns_client_id)
 }
 #endif /* CONFIG_TFM_CONNECTION_BASED_SERVICE_API == 1 */
 #endif /* TFM_PARTITION_NS_AGENT_MAILBOX */
+
+#ifdef PLATFORM_HAS_NS_NOTIF
+psa_status_t tfm_ns_notif(uint32_t event)
+{
+    return PART_METADATA()->psa_fns->ns_notif(event);
+}
+#endif /* PLATFORM_HAS_NS_NOTIF */
