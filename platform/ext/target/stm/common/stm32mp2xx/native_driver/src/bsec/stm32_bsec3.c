@@ -391,6 +391,9 @@ void stm32_bsec_write_debug_conf(uint32_t val)
 	uint32_t masked_val = val & drv_data->variant->denr_all_mask;
 	int sem_ret;
 
+	if (!IS_ENABLED(STM32_M33TDCID))
+		return;
+
 	sem_ret = bsec_get_semaphore();
 	if (sem_ret)
 		return;
@@ -408,6 +411,27 @@ void stm32_bsec_write_debug_conf(uint32_t val)
 		mmio_write_32(drv_cfg->base + _BSEC_DBGMCR, BSEC_DBGxCR_DUMMY_ADAC);
 		mmio_write_32(drv_cfg->base + _BSEC_AP_UNLOCK, BSEC_AP_UNLOCK_DUMMY_ADAC);
 	}
+
+	bsec_release_semaphore();
+}
+
+void stm32_bsec_restore_cortexa_debug_conf(void)
+{
+	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
+	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
+	int sem_ret;
+
+	if (!IS_ENABLED(STM32_M33TDCID))
+		return;
+
+	if (drv_data->verr < BSEC_VERR_1_2)
+		return;
+
+	sem_ret = bsec_get_semaphore();
+	if (sem_ret)
+		return;
+
+	mmio_write_32(drv_cfg->base + _BSEC_DBGACR, BSEC_DBGxCR_DUMMY_ADAC);
 
 	bsec_release_semaphore();
 }
