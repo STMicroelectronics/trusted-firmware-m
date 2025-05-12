@@ -20,6 +20,7 @@
 #include <reset.h>
 #include <clk.h>
 #include <cmsis.h>
+#include <stm32_bsec3.h>
 
 #define IRQ_INVALID	UINT32_MAX
 
@@ -212,6 +213,9 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 	err = reset_control_deassert(&cfg->rst_ctl);
 	if (err)
 		return err;
+
+	/* Restore a35 debug configuration */
+	stm32_bsec_restore_cortexa_debug_conf();
 
 	/*  check cpu is not in holbot */
 	return mmio_read32_poll_timeout(((uint32_t)&PWR_S->CPU1D1SR), cfgr,
