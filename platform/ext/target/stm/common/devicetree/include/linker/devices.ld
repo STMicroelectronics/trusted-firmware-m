@@ -11,6 +11,10 @@
 		KEEP(*(SORT(._##object##_##level?_*)));	\
 		KEEP(*(SORT(._##object##_##level??_*)));
 
+#define DEVICE_SORT_BY_LEVEL(level)				\
+		KEEP(*(SORT(._device.static.##level##_?_*)));	\
+		KEEP(*(SORT(._device.static.##level##_??_*)));
+
     /*
      * To support firmware image encryption by OP-TEE (TF-M running on a coprocessor),
      * we need to align all sections to have a modulo 16 size. This size is the atomic block size to
@@ -46,8 +50,12 @@
 	device_area : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
 	{
 		_device_list_start = .;
-		KEEP(*(SORT(._device.static.*_?_*)));
-		KEEP(*(SORT(._device.static.*_??_*)));
+		DEVICE_SORT_BY_LEVEL(0) /* INIT_ORD_EARLY */
+		DEVICE_SORT_BY_LEVEL(1) /* INIT_ORD_ARCH */
+		DEVICE_SORT_BY_LEVEL(2) /* INIT_ORD_PRE_CORE */
+		DEVICE_SORT_BY_LEVEL(3) /* INIT_ORD_CORE */
+		DEVICE_SORT_BY_LEVEL(4) /* INIT_ORD_POST_CORE */
+		DEVICE_SORT_BY_LEVEL(5) /* INIT_ORD_REST */
 		_device_list_end = .;
 		. = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
 	} > FLASH
@@ -55,5 +63,14 @@
 	.__device_handles_pass1 : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
 	{
 		KEEP (*(.__device_handles_pass1));
+		. = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
+	} > FLASH
+
+
+	pm_device_slots_area : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
+	{
+		_pm_device_slots_list_start = .;
+		KEEP(*(SORT_BY_NAME(._pm_device_slots.static.*)));
+		_pm_device_slots_list_end = .;
 		. = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
 	} > FLASH

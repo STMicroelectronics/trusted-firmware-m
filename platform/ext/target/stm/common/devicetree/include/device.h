@@ -110,6 +110,7 @@ typedef int16_t device_handle_t;
  * (including terminating `NULL`) in order to be looked up from user mode.
  * @param init_fn Pointer to the device's initialization function, which will be
  * run by the kernel during system initialization. Can be `NULL`.
+ * @param pm Reference to @ref pm_device_base associated with the device. (optional)
  * @param data Pointer to the device's private mutable data, which will be
  * stored in @ref device.data.
  * @param config Pointer to the device's private constant data, which will be
@@ -120,11 +121,10 @@ typedef int16_t device_handle_t;
  * SYS_INIT() for details.
  * @param api Pointer to the device's API structure. Can be `NULL`.
  */
-#define DEVICE_DEFINE(dev_id, name, init_fn, data, config, level, prio,    \
-		      api)                                                     \
-	DEVICE_STATE_DEFINE(dev_id);                                         \
-	__DEVICE_DEFINE(DT_INVALID_NODE, dev_id, name, init_fn, data,      \
-			config, level, prio, api,                              \
+#define DEVICE_DEFINE(dev_id, name, init_fn, pm, data, config, level, prio, api)\
+	DEVICE_STATE_DEFINE(dev_id);						\
+	__DEVICE_DEFINE(DT_INVALID_NODE, dev_id, name, init_fn, data,		\
+			config, level, prio, api, pm,				\
 			&DEVICE_STATE_NAME(dev_id))
 
 /**
@@ -158,6 +158,7 @@ typedef int16_t device_handle_t;
  * @param node_id The devicetree node identifier.
  * @param init_fn Pointer to the device's initialization function, which will be
  * run by the kernel during system initialization. Can be `NULL`.
+ * @param pm Reference to @ref pm_device_base associated with the device. (optional)
  * @param data Pointer to the device's private mutable data, which will be
  * stored in @ref device.data.
  * @param config Pointer to the device's private constant data, which will be
@@ -167,13 +168,13 @@ typedef int16_t device_handle_t;
  * SYS_INIT() for details.
  * @param api Pointer to the device's API structure. Can be `NULL`.
  */
-#define DEVICE_DT_DEFINE(node_id, init_fn, data, config, level, prio, api,  \
-			 ...)						    \
-	DEVICE_STATE_DEFINE(DEVICE_DT_DEV_ID(node_id));			    \
-	__DEVICE_DEFINE(node_id, DEVICE_DT_DEV_ID(node_id),		    \
-			DEVICE_DT_NAME(node_id), init_fn, data, config,	    \
-			level, prio, api,                                   \
-			&DEVICE_STATE_NAME(DEVICE_DT_DEV_ID(node_id)),      \
+#define DEVICE_DT_DEFINE(node_id, init_fn, pm, data, config, level,		\
+			 prio, api, ...)					\
+	DEVICE_STATE_DEFINE(DEVICE_DT_DEV_ID(node_id));				\
+	__DEVICE_DEFINE(node_id, DEVICE_DT_DEV_ID(node_id),			\
+			DEVICE_DT_NAME(node_id), init_fn, data, config,		\
+			level, prio, api, pm,					\
+			&DEVICE_STATE_NAME(DEVICE_DT_DEV_ID(node_id)),		\
 			__VA_ARGS__)
 
 /**
@@ -372,6 +373,10 @@ struct device {
 	struct device_state *state;
 	/** Address of the device instance private data */
 	void *data;
+	/** Reference to the device PM */
+#if defined(CONFIG_PM_DEVICE)
+	struct pm_device *pm;
+#endif
 	/**
 	 * Optional pointer to handles associated with the device.
 	 *
@@ -391,6 +396,16 @@ static inline const void *dev_get_config(const struct device *dev)
 {
 	return dev ? dev->config : NULL;
 }
+
+/**
+ * @brief Get access to array of static devices.
+ *
+ * @param devices where to store the pointer to the array of statically
+ * allocated devices. The array must not be mutated through this pointer.
+ *
+ * @return the number of statically allocated devices.
+ */
+size_t device_get_all(const struct device **devices);
 
 /**
  * @brief Verify that a device is ready for use.
@@ -520,9 +535,12 @@ bool device_is_ready(const struct device *dev);
  *
  * @param name Device name.
  */
-#define DEVICE_NAME_CHECK(name)                                              \
-	BUILD_ASSERT(sizeof(STRINGIFY(name)) <= DEVICE_MAX_NAME_LEN,       \
+#define DEVICE_NAME_CHECK(name)							\
+	BUILD_ASSERT(sizeof(STRINGIFY(name)) <= DEVICE_MAX_NAME_LEN,		\
 			    STRINGIFY(DEVICE_NAME_GET(name)) " too long")
+
+
+#define DEVICE_INIT_PM(pm_) (.pm = (pm_),)
 
 /**
  * @brief Initializer for @ref device.
@@ -534,14 +552,15 @@ bool device_is_ready(const struct device *dev);
  * @param state_ Reference to device state.
  * @param handles_ Reference to device handles.
  */
-#define DEVICE_INIT(name_, data_, config_, api_, state_, handles_)      \
-	{                                                                      \
-		.name = name_,                                                 \
-		.config = (config_),                                           \
-		.api = (api_),                                                 \
-		.state = (state_),                                             \
-		.data = (data_),                                               \
-		.handles = (handles_),                                         \
+#define DEVICE_INIT(name_, data_, config_, api_, pm_, state_, handles_, ...)	\
+	{									\
+		.name = name_,							\
+		.config = (config_),						\
+		.api = (api_),							\
+		.state = (state_),						\
+		.data = (data_),						\
+		.handles = (handles_),						\
+		IF_ENABLED(CONFIG_PM_DEVICE, DEVICE_INIT_PM(pm_))		\
 	}
 
 /**
@@ -550,7 +569,7 @@ bool device_is_ready(const struct device *dev);
  * @param level Initialization level
  * @param prio Initialization priority
  */
-#define DEVICE_SECTION_NAME(level, prio)                                     \
+#define DEVICE_SECTION_NAME(level, prio)					\
 	_CONCAT(INIT_LEVEL_ORD(level), _##prio)
 
 /**
@@ -567,13 +586,13 @@ bool device_is_ready(const struct device *dev);
  * @param api Reference to device API.
  * @param ... Optional dependencies, manually specified.
  */
-#define DEVICE_BASE_DEFINE(node_id, dev_id, name, data, config, level,   \
-			     prio, api, state, handles)                        \
-	COND_CODE_1(DT_NODE_EXISTS(node_id), (), (static))                     \
-	const STRUCT_SECTION_ITERABLE_NAMED(device,                            \
-		DEVICE_SECTION_NAME(level, prio),                            \
-		DEVICE_NAME_GET(dev_id)) =                                     \
-		DEVICE_INIT(name, data, config, api, state, handles)
+#define DEVICE_BASE_DEFINE(node_id, dev_id, name, data, config, level,		\
+			     prio, api, pm, state, handles)			\
+	COND_CODE_1(DT_NODE_EXISTS(node_id), (), (static))			\
+	const STRUCT_SECTION_ITERABLE_NAMED(device,				\
+		DEVICE_SECTION_NAME(level, prio),				\
+		DEVICE_NAME_GET(dev_id)) =					\
+		DEVICE_INIT(name, data, config, api, pm, state, handles)
 
 /**
  * @brief Define the init entry for a device.
@@ -610,15 +629,15 @@ bool device_is_ready(const struct device *dev);
  * @param state Reference to device state.
  * @param ... Optional dependencies, manually specified.
  */
-#define __DEVICE_DEFINE(node_id, dev_id, name, init_fn, data, config,      \
-			level, prio, api, state, ...)                          \
-	DEVICE_NAME_CHECK(name);                                             \
-                                                                               \
-	DEVICE_HANDLES_DEFINE(node_id, dev_id, __VA_ARGS__);                 \
-                                                                               \
-	DEVICE_BASE_DEFINE(node_id, dev_id, name, data, config, level,   \
-			     prio, api, state, DEVICE_HANDLES_NAME(dev_id)); \
-                                                                               \
+#define __DEVICE_DEFINE(node_id, dev_id, name, init_fn, data, config,		\
+			level, prio, api, pm, state, ...)			\
+	DEVICE_NAME_CHECK(name);						\
+										\
+	DEVICE_HANDLES_DEFINE(node_id, dev_id, __VA_ARGS__);			\
+										\
+	DEVICE_BASE_DEFINE(node_id, dev_id, name, data, config, level, prio,	\
+			   api, pm, state, DEVICE_HANDLES_NAME(dev_id));	\
+										\
 	DEVICE_INIT_ENTRY_DEFINE(dev_id, init_fn, level, prio)
 
 /**

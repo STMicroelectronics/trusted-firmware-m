@@ -1,0 +1,42 @@
+/*
+ * Copyright (C) 2025, STMicroelectronics
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ */
+#ifndef  TFM_PM_H
+#define  TFM_PM_H
+
+#include <tfm_platform_system.h>
+#include <lib/utils_def.h>
+
+/*
+ * Platform hints on targeted power state. Hints are stored in a 32bit
+ * unsigned value. Lower bits defines generic resource bit flags. Higher
+ * bits stores a platform specific value specific platform driver may
+ * understand. Registered callbacks may choose to use or ignore these hints.
+ *
+ * PM_HINT_CLOCK_STATE - When set clock shall be suspended/restored
+ * PM_HINT_POWER_STATE - When set device power shall be suspended/restored
+ * PM_HINT_IO_STATE - When set IO pins shall be suspended/restored
+ * PM_HINT_CONTEXT_STATE - When set the full context be suspended/restored
+ * PM_HINT_PLATFORM_STATE_MASK - Bit mask reserved for platform specific hints
+ * PM_HINT_PLATFORM_STATE_SHIFT - LSBit position of platform specific hints mask
+ */
+#define PM_HINT_CLOCK_STATE		BIT(0)
+#define PM_HINT_POWER_STATE		BIT(1)
+#define PM_HINT_IO_STATE		BIT(2)
+#define PM_HINT_CONTEXT_STATE		BIT(3)
+#define PM_HINT_PLATFORM_STATE_MASK	GENMASK_32(31, 16)
+#define PM_HINT_PLATFORM_STATE_SHIFT	U(16)
+
+/**
+ * @brief suspend the system in hint state
+ *
+ * @param[in]  pm_hint     Hint (PM_HINT_*) on state the platform suspends to/resumes from.
+ *
+ * @return True if the system suspended, otherwise return false
+ */
+enum tfm_platform_err_t pm_service(const psa_invec *in_vec);
+
+#endif /* TFM_PM_H */
