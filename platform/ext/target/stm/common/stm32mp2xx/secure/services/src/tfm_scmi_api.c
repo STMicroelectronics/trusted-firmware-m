@@ -25,3 +25,10 @@ psa_status_t tfm_scmi_req(void *req, size_t req_len, void *rsp, size_t rsp_len )
 			  &out_vec, 1);
 	return status;
 }
+
+psa_status_t tfm_secure_scmi_req(uint32_t agent_id)
+{
+
+	return psa_call(TFM_SCP_SERVICE_HANDLE, agent_id, NULL, 0,
+			  NULL, 0);
+}

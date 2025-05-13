@@ -17,7 +17,7 @@
       {
           "name": "TFM_SCP_SERVICE",
           "sid": "0x000000F0",
-          "non_secure_clients": false,
+          "non_secure_clients": true,
           "connection_based": false,
           "version": 1,
           "version_policy": "STRICT",
