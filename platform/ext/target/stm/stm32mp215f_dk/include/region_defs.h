@@ -107,8 +107,13 @@
 #define S_CODE_SIZE			(IMAGE_S_CODE_SIZE - BL2_HEADER_SIZE)
 #define S_CODE_LIMIT			(S_CODE_START + S_CODE_SIZE - 1)
 /* SCMI SHMEM */
+#if STM32_M33TDCID
 #define S_SCMI_ADDR			DT_REG_ADDR(DT_NODELABEL(scmi_cid1_ns))
 #define S_SCMI_SIZE			DT_REG_SIZE(DT_NODELABEL(scmi_cid1_ns))
+#else
+#define S_SCMI_ADDR			DT_REG_ADDR(DT_NODELABEL(scmi_cid2_ns))
+#define S_SCMI_SIZE			DT_REG_SIZE(DT_NODELABEL(scmi_cid2_ns))
+#endif
 
 /* Non-secure regions */
 #define NS_CODE_START			(DDR_CAHB_ALIAS(NS_IMAGE_RAM_OFFSET))
