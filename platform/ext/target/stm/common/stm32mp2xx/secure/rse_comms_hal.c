@@ -10,7 +10,6 @@
 #include <mbox.h>
 #include "tfm_multi_core.h"
 #include "rse_comms_hal.h"
-
 #include "rse_comms.h"
 #include "rse_comms_queue.h"
 #include "tfm_hal_device_header.h"
@@ -23,6 +22,8 @@
 #include "psa_manifest/pid.h"
 #include "psa_manifest/sid.h"
 #include "region_defs.h"
+#include "tfm_ns_notif.h"
+#include "ns_evt.h"
 
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,"only one st,psa-mbox node may be present");
 /* Secure RSS SHMEM */
@@ -44,7 +45,7 @@ static void rx_psa(const struct device *dev,
 		   struct mbox_msg *data)
 {
 	tfm_multi_core_hal_receive(CLIENT_ID_OWNER_MAGIC, CLIENT_ID_OWNER_MAGIC, 0);
-	psa_call(TFM_MBOX_SERVICE_HANDLE, TFM_MBOX_SERVICE_SID, NULL, 0, NULL, 0);
+	tfm_ns_notif_flih(TFM_SP_IPCC_RSE_NS_EVT);
 }
 
 static inline bool sendmsg(void *msg, size_t msg_len)
