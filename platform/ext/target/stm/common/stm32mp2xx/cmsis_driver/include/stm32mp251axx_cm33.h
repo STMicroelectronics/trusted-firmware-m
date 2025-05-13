@@ -66,6 +66,7 @@
  *          RM0457 - Reference Manual - STM32MP25xx - advanced ARM-based 32/64-bit MPUs
  *          file "DM00485804 (RM0457) Rev0.2.pdf" (Revision 0.2 / 27-Jul-2021)
  */
+
  typedef enum
   {
   /******  Cortex-M Processor Exceptions Numbers ***********************************************/
@@ -4343,6 +4344,7 @@ typedef struct
 #define LTDC_Layer1_BASE_NS                 (LTDC_BASE_NS + 0x100UL)
 #define LTDC_Layer2_BASE_NS                 (LTDC_BASE_NS + 0x200UL)
 #define LTDC_Layer3_BASE_NS                 (LTDC_BASE_NS + 0x300UL)
+
 #define CSI_BASE_NS                         (APB4_PERIPH_BASE_NS + 0x20000UL)
 #define DCMIPP_BASE_NS                      (APB4_PERIPH_BASE_NS + 0x30000UL)
 #define DDRC_BASE_NS                        (APB4_PERIPH_BASE_NS + 0x40000UL)
@@ -10816,6 +10818,7 @@ typedef struct
 /******************************************************************************/
 #define DCMIPP_NUM_OF_PIPES               (0x3U)
 
+#define DCMIPP_CSI2_SUPPORT
 #ifdef STM32MP25XX_SI_CUT1_X
 /*****************  Bit definition for DCMIPP_IPGR1 register  *****************/
 #define DCMIPP_IPGR1_MEMORYPAGE_Pos         (0U)
@@ -51066,7 +51069,7 @@ typedef struct
 /******************************* DCACHE Instances ********************************/
 #define IS_DCACHE_ALL_INSTANCE(INSTANCE) ((INSTANCE) == DCACHE)
 
-/******************************* DCMI Instances *******************************/
+/******************************* CSI Instances *******************************/
 #define IS_CSI_ALL_INSTANCE(INSTANCE) ((INSTANCE) == CSI)
 
 /******************************* DCMI Instances *******************************/

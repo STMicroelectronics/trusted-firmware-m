@@ -58,10 +58,13 @@
   * @{
   */
 
+
  /**
  * @brief stm32mp2_m33 Interrupt Number Definition :
- * Based on TinyPanther_interrupts.xlsm V 0.3 at below location
- * https://epm-st.st.com/ProjectServerST/Tiny%20Panther%20(503)/Working%20documents/Product%20description/
+ *        - according to the selected device in @ref Library_configuration_section
+ *        - according to "Table 187. interrupt mapping for Cortex-M33"
+ *          in chapitre 26 "interrupt list" of reference document
+ *          RM0506 - Reference Manual - STM32MP21xx - advanced ARM-based 32/64-bit MPUs
  */
  typedef enum
   {
@@ -206,7 +209,11 @@
     USBH_EHCI_IRQn              = 126,     /*!< USB Host EHCI Interrupt                        */
     USBH_OHCI_IRQn              = 127,     /*!< USB Host OHCI Interrupt                        */
     DCMI_PSSI_IRQn              = 128,     /*!< DCMI & PSSI global interrupt                   */
+#if ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3))
     CSI2HOST_IRQn               = 129,     /*!< CSI2 Host controller interrupt                 */
+#else
+    RESERVED_129                = 129,     /*!< reserved                                       */
+#endif /* ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3)) */
     RESERVED_130                = 130,     /*!< reserved                                       */
     CRYP1_IRQn                  = 131,     /*!< Crypto1 interrupt                              */
     HASH1_IRQn                  = 132,     /*!< Hash1  interrupt                               */
@@ -218,10 +225,10 @@
     SPI5_IRQn                   = 138,     /*!< SPI5 global interrupt                          */
     SPI6_IRQn                   = 139,     /*!< SPI6 global interrupt                          */
     SAI1_IRQn                   = 140,     /*!< SAI1 global interrupt                          */
-    LTDC_IRQ_IRQn               = 141,     /*!< LTDC global interrupt                          */
-    LTDC_ER_IRQ_IRQn            = 142,     /*!< LTDC global error interrupt                    */
-    LTDC_SEC_IRQ_IRQn           = 143,     /*!< LTDC security global interrupt                 */
-    LTDC_SEC_ER_IRQ_IRQn        = 144,     /*!< LTDC security global error interrupt           */
+    LTDC_IRQn                   = 141,     /*!< LTDC global interrupt                          */
+    LTDC_ER_IRQn                = 142,     /*!< LTDC global error interrupt                    */
+    LTDC_SEC_IRQn               = 143,     /*!< LTDC security global interrupt                 */
+    LTDC_SEC_ER_IRQn            = 144,     /*!< LTDC security global error interrupt           */
     SAI2_IRQn                   = 145,     /*!< SAI2 global interrupt                          */
     OCTOSPI1_IRQn               = 146,     /*!< OCTOSPI1 global interrupt                      */
     RESERVED_147                = 147,     /*!< reserved                                       */
@@ -642,6 +649,7 @@ typedef struct
   __IO uint32_t SIDR;            /*!< CRYP size identification register      Address offset: 0x3FC */
 } CRYP_TypeDef;
 
+#if ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3))
 /*
  * @brief  (CSI)
  */
@@ -708,6 +716,7 @@ typedef struct
   __IO uint32_t IPIDR;            /*!< CSI-2 Host identification register                    Address offset: 0x1FF8 */
   __IO uint32_t SIDR;             /*!< CSI-2 Host size identification register               Address offset: 0x1FFC */
 } CSI_TypeDef;
+#endif /* ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3)) */
 
 /**
   * @brief Debug MCU
@@ -2285,10 +2294,7 @@ typedef struct
        uint32_t RESERVED2;       /*!< Reserved                                                      Address offset: 0x0074 */
   __IO uint32_t ECRCR;           /*!< LTDC expected CRC register                                    Address offset: 0x0078 */
   __IO uint32_t CCRCR;           /*!< LTDC computed CRC register                                    Address offset: 0x007C */
-  __IO uint32_t RB0AR;           /*!< LTDC rotation buffer 0 address register                       Address offset: 0x0080 */
-  __IO uint32_t RB1AR;           /*!< LTDC rotation buffer 1 address register                       Address offset: 0x0084 */
-  __IO uint32_t RBPR;            /*!< LTDC rotation buffer pitch register                           Address offset: 0x0088 */
-  __IO uint32_t RIFCR;           /*!< LTDC rotation intermediate frame color register               Address offset: 0x008C */
+       uint32_t RESERVED3[4];    /*!< Reserved                                                      Address offset: 0x0080-0x008C */
   __IO uint32_t FUTR;            /*!< LTDC FIFO underrun threshold register                         Address offset: 0x0090 */
 } LTDC_TypeDef;
 
@@ -2587,13 +2593,12 @@ typedef struct
   __IO uint32_t CCSR;         /*!< CRC Calculated Signature Register, Address offset: 0x040 */
 } RAMCFG_TypeDef;
 
-/*           Reset and Clock Control (RCC)             */
-/* Reference document :                                */
-/*  https://epm-st.st.com/ProjectServerST/             */
-/*  Tiny%20Panther%20(504)/Working%20documents/      */
-/*  Design/IP%20Design/DIGITAL_IP/ip_rcc_design/       */
-/*   TPanther_RCC_RegDesc.xml                          */
-/*******************************************************/
+/**
+  * @brief Resets & Clocks Control
+  *        reference document : Chapter #20 "Reset and clock control (RCC)"
+  *                             RM0506 - Reference Manual - STM32MP21xx
+  *                             advanced ARM-based 32/64-bit MPUs
+  */
 typedef struct
 {
   __IO uint32_t CIDCFGR; /*!< RCC Resource x CID Configuration Register */
@@ -2786,8 +2791,12 @@ typedef struct
        uint32_t RESERVED27;         /*!< Reserved                                                                       Address offset: 0x083C */
   __IO uint32_t LTDCCFGR;           /*!< RCC LTDC configuration register                                                Address offset: 0x0840 */
        uint32_t RESERVED28[5];      /*!< Reserved                                                                       Address offset: 0x0844-0x0854 */
+#if ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3))
   __IO uint32_t CSICFGR;            /*!< RCC CSI configuration register                                                 Address offset: 0x0858 */
-  __IO uint32_t DCMIPPCFGR;         /*!< RCC DCMIPP configuration register                                              Address offset: 0x085C */
+#else 
+       uint32_t RESERVED_CS;        /*!< Reserved                                                                       Address offset: 0x0858 */
+#endif /* ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3)) */
+  __IO uint32_t DCMIPPCFGR;           /*!< RCC DCMIPP configuration register                                              Address offset: 0x085C */
   __IO uint32_t DCMIPSSICFGR;       /*!< RCC DCMIPSSI configuration register                                            Address offset: 0x0860 */
        uint32_t RESERVED29[3];      /*!< Reserved                                                                       Address offset: 0x0864-0x086C */
   __IO uint32_t RNG1CFGR;           /*!< RCC RNG1 configuration register                                                Address offset: 0x0870 */
@@ -4128,7 +4137,10 @@ typedef struct
 #define LTDC_Layer1_BASE_NS                 (LTDC_BASE_NS + 0x100UL)
 #define LTDC_Layer2_BASE_NS                 (LTDC_BASE_NS + 0x200UL)
 #define LTDC_Layer3_BASE_NS                 (LTDC_BASE_NS + 0x300UL)
+
+#if ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3))
 #define CSI_BASE_NS                         (APB4_PERIPH_BASE_NS + 0x20000UL)
+#endif /* ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3)) */
 #define DCMIPP_BASE_NS                      (APB4_PERIPH_BASE_NS + 0x30000UL)
 #define DDRC_BASE_NS                        (APB4_PERIPH_BASE_NS + 0x40000UL)
 #define DDRDBG_BASE_NS                      (APB4_PERIPH_BASE_NS + 0x50000UL)
@@ -4441,7 +4453,9 @@ typedef struct
 #define LTDC_Layer1_BASE_S                  (LTDC_BASE_S + 0x100UL)
 #define LTDC_Layer2_BASE_S                  (LTDC_BASE_S + 0x200UL)
 #define LTDC_Layer3_BASE_S                  (LTDC_BASE_S + 0x300UL)
+#if ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3))
 #define CSI_BASE_S                          (APB4_PERIPH_BASE_S + 0x20000UL)
+#endif /* ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3)) */
 #define DCMIPP_BASE_S                       (APB4_PERIPH_BASE_S + 0x30000UL)
 #define DDRC_BASE_S                         (APB4_PERIPH_BASE_S + 0x40000UL)
 #define DDRDBG_BASE_S                       (APB4_PERIPH_BASE_S + 0x50000UL)
@@ -4692,7 +4706,9 @@ typedef struct
 #define LTDC_Layer1_NS                      ((LTDC_Layer_TypeDef *) LTDC_Layer1_BASE_NS)
 #define LTDC_Layer2_NS                      ((LTDC_Layer_TypeDef *) LTDC_Layer2_BASE_NS)
 #define LTDC_Layer3_NS                      ((LTDC_Layer_TypeDef *) LTDC_Layer3_BASE_NS)
+#if ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3))
 #define CSI_NS                              ((CSI_TypeDef *) CSI_BASE_NS)
+#endif /* ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3)) */
 #define DCMIPP_NS                           ((DCMIPP_TypeDef *) DCMIPP_BASE_NS)
 #define DDRC_NS                             ((DDRC_TypeDef *) DDRC_BASE_NS)
 #define DDRDBG_NS                           ((DDRDBG_TypeDef *) DDRDBG_BASE_NS)
@@ -4931,7 +4947,9 @@ typedef struct
 #define LTDC_Layer1_S                       ((LTDC_Layer_TypeDef *) LTDC_Layer1_BASE_S)
 #define LTDC_Layer2_S                       ((LTDC_Layer_TypeDef *) LTDC_Layer2_BASE_S)
 #define LTDC_Layer3_S                       ((LTDC_Layer_TypeDef *) LTDC_Layer3_BASE_S)
+#if ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3))
 #define CSI_S                               ((CSI_TypeDef *) CSI_BASE_S)
+#endif /* ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3)) */
 #define DCMIPP_S                            ((DCMIPP_TypeDef *) DCMIPP_BASE_S)
 #define DDRC_S                              ((DDRC_TypeDef *) DDRC_BASE_S)
 #define DDRDBG_S                            ((DDRDBG_TypeDef *) DDRDBG_BASE_S)
@@ -5612,8 +5630,10 @@ typedef struct
 #define LTDC_Layer3                 LTDC_Layer3_S
 #define LTDC_Layer3_BASE            LTDC_Layer3_BASE_S
 
+#if ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3))
 #define CSI                         CSI_S
 #define CSI_BASE                    CSI_BASE_S
+#endif /* ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3)) */
 
 #define DCMIPP                      DCMIPP_S
 #define DCMIPP_BASE                 DCMIPP_BASE_S
@@ -6338,8 +6358,10 @@ typedef struct
 #define LTDC_Layer3                 LTDC_Layer3_NS
 #define LTDC_Layer3_BASE            LTDC_Layer3_BASE_NS
 
+#if ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3))
 #define CSI                         CSI_NS
 #define CSI_BASE                    CSI_BASE_NS
+#endif /* ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3)) */
 
 #define DCMIPP                      DCMIPP_NS
 #define DCMIPP_BASE                 DCMIPP_BASE_NS
@@ -9052,6 +9074,7 @@ typedef struct
 #define CRYP_SIDR_SID_Msk               (0xFFFFFFFFU << CRYP_SIDR_SID_Pos)        /*!< 0xFFFFFFFF */
 #define CRYP_SIDR_SID                   CRYP_SIDR_SID_Msk                         /*!< Size identification code */
 
+#if ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3))
 /******************************************************************************/
 /*                                                                            */
 /*                                    (CSI)                                   */
@@ -10072,7 +10095,7 @@ typedef struct
 #define CSI_SIDR_SID_Pos                (0U)
 #define CSI_SIDR_SID_Msk                (0xFFFFFFFFU << CSI_SIDR_SID_Pos)        /*!< 0xFFFFFFFF */
 #define CSI_SIDR_SID                    CSI_SIDR_SID_Msk                         /*!< Size and ID */
-
+#endif /* ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3)) */
 /******************************************************************************/
 /*                                                                            */
 /*                                DBGMCU                                      */
@@ -10859,7 +10882,11 @@ typedef struct
 /******************************************************************************/
 #define DCMIPP_NUM_OF_PIPES               (0x3U)
 
-#define DCMIPPP_P1HISTOGRAM_AVAILABLE
+#if ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3))
+#define DCMIPP_CSI2_SUPPORT
+#endif /* ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3)) */
+
+#define DCMIPP_P1HISTOGRAM_SUPPORT
 /******************  Bit definition for DCMIPP_IPGR1 register  *****************/
 #define DCMIPP_IPGR1_MEMORYPAGE_Pos         (0U)
 #define DCMIPP_IPGR1_MEMORYPAGE_Msk         (0x7U << DCMIPP_IPGR1_MEMORYPAGE_Pos)           /*!< 0x00000007 */
@@ -30094,31 +30121,6 @@ typedef struct
 #define LTDC_CCRCR_CCRC_Msk           (0xFFFFU << LTDC_CCRCR_CCRC_Pos)     /*!< 0x0000FFFF */
 #define LTDC_CCRCR_CCRC               LTDC_CCRCR_CCRC_Msk        /*!< computed CRC of frame */
 
-/******************  Bit definition for LTDC_RB0AR register  ******************/
-#define LTDC_RB0AR_ADDR_Pos           (0U)
-#define LTDC_RB0AR_ADDR_Msk           (0xFFFFFFFFU << LTDC_RB0AR_ADDR_Pos)         /*!< 0xFFFFFFFF */
-#define LTDC_RB0AR_ADDR               LTDC_RB0AR_ADDR_Msk        /*!< address of the rotation buffer 0 */
-
-/******************  Bit definition for LTDC_RB1AR register  ******************/
-#define LTDC_RB1AR_ADDR_Pos           (0U)
-#define LTDC_RB1AR_ADDR_Msk           (0xFFFFFFFFU << LTDC_RB1AR_ADDR_Pos)         /*!< 0xFFFFFFFF */
-#define LTDC_RB1AR_ADDR               LTDC_RB1AR_ADDR_Msk        /*!< address of the rotation buffer 1 */
-
-/******************  Bit definition for LTDC_RBPR register  *******************/
-#define LTDC_RBPR_PITCH_Pos           (0U)
-#define LTDC_RBPR_PITCH_Msk           (0xFFFFU << LTDC_RBPR_PITCH_Pos)     /*!< 0x0000FFFF */
-#define LTDC_RBPR_PITCH               LTDC_RBPR_PITCH_Msk        /*!< pitch in bytes of the rotation buffers 0 and 1 */
-
-/******************  Bit definition for LTDC_RIFCR register  ******************/
-#define LTDC_RIFCR_RIFBLUE_Pos        (0U)
-#define LTDC_RIFCR_RIFBLUE_Msk        (0xFFU << LTDC_RIFCR_RIFBLUE_Pos)      /*!< 0x000000FF */
-#define LTDC_RIFCR_RIFBLUE            LTDC_RIFCR_RIFBLUE_Msk     /*!< Blue component of the rotation intermediate frame */
-#define LTDC_RIFCR_RIFGREEN_Pos       (8U)
-#define LTDC_RIFCR_RIFGREEN_Msk       (0xFFU << LTDC_RIFCR_RIFGREEN_Pos)       /*!< 0x0000FF00 */
-#define LTDC_RIFCR_RIFGREEN           LTDC_RIFCR_RIFGREEN_Msk    /*!< Green component of the rotation intermediate frame */
-#define LTDC_RIFCR_RIFRED_Pos         (16U)
-#define LTDC_RIFCR_RIFRED_Msk         (0xFFU << LTDC_RIFCR_RIFRED_Pos)     /*!< 0x00FF0000 */
-#define LTDC_RIFCR_RIFRED             LTDC_RIFCR_RIFRED_Msk      /*!< Red component of the rotation intermediate frame */
 
 /******************  Bit definition for LTDC_FUTR register  *******************/
 #define LTDC_FUTR_THRE_Pos            (0U)
@@ -32861,12 +32863,12 @@ typedef struct
 #define RAMCFG_CCSR_CRCCS_Msk               (0xFFFFFFFFUL << RAMCFG_CCSR_CRCCS_Pos) /*!< 0xFFFFFFFF */
 #define RAMCFG_CCSR_CRCCS                   RAMCFG_CCSR_CRCCS_Msk                   /*!< CRC calculated signature */
 
+/*******************************************************/
 /*           Reset and Clock Control (RCC)             */
 /* Reference document :                                */
-/*  https://epm-st.st.com/ProjectServerST/             */
-/*  Tiny%20Panther%20(504)/Working%20documents/      */
-/*  Design/IP%20Design/DIGITAL_IP/ip_rcc_design/       */
-/*   TPanther_RCC_RegDesc.xml                          */
+/*     Chapter #20 "Reset and clock control (RCC)"     */
+/*     RM0506 - Reference Manual - STM32MP21xx         */
+/*     advanced ARM-based 32/64-bit MPUs               */
 /*******************************************************/
 /* Bit fields for RCC_SECCFGR0 register */
 #define RCC_SECCFGR0_SEC_Pos                     (0U)
@@ -34961,6 +34963,7 @@ typedef struct
 #define RCC_LTDCCFGR_LTDCLPEN_Msk                  (0x1U << RCC_LTDCCFGR_LTDCLPEN_Pos)                 /*!< 0x00000004 */
 #define RCC_LTDCCFGR_LTDCLPEN                      RCC_LTDCCFGR_LTDCLPEN_Msk                         /*!< LTDC clock enable during CSleep */
 
+#if ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3))
 /* Bit fields for RCC_CSICFGR register  ******************/
 #define RCC_CSICFGR_CSIRST_Pos                   (0U)
 #define RCC_CSICFGR_CSIRST_Msk                   (0x1U << RCC_CSICFGR_CSIRST_Pos)                    /*!< 0x00000001 */
@@ -34971,6 +34974,7 @@ typedef struct
 #define RCC_CSICFGR_CSILPEN_Pos                  (2U)
 #define RCC_CSICFGR_CSILPEN_Msk                  (0x1U << RCC_CSICFGR_CSILPEN_Pos)                   /*!< 0x00000004 */
 #define RCC_CSICFGR_CSILPEN                      RCC_CSICFGR_CSILPEN_Msk                           /*!< CSI clock enable during CSleep */
+#endif /* ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3)) */
 
 /* Bit fields for RCC_DCMIPPCFGR register */
 #define RCC_DCMIPPCFGR_DCMIPPRST_Pos               (0U)
@@ -49387,8 +49391,10 @@ typedef struct
 /******************************* CRC Instances ********************************/
 #define IS_CRC_ALL_INSTANCE(INSTANCE) (((INSTANCE) == CRC_S) || ((INSTANCE) == CRC_NS))
 
+#if ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3))
 /******************************* CSI Instances *******************************/
 #define IS_CSI_ALL_INSTANCE(INSTANCE) (((INSTANCE) == CSI_S) || ((INSTANCE) == CSI_NS))
+#endif /* ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3)) */
 
 /******************************* DCACHE Instances *******************************/
 #define IS_DCACHE_ALL_INSTANCE(INSTANCE) (((INSTANCE) == DCACHE_S) || ((INSTANCE) == DCACHE_NS))
@@ -49624,9 +49630,9 @@ typedef struct
                                        ((INSTANCE) == I2C2_S) || ((INSTANCE) == I2C2_NS) || \
                                        ((INSTANCE) == I2C3_S) || ((INSTANCE) == I2C3_NS))
 /******************* I2C Instances : Group belongingness *********************/
-#define IS_I2C_GRP1_INSTANCE(INSTANCE) (((INSTANCE) == I2C1_NS) || ((INSTANCE) == I2C1_S))
-#define IS_I2C_GRP2_INSTANCE(INSTANCE) (((INSTANCE) == I2C2_NS) || ((INSTANCE) == I2C2_S))
-#define IS_I2C_GRP3_INSTANCE(INSTANCE) (((INSTANCE) == I2C3_NS) || ((INSTANCE) == I2C3_S))
+#define IS_I2C_GRP1_INSTANCE(INSTANCE) (((INSTANCE) == I2C1_NS) || ((INSTANCE) == I2C1_S)|| \
+                                        ((INSTANCE) == I2C2_NS) || ((INSTANCE) == I2C2_S))
+#define IS_I2C_GRP2_INSTANCE(INSTANCE) (((INSTANCE) == I2C3_NS) || ((INSTANCE) == I2C3_S))
 
 /************** I2C Instances : wakeup capability from stop modes *************/
 #define IS_I2C_WAKEUP_FROMSTOP_INSTANCE(INSTANCE) IS_I2C_ALL_INSTANCE(INSTANCE)
@@ -49643,14 +49649,13 @@ typedef struct
                                          ((INSTANCE) == I2C3_S) || ((INSTANCE) == I2C3_NS))
 
 /******************* SMBUS Instances : Group belongingness *********************/
-#define IS_SMBUS_GRP1_INSTANCE(INSTANCE) (((INSTANCE) == I2C1_NS) || ((INSTANCE) == I2C1_S))
-#define IS_SMBUS_GRP2_INSTANCE(INSTANCE) (((INSTANCE) == I2C2_NS) || ((INSTANCE) == I2C2_S))
-#define IS_SMBUS_GRP3_INSTANCE(INSTANCE) (((INSTANCE) == I2C3_NS) || ((INSTANCE) == I2C3_S))
+#define IS_SMBUS_GRP1_INSTANCE(INSTANCE) (((INSTANCE) == I2C1_NS) || ((INSTANCE) == I2C1_S)|| \
+                                          ((INSTANCE) == I2C2_NS) || ((INSTANCE) == I2C2_S)) 
+#define IS_SMBUS_GRP2_INSTANCE(INSTANCE) (((INSTANCE) == I2C3_NS) || ((INSTANCE) == I2C3_S))
 
 /************** SMBUS Instances : trigger input *******************************/
 #define IS_SMBUS_TRIGGER_INPUT_INSTANCE(INSTANCE) (IS_SMBUS_GRP1_INSTANCE(INSTANCE) ||\
-                                                   IS_SMBUS_GRP2_INSTANCE(INSTANCE) ||\
-												   IS_SMBUS_GRP3_INSTANCE(INSTANCE))
+                                                   IS_SMBUS_GRP2_INSTANCE(INSTANCE))
 
 /******************************* IPCC Instances *******************************/
 #define IS_IPCC_ALL_INSTANCE(INSTANCE) (((INSTANCE) == IPCC1_S) || ((INSTANCE) == IPCC1_NS))
@@ -50322,8 +50327,10 @@ typedef struct
 /******************************* DCACHE Instances ********************************/
 #define IS_DCACHE_ALL_INSTANCE(INSTANCE) ((INSTANCE) == DCACHE)
 
-/******************************* DCMI Instances *******************************/
+#if ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3))
+/******************************* CSI Instances *******************************/
 #define IS_CSI_ALL_INSTANCE(INSTANCE) ((INSTANCE) == CSI)
+#endif /* ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3)) */
 
 /******************************* DCMI Instances *******************************/
 #define IS_DCMI_ALL_INSTANCE(INSTANCE) ((INSTANCE) == DCMI)
@@ -50555,17 +50562,16 @@ typedef struct
                                        ((INSTANCE) == I2C2) || \
                                        ((INSTANCE) == I2C3))
 /******************* I2C Instances : Group belongingness *********************/
-#define IS_I2C_GRP1_INSTANCE(INSTANCE) ((INSTANCE) == I2C1)
-#define IS_I2C_GRP2_INSTANCE(INSTANCE) ((INSTANCE) == I2C2)
-#define IS_I2C_GRP3_INSTANCE(INSTANCE) ((INSTANCE) == I2C3)
+#define IS_I2C_GRP1_INSTANCE(INSTANCE) (((INSTANCE) == I2C1) || \
+                                        ((INSTANCE) == I2C2))
+#define IS_I2C_GRP2_INSTANCE(INSTANCE) ((INSTANCE) == I2C3)
 
 /************** I2C Instances : wakeup capability from stop modes *************/
 #define IS_I2C_WAKEUP_FROMSTOP_INSTANCE(INSTANCE) IS_I2C_ALL_INSTANCE(INSTANCE)
 
 /************** I2C Instances : trigger input *********************************/
-#define IS_I2C_TRIGGER_INPUT_INSTANCE(INSTANCE) (IS_I2C_GRP1_INSTANCE(INSTANCE) ||\
-                                                 IS_I2C_GRP2_INSTANCE(INSTANCE) ||\
-												 IS_I2C_GRP3_INSTANCE(INSTANCE))
+#define IS_I2C_TRIGGER_INPUT_INSTANCE(INSTANCE) (IS_I2C_GRP1_INSTANCE(INSTANCE) || \
+                                                 IS_I2C_GRP2_INSTANCE(INSTANCE))
 
 /****************************** SMBUS Instances *******************************/
 
@@ -50573,14 +50579,13 @@ typedef struct
                                          ((INSTANCE) == I2C2) || \
                                          ((INSTANCE) == I2C3))
 /******************* SMBUS Instances : Group belongingness *********************/
-#define IS_SMBUS_GRP1_INSTANCE(INSTANCE) ((INSTANCE) == I2C1)
-#define IS_SMBUS_GRP2_INSTANCE(INSTANCE) ((INSTANCE) == I2C2)
-#define IS_SMBUS_GRP3_INSTANCE(INSTANCE) ((INSTANCE) == I2C3)
+#define IS_SMBUS_GRP1_INSTANCE(INSTANCE) (((INSTANCE) == I2C1)|| \
+                                          ((INSTANCE) == I2C2))
+#define IS_SMBUS_GRP2_INSTANCE(INSTANCE) ((INSTANCE) == I2C3)
 
 /************** SMBUS Instances : trigger input *******************************/
 #define IS_SMBUS_TRIGGER_INPUT_INSTANCE(INSTANCE) (IS_SMBUS_GRP1_INSTANCE(INSTANCE) ||\
-                                                   IS_SMBUS_GRP2_INSTANCE(INSTANCE) ||\
-												   IS_SMBUS_GRP3_INSTANCE(INSTANCE))
+                                                   IS_SMBUS_GRP2_INSTANCE(INSTANCE))
 /******************************* I2S Instances ****************************/
 #define IS_I2S_ALL_INSTANCE(INSTANCE) (((INSTANCE) == SPI1) || \
                                        ((INSTANCE) == SPI2) || \
@@ -50669,8 +50674,7 @@ typedef struct
 #define IS_RAMCFG_CRC_INSTANCE(INSTANCE) (((INSTANCE) == RAMCFG_RETRAM))
 
 /******************************* RNG Instances ********************************/
-#define IS_RNG_ALL_INSTANCE(INSTANCE) (((INSTANCE) == RNG1_S) || ((INSTANCE) == RNG1_NS) || ((INSTANCE) == RNG2_S) || \
-                                        ((INSTANCE) == RNG2_NS))
+#define IS_RNG_ALL_INSTANCE(INSTANCE) (((INSTANCE) == RNG1) || ((INSTANCE) == RNG2))
 
 /******************************* RTC Instances ********************************/
 #define IS_RTC_ALL_INSTANCE(INSTANCE) ((INSTANCE) == RTC)
@@ -51236,8 +51240,10 @@ typedef struct
 /******************************* CRYP VERSION ********************************/
 #define CRYP_VERSION(__INSTANCE__) ((__INSTANCE__)->VERR)
 
+#if ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3))
 /******************************* CSI VERSION ********************************/
 #define CSI_VERSION(__INSTANCE__) ((__INSTANCE__)->VERR)
+#endif /* ! (defined(STM32MP215AAO3) || defined(STM32MP215CAO3) || defined(STM32MP215DAO3) || defined(STM32MP215FAO3)) */
 
 /******************************* DCACHE VERSION ********************************/
 #define DCACHE_VERSION(__INSTANCE__) ((__INSTANCE__)->VERR)

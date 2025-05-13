@@ -58,10 +58,13 @@
   * @{
   */
 
+
  /**
  * @brief stm32mp2_m33 Interrupt Number Definition :
- * Based on TinyPanther_interrupts.xlsm V 0.3 at below location
- * https://epm-st.st.com/ProjectServerST/Tiny%20Panther%20(503)/Working%20documents/Product%20description/
+ *        - according to the selected device in @ref Library_configuration_section
+ *        - according to "Table 187. interrupt mapping for Cortex-M33"
+ *          in chapitre 26 "interrupt list" of reference document
+ *          RM0506 - Reference Manual - STM32MP21xx - advanced ARM-based 32/64-bit MPUs
  */
  typedef enum
   {
@@ -206,7 +209,7 @@
     USBH_EHCI_IRQn              = 126,     /*!< USB Host EHCI Interrupt                        */
     USBH_OHCI_IRQn              = 127,     /*!< USB Host OHCI Interrupt                        */
     DCMI_PSSI_IRQn              = 128,     /*!< DCMI & PSSI global interrupt                   */
-    CSI2HOST_IRQn               = 129,     /*!< CSI2 Host controller interrupt                 */
+   RESERVED_129                 = 129,     /*!< reserved                                       */
     RESERVED_130                = 130,     /*!< reserved                                       */
     CRYP1_IRQn                  = 131,     /*!< Crypto1 interrupt                              */
     HASH1_IRQn                  = 132,     /*!< Hash1  interrupt                               */
@@ -218,10 +221,10 @@
     SPI5_IRQn                   = 138,     /*!< SPI5 global interrupt                          */
     SPI6_IRQn                   = 139,     /*!< SPI6 global interrupt                          */
     SAI1_IRQn                   = 140,     /*!< SAI1 global interrupt                          */
-    LTDC_IRQ_IRQn               = 141,     /*!< LTDC global interrupt                          */
-    LTDC_ER_IRQ_IRQn            = 142,     /*!< LTDC global error interrupt                    */
-    LTDC_SEC_IRQ_IRQn           = 143,     /*!< LTDC security global interrupt                 */
-    LTDC_SEC_ER_IRQ_IRQn        = 144,     /*!< LTDC security global error interrupt           */
+    LTDC_IRQn                   = 141,     /*!< LTDC global interrupt                          */
+    LTDC_ER_IRQn                = 142,     /*!< LTDC global error interrupt                    */
+    LTDC_SEC_IRQn               = 143,     /*!< LTDC security global interrupt                 */
+    LTDC_SEC_ER_IRQn            = 144,     /*!< LTDC security global error interrupt           */
     SAI2_IRQn                   = 145,     /*!< SAI2 global interrupt                          */
     OCTOSPI1_IRQn               = 146,     /*!< OCTOSPI1 global interrupt                      */
     RESERVED_147                = 147,     /*!< reserved                                       */
@@ -642,72 +645,6 @@ typedef struct
   __IO uint32_t SIDR;            /*!< CRYP size identification register      Address offset: 0x3FC */
 } CRYP_TypeDef;
 
-/*
- * @brief  (CSI)
- */
-typedef struct
-{
-  __IO uint32_t CR;               /*!< CSI-2 Host control register                           Address offset: 0x0000 */
-  __IO uint32_t PCR;              /*!< CSI-2 Host DPHY_RX control register                   Address offset: 0x0004 */
-       uint32_t RESERVED0[2];     /*!< Reserved                                              Address offset: 0x0008-0x000C */
-  __IO uint32_t VC0CFGR1;         /*!< CSI-2 Host virtual channel 0 configuration register 1 Address offset: 0x0010 */
-  __IO uint32_t VC0CFGR2;         /*!< CSI-2 Host virtual channel 0 configuration register 2 Address offset: 0x0014 */
-  __IO uint32_t VC0CFGR3;         /*!< CSI-2 Host virtual channel 0 configuration register 3 Address offset: 0x0018 */
-  __IO uint32_t VC0CFGR4;         /*!< CSI-2 Host virtual channel 0 configuration register 4 Address offset: 0x001C */
-  __IO uint32_t VC1CFGR1;         /*!< CSI-2 Host virtual channel 1 configuration register 1 Address offset: 0x0020 */
-  __IO uint32_t VC1CFGR2;         /*!< CSI-2 Host virtual channel 1 configuration register 2 Address offset: 0x0024 */
-  __IO uint32_t VC1CFGR3;         /*!< CSI-2 Host virtual channel 1 configuration register 3 Address offset: 0x0028 */
-  __IO uint32_t VC1CFGR4;         /*!< CSI-2 Host virtual channel 1 configuration register 4 Address offset: 0x002C */
-  __IO uint32_t VC2CFGR1;         /*!< CSI-2 Host virtual channel 2 configuration register 1 Address offset: 0x0030 */
-  __IO uint32_t VC2CFGR2;         /*!< CSI-2 Host virtual channel 2 configuration register 2 Address offset: 0x0034 */
-  __IO uint32_t VC2CFGR3;         /*!< CSI-2 Host virtual channel 2 configuration register 3 Address offset: 0x0038 */
-  __IO uint32_t VC2CFGR4;         /*!< CSI-2 Host virtual channel 2 configuration register 4 Address offset: 0x003C */
-  __IO uint32_t VC3CFGR1;         /*!< CSI-2 Host virtual channel 3 configuration register 1 Address offset: 0x0040 */
-  __IO uint32_t VC3CFGR2;         /*!< CSI-2 Host virtual channel 3 configuration register 2 Address offset: 0x0044 */
-  __IO uint32_t VC3CFGR3;         /*!< CSI-2 Host virtual channel 3 configuration register 3 Address offset: 0x0048 */
-  __IO uint32_t VC3CFGR4;         /*!< CSI-2 Host virtual channel 3 configuration register 4 Address offset: 0x004C */
-  __IO uint32_t LB0CFGR;          /*!< CSI-2 Host line byte 0 configuration register         Address offset: 0x0050 */
-  __IO uint32_t LB1CFGR;          /*!< CSI-2 Host line byte 1 configuration register         Address offset: 0x0054 */
-  __IO uint32_t LB2CFGR;          /*!< CSI-2 Host line byte 2 configuration register         Address offset: 0x0058 */
-  __IO uint32_t LB3CFGR;          /*!< CSI-2 Host line byte 3 configuration register         Address offset: 0x005C */
-  __IO uint32_t TIM0CFGR;         /*!< CSI-2 Host timer 0 configuration register             Address offset: 0x0060 */
-  __IO uint32_t TIM1CFGR;         /*!< CSI-2 Host timer 1 configuration register             Address offset: 0x0064 */
-  __IO uint32_t TIM2CFGR;         /*!< CSI-2 Host timer 2 configuration register             Address offset: 0x0068 */
-  __IO uint32_t TIM3CFGR;         /*!< CSI-2 Host timer 3 configuration register             Address offset: 0x006C */
-  __IO uint32_t LMCFGR;           /*!< CSI-2 Host lane merger configuration register         Address offset: 0x0070 */
-  __IO uint32_t PRGITR;           /*!< CSI-2 Host program interrupt register                 Address offset: 0x0074 */
-  __IO uint32_t WDR;              /*!< CSI-2 Host watchdog register                          Address offset: 0x0078 */
-       uint32_t RESERVED1;        /*!< Reserved                                              Address offset: 0x007C */
-  __IO uint32_t IER0;             /*!< CSI-2 Host Interrupt enable register 0                Address offset: 0x0080 */
-  __IO uint32_t IER1;             /*!< CSI-2 Host Interrupt enable register 1                Address offset: 0x0084 */
-       uint32_t RESERVED2[2];     /*!< Reserved                                              Address offset: 0x0088-0x008C */
-  __IO uint32_t SR0;              /*!< CSI-2 Host status register 0                          Address offset: 0x0090 */
-  __IO uint32_t SR1;              /*!< CSI-2 Host status register 1                          Address offset: 0x0094 */
-       uint32_t RESERVED3[26];    /*!< Reserved                                              Address offset: 0x0098-0x00FC */
-  __IO uint32_t FCR0;             /*!< CSI-2 Host Flag clear register 0                      Address offset: 0x0100 */
-  __IO uint32_t FCR1;             /*!< CSI-2 Host Flag clear register 1                      Address offset: 0x0104 */
-       uint32_t RESERVED4[2];     /*!< Reserved                                              Address offset: 0x0108-0x010C */
-  __IO uint32_t SPDFR;            /*!< CSI-2 Host short packet data field register           Address offset: 0x0110 */
-  __IO uint32_t ERR1;             /*!< CSI-2 Host error register 1                           Address offset: 0x0114 */
-  __IO uint32_t ERR2;             /*!< CSI-2 Host error register 2                           Address offset: 0x0118 */
-       uint32_t RESERVED5[949];   /*!< Reserved                                              Address offset: 0x011C-0x0FEC */
-  __IO uint32_t HHWCFGR;          /*!< CSI-2 Host hardware configuration register            Address offset: 0x0FF0 */
-  __IO uint32_t HVERR;            /*!< CSI-2 Host version register                           Address offset: 0x0FF4 */
-  __IO uint32_t HIPIDR;           /*!< CSI-2 Host identification register                    Address offset: 0x0FF8 */
-  __IO uint32_t HSIDR;            /*!< CSI-2 Host size identification register               Address offset: 0x0FFC */
-  __IO uint32_t PRCR;             /*!< CSI PHY reset control register                        Address offset: 0x1000 */
-  __IO uint32_t PMCR;             /*!< CSI PHY mode control register                         Address offset: 0x1004 */
-  __IO uint32_t PFCR;             /*!< CSI PHY frequency control register                    Address offset: 0x1008 */
-       uint32_t RESERVED6;        /*!< Reserved                                              Address offset: 0x100C */
-  __IO uint32_t PTCR0;            /*!< CSI PHY test control register 0                       Address offset: 0x1010 */
-  __IO uint32_t PTCR1;            /*!< CSI PHY test control register 1                       Address offset: 0x1014 */
-  __IO uint32_t PTSR;             /*!< CSI PHY test status register                          Address offset: 0x1018 */
-       uint32_t RESERVED7[1013];  /*!< Reserved                                              Address offset: 0x101C-0x1FEC */
-  __IO uint32_t HWCFGR;           /*!< CSI-2 Host hardware configuration register            Address offset: 0x1FF0 */
-  __IO uint32_t VERR;             /*!< CSI-2 Host version register                           Address offset: 0x1FF4 */
-  __IO uint32_t IPIDR;            /*!< CSI-2 Host identification register                    Address offset: 0x1FF8 */
-  __IO uint32_t SIDR;             /*!< CSI-2 Host size identification register               Address offset: 0x1FFC */
-} CSI_TypeDef;
 
 /**
   * @brief Debug MCU
@@ -2285,10 +2222,7 @@ typedef struct
        uint32_t RESERVED2;       /*!< Reserved                                                      Address offset: 0x0074 */
   __IO uint32_t ECRCR;           /*!< LTDC expected CRC register                                    Address offset: 0x0078 */
   __IO uint32_t CCRCR;           /*!< LTDC computed CRC register                                    Address offset: 0x007C */
-  __IO uint32_t RB0AR;           /*!< LTDC rotation buffer 0 address register                       Address offset: 0x0080 */
-  __IO uint32_t RB1AR;           /*!< LTDC rotation buffer 1 address register                       Address offset: 0x0084 */
-  __IO uint32_t RBPR;            /*!< LTDC rotation buffer pitch register                           Address offset: 0x0088 */
-  __IO uint32_t RIFCR;           /*!< LTDC rotation intermediate frame color register               Address offset: 0x008C */
+       uint32_t RESERVED3[4];    /*!< Reserved                                                      Address offset: 0x0080-0x008C */
   __IO uint32_t FUTR;            /*!< LTDC FIFO underrun threshold register                         Address offset: 0x0090 */
 } LTDC_TypeDef;
 
@@ -2587,13 +2521,12 @@ typedef struct
   __IO uint32_t CCSR;         /*!< CRC Calculated Signature Register, Address offset: 0x040 */
 } RAMCFG_TypeDef;
 
-/*           Reset and Clock Control (RCC)             */
-/* Reference document :                                */
-/*  https://epm-st.st.com/ProjectServerST/             */
-/*  Tiny%20Panther%20(504)/Working%20documents/      */
-/*  Design/IP%20Design/DIGITAL_IP/ip_rcc_design/       */
-/*   TPanther_RCC_RegDesc.xml                          */
-/*******************************************************/
+/**
+  * @brief Resets & Clocks Control
+  *        reference document : Chapter #20 "Reset and clock control (RCC)"
+  *                             RM0506 - Reference Manual - STM32MP21xx
+  *                             advanced ARM-based 32/64-bit MPUs
+  */
 typedef struct
 {
   __IO uint32_t CIDCFGR; /*!< RCC Resource x CID Configuration Register */
@@ -2786,8 +2719,8 @@ typedef struct
        uint32_t RESERVED27;         /*!< Reserved                                                                       Address offset: 0x083C */
   __IO uint32_t LTDCCFGR;           /*!< RCC LTDC configuration register                                                Address offset: 0x0840 */
        uint32_t RESERVED28[5];      /*!< Reserved                                                                       Address offset: 0x0844-0x0854 */
-  __IO uint32_t CSICFGR;            /*!< RCC CSI configuration register                                                 Address offset: 0x0858 */
-  __IO uint32_t DCMIPPCFGR;         /*!< RCC DCMIPP configuration register                                              Address offset: 0x085C */
+       uint32_t RESERVED_CS;        /*!< Reserved                                                                       Address offset: 0x0858 */
+  __IO uint32_t DCMIPPCFGR;           /*!< RCC DCMIPP configuration register                                              Address offset: 0x085C */
   __IO uint32_t DCMIPSSICFGR;       /*!< RCC DCMIPSSI configuration register                                            Address offset: 0x0860 */
        uint32_t RESERVED29[3];      /*!< Reserved                                                                       Address offset: 0x0864-0x086C */
   __IO uint32_t RNG1CFGR;           /*!< RCC RNG1 configuration register                                                Address offset: 0x0870 */
@@ -4128,7 +4061,7 @@ typedef struct
 #define LTDC_Layer1_BASE_NS                 (LTDC_BASE_NS + 0x100UL)
 #define LTDC_Layer2_BASE_NS                 (LTDC_BASE_NS + 0x200UL)
 #define LTDC_Layer3_BASE_NS                 (LTDC_BASE_NS + 0x300UL)
-#define CSI_BASE_NS                         (APB4_PERIPH_BASE_NS + 0x20000UL)
+
 #define DCMIPP_BASE_NS                      (APB4_PERIPH_BASE_NS + 0x30000UL)
 #define DDRC_BASE_NS                        (APB4_PERIPH_BASE_NS + 0x40000UL)
 #define DDRDBG_BASE_NS                      (APB4_PERIPH_BASE_NS + 0x50000UL)
@@ -4441,7 +4374,6 @@ typedef struct
 #define LTDC_Layer1_BASE_S                  (LTDC_BASE_S + 0x100UL)
 #define LTDC_Layer2_BASE_S                  (LTDC_BASE_S + 0x200UL)
 #define LTDC_Layer3_BASE_S                  (LTDC_BASE_S + 0x300UL)
-#define CSI_BASE_S                          (APB4_PERIPH_BASE_S + 0x20000UL)
 #define DCMIPP_BASE_S                       (APB4_PERIPH_BASE_S + 0x30000UL)
 #define DDRC_BASE_S                         (APB4_PERIPH_BASE_S + 0x40000UL)
 #define DDRDBG_BASE_S                       (APB4_PERIPH_BASE_S + 0x50000UL)
@@ -4692,7 +4624,6 @@ typedef struct
 #define LTDC_Layer1_NS                      ((LTDC_Layer_TypeDef *) LTDC_Layer1_BASE_NS)
 #define LTDC_Layer2_NS                      ((LTDC_Layer_TypeDef *) LTDC_Layer2_BASE_NS)
 #define LTDC_Layer3_NS                      ((LTDC_Layer_TypeDef *) LTDC_Layer3_BASE_NS)
-#define CSI_NS                              ((CSI_TypeDef *) CSI_BASE_NS)
 #define DCMIPP_NS                           ((DCMIPP_TypeDef *) DCMIPP_BASE_NS)
 #define DDRC_NS                             ((DDRC_TypeDef *) DDRC_BASE_NS)
 #define DDRDBG_NS                           ((DDRDBG_TypeDef *) DDRDBG_BASE_NS)
@@ -4931,7 +4862,6 @@ typedef struct
 #define LTDC_Layer1_S                       ((LTDC_Layer_TypeDef *) LTDC_Layer1_BASE_S)
 #define LTDC_Layer2_S                       ((LTDC_Layer_TypeDef *) LTDC_Layer2_BASE_S)
 #define LTDC_Layer3_S                       ((LTDC_Layer_TypeDef *) LTDC_Layer3_BASE_S)
-#define CSI_S                               ((CSI_TypeDef *) CSI_BASE_S)
 #define DCMIPP_S                            ((DCMIPP_TypeDef *) DCMIPP_BASE_S)
 #define DDRC_S                              ((DDRC_TypeDef *) DDRC_BASE_S)
 #define DDRDBG_S                            ((DDRDBG_TypeDef *) DDRDBG_BASE_S)
@@ -5611,9 +5541,6 @@ typedef struct
 
 #define LTDC_Layer3                 LTDC_Layer3_S
 #define LTDC_Layer3_BASE            LTDC_Layer3_BASE_S
-
-#define CSI                         CSI_S
-#define CSI_BASE                    CSI_BASE_S
 
 #define DCMIPP                      DCMIPP_S
 #define DCMIPP_BASE                 DCMIPP_BASE_S
@@ -6337,9 +6264,6 @@ typedef struct
 
 #define LTDC_Layer3                 LTDC_Layer3_NS
 #define LTDC_Layer3_BASE            LTDC_Layer3_BASE_NS
-
-#define CSI                         CSI_NS
-#define CSI_BASE                    CSI_BASE_NS
 
 #define DCMIPP                      DCMIPP_NS
 #define DCMIPP_BASE                 DCMIPP_BASE_NS
@@ -9054,1027 +8978,6 @@ typedef struct
 
 /******************************************************************************/
 /*                                                                            */
-/*                                    (CSI)                                   */
-/*                                                                            */
-/******************************************************************************/
-/********************  Bit definition for CSI_CR register  ********************/
-#define CSI_CR_CSIEN_Pos                (0U)
-#define CSI_CR_CSIEN_Msk                (0x1U << CSI_CR_CSIEN_Pos)               /*!< 0x00000001 */
-#define CSI_CR_CSIEN                    CSI_CR_CSIEN_Msk                         /*!< CSI-2 enable */
-#define CSI_CR_VC0START_Pos             (2U)
-#define CSI_CR_VC0START_Msk             (0x1U << CSI_CR_VC0START_Pos)            /*!< 0x00000004 */
-#define CSI_CR_VC0START                 CSI_CR_VC0START_Msk                      /*!< Virtual channel 0 start */
-#define CSI_CR_VC0STOP_Pos              (3U)
-#define CSI_CR_VC0STOP_Msk              (0x1U << CSI_CR_VC0STOP_Pos)             /*!< 0x00000008 */
-#define CSI_CR_VC0STOP                  CSI_CR_VC0STOP_Msk                       /*!< Virtual channel 0 stop */
-#define CSI_CR_VC1START_Pos             (6U)
-#define CSI_CR_VC1START_Msk             (0x1U << CSI_CR_VC1START_Pos)            /*!< 0x00000040 */
-#define CSI_CR_VC1START                 CSI_CR_VC1START_Msk                      /*!< Virtual channel 1 start */
-#define CSI_CR_VC1STOP_Pos              (7U)
-#define CSI_CR_VC1STOP_Msk              (0x1U << CSI_CR_VC1STOP_Pos)             /*!< 0x00000080 */
-#define CSI_CR_VC1STOP                  CSI_CR_VC1STOP_Msk                       /*!< Virtual channel 1 stop */
-#define CSI_CR_VC2START_Pos             (10U)
-#define CSI_CR_VC2START_Msk             (0x1U << CSI_CR_VC2START_Pos)            /*!< 0x00000400 */
-#define CSI_CR_VC2START                 CSI_CR_VC2START_Msk                      /*!< Virtual channel 2 start */
-#define CSI_CR_VC2STOP_Pos              (11U)
-#define CSI_CR_VC2STOP_Msk              (0x1U << CSI_CR_VC2STOP_Pos)             /*!< 0x00000800 */
-#define CSI_CR_VC2STOP                  CSI_CR_VC2STOP_Msk                       /*!< Virtual channel 2 stop */
-#define CSI_CR_VC3START_Pos             (14U)
-#define CSI_CR_VC3START_Msk             (0x1U << CSI_CR_VC3START_Pos)            /*!< 0x00004000 */
-#define CSI_CR_VC3START                 CSI_CR_VC3START_Msk                      /*!< Virtual channel 3 start */
-#define CSI_CR_VC3STOP_Pos              (15U)
-#define CSI_CR_VC3STOP_Msk              (0x1U << CSI_CR_VC3STOP_Pos)             /*!< 0x00008000 */
-#define CSI_CR_VC3STOP                  CSI_CR_VC3STOP_Msk                       /*!< Virtual channel 3 stop */
-
-/*******************  Bit definition for CSI_PCR register  ********************/
-#define CSI_PCR_PWRDOWN_Pos             (0U)
-#define CSI_PCR_PWRDOWN_Msk             (0x1U << CSI_PCR_PWRDOWN_Pos)            /*!< 0x00000001 */
-#define CSI_PCR_PWRDOWN                 CSI_PCR_PWRDOWN_Msk                      /*!< Virtual channel 3 start */
-#define CSI_PCR_CLEN_Pos                (1U)
-#define CSI_PCR_CLEN_Msk                (0x1U << CSI_PCR_CLEN_Pos)               /*!< 0x00000002 */
-#define CSI_PCR_CLEN                    CSI_PCR_CLEN_Msk                         /*!< Clock lane enable */
-#define CSI_PCR_DL0EN_Pos               (2U)
-#define CSI_PCR_DL0EN_Msk               (0x1U << CSI_PCR_DL0EN_Pos)              /*!< 0x00000004 */
-#define CSI_PCR_DL0EN                   CSI_PCR_DL0EN_Msk                        /*!< D-PHY_RX data lane 0 enable */
-#define CSI_PCR_DL1EN_Pos               (3U)
-#define CSI_PCR_DL1EN_Msk               (0x1U << CSI_PCR_DL1EN_Pos)              /*!< 0x00000008 */
-#define CSI_PCR_DL1EN                   CSI_PCR_DL1EN_Msk                        /*!< D-PHY_RX data lane 1 enable */
-
-/*****************  Bit definition for CSI_VC0CFGR1 register  *****************/
-#define CSI_VC0CFGR1_ALLDT_Pos          (0U)
-#define CSI_VC0CFGR1_ALLDT_Msk          (0x1U << CSI_VC0CFGR1_ALLDT_Pos)         /*!< 0x00000001 */
-#define CSI_VC0CFGR1_ALLDT              CSI_VC0CFGR1_ALLDT_Msk                   /*!< All data types enable for the virtual channel x */
-#define CSI_VC0CFGR1_DT0EN_Pos          (1U)
-#define CSI_VC0CFGR1_DT0EN_Msk          (0x1U << CSI_VC0CFGR1_DT0EN_Pos)         /*!< 0x00000002 */
-#define CSI_VC0CFGR1_DT0EN              CSI_VC0CFGR1_DT0EN_Msk                   /*!< Data type 0 enable */
-#define CSI_VC0CFGR1_DT1EN_Pos          (2U)
-#define CSI_VC0CFGR1_DT1EN_Msk          (0x1U << CSI_VC0CFGR1_DT1EN_Pos)         /*!< 0x00000004 */
-#define CSI_VC0CFGR1_DT1EN              CSI_VC0CFGR1_DT1EN_Msk                   /*!< Data type 1 enable */
-#define CSI_VC0CFGR1_DT2EN_Pos          (3U)
-#define CSI_VC0CFGR1_DT2EN_Msk          (0x1U << CSI_VC0CFGR1_DT2EN_Pos)         /*!< 0x00000008 */
-#define CSI_VC0CFGR1_DT2EN              CSI_VC0CFGR1_DT2EN_Msk                   /*!< Data type 2 enable */
-#define CSI_VC0CFGR1_DT3EN_Pos          (4U)
-#define CSI_VC0CFGR1_DT3EN_Msk          (0x1U << CSI_VC0CFGR1_DT3EN_Pos)         /*!< 0x00000010 */
-#define CSI_VC0CFGR1_DT3EN              CSI_VC0CFGR1_DT3EN_Msk                   /*!< Data type 3 enable */
-#define CSI_VC0CFGR1_DT4EN_Pos          (5U)
-#define CSI_VC0CFGR1_DT4EN_Msk          (0x1U << CSI_VC0CFGR1_DT4EN_Pos)         /*!< 0x00000020 */
-#define CSI_VC0CFGR1_DT4EN              CSI_VC0CFGR1_DT4EN_Msk                   /*!< Data type 4 enable */
-#define CSI_VC0CFGR1_DT5EN_Pos          (6U)
-#define CSI_VC0CFGR1_DT5EN_Msk          (0x1U << CSI_VC0CFGR1_DT5EN_Pos)         /*!< 0x00000040 */
-#define CSI_VC0CFGR1_DT5EN              CSI_VC0CFGR1_DT5EN_Msk                   /*!< Data type 5 enable */
-#define CSI_VC0CFGR1_DT6EN_Pos          (7U)
-#define CSI_VC0CFGR1_DT6EN_Msk          (0x1U << CSI_VC0CFGR1_DT6EN_Pos)         /*!< 0x00000080 */
-#define CSI_VC0CFGR1_DT6EN              CSI_VC0CFGR1_DT6EN_Msk                   /*!< Data type 6 enable */
-#define CSI_VC0CFGR1_CDTFT_Pos          (8U)
-#define CSI_VC0CFGR1_CDTFT_Msk          (0x1FU << CSI_VC0CFGR1_CDTFT_Pos)        /*!< 0x00001F00 */
-#define CSI_VC0CFGR1_CDTFT              CSI_VC0CFGR1_CDTFT_Msk                   /*!< Common format for all data types */
-#define CSI_VC0CFGR1_DT0_Pos            (16U)
-#define CSI_VC0CFGR1_DT0_Msk            (0x3FU << CSI_VC0CFGR1_DT0_Pos)          /*!< 0x003F0000 */
-#define CSI_VC0CFGR1_DT0                CSI_VC0CFGR1_DT0_Msk                     /*!< Data type 0 class selection for virtual channel x */
-#define CSI_VC0CFGR1_DT0FT_Pos          (24U)
-#define CSI_VC0CFGR1_DT0FT_Msk          (0x1FU << CSI_VC0CFGR1_DT0FT_Pos)        /*!< 0x1F000000 */
-#define CSI_VC0CFGR1_DT0FT              CSI_VC0CFGR1_DT0FT_Msk                   /*!< Data type 0 format */
-
-/*****************  Bit definition for CSI_VC0CFGR2 register  *****************/
-#define CSI_VC0CFGR2_DT1_Pos            (0U)
-#define CSI_VC0CFGR2_DT1_Msk            (0x3FU << CSI_VC0CFGR2_DT1_Pos)          /*!< 0x0000003F */
-#define CSI_VC0CFGR2_DT1                CSI_VC0CFGR2_DT1_Msk                     /*!< Data type 1 class selection for virtual channel x */
-#define CSI_VC0CFGR2_DT1FT_Pos          (8U)
-#define CSI_VC0CFGR2_DT1FT_Msk          (0x1FU << CSI_VC0CFGR2_DT1FT_Pos)        /*!< 0x00001F00 */
-#define CSI_VC0CFGR2_DT1FT              CSI_VC0CFGR2_DT1FT_Msk                   /*!< Data type 1 format */
-#define CSI_VC0CFGR2_DT2_Pos            (16U)
-#define CSI_VC0CFGR2_DT2_Msk            (0x3FU << CSI_VC0CFGR2_DT2_Pos)          /*!< 0x003F0000 */
-#define CSI_VC0CFGR2_DT2                CSI_VC0CFGR2_DT2_Msk                     /*!< Data type 2 class selection for virtual channel x */
-#define CSI_VC0CFGR2_DT2FT_Pos          (24U)
-#define CSI_VC0CFGR2_DT2FT_Msk          (0x1FU << CSI_VC0CFGR2_DT2FT_Pos)        /*!< 0x1F000000 */
-#define CSI_VC0CFGR2_DT2FT              CSI_VC0CFGR2_DT2FT_Msk                   /*!< Data type 2 format */
-
-/*****************  Bit definition for CSI_VC0CFGR3 register  *****************/
-#define CSI_VC0CFGR3_DT3_Pos            (0U)
-#define CSI_VC0CFGR3_DT3_Msk            (0x3FU << CSI_VC0CFGR3_DT3_Pos)          /*!< 0x0000003F */
-#define CSI_VC0CFGR3_DT3                CSI_VC0CFGR3_DT3_Msk                     /*!< Data type 3 class selection for virtual channel x */
-#define CSI_VC0CFGR3_DT3FT_Pos          (8U)
-#define CSI_VC0CFGR3_DT3FT_Msk          (0x1FU << CSI_VC0CFGR3_DT3FT_Pos)        /*!< 0x00001F00 */
-#define CSI_VC0CFGR3_DT3FT              CSI_VC0CFGR3_DT3FT_Msk                   /*!< Data type 3 format */
-#define CSI_VC0CFGR3_DT4_Pos            (16U)
-#define CSI_VC0CFGR3_DT4_Msk            (0x3FU << CSI_VC0CFGR3_DT4_Pos)          /*!< 0x003F0000 */
-#define CSI_VC0CFGR3_DT4                CSI_VC0CFGR3_DT4_Msk                     /*!< Data type 4 class selection for virtual channel x */
-#define CSI_VC0CFGR3_DT4FT_Pos          (24U)
-#define CSI_VC0CFGR3_DT4FT_Msk          (0x1FU << CSI_VC0CFGR3_DT4FT_Pos)        /*!< 0x1F000000 */
-#define CSI_VC0CFGR3_DT4FT              CSI_VC0CFGR3_DT4FT_Msk                   /*!< Data type 4 format */
-
-/*****************  Bit definition for CSI_VC0CFGR4 register  *****************/
-#define CSI_VC0CFGR4_DT5_Pos            (0U)
-#define CSI_VC0CFGR4_DT5_Msk            (0x3FU << CSI_VC0CFGR4_DT5_Pos)          /*!< 0x0000003F */
-#define CSI_VC0CFGR4_DT5                CSI_VC0CFGR4_DT5_Msk                     /*!< Data type 5 class selection for virtual channel x */
-#define CSI_VC0CFGR4_DT5FT_Pos          (8U)
-#define CSI_VC0CFGR4_DT5FT_Msk          (0x1FU << CSI_VC0CFGR4_DT5FT_Pos)        /*!< 0x00001F00 */
-#define CSI_VC0CFGR4_DT5FT              CSI_VC0CFGR4_DT5FT_Msk                   /*!< Data type 5 format */
-#define CSI_VC0CFGR4_DT6_Pos            (16U)
-#define CSI_VC0CFGR4_DT6_Msk            (0x3FU << CSI_VC0CFGR4_DT6_Pos)          /*!< 0x003F0000 */
-#define CSI_VC0CFGR4_DT6                CSI_VC0CFGR4_DT6_Msk                     /*!< Data type 6 class selection for virtual channel x */
-#define CSI_VC0CFGR4_DT6FT_Pos          (24U)
-#define CSI_VC0CFGR4_DT6FT_Msk          (0x1FU << CSI_VC0CFGR4_DT6FT_Pos)        /*!< 0x1F000000 */
-#define CSI_VC0CFGR4_DT6FT              CSI_VC0CFGR4_DT6FT_Msk                   /*!< Data type 6 format */
-
-/*****************  Bit definition for CSI_VC1CFGR1 register  *****************/
-#define CSI_VC1CFGR1_ALLDT_Pos          (0U)
-#define CSI_VC1CFGR1_ALLDT_Msk          (0x1U << CSI_VC1CFGR1_ALLDT_Pos)         /*!< 0x00000001 */
-#define CSI_VC1CFGR1_ALLDT              CSI_VC1CFGR1_ALLDT_Msk                   /*!< All data types enable for the virtual channel x */
-#define CSI_VC1CFGR1_DT0EN_Pos          (1U)
-#define CSI_VC1CFGR1_DT0EN_Msk          (0x1U << CSI_VC1CFGR1_DT0EN_Pos)         /*!< 0x00000002 */
-#define CSI_VC1CFGR1_DT0EN              CSI_VC1CFGR1_DT0EN_Msk                   /*!< Data type 0 enable */
-#define CSI_VC1CFGR1_DT1EN_Pos          (2U)
-#define CSI_VC1CFGR1_DT1EN_Msk          (0x1U << CSI_VC1CFGR1_DT1EN_Pos)         /*!< 0x00000004 */
-#define CSI_VC1CFGR1_DT1EN              CSI_VC1CFGR1_DT1EN_Msk                   /*!< Data type 1 enable */
-#define CSI_VC1CFGR1_DT2EN_Pos          (3U)
-#define CSI_VC1CFGR1_DT2EN_Msk          (0x1U << CSI_VC1CFGR1_DT2EN_Pos)         /*!< 0x00000008 */
-#define CSI_VC1CFGR1_DT2EN              CSI_VC1CFGR1_DT2EN_Msk                   /*!< Data type 2 enable */
-#define CSI_VC1CFGR1_DT3EN_Pos          (4U)
-#define CSI_VC1CFGR1_DT3EN_Msk          (0x1U << CSI_VC1CFGR1_DT3EN_Pos)         /*!< 0x00000010 */
-#define CSI_VC1CFGR1_DT3EN              CSI_VC1CFGR1_DT3EN_Msk                   /*!< Data type 3 enable */
-#define CSI_VC1CFGR1_DT4EN_Pos          (5U)
-#define CSI_VC1CFGR1_DT4EN_Msk          (0x1U << CSI_VC1CFGR1_DT4EN_Pos)         /*!< 0x00000020 */
-#define CSI_VC1CFGR1_DT4EN              CSI_VC1CFGR1_DT4EN_Msk                   /*!< Data type 4 enable */
-#define CSI_VC1CFGR1_DT5EN_Pos          (6U)
-#define CSI_VC1CFGR1_DT5EN_Msk          (0x1U << CSI_VC1CFGR1_DT5EN_Pos)         /*!< 0x00000040 */
-#define CSI_VC1CFGR1_DT5EN              CSI_VC1CFGR1_DT5EN_Msk                   /*!< Data type 5 enable */
-#define CSI_VC1CFGR1_DT6EN_Pos          (7U)
-#define CSI_VC1CFGR1_DT6EN_Msk          (0x1U << CSI_VC1CFGR1_DT6EN_Pos)         /*!< 0x00000080 */
-#define CSI_VC1CFGR1_DT6EN              CSI_VC1CFGR1_DT6EN_Msk                   /*!< Data type 6 enable */
-#define CSI_VC1CFGR1_CDTFT_Pos          (8U)
-#define CSI_VC1CFGR1_CDTFT_Msk          (0x1FU << CSI_VC1CFGR1_CDTFT_Pos)        /*!< 0x00001F00 */
-#define CSI_VC1CFGR1_CDTFT              CSI_VC1CFGR1_CDTFT_Msk                   /*!< Common format for all data types */
-#define CSI_VC1CFGR1_DT0_Pos            (16U)
-#define CSI_VC1CFGR1_DT0_Msk            (0x3FU << CSI_VC1CFGR1_DT0_Pos)          /*!< 0x003F0000 */
-#define CSI_VC1CFGR1_DT0                CSI_VC1CFGR1_DT0_Msk                     /*!< Data type 0 class selection for virtual channel x */
-#define CSI_VC1CFGR1_DT0FT_Pos          (24U)
-#define CSI_VC1CFGR1_DT0FT_Msk          (0x1FU << CSI_VC1CFGR1_DT0FT_Pos)        /*!< 0x1F000000 */
-#define CSI_VC1CFGR1_DT0FT              CSI_VC1CFGR1_DT0FT_Msk                   /*!< Data type 0 format */
-
-/*****************  Bit definition for CSI_VC1CFGR2 register  *****************/
-#define CSI_VC1CFGR2_DT1_Pos            (0U)
-#define CSI_VC1CFGR2_DT1_Msk            (0x3FU << CSI_VC1CFGR2_DT1_Pos)          /*!< 0x0000003F */
-#define CSI_VC1CFGR2_DT1                CSI_VC1CFGR2_DT1_Msk                     /*!< Data type 1 class selection for virtual channel x */
-#define CSI_VC1CFGR2_DT1FT_Pos          (8U)
-#define CSI_VC1CFGR2_DT1FT_Msk          (0x1FU << CSI_VC1CFGR2_DT1FT_Pos)        /*!< 0x00001F00 */
-#define CSI_VC1CFGR2_DT1FT              CSI_VC1CFGR2_DT1FT_Msk                   /*!< Data type 1 format */
-#define CSI_VC1CFGR2_DT2_Pos            (16U)
-#define CSI_VC1CFGR2_DT2_Msk            (0x3FU << CSI_VC1CFGR2_DT2_Pos)          /*!< 0x003F0000 */
-#define CSI_VC1CFGR2_DT2                CSI_VC1CFGR2_DT2_Msk                     /*!< Data type 2 class selection for virtual channel x */
-#define CSI_VC1CFGR2_DT2FT_Pos          (24U)
-#define CSI_VC1CFGR2_DT2FT_Msk          (0x1FU << CSI_VC1CFGR2_DT2FT_Pos)        /*!< 0x1F000000 */
-#define CSI_VC1CFGR2_DT2FT              CSI_VC1CFGR2_DT2FT_Msk                   /*!< Data type 2 format */
-
-/*****************  Bit definition for CSI_VC1CFGR3 register  *****************/
-#define CSI_VC1CFGR3_DT3_Pos            (0U)
-#define CSI_VC1CFGR3_DT3_Msk            (0x3FU << CSI_VC1CFGR3_DT3_Pos)          /*!< 0x0000003F */
-#define CSI_VC1CFGR3_DT3                CSI_VC1CFGR3_DT3_Msk                     /*!< Data type 3 class selection for virtual channel x */
-#define CSI_VC1CFGR3_DT3FT_Pos          (8U)
-#define CSI_VC1CFGR3_DT3FT_Msk          (0x1FU << CSI_VC1CFGR3_DT3FT_Pos)        /*!< 0x00001F00 */
-#define CSI_VC1CFGR3_DT3FT              CSI_VC1CFGR3_DT3FT_Msk                   /*!< Data type 3 format */
-#define CSI_VC1CFGR3_DT4_Pos            (16U)
-#define CSI_VC1CFGR3_DT4_Msk            (0x3FU << CSI_VC1CFGR3_DT4_Pos)          /*!< 0x003F0000 */
-#define CSI_VC1CFGR3_DT4                CSI_VC1CFGR3_DT4_Msk                     /*!< Data type 4 class selection for virtual channel x */
-#define CSI_VC1CFGR3_DT4FT_Pos          (24U)
-#define CSI_VC1CFGR3_DT4FT_Msk          (0x1FU << CSI_VC1CFGR3_DT4FT_Pos)        /*!< 0x1F000000 */
-#define CSI_VC1CFGR3_DT4FT              CSI_VC1CFGR3_DT4FT_Msk                   /*!< Data type 4 format */
-
-/*****************  Bit definition for CSI_VC1CFGR4 register  *****************/
-#define CSI_VC1CFGR4_DT5_Pos            (0U)
-#define CSI_VC1CFGR4_DT5_Msk            (0x3FU << CSI_VC1CFGR4_DT5_Pos)          /*!< 0x0000003F */
-#define CSI_VC1CFGR4_DT5                CSI_VC1CFGR4_DT5_Msk                     /*!< Data type 5 class selection for virtual channel x */
-#define CSI_VC1CFGR4_DT5FT_Pos          (8U)
-#define CSI_VC1CFGR4_DT5FT_Msk          (0x1FU << CSI_VC1CFGR4_DT5FT_Pos)        /*!< 0x00001F00 */
-#define CSI_VC1CFGR4_DT5FT              CSI_VC1CFGR4_DT5FT_Msk                   /*!< Data type 5 format */
-#define CSI_VC1CFGR4_DT6_Pos            (16U)
-#define CSI_VC1CFGR4_DT6_Msk            (0x3FU << CSI_VC1CFGR4_DT6_Pos)          /*!< 0x003F0000 */
-#define CSI_VC1CFGR4_DT6                CSI_VC1CFGR4_DT6_Msk                     /*!< Data type 6 class selection for virtual channel x */
-#define CSI_VC1CFGR4_DT6FT_Pos          (24U)
-#define CSI_VC1CFGR4_DT6FT_Msk          (0x1FU << CSI_VC1CFGR4_DT6FT_Pos)        /*!< 0x1F000000 */
-#define CSI_VC1CFGR4_DT6FT              CSI_VC1CFGR4_DT6FT_Msk                   /*!< Data type 6 format */
-
-/*****************  Bit definition for CSI_VC2CFGR1 register  *****************/
-#define CSI_VC2CFGR1_ALLDT_Pos          (0U)
-#define CSI_VC2CFGR1_ALLDT_Msk          (0x1U << CSI_VC2CFGR1_ALLDT_Pos)         /*!< 0x00000001 */
-#define CSI_VC2CFGR1_ALLDT              CSI_VC2CFGR1_ALLDT_Msk                   /*!< All data types enable for the virtual channel x */
-#define CSI_VC2CFGR1_DT0EN_Pos          (1U)
-#define CSI_VC2CFGR1_DT0EN_Msk          (0x1U << CSI_VC2CFGR1_DT0EN_Pos)         /*!< 0x00000002 */
-#define CSI_VC2CFGR1_DT0EN              CSI_VC2CFGR1_DT0EN_Msk                   /*!< Data type 0 enable */
-#define CSI_VC2CFGR1_DT1EN_Pos          (2U)
-#define CSI_VC2CFGR1_DT1EN_Msk          (0x1U << CSI_VC2CFGR1_DT1EN_Pos)         /*!< 0x00000004 */
-#define CSI_VC2CFGR1_DT1EN              CSI_VC2CFGR1_DT1EN_Msk                   /*!< Data type 1 enable */
-#define CSI_VC2CFGR1_DT2EN_Pos          (3U)
-#define CSI_VC2CFGR1_DT2EN_Msk          (0x1U << CSI_VC2CFGR1_DT2EN_Pos)         /*!< 0x00000008 */
-#define CSI_VC2CFGR1_DT2EN              CSI_VC2CFGR1_DT2EN_Msk                   /*!< Data type 2 enable */
-#define CSI_VC2CFGR1_DT3EN_Pos          (4U)
-#define CSI_VC2CFGR1_DT3EN_Msk          (0x1U << CSI_VC2CFGR1_DT3EN_Pos)         /*!< 0x00000010 */
-#define CSI_VC2CFGR1_DT3EN              CSI_VC2CFGR1_DT3EN_Msk                   /*!< Data type 3 enable */
-#define CSI_VC2CFGR1_DT4EN_Pos          (5U)
-#define CSI_VC2CFGR1_DT4EN_Msk          (0x1U << CSI_VC2CFGR1_DT4EN_Pos)         /*!< 0x00000020 */
-#define CSI_VC2CFGR1_DT4EN              CSI_VC2CFGR1_DT4EN_Msk                   /*!< Data type 4 enable */
-#define CSI_VC2CFGR1_DT5EN_Pos          (6U)
-#define CSI_VC2CFGR1_DT5EN_Msk          (0x1U << CSI_VC2CFGR1_DT5EN_Pos)         /*!< 0x00000040 */
-#define CSI_VC2CFGR1_DT5EN              CSI_VC2CFGR1_DT5EN_Msk                   /*!< Data type 5 enable */
-#define CSI_VC2CFGR1_DT6EN_Pos          (7U)
-#define CSI_VC2CFGR1_DT6EN_Msk          (0x1U << CSI_VC2CFGR1_DT6EN_Pos)         /*!< 0x00000080 */
-#define CSI_VC2CFGR1_DT6EN              CSI_VC2CFGR1_DT6EN_Msk                   /*!< Data type 6 enable */
-#define CSI_VC2CFGR1_CDTFT_Pos          (8U)
-#define CSI_VC2CFGR1_CDTFT_Msk          (0x1FU << CSI_VC2CFGR1_CDTFT_Pos)        /*!< 0x00001F00 */
-#define CSI_VC2CFGR1_CDTFT              CSI_VC2CFGR1_CDTFT_Msk                   /*!< Common format for all data types */
-#define CSI_VC2CFGR1_DT0_Pos            (16U)
-#define CSI_VC2CFGR1_DT0_Msk            (0x3FU << CSI_VC2CFGR1_DT0_Pos)          /*!< 0x003F0000 */
-#define CSI_VC2CFGR1_DT0                CSI_VC2CFGR1_DT0_Msk                     /*!< Data type 0 class selection for virtual channel x */
-#define CSI_VC2CFGR1_DT0FT_Pos          (24U)
-#define CSI_VC2CFGR1_DT0FT_Msk          (0x1FU << CSI_VC2CFGR1_DT0FT_Pos)        /*!< 0x1F000000 */
-#define CSI_VC2CFGR1_DT0FT              CSI_VC2CFGR1_DT0FT_Msk                   /*!< Data type 0 format */
-
-/*****************  Bit definition for CSI_VC2CFGR2 register  *****************/
-#define CSI_VC2CFGR2_DT1_Pos            (0U)
-#define CSI_VC2CFGR2_DT1_Msk            (0x3FU << CSI_VC2CFGR2_DT1_Pos)          /*!< 0x0000003F */
-#define CSI_VC2CFGR2_DT1                CSI_VC2CFGR2_DT1_Msk                     /*!< Data type 1 class selection for virtual channel x */
-#define CSI_VC2CFGR2_DT1FT_Pos          (8U)
-#define CSI_VC2CFGR2_DT1FT_Msk          (0x1FU << CSI_VC2CFGR2_DT1FT_Pos)        /*!< 0x00001F00 */
-#define CSI_VC2CFGR2_DT1FT              CSI_VC2CFGR2_DT1FT_Msk                   /*!< Data type 1 format */
-#define CSI_VC2CFGR2_DT2_Pos            (16U)
-#define CSI_VC2CFGR2_DT2_Msk            (0x3FU << CSI_VC2CFGR2_DT2_Pos)          /*!< 0x003F0000 */
-#define CSI_VC2CFGR2_DT2                CSI_VC2CFGR2_DT2_Msk                     /*!< Data type 2 class selection for virtual channel x */
-#define CSI_VC2CFGR2_DT2FT_Pos          (24U)
-#define CSI_VC2CFGR2_DT2FT_Msk          (0x1FU << CSI_VC2CFGR2_DT2FT_Pos)        /*!< 0x1F000000 */
-#define CSI_VC2CFGR2_DT2FT              CSI_VC2CFGR2_DT2FT_Msk                   /*!< Data type 2 format */
-
-/*****************  Bit definition for CSI_VC2CFGR3 register  *****************/
-#define CSI_VC2CFGR3_DT3_Pos            (0U)
-#define CSI_VC2CFGR3_DT3_Msk            (0x3FU << CSI_VC2CFGR3_DT3_Pos)          /*!< 0x0000003F */
-#define CSI_VC2CFGR3_DT3                CSI_VC2CFGR3_DT3_Msk                     /*!< Data type 3 class selection for virtual channel x */
-#define CSI_VC2CFGR3_DT3FT_Pos          (8U)
-#define CSI_VC2CFGR3_DT3FT_Msk          (0x1FU << CSI_VC2CFGR3_DT3FT_Pos)        /*!< 0x00001F00 */
-#define CSI_VC2CFGR3_DT3FT              CSI_VC2CFGR3_DT3FT_Msk                   /*!< Data type 3 format */
-#define CSI_VC2CFGR3_DT4_Pos            (16U)
-#define CSI_VC2CFGR3_DT4_Msk            (0x3FU << CSI_VC2CFGR3_DT4_Pos)          /*!< 0x003F0000 */
-#define CSI_VC2CFGR3_DT4                CSI_VC2CFGR3_DT4_Msk                     /*!< Data type 4 class selection for virtual channel x */
-#define CSI_VC2CFGR3_DT4FT_Pos          (24U)
-#define CSI_VC2CFGR3_DT4FT_Msk          (0x1FU << CSI_VC2CFGR3_DT4FT_Pos)        /*!< 0x1F000000 */
-#define CSI_VC2CFGR3_DT4FT              CSI_VC2CFGR3_DT4FT_Msk                   /*!< Data type 4 format */
-
-/*****************  Bit definition for CSI_VC2CFGR4 register  *****************/
-#define CSI_VC2CFGR4_DT5_Pos            (0U)
-#define CSI_VC2CFGR4_DT5_Msk            (0x3FU << CSI_VC2CFGR4_DT5_Pos)          /*!< 0x0000003F */
-#define CSI_VC2CFGR4_DT5                CSI_VC2CFGR4_DT5_Msk                     /*!< Data type 5 class selection for virtual channel x */
-#define CSI_VC2CFGR4_DT5FT_Pos          (8U)
-#define CSI_VC2CFGR4_DT5FT_Msk          (0x1FU << CSI_VC2CFGR4_DT5FT_Pos)        /*!< 0x00001F00 */
-#define CSI_VC2CFGR4_DT5FT              CSI_VC2CFGR4_DT5FT_Msk                   /*!< Data type 5 format */
-#define CSI_VC2CFGR4_DT6_Pos            (16U)
-#define CSI_VC2CFGR4_DT6_Msk            (0x3FU << CSI_VC2CFGR4_DT6_Pos)          /*!< 0x003F0000 */
-#define CSI_VC2CFGR4_DT6                CSI_VC2CFGR4_DT6_Msk                     /*!< Data type 6 class selection for virtual channel x */
-#define CSI_VC2CFGR4_DT6FT_Pos          (24U)
-#define CSI_VC2CFGR4_DT6FT_Msk          (0x1FU << CSI_VC2CFGR4_DT6FT_Pos)        /*!< 0x1F000000 */
-#define CSI_VC2CFGR4_DT6FT              CSI_VC2CFGR4_DT6FT_Msk                   /*!< Data type 6 format */
-
-/*****************  Bit definition for CSI_VC3CFGR1 register  *****************/
-#define CSI_VC3CFGR1_ALLDT_Pos          (0U)
-#define CSI_VC3CFGR1_ALLDT_Msk          (0x1U << CSI_VC3CFGR1_ALLDT_Pos)         /*!< 0x00000001 */
-#define CSI_VC3CFGR1_ALLDT              CSI_VC3CFGR1_ALLDT_Msk                   /*!< All data types enable for the virtual channel x */
-#define CSI_VC3CFGR1_DT0EN_Pos          (1U)
-#define CSI_VC3CFGR1_DT0EN_Msk          (0x1U << CSI_VC3CFGR1_DT0EN_Pos)         /*!< 0x00000002 */
-#define CSI_VC3CFGR1_DT0EN              CSI_VC3CFGR1_DT0EN_Msk                   /*!< Data type 0 enable */
-#define CSI_VC3CFGR1_DT1EN_Pos          (2U)
-#define CSI_VC3CFGR1_DT1EN_Msk          (0x1U << CSI_VC3CFGR1_DT1EN_Pos)         /*!< 0x00000004 */
-#define CSI_VC3CFGR1_DT1EN              CSI_VC3CFGR1_DT1EN_Msk                   /*!< Data type 1 enable */
-#define CSI_VC3CFGR1_DT2EN_Pos          (3U)
-#define CSI_VC3CFGR1_DT2EN_Msk          (0x1U << CSI_VC3CFGR1_DT2EN_Pos)         /*!< 0x00000008 */
-#define CSI_VC3CFGR1_DT2EN              CSI_VC3CFGR1_DT2EN_Msk                   /*!< Data type 2 enable */
-#define CSI_VC3CFGR1_DT3EN_Pos          (4U)
-#define CSI_VC3CFGR1_DT3EN_Msk          (0x1U << CSI_VC3CFGR1_DT3EN_Pos)         /*!< 0x00000010 */
-#define CSI_VC3CFGR1_DT3EN              CSI_VC3CFGR1_DT3EN_Msk                   /*!< Data type 3 enable */
-#define CSI_VC3CFGR1_DT4EN_Pos          (5U)
-#define CSI_VC3CFGR1_DT4EN_Msk          (0x1U << CSI_VC3CFGR1_DT4EN_Pos)         /*!< 0x00000020 */
-#define CSI_VC3CFGR1_DT4EN              CSI_VC3CFGR1_DT4EN_Msk                   /*!< Data type 4 enable */
-#define CSI_VC3CFGR1_DT5EN_Pos          (6U)
-#define CSI_VC3CFGR1_DT5EN_Msk          (0x1U << CSI_VC3CFGR1_DT5EN_Pos)         /*!< 0x00000040 */
-#define CSI_VC3CFGR1_DT5EN              CSI_VC3CFGR1_DT5EN_Msk                   /*!< Data type 5 enable */
-#define CSI_VC3CFGR1_DT6EN_Pos          (7U)
-#define CSI_VC3CFGR1_DT6EN_Msk          (0x1U << CSI_VC3CFGR1_DT6EN_Pos)         /*!< 0x00000080 */
-#define CSI_VC3CFGR1_DT6EN              CSI_VC3CFGR1_DT6EN_Msk                   /*!< Data type 6 enable */
-#define CSI_VC3CFGR1_CDTFT_Pos          (8U)
-#define CSI_VC3CFGR1_CDTFT_Msk          (0x1FU << CSI_VC3CFGR1_CDTFT_Pos)        /*!< 0x00001F00 */
-#define CSI_VC3CFGR1_CDTFT              CSI_VC3CFGR1_CDTFT_Msk                   /*!< Common format for all data types */
-#define CSI_VC3CFGR1_DT0_Pos            (16U)
-#define CSI_VC3CFGR1_DT0_Msk            (0x3FU << CSI_VC3CFGR1_DT0_Pos)          /*!< 0x003F0000 */
-#define CSI_VC3CFGR1_DT0                CSI_VC3CFGR1_DT0_Msk                     /*!< Data type 0 class selection for virtual channel x */
-#define CSI_VC3CFGR1_DT0FT_Pos          (24U)
-#define CSI_VC3CFGR1_DT0FT_Msk          (0x1FU << CSI_VC3CFGR1_DT0FT_Pos)        /*!< 0x1F000000 */
-#define CSI_VC3CFGR1_DT0FT              CSI_VC3CFGR1_DT0FT_Msk                   /*!< Data type 0 format */
-
-/*****************  Bit definition for CSI_VC3CFGR2 register  *****************/
-#define CSI_VC3CFGR2_DT1_Pos            (0U)
-#define CSI_VC3CFGR2_DT1_Msk            (0x3FU << CSI_VC3CFGR2_DT1_Pos)          /*!< 0x0000003F */
-#define CSI_VC3CFGR2_DT1                CSI_VC3CFGR2_DT1_Msk                     /*!< Data type 1 class selection for virtual channel x */
-#define CSI_VC3CFGR2_DT1FT_Pos          (8U)
-#define CSI_VC3CFGR2_DT1FT_Msk          (0x1FU << CSI_VC3CFGR2_DT1FT_Pos)        /*!< 0x00001F00 */
-#define CSI_VC3CFGR2_DT1FT              CSI_VC3CFGR2_DT1FT_Msk                   /*!< Data type 1 format */
-#define CSI_VC3CFGR2_DT2_Pos            (16U)
-#define CSI_VC3CFGR2_DT2_Msk            (0x3FU << CSI_VC3CFGR2_DT2_Pos)          /*!< 0x003F0000 */
-#define CSI_VC3CFGR2_DT2                CSI_VC3CFGR2_DT2_Msk                     /*!< Data type 2 class selection for virtual channel x */
-#define CSI_VC3CFGR2_DT2FT_Pos          (24U)
-#define CSI_VC3CFGR2_DT2FT_Msk          (0x1FU << CSI_VC3CFGR2_DT2FT_Pos)        /*!< 0x1F000000 */
-#define CSI_VC3CFGR2_DT2FT              CSI_VC3CFGR2_DT2FT_Msk                   /*!< Data type 2 format */
-
-/*****************  Bit definition for CSI_VC3CFGR3 register  *****************/
-#define CSI_VC3CFGR3_DT3_Pos            (0U)
-#define CSI_VC3CFGR3_DT3_Msk            (0x3FU << CSI_VC3CFGR3_DT3_Pos)          /*!< 0x0000003F */
-#define CSI_VC3CFGR3_DT3                CSI_VC3CFGR3_DT3_Msk                     /*!< Data type 3 class selection for virtual channel x */
-#define CSI_VC3CFGR3_DT3FT_Pos          (8U)
-#define CSI_VC3CFGR3_DT3FT_Msk          (0x1FU << CSI_VC3CFGR3_DT3FT_Pos)        /*!< 0x00001F00 */
-#define CSI_VC3CFGR3_DT3FT              CSI_VC3CFGR3_DT3FT_Msk                   /*!< Data type 3 format */
-#define CSI_VC3CFGR3_DT4_Pos            (16U)
-#define CSI_VC3CFGR3_DT4_Msk            (0x3FU << CSI_VC3CFGR3_DT4_Pos)          /*!< 0x003F0000 */
-#define CSI_VC3CFGR3_DT4                CSI_VC3CFGR3_DT4_Msk                     /*!< Data type 4 class selection for virtual channel x */
-#define CSI_VC3CFGR3_DT4FT_Pos          (24U)
-#define CSI_VC3CFGR3_DT4FT_Msk          (0x1FU << CSI_VC3CFGR3_DT4FT_Pos)        /*!< 0x1F000000 */
-#define CSI_VC3CFGR3_DT4FT              CSI_VC3CFGR3_DT4FT_Msk                   /*!< Data type 4 format */
-
-/*****************  Bit definition for CSI_VC3CFGR4 register  *****************/
-#define CSI_VC3CFGR4_DT5_Pos            (0U)
-#define CSI_VC3CFGR4_DT5_Msk            (0x3FU << CSI_VC3CFGR4_DT5_Pos)          /*!< 0x0000003F */
-#define CSI_VC3CFGR4_DT5                CSI_VC3CFGR4_DT5_Msk                     /*!< Data type 5 class selection for virtual channel x */
-#define CSI_VC3CFGR4_DT5FT_Pos          (8U)
-#define CSI_VC3CFGR4_DT5FT_Msk          (0x1FU << CSI_VC3CFGR4_DT5FT_Pos)        /*!< 0x00001F00 */
-#define CSI_VC3CFGR4_DT5FT              CSI_VC3CFGR4_DT5FT_Msk                   /*!< Data type 5 format */
-#define CSI_VC3CFGR4_DT6_Pos            (16U)
-#define CSI_VC3CFGR4_DT6_Msk            (0x3FU << CSI_VC3CFGR4_DT6_Pos)          /*!< 0x003F0000 */
-#define CSI_VC3CFGR4_DT6                CSI_VC3CFGR4_DT6_Msk                     /*!< Data type 6 class selection for virtual channel x */
-#define CSI_VC3CFGR4_DT6FT_Pos          (24U)
-#define CSI_VC3CFGR4_DT6FT_Msk          (0x1FU << CSI_VC3CFGR4_DT6FT_Pos)        /*!< 0x1F000000 */
-#define CSI_VC3CFGR4_DT6FT              CSI_VC3CFGR4_DT6FT_Msk                   /*!< Data type 6 format */
-
-/*****************  Bit definition for CSI_LB0CFGR register  ******************/
-#define CSI_LB0CFGR_BYTECNT_Pos         (0U)
-#define CSI_LB0CFGR_BYTECNT_Msk         (0xFFFFU << CSI_LB0CFGR_BYTECNT_Pos)     /*!< 0x0000FFFF */
-#define CSI_LB0CFGR_BYTECNT             CSI_LB0CFGR_BYTECNT_Msk                  /*!< Byte counter */
-#define CSI_LB0CFGR_LINECNT_Pos         (16U)
-#define CSI_LB0CFGR_LINECNT_Msk         (0xFFFFU << CSI_LB0CFGR_LINECNT_Pos)     /*!< 0xFFFF0000 */
-#define CSI_LB0CFGR_LINECNT             CSI_LB0CFGR_LINECNT_Msk                  /*!< Line counter */
-
-/*****************  Bit definition for CSI_LB1CFGR register  ******************/
-#define CSI_LB1CFGR_BYTECNT_Pos         (0U)
-#define CSI_LB1CFGR_BYTECNT_Msk         (0xFFFFU << CSI_LB1CFGR_BYTECNT_Pos)     /*!< 0x0000FFFF */
-#define CSI_LB1CFGR_BYTECNT             CSI_LB1CFGR_BYTECNT_Msk                  /*!< Byte counter */
-#define CSI_LB1CFGR_LINECNT_Pos         (16U)
-#define CSI_LB1CFGR_LINECNT_Msk         (0xFFFFU << CSI_LB1CFGR_LINECNT_Pos)     /*!< 0xFFFF0000 */
-#define CSI_LB1CFGR_LINECNT             CSI_LB1CFGR_LINECNT_Msk                  /*!< Line counter */
-
-/*****************  Bit definition for CSI_LB2CFGR register  ******************/
-#define CSI_LB2CFGR_BYTECNT_Pos         (0U)
-#define CSI_LB2CFGR_BYTECNT_Msk         (0xFFFFU << CSI_LB2CFGR_BYTECNT_Pos)     /*!< 0x0000FFFF */
-#define CSI_LB2CFGR_BYTECNT             CSI_LB2CFGR_BYTECNT_Msk                  /*!< Byte counter */
-#define CSI_LB2CFGR_LINECNT_Pos         (16U)
-#define CSI_LB2CFGR_LINECNT_Msk         (0xFFFFU << CSI_LB2CFGR_LINECNT_Pos)     /*!< 0xFFFF0000 */
-#define CSI_LB2CFGR_LINECNT             CSI_LB2CFGR_LINECNT_Msk                  /*!< Line counter */
-
-/*****************  Bit definition for CSI_LB3CFGR register  ******************/
-#define CSI_LB3CFGR_BYTECNT_Pos         (0U)
-#define CSI_LB3CFGR_BYTECNT_Msk         (0xFFFFU << CSI_LB3CFGR_BYTECNT_Pos)     /*!< 0x0000FFFF */
-#define CSI_LB3CFGR_BYTECNT             CSI_LB3CFGR_BYTECNT_Msk                  /*!< Byte counter */
-#define CSI_LB3CFGR_LINECNT_Pos         (16U)
-#define CSI_LB3CFGR_LINECNT_Msk         (0xFFFFU << CSI_LB3CFGR_LINECNT_Pos)     /*!< 0xFFFF0000 */
-#define CSI_LB3CFGR_LINECNT             CSI_LB3CFGR_LINECNT_Msk                  /*!< Line counter */
-
-/*****************  Bit definition for CSI_TIM0CFGR register  *****************/
-#define CSI_TIM0CFGR_COUNT_Pos          (0U)
-#define CSI_TIM0CFGR_COUNT_Msk          (0x1FFFFFFU << CSI_TIM0CFGR_COUNT_Pos)   /*!< 0x01FFFFFF */
-#define CSI_TIM0CFGR_COUNT              CSI_TIM0CFGR_COUNT_Msk                   /*!< Clock cycle counter */
-
-/*****************  Bit definition for CSI_TIM1CFGR register  *****************/
-#define CSI_TIM1CFGR_COUNT_Pos          (0U)
-#define CSI_TIM1CFGR_COUNT_Msk          (0x1FFFFFFU << CSI_TIM1CFGR_COUNT_Pos)   /*!< 0x01FFFFFF */
-#define CSI_TIM1CFGR_COUNT              CSI_TIM1CFGR_COUNT_Msk                   /*!< Clock cycle counter */
-
-/*****************  Bit definition for CSI_TIM2CFGR register  *****************/
-#define CSI_TIM2CFGR_COUNT_Pos          (0U)
-#define CSI_TIM2CFGR_COUNT_Msk          (0x1FFFFFFU << CSI_TIM2CFGR_COUNT_Pos)   /*!< 0x01FFFFFF */
-#define CSI_TIM2CFGR_COUNT              CSI_TIM2CFGR_COUNT_Msk                   /*!< Clock cycle counter */
-
-/*****************  Bit definition for CSI_TIM3CFGR register  *****************/
-#define CSI_TIM3CFGR_COUNT_Pos          (0U)
-#define CSI_TIM3CFGR_COUNT_Msk          (0x1FFFFFFU << CSI_TIM3CFGR_COUNT_Pos)   /*!< 0x01FFFFFF */
-#define CSI_TIM3CFGR_COUNT              CSI_TIM3CFGR_COUNT_Msk                   /*!< Clock cycle counter */
-
-/******************  Bit definition for CSI_LMCFGR register  ******************/
-#define CSI_LMCFGR_LANENB_Pos           (8U)
-#define CSI_LMCFGR_LANENB_Msk           (0x7U << CSI_LMCFGR_LANENB_Pos)          /*!< 0x00000700 */
-#define CSI_LMCFGR_LANENB               CSI_LMCFGR_LANENB_Msk                    /*!< Number of lanes */
-#define CSI_LMCFGR_DL0MAP_Pos           (16U)
-#define CSI_LMCFGR_DL0MAP_Msk           (0x7U << CSI_LMCFGR_DL0MAP_Pos)          /*!< 0x00070000 */
-#define CSI_LMCFGR_DL0MAP               CSI_LMCFGR_DL0MAP_Msk                    /*!< Physical mapping of logical data lane 0 */
-#define CSI_LMCFGR_DL1MAP_Pos           (20U)
-#define CSI_LMCFGR_DL1MAP_Msk           (0x7U << CSI_LMCFGR_DL1MAP_Pos)          /*!< 0x00700000 */
-#define CSI_LMCFGR_DL1MAP               CSI_LMCFGR_DL1MAP_Msk                    /*!< Physical mapping of logical data lane 1 */
-
-/******************  Bit definition for CSI_PRGITR register  ******************/
-#define CSI_PRGITR_LB0VC_Pos            (0U)
-#define CSI_PRGITR_LB0VC_Msk            (0x3U << CSI_PRGITR_LB0VC_Pos)           /*!< 0x00000003 */
-#define CSI_PRGITR_LB0VC                CSI_PRGITR_LB0VC_Msk                     /*!< Line/Byte counter 0 linked to a virtual channel */
-#define CSI_PRGITR_LB0EN_Pos            (3U)
-#define CSI_PRGITR_LB0EN_Msk            (0x1U << CSI_PRGITR_LB0EN_Pos)           /*!< 0x00000008 */
-#define CSI_PRGITR_LB0EN                CSI_PRGITR_LB0EN_Msk                     /*!< Line/Byte 0counter enable */
-#define CSI_PRGITR_LB1VC_Pos            (4U)
-#define CSI_PRGITR_LB1VC_Msk            (0x3U << CSI_PRGITR_LB1VC_Pos)           /*!< 0x00000030 */
-#define CSI_PRGITR_LB1VC                CSI_PRGITR_LB1VC_Msk                     /*!< Line/Byte counter 1 linked to a virtual channel */
-#define CSI_PRGITR_LB1EN_Pos            (7U)
-#define CSI_PRGITR_LB1EN_Msk            (0x1U << CSI_PRGITR_LB1EN_Pos)           /*!< 0x00000080 */
-#define CSI_PRGITR_LB1EN                CSI_PRGITR_LB1EN_Msk                     /*!< Line/Byte 1 counter enable */
-#define CSI_PRGITR_LB2VC_Pos            (8U)
-#define CSI_PRGITR_LB2VC_Msk            (0x3U << CSI_PRGITR_LB2VC_Pos)           /*!< 0x00000300 */
-#define CSI_PRGITR_LB2VC                CSI_PRGITR_LB2VC_Msk                     /*!< Line/Byte counter 2 linked to a virtual channel */
-#define CSI_PRGITR_LB2EN_Pos            (11U)
-#define CSI_PRGITR_LB2EN_Msk            (0x1U << CSI_PRGITR_LB2EN_Pos)           /*!< 0x00000800 */
-#define CSI_PRGITR_LB2EN                CSI_PRGITR_LB2EN_Msk                     /*!< Line/Byte 2 counter enable */
-#define CSI_PRGITR_LB3VC_Pos            (12U)
-#define CSI_PRGITR_LB3VC_Msk            (0x3U << CSI_PRGITR_LB3VC_Pos)           /*!< 0x00003000 */
-#define CSI_PRGITR_LB3VC                CSI_PRGITR_LB3VC_Msk                     /*!< Line/Byte counter 3 linked to a virtual channel */
-#define CSI_PRGITR_LB3EN_Pos            (15U)
-#define CSI_PRGITR_LB3EN_Msk            (0x1U << CSI_PRGITR_LB3EN_Pos)           /*!< 0x00008000 */
-#define CSI_PRGITR_LB3EN                CSI_PRGITR_LB3EN_Msk                     /*!< Line/Byte 3 counter enable */
-#define CSI_PRGITR_TIM0VC_Pos           (16U)
-#define CSI_PRGITR_TIM0VC_Msk           (0x3U << CSI_PRGITR_TIM0VC_Pos)          /*!< 0x00030000 */
-#define CSI_PRGITR_TIM0VC               CSI_PRGITR_TIM0VC_Msk                    /*!< TIM0 base time linked to a virtual channel */
-#define CSI_PRGITR_TIM0EOF_Pos          (18U)
-#define CSI_PRGITR_TIM0EOF_Msk          (0x1U << CSI_PRGITR_TIM0EOF_Pos)         /*!< 0x00040000 */
-#define CSI_PRGITR_TIM0EOF              CSI_PRGITR_TIM0EOF_Msk                   /*!< TIM0 base time starting from the end of frame */
-#define CSI_PRGITR_TIM0EN_Pos           (19U)
-#define CSI_PRGITR_TIM0EN_Msk           (0x1U << CSI_PRGITR_TIM0EN_Pos)          /*!< 0x00080000 */
-#define CSI_PRGITR_TIM0EN               CSI_PRGITR_TIM0EN_Msk                    /*!< TIM0 base time enable */
-#define CSI_PRGITR_TIM1VC_Pos           (20U)
-#define CSI_PRGITR_TIM1VC_Msk           (0x3U << CSI_PRGITR_TIM1VC_Pos)          /*!< 0x00300000 */
-#define CSI_PRGITR_TIM1VC               CSI_PRGITR_TIM1VC_Msk                    /*!< TIM1 base time linked to a virtual channel */
-#define CSI_PRGITR_TIM1EOF_Pos          (22U)
-#define CSI_PRGITR_TIM1EOF_Msk          (0x1U << CSI_PRGITR_TIM1EOF_Pos)         /*!< 0x00400000 */
-#define CSI_PRGITR_TIM1EOF              CSI_PRGITR_TIM1EOF_Msk                   /*!< TIM1 base time starting from the end of frame */
-#define CSI_PRGITR_TIM1EN_Pos           (23U)
-#define CSI_PRGITR_TIM1EN_Msk           (0x1U << CSI_PRGITR_TIM1EN_Pos)          /*!< 0x00800000 */
-#define CSI_PRGITR_TIM1EN               CSI_PRGITR_TIM1EN_Msk                    /*!< TIM1 base time enable */
-#define CSI_PRGITR_TIM2VC_Pos           (24U)
-#define CSI_PRGITR_TIM2VC_Msk           (0x3U << CSI_PRGITR_TIM2VC_Pos)          /*!< 0x03000000 */
-#define CSI_PRGITR_TIM2VC               CSI_PRGITR_TIM2VC_Msk                    /*!< TIM2 base time linked to a virtual channel */
-#define CSI_PRGITR_TIM2EOF_Pos          (26U)
-#define CSI_PRGITR_TIM2EOF_Msk          (0x1U << CSI_PRGITR_TIM2EOF_Pos)         /*!< 0x04000000 */
-#define CSI_PRGITR_TIM2EOF              CSI_PRGITR_TIM2EOF_Msk                   /*!< TIM2 base time starting from the end of frame */
-#define CSI_PRGITR_TIM2EN_Pos           (27U)
-#define CSI_PRGITR_TIM2EN_Msk           (0x1U << CSI_PRGITR_TIM2EN_Pos)          /*!< 0x08000000 */
-#define CSI_PRGITR_TIM2EN               CSI_PRGITR_TIM2EN_Msk                    /*!< TIM2 base time enable */
-#define CSI_PRGITR_TIM3VC_Pos           (28U)
-#define CSI_PRGITR_TIM3VC_Msk           (0x3U << CSI_PRGITR_TIM3VC_Pos)          /*!< 0x30000000 */
-#define CSI_PRGITR_TIM3VC               CSI_PRGITR_TIM3VC_Msk                    /*!< TIM3 base time linked to a virtual channel */
-#define CSI_PRGITR_TIM3EOF_Pos          (30U)
-#define CSI_PRGITR_TIM3EOF_Msk          (0x1U << CSI_PRGITR_TIM3EOF_Pos)         /*!< 0x40000000 */
-#define CSI_PRGITR_TIM3EOF              CSI_PRGITR_TIM3EOF_Msk                   /*!< TIM3 base time starting from the end of frame */
-#define CSI_PRGITR_TIM3EN_Pos           (31U)
-#define CSI_PRGITR_TIM3EN_Msk           (0x1U << CSI_PRGITR_TIM3EN_Pos)          /*!< 0x80000000 */
-#define CSI_PRGITR_TIM3EN               CSI_PRGITR_TIM3EN_Msk                    /*!< TIM3 base time enable */
-
-/*******************  Bit definition for CSI_WDR register  ********************/
-#define CSI_WDR_CNT_Pos                 (0U)
-#define CSI_WDR_CNT_Msk                 (0xFFFFFFFFU << CSI_WDR_CNT_Pos)         /*!< 0xFFFFFFFF */
-#define CSI_WDR_CNT                     CSI_WDR_CNT_Msk                          /*!< Watchdog counter */
-
-/*******************  Bit definition for CSI_IER0 register  *******************/
-#define CSI_IER0_LB0IE_Pos              (0U)
-#define CSI_IER0_LB0IE_Msk              (0x1U << CSI_IER0_LB0IE_Pos)             /*!< 0x00000001 */
-#define CSI_IER0_LB0IE                  CSI_IER0_LB0IE_Msk                       /*!< Line byte counter 0 interrupt enable */
-#define CSI_IER0_LB1IE_Pos              (1U)
-#define CSI_IER0_LB1IE_Msk              (0x1U << CSI_IER0_LB1IE_Pos)             /*!< 0x00000002 */
-#define CSI_IER0_LB1IE                  CSI_IER0_LB1IE_Msk                       /*!< Line byte counter 1 interrupt enable */
-#define CSI_IER0_LB2IE_Pos              (2U)
-#define CSI_IER0_LB2IE_Msk              (0x1U << CSI_IER0_LB2IE_Pos)             /*!< 0x00000004 */
-#define CSI_IER0_LB2IE                  CSI_IER0_LB2IE_Msk                       /*!< Line byte counter 2 interrupt enable */
-#define CSI_IER0_LB3IE_Pos              (3U)
-#define CSI_IER0_LB3IE_Msk              (0x1U << CSI_IER0_LB3IE_Pos)             /*!< 0x00000008 */
-#define CSI_IER0_LB3IE                  CSI_IER0_LB3IE_Msk                       /*!< Line byte counter 3 interrupt enable */
-#define CSI_IER0_TIM0IE_Pos             (4U)
-#define CSI_IER0_TIM0IE_Msk             (0x1U << CSI_IER0_TIM0IE_Pos)            /*!< 0x00000010 */
-#define CSI_IER0_TIM0IE                 CSI_IER0_TIM0IE_Msk                      /*!< Timer 0 interrupt enable */
-#define CSI_IER0_TIM1IE_Pos             (5U)
-#define CSI_IER0_TIM1IE_Msk             (0x1U << CSI_IER0_TIM1IE_Pos)            /*!< 0x00000020 */
-#define CSI_IER0_TIM1IE                 CSI_IER0_TIM1IE_Msk                      /*!< Timer 1 interrupt enable */
-#define CSI_IER0_TIM2IE_Pos             (6U)
-#define CSI_IER0_TIM2IE_Msk             (0x1U << CSI_IER0_TIM2IE_Pos)            /*!< 0x00000040 */
-#define CSI_IER0_TIM2IE                 CSI_IER0_TIM2IE_Msk                      /*!< Timer 2 interrupt enable */
-#define CSI_IER0_TIM3IE_Pos             (7U)
-#define CSI_IER0_TIM3IE_Msk             (0x1U << CSI_IER0_TIM3IE_Pos)            /*!< 0x00000080 */
-#define CSI_IER0_TIM3IE                 CSI_IER0_TIM3IE_Msk                      /*!< Timer 3 interrupt enable */
-#define CSI_IER0_SOF0IE_Pos             (8U)
-#define CSI_IER0_SOF0IE_Msk             (0x1U << CSI_IER0_SOF0IE_Pos)            /*!< 0x00000100 */
-#define CSI_IER0_SOF0IE                 CSI_IER0_SOF0IE_Msk                      /*!< Start of frame for virtual channel 0 interrupt enable */
-#define CSI_IER0_SOF1IE_Pos             (9U)
-#define CSI_IER0_SOF1IE_Msk             (0x1U << CSI_IER0_SOF1IE_Pos)            /*!< 0x00000200 */
-#define CSI_IER0_SOF1IE                 CSI_IER0_SOF1IE_Msk                      /*!< Start of frame for virtual channel 1 interrupt enable */
-#define CSI_IER0_SOF2IE_Pos             (10U)
-#define CSI_IER0_SOF2IE_Msk             (0x1U << CSI_IER0_SOF2IE_Pos)            /*!< 0x00000400 */
-#define CSI_IER0_SOF2IE                 CSI_IER0_SOF2IE_Msk                      /*!< Start of frame for virtual channel 2 interrupt enable */
-#define CSI_IER0_SOF3IE_Pos             (11U)
-#define CSI_IER0_SOF3IE_Msk             (0x1U << CSI_IER0_SOF3IE_Pos)            /*!< 0x00000800 */
-#define CSI_IER0_SOF3IE                 CSI_IER0_SOF3IE_Msk                      /*!< Start of frame for virtual channel 3 interrupt enable */
-#define CSI_IER0_EOF0IE_Pos             (12U)
-#define CSI_IER0_EOF0IE_Msk             (0x1U << CSI_IER0_EOF0IE_Pos)            /*!< 0x00001000 */
-#define CSI_IER0_EOF0IE                 CSI_IER0_EOF0IE_Msk                      /*!< End of frame for virtual channel 0 interrupt enable */
-#define CSI_IER0_EOF1IE_Pos             (13U)
-#define CSI_IER0_EOF1IE_Msk             (0x1U << CSI_IER0_EOF1IE_Pos)            /*!< 0x00002000 */
-#define CSI_IER0_EOF1IE                 CSI_IER0_EOF1IE_Msk                      /*!< End of frame for virtual channel 1 interrupt enable */
-#define CSI_IER0_EOF2IE_Pos             (14U)
-#define CSI_IER0_EOF2IE_Msk             (0x1U << CSI_IER0_EOF2IE_Pos)            /*!< 0x00004000 */
-#define CSI_IER0_EOF2IE                 CSI_IER0_EOF2IE_Msk                      /*!< End of frame for virtual channel 2 interrupt enable */
-#define CSI_IER0_EOF3IE_Pos             (15U)
-#define CSI_IER0_EOF3IE_Msk             (0x1U << CSI_IER0_EOF3IE_Pos)            /*!< 0x00008000 */
-#define CSI_IER0_EOF3IE                 CSI_IER0_EOF3IE_Msk                      /*!< End of frame for virtual channel 3 interrupt enable */
-#define CSI_IER0_SPKTIE_Pos             (16U)
-#define CSI_IER0_SPKTIE_Msk             (0x1U << CSI_IER0_SPKTIE_Pos)            /*!< 0x00010000 */
-#define CSI_IER0_SPKTIE                 CSI_IER0_SPKTIE_Msk                      /*!< Short packet interrupt enable */
-#define CSI_IER0_CCFIFOFIE_Pos          (21U)
-#define CSI_IER0_CCFIFOFIE_Msk          (0x1U << CSI_IER0_CCFIFOFIE_Pos)         /*!< 0x00200000 */
-#define CSI_IER0_CCFIFOFIE              CSI_IER0_CCFIFOFIE_Msk                   /*!< Clock changer FIFO full interrupt enable */
-#define CSI_IER0_CRCERRIE_Pos           (24U)
-#define CSI_IER0_CRCERRIE_Msk           (0x1U << CSI_IER0_CRCERRIE_Pos)          /*!< 0x01000000 */
-#define CSI_IER0_CRCERRIE               CSI_IER0_CRCERRIE_Msk                    /*!< CRC error interrupt enable */
-#define CSI_IER0_ECCERRIE_Pos           (25U)
-#define CSI_IER0_ECCERRIE_Msk           (0x1U << CSI_IER0_ECCERRIE_Pos)          /*!< 0x02000000 */
-#define CSI_IER0_ECCERRIE               CSI_IER0_ECCERRIE_Msk                    /*!< ECC error interrupt enable */
-#define CSI_IER0_CECCERRIE_Pos          (26U)
-#define CSI_IER0_CECCERRIE_Msk          (0x1U << CSI_IER0_CECCERRIE_Pos)         /*!< 0x04000000 */
-#define CSI_IER0_CECCERRIE              CSI_IER0_CECCERRIE_Msk                   /*!< Corrected ECC error interrupt enable */
-#define CSI_IER0_IDERRIE_Pos            (27U)
-#define CSI_IER0_IDERRIE_Msk            (0x1U << CSI_IER0_IDERRIE_Pos)           /*!< 0x08000000 */
-#define CSI_IER0_IDERRIE                CSI_IER0_IDERRIE_Msk                     /*!< Data type ID error interrupt enable */
-#define CSI_IER0_SPKTERRIE_Pos          (28U)
-#define CSI_IER0_SPKTERRIE_Msk          (0x1U << CSI_IER0_SPKTERRIE_Pos)         /*!< 0x10000000 */
-#define CSI_IER0_SPKTERRIE              CSI_IER0_SPKTERRIE_Msk                   /*!< Short packet error interrupt enable */
-#define CSI_IER0_WDERRIE_Pos            (29U)
-#define CSI_IER0_WDERRIE_Msk            (0x1U << CSI_IER0_WDERRIE_Pos)           /*!< 0x20000000 */
-#define CSI_IER0_WDERRIE                CSI_IER0_WDERRIE_Msk                     /*!< Watchdog error interrupt enable */
-#define CSI_IER0_SYNCERRIE_Pos          (30U)
-#define CSI_IER0_SYNCERRIE_Msk          (0x1U << CSI_IER0_SYNCERRIE_Pos)         /*!< 0x40000000 */
-#define CSI_IER0_SYNCERRIE              CSI_IER0_SYNCERRIE_Msk                   /*!< Invalid synchronization error interrupt enable */
-
-/*******************  Bit definition for CSI_IER1 register  *******************/
-#define CSI_IER1_ESOTDL0IE_Pos          (0U)
-#define CSI_IER1_ESOTDL0IE_Msk          (0x1U << CSI_IER1_ESOTDL0IE_Pos)         /*!< 0x00000001 */
-#define CSI_IER1_ESOTDL0IE              CSI_IER1_ESOTDL0IE_Msk                   /*!< Start of transmission error interrupt enable on lane 0 */
-#define CSI_IER1_ESOTSYNCDL0IE_Pos      (1U)
-#define CSI_IER1_ESOTSYNCDL0IE_Msk      (0x1U << CSI_IER1_ESOTSYNCDL0IE_Pos)     /*!< 0x00000002 */
-#define CSI_IER1_ESOTSYNCDL0IE          CSI_IER1_ESOTSYNCDL0IE_Msk               /*!< Start of transmission synchronization interrupt error enable on lane 0 */
-#define CSI_IER1_EESCDL0IE_Pos          (2U)
-#define CSI_IER1_EESCDL0IE_Msk          (0x1U << CSI_IER1_EESCDL0IE_Pos)         /*!< 0x00000004 */
-#define CSI_IER1_EESCDL0IE              CSI_IER1_EESCDL0IE_Msk                   /*!< D-PHY_RX lane 0 escape entry error interrupt enable */
-#define CSI_IER1_ESYNCESCDL0IE_Pos      (3U)
-#define CSI_IER1_ESYNCESCDL0IE_Msk      (0x1U << CSI_IER1_ESYNCESCDL0IE_Pos)     /*!< 0x00000008 */
-#define CSI_IER1_ESYNCESCDL0IE          CSI_IER1_ESYNCESCDL0IE_Msk               /*!< D-PHY_RX lane 0 low power data transmission synchronization error interrupt enable */
-#define CSI_IER1_ECTRLDL0IE_Pos         (4U)
-#define CSI_IER1_ECTRLDL0IE_Msk         (0x1U << CSI_IER1_ECTRLDL0IE_Pos)        /*!< 0x00000010 */
-#define CSI_IER1_ECTRLDL0IE             CSI_IER1_ECTRLDL0IE_Msk                  /*!< D-PHY_RX lane 0 control error interrupt enable */
-#define CSI_IER1_ESOTDL1IE_Pos          (8U)
-#define CSI_IER1_ESOTDL1IE_Msk          (0x1U << CSI_IER1_ESOTDL1IE_Pos)         /*!< 0x00000100 */
-#define CSI_IER1_ESOTDL1IE              CSI_IER1_ESOTDL1IE_Msk                   /*!< Start of transmission error interrupt enable on lane 1 */
-#define CSI_IER1_ESOTSYNCDL1IE_Pos      (9U)
-#define CSI_IER1_ESOTSYNCDL1IE_Msk      (0x1U << CSI_IER1_ESOTSYNCDL1IE_Pos)     /*!< 0x00000200 */
-#define CSI_IER1_ESOTSYNCDL1IE          CSI_IER1_ESOTSYNCDL1IE_Msk               /*!< Start of transmission synchronization interrupt error enable on lane 1 */
-#define CSI_IER1_EESCDL1IE_Pos          (10U)
-#define CSI_IER1_EESCDL1IE_Msk          (0x1U << CSI_IER1_EESCDL1IE_Pos)         /*!< 0x00000400 */
-#define CSI_IER1_EESCDL1IE              CSI_IER1_EESCDL1IE_Msk                   /*!< D-PHY_RX lane 1 escape entry error interrupt enable */
-#define CSI_IER1_ESYNCESCDL1IE_Pos      (11U)
-#define CSI_IER1_ESYNCESCDL1IE_Msk      (0x1U << CSI_IER1_ESYNCESCDL1IE_Pos)     /*!< 0x00000800 */
-#define CSI_IER1_ESYNCESCDL1IE          CSI_IER1_ESYNCESCDL1IE_Msk               /*!< D-PHY_RX lane 1 low power data transmission synchronization error interrupt enable */
-#define CSI_IER1_ECTRLDL1IE_Pos         (12U)
-#define CSI_IER1_ECTRLDL1IE_Msk         (0x1U << CSI_IER1_ECTRLDL1IE_Pos)        /*!< 0x00001000 */
-#define CSI_IER1_ECTRLDL1IE             CSI_IER1_ECTRLDL1IE_Msk                  /*!< D-PHY_RX lane 1 control error interrupt enable */
-
-/*******************  Bit definition for CSI_SR0 register  ********************/
-#define CSI_SR0_LB0F_Pos                (0U)
-#define CSI_SR0_LB0F_Msk                (0x1U << CSI_SR0_LB0F_Pos)               /*!< 0x00000001 */
-#define CSI_SR0_LB0F                    CSI_SR0_LB0F_Msk                         /*!< Line byte counter 0 flag */
-#define CSI_SR0_LB1F_Pos                (1U)
-#define CSI_SR0_LB1F_Msk                (0x1U << CSI_SR0_LB1F_Pos)               /*!< 0x00000002 */
-#define CSI_SR0_LB1F                    CSI_SR0_LB1F_Msk                         /*!< Line byte counter 1 flag */
-#define CSI_SR0_LB2F_Pos                (2U)
-#define CSI_SR0_LB2F_Msk                (0x1U << CSI_SR0_LB2F_Pos)               /*!< 0x00000004 */
-#define CSI_SR0_LB2F                    CSI_SR0_LB2F_Msk                         /*!< Line byte counter 2 flag */
-#define CSI_SR0_LB3F_Pos                (3U)
-#define CSI_SR0_LB3F_Msk                (0x1U << CSI_SR0_LB3F_Pos)               /*!< 0x00000008 */
-#define CSI_SR0_LB3F                    CSI_SR0_LB3F_Msk                         /*!< Line byte counter 3 flag */
-#define CSI_SR0_TIM0F_Pos               (4U)
-#define CSI_SR0_TIM0F_Msk               (0x1U << CSI_SR0_TIM0F_Pos)              /*!< 0x00000010 */
-#define CSI_SR0_TIM0F                   CSI_SR0_TIM0F_Msk                        /*!< Timer 0 flag */
-#define CSI_SR0_TIM1F_Pos               (5U)
-#define CSI_SR0_TIM1F_Msk               (0x1U << CSI_SR0_TIM1F_Pos)              /*!< 0x00000020 */
-#define CSI_SR0_TIM1F                   CSI_SR0_TIM1F_Msk                        /*!< Timer 1 flag */
-#define CSI_SR0_TIM2F_Pos               (6U)
-#define CSI_SR0_TIM2F_Msk               (0x1U << CSI_SR0_TIM2F_Pos)              /*!< 0x00000040 */
-#define CSI_SR0_TIM2F                   CSI_SR0_TIM2F_Msk                        /*!< Timer 2 flag */
-#define CSI_SR0_TIM3F_Pos               (7U)
-#define CSI_SR0_TIM3F_Msk               (0x1U << CSI_SR0_TIM3F_Pos)              /*!< 0x00000080 */
-#define CSI_SR0_TIM3F                   CSI_SR0_TIM3F_Msk                        /*!< Timer 3 flag */
-#define CSI_SR0_SOF0F_Pos               (8U)
-#define CSI_SR0_SOF0F_Msk               (0x1U << CSI_SR0_SOF0F_Pos)              /*!< 0x00000100 */
-#define CSI_SR0_SOF0F                   CSI_SR0_SOF0F_Msk                        /*!< Start of frame flag for virtual channel 0 */
-#define CSI_SR0_SOF1F_Pos               (9U)
-#define CSI_SR0_SOF1F_Msk               (0x1U << CSI_SR0_SOF1F_Pos)              /*!< 0x00000200 */
-#define CSI_SR0_SOF1F                   CSI_SR0_SOF1F_Msk                        /*!< Start of frame flag for virtual channel 1 */
-#define CSI_SR0_SOF2F_Pos               (10U)
-#define CSI_SR0_SOF2F_Msk               (0x1U << CSI_SR0_SOF2F_Pos)              /*!< 0x00000400 */
-#define CSI_SR0_SOF2F                   CSI_SR0_SOF2F_Msk                        /*!< Start of frame flag for virtual channel 2 */
-#define CSI_SR0_SOF3F_Pos               (11U)
-#define CSI_SR0_SOF3F_Msk               (0x1U << CSI_SR0_SOF3F_Pos)              /*!< 0x00000800 */
-#define CSI_SR0_SOF3F                   CSI_SR0_SOF3F_Msk                        /*!< Start of frame flag for virtual channel 3 */
-#define CSI_SR0_EOF0F_Pos               (12U)
-#define CSI_SR0_EOF0F_Msk               (0x1U << CSI_SR0_EOF0F_Pos)              /*!< 0x00001000 */
-#define CSI_SR0_EOF0F                   CSI_SR0_EOF0F_Msk                        /*!< End of frame flag for virtual channel 0 */
-#define CSI_SR0_EOF1F_Pos               (13U)
-#define CSI_SR0_EOF1F_Msk               (0x1U << CSI_SR0_EOF1F_Pos)              /*!< 0x00002000 */
-#define CSI_SR0_EOF1F                   CSI_SR0_EOF1F_Msk                        /*!< End of frame flag for virtual channel 1 */
-#define CSI_SR0_EOF2F_Pos               (14U)
-#define CSI_SR0_EOF2F_Msk               (0x1U << CSI_SR0_EOF2F_Pos)              /*!< 0x00004000 */
-#define CSI_SR0_EOF2F                   CSI_SR0_EOF2F_Msk                        /*!< End of frame flag for virtual channel 2 */
-#define CSI_SR0_EOF3F_Pos               (15U)
-#define CSI_SR0_EOF3F_Msk               (0x1U << CSI_SR0_EOF3F_Pos)              /*!< 0x00008000 */
-#define CSI_SR0_EOF3F                   CSI_SR0_EOF3F_Msk                        /*!< End of frame flag for virtual channel 3 */
-#define CSI_SR0_SPKTF_Pos               (16U)
-#define CSI_SR0_SPKTF_Msk               (0x1U << CSI_SR0_SPKTF_Pos)              /*!< 0x00010000 */
-#define CSI_SR0_SPKTF                   CSI_SR0_SPKTF_Msk                        /*!< Short packet flag */
-#define CSI_SR0_VC0STATEF_Pos           (17U)
-#define CSI_SR0_VC0STATEF_Msk           (0x1U << CSI_SR0_VC0STATEF_Pos)          /*!< 0x00020000 */
-#define CSI_SR0_VC0STATEF               CSI_SR0_VC0STATEF_Msk                    /*!< Virtual channel 0 state flag */
-#define CSI_SR0_VC1STATEF_Pos           (18U)
-#define CSI_SR0_VC1STATEF_Msk           (0x1U << CSI_SR0_VC1STATEF_Pos)          /*!< 0x00040000 */
-#define CSI_SR0_VC1STATEF               CSI_SR0_VC1STATEF_Msk                    /*!< Virtual channel 1 state flag */
-#define CSI_SR0_VC2STATEF_Pos           (19U)
-#define CSI_SR0_VC2STATEF_Msk           (0x1U << CSI_SR0_VC2STATEF_Pos)          /*!< 0x00080000 */
-#define CSI_SR0_VC2STATEF               CSI_SR0_VC2STATEF_Msk                    /*!< Virtual channel 2 state flag */
-#define CSI_SR0_VC3STATEF_Pos           (20U)
-#define CSI_SR0_VC3STATEF_Msk           (0x1U << CSI_SR0_VC3STATEF_Pos)          /*!< 0x00100000 */
-#define CSI_SR0_VC3STATEF               CSI_SR0_VC3STATEF_Msk                    /*!< Virtual channel 3 state flag */
-#define CSI_SR0_CCFIFOFF_Pos            (21U)
-#define CSI_SR0_CCFIFOFF_Msk            (0x1U << CSI_SR0_CCFIFOFF_Pos)           /*!< 0x00200000 */
-#define CSI_SR0_CCFIFOFF                CSI_SR0_CCFIFOFF_Msk                     /*!< Clock changer FIFO full flag */
-#define CSI_SR0_CRCERRF_Pos             (24U)
-#define CSI_SR0_CRCERRF_Msk             (0x1U << CSI_SR0_CRCERRF_Pos)            /*!< 0x01000000 */
-#define CSI_SR0_CRCERRF                 CSI_SR0_CRCERRF_Msk                      /*!< CRC error flag */
-#define CSI_SR0_ECCERRF_Pos             (25U)
-#define CSI_SR0_ECCERRF_Msk             (0x1U << CSI_SR0_ECCERRF_Pos)            /*!< 0x02000000 */
-#define CSI_SR0_ECCERRF                 CSI_SR0_ECCERRF_Msk                      /*!< ECC error flag */
-#define CSI_SR0_CECCERRF_Pos            (26U)
-#define CSI_SR0_CECCERRF_Msk            (0x1U << CSI_SR0_CECCERRF_Pos)           /*!< 0x04000000 */
-#define CSI_SR0_CECCERRF                CSI_SR0_CECCERRF_Msk                     /*!< Corrected ECC error flag */
-#define CSI_SR0_IDERRF_Pos              (27U)
-#define CSI_SR0_IDERRF_Msk              (0x1U << CSI_SR0_IDERRF_Pos)             /*!< 0x08000000 */
-#define CSI_SR0_IDERRF                  CSI_SR0_IDERRF_Msk                       /*!< Data type ID error flag */
-#define CSI_SR0_SPKTERRF_Pos            (28U)
-#define CSI_SR0_SPKTERRF_Msk            (0x1U << CSI_SR0_SPKTERRF_Pos)           /*!< 0x10000000 */
-#define CSI_SR0_SPKTERRF                CSI_SR0_SPKTERRF_Msk                     /*!< Short packet error flag */
-#define CSI_SR0_WDERRF_Pos              (29U)
-#define CSI_SR0_WDERRF_Msk              (0x1U << CSI_SR0_WDERRF_Pos)             /*!< 0x20000000 */
-#define CSI_SR0_WDERRF                  CSI_SR0_WDERRF_Msk                       /*!< Watchdog error flag */
-#define CSI_SR0_SYNCERRF_Pos            (30U)
-#define CSI_SR0_SYNCERRF_Msk            (0x1U << CSI_SR0_SYNCERRF_Pos)           /*!< 0x40000000 */
-#define CSI_SR0_SYNCERRF                CSI_SR0_SYNCERRF_Msk                     /*!< Invalid synchronization error flag */
-
-/*******************  Bit definition for CSI_SR1 register  ********************/
-#define CSI_SR1_ESOTDL0F_Pos            (0U)
-#define CSI_SR1_ESOTDL0F_Msk            (0x1U << CSI_SR1_ESOTDL0F_Pos)           /*!< 0x00000001 */
-#define CSI_SR1_ESOTDL0F                CSI_SR1_ESOTDL0F_Msk                     /*!< Start of transmission error flag on lane 0 */
-#define CSI_SR1_ESOTSYNCDL0F_Pos        (1U)
-#define CSI_SR1_ESOTSYNCDL0F_Msk        (0x1U << CSI_SR1_ESOTSYNCDL0F_Pos)       /*!< 0x00000002 */
-#define CSI_SR1_ESOTSYNCDL0F            CSI_SR1_ESOTSYNCDL0F_Msk                 /*!< Start of transmission synchronization error flag on lane 0 */
-#define CSI_SR1_EESCDL0F_Pos            (2U)
-#define CSI_SR1_EESCDL0F_Msk            (0x1U << CSI_SR1_EESCDL0F_Pos)           /*!< 0x00000004 */
-#define CSI_SR1_EESCDL0F                CSI_SR1_EESCDL0F_Msk                     /*!< D-PHY_RX lane 0 escape entry error flag */
-#define CSI_SR1_ESYNCESCDL0F_Pos        (3U)
-#define CSI_SR1_ESYNCESCDL0F_Msk        (0x1U << CSI_SR1_ESYNCESCDL0F_Pos)       /*!< 0x00000008 */
-#define CSI_SR1_ESYNCESCDL0F            CSI_SR1_ESYNCESCDL0F_Msk                 /*!< D-PHY_RX lane 0 low power data transmission synchronization error flag */
-#define CSI_SR1_ECTRLDL0F_Pos           (4U)
-#define CSI_SR1_ECTRLDL0F_Msk           (0x1U << CSI_SR1_ECTRLDL0F_Pos)          /*!< 0x00000010 */
-#define CSI_SR1_ECTRLDL0F               CSI_SR1_ECTRLDL0F_Msk                    /*!< D-PHY_RX lane 0 control error flag */
-#define CSI_SR1_ESOTDL1F_Pos            (8U)
-#define CSI_SR1_ESOTDL1F_Msk            (0x1U << CSI_SR1_ESOTDL1F_Pos)           /*!< 0x00000100 */
-#define CSI_SR1_ESOTDL1F                CSI_SR1_ESOTDL1F_Msk                     /*!< Start of transmission error flag on lane 1 */
-#define CSI_SR1_ESOTSYNCDL1F_Pos        (9U)
-#define CSI_SR1_ESOTSYNCDL1F_Msk        (0x1U << CSI_SR1_ESOTSYNCDL1F_Pos)       /*!< 0x00000200 */
-#define CSI_SR1_ESOTSYNCDL1F            CSI_SR1_ESOTSYNCDL1F_Msk                 /*!< Start of transmission synchronization error flag on lane 1 */
-#define CSI_SR1_EESCDL1F_Pos            (10U)
-#define CSI_SR1_EESCDL1F_Msk            (0x1U << CSI_SR1_EESCDL1F_Pos)           /*!< 0x00000400 */
-#define CSI_SR1_EESCDL1F                CSI_SR1_EESCDL1F_Msk                     /*!< D-PHY_RX lane 1 escape entry error flag */
-#define CSI_SR1_ESYNCESCDL1F_Pos        (11U)
-#define CSI_SR1_ESYNCESCDL1F_Msk        (0x1U << CSI_SR1_ESYNCESCDL1F_Pos)       /*!< 0x00000800 */
-#define CSI_SR1_ESYNCESCDL1F            CSI_SR1_ESYNCESCDL1F_Msk                 /*!< D-PHY_RX lane 1 low power data transmission synchronization error flag */
-#define CSI_SR1_ECTRLDL1F_Pos           (12U)
-#define CSI_SR1_ECTRLDL1F_Msk           (0x1U << CSI_SR1_ECTRLDL1F_Pos)          /*!< 0x00001000 */
-#define CSI_SR1_ECTRLDL1F               CSI_SR1_ECTRLDL1F_Msk                    /*!< D-PHY_RX lane 1 control error flag */
-#define CSI_SR1_ACTDL0F_Pos             (16U)
-#define CSI_SR1_ACTDL0F_Msk             (0x1U << CSI_SR1_ACTDL0F_Pos)            /*!< 0x00010000 */
-#define CSI_SR1_ACTDL0F                 CSI_SR1_ACTDL0F_Msk                      /*!< D-PHY_RX lane 0 High speed reception active */
-#define CSI_SR1_SYNCDL0F_Pos            (17U)
-#define CSI_SR1_SYNCDL0F_Msk            (0x1U << CSI_SR1_SYNCDL0F_Pos)           /*!< 0x00020000 */
-#define CSI_SR1_SYNCDL0F                CSI_SR1_SYNCDL0F_Msk                     /*!< D-PHY_RX lane 0 receiver synchronization observed */
-#define CSI_SR1_SKCALDL0F_Pos           (18U)
-#define CSI_SR1_SKCALDL0F_Msk           (0x1U << CSI_SR1_SKCALDL0F_Pos)          /*!< 0x00040000 */
-#define CSI_SR1_SKCALDL0F               CSI_SR1_SKCALDL0F_Msk                    /*!< D-PHY_RX lane 0 High speed skew calibration */
-#define CSI_SR1_STOPDL0F_Pos            (19U)
-#define CSI_SR1_STOPDL0F_Msk            (0x1U << CSI_SR1_STOPDL0F_Pos)           /*!< 0x00080000 */
-#define CSI_SR1_STOPDL0F                CSI_SR1_STOPDL0F_Msk                     /*!< D-PHY_RX receiver data lane 0 in stop state */
-#define CSI_SR1_ULPNDL0F_Pos            (20U)
-#define CSI_SR1_ULPNDL0F_Msk            (0x1U << CSI_SR1_ULPNDL0F_Pos)           /*!< 0x00100000 */
-#define CSI_SR1_ULPNDL0F                CSI_SR1_ULPNDL0F_Msk                     /*!< D-PHY_RX receiver Ultra low power state (not) Active on data lane 00 */
-#define CSI_SR1_ACTDL1F_Pos             (22U)
-#define CSI_SR1_ACTDL1F_Msk             (0x1U << CSI_SR1_ACTDL1F_Pos)            /*!< 0x00400000 */
-#define CSI_SR1_ACTDL1F                 CSI_SR1_ACTDL1F_Msk                      /*!< D-PHY_RX lane 1 High speed reception active */
-#define CSI_SR1_SYNCDL1F_Pos            (23U)
-#define CSI_SR1_SYNCDL1F_Msk            (0x1U << CSI_SR1_SYNCDL1F_Pos)           /*!< 0x00800000 */
-#define CSI_SR1_SYNCDL1F                CSI_SR1_SYNCDL1F_Msk                     /*!< D-PHY_RX lane 1 receiver synchronization observed */
-#define CSI_SR1_SKCALDL1F_Pos           (24U)
-#define CSI_SR1_SKCALDL1F_Msk           (0x1U << CSI_SR1_SKCALDL1F_Pos)          /*!< 0x01000000 */
-#define CSI_SR1_SKCALDL1F               CSI_SR1_SKCALDL1F_Msk                    /*!< D-PHY_RX lane 1 High speed skew calibration */
-#define CSI_SR1_STOPDL1F_Pos            (25U)
-#define CSI_SR1_STOPDL1F_Msk            (0x1U << CSI_SR1_STOPDL1F_Pos)           /*!< 0x02000000 */
-#define CSI_SR1_STOPDL1F                CSI_SR1_STOPDL1F_Msk                     /*!< D-PHY_RX receiver data lane 1 in stop state */
-#define CSI_SR1_ULPNDL1F_Pos            (26U)
-#define CSI_SR1_ULPNDL1F_Msk            (0x1U << CSI_SR1_ULPNDL1F_Pos)           /*!< 0x04000000 */
-#define CSI_SR1_ULPNDL1F                CSI_SR1_ULPNDL1F_Msk                     /*!< D-PHY_RX receiver Ultra low power state (not) Active on data lane 1 */
-#define CSI_SR1_STOPCLF_Pos             (28U)
-#define CSI_SR1_STOPCLF_Msk             (0x1U << CSI_SR1_STOPCLF_Pos)            /*!< 0x10000000 */
-#define CSI_SR1_STOPCLF                 CSI_SR1_STOPCLF_Msk                      /*!< D-PHY_RX receiver in stop state for the clock lane */
-#define CSI_SR1_ULPNACTF_Pos            (29U)
-#define CSI_SR1_ULPNACTF_Msk            (0x1U << CSI_SR1_ULPNACTF_Pos)           /*!< 0x20000000 */
-#define CSI_SR1_ULPNACTF                CSI_SR1_ULPNACTF_Msk                     /*!< D-PHY_RX receiver ULP state (not) active */
-#define CSI_SR1_ULPNCLF_Pos             (30U)
-#define CSI_SR1_ULPNCLF_Msk             (0x1U << CSI_SR1_ULPNCLF_Pos)            /*!< 0x40000000 */
-#define CSI_SR1_ULPNCLF                 CSI_SR1_ULPNCLF_Msk                      /*!< D-PHY_RX receiver Ultra-Low power state (not) on clock lane */
-#define CSI_SR1_ACTCLF_Pos              (31U)
-#define CSI_SR1_ACTCLF_Msk              (0x1U << CSI_SR1_ACTCLF_Pos)             /*!< 0x80000000 */
-#define CSI_SR1_ACTCLF                  CSI_SR1_ACTCLF_Msk                       /*!< D-PHY_RX receiver clock active flag */
-
-/*******************  Bit definition for CSI_FCR0 register  *******************/
-#define CSI_FCR0_CLB0F_Pos              (0U)
-#define CSI_FCR0_CLB0F_Msk              (0x1U << CSI_FCR0_CLB0F_Pos)             /*!< 0x00000001 */
-#define CSI_FCR0_CLB0F                  CSI_FCR0_CLB0F_Msk                       /*!< Clear Line byte counter 0 flag */
-#define CSI_FCR0_CLB1F_Pos              (1U)
-#define CSI_FCR0_CLB1F_Msk              (0x1U << CSI_FCR0_CLB1F_Pos)             /*!< 0x00000002 */
-#define CSI_FCR0_CLB1F                  CSI_FCR0_CLB1F_Msk                       /*!< Clear Line byte counter 1 flag */
-#define CSI_FCR0_CLB2F_Pos              (2U)
-#define CSI_FCR0_CLB2F_Msk              (0x1U << CSI_FCR0_CLB2F_Pos)             /*!< 0x00000004 */
-#define CSI_FCR0_CLB2F                  CSI_FCR0_CLB2F_Msk                       /*!< Clear Line byte counter 2 flag */
-#define CSI_FCR0_CLB3F_Pos              (3U)
-#define CSI_FCR0_CLB3F_Msk              (0x1U << CSI_FCR0_CLB3F_Pos)             /*!< 0x00000008 */
-#define CSI_FCR0_CLB3F                  CSI_FCR0_CLB3F_Msk                       /*!< Clear Line byte counter 3 flag */
-#define CSI_FCR0_CTIM0F_Pos             (4U)
-#define CSI_FCR0_CTIM0F_Msk             (0x1U << CSI_FCR0_CTIM0F_Pos)            /*!< 0x00000010 */
-#define CSI_FCR0_CTIM0F                 CSI_FCR0_CTIM0F_Msk                      /*!< Clear Timer 0 flag */
-#define CSI_FCR0_CTIM1F_Pos             (5U)
-#define CSI_FCR0_CTIM1F_Msk             (0x1U << CSI_FCR0_CTIM1F_Pos)            /*!< 0x00000020 */
-#define CSI_FCR0_CTIM1F                 CSI_FCR0_CTIM1F_Msk                      /*!< Clear Timer 1 flag */
-#define CSI_FCR0_CTIM2F_Pos             (6U)
-#define CSI_FCR0_CTIM2F_Msk             (0x1U << CSI_FCR0_CTIM2F_Pos)            /*!< 0x00000040 */
-#define CSI_FCR0_CTIM2F                 CSI_FCR0_CTIM2F_Msk                      /*!< Clear Timer 2 flag */
-#define CSI_FCR0_CTIM3F_Pos             (7U)
-#define CSI_FCR0_CTIM3F_Msk             (0x1U << CSI_FCR0_CTIM3F_Pos)            /*!< 0x00000080 */
-#define CSI_FCR0_CTIM3F                 CSI_FCR0_CTIM3F_Msk                      /*!< Clear Timer 3 flag */
-#define CSI_FCR0_CSOF0F_Pos             (8U)
-#define CSI_FCR0_CSOF0F_Msk             (0x1U << CSI_FCR0_CSOF0F_Pos)            /*!< 0x00000100 */
-#define CSI_FCR0_CSOF0F                 CSI_FCR0_CSOF0F_Msk                      /*!< Clear Start of frame flag for virtual channel 0 */
-#define CSI_FCR0_CSOF1F_Pos             (9U)
-#define CSI_FCR0_CSOF1F_Msk             (0x1U << CSI_FCR0_CSOF1F_Pos)            /*!< 0x00000200 */
-#define CSI_FCR0_CSOF1F                 CSI_FCR0_CSOF1F_Msk                      /*!< Clear Start of frame flag for virtual channel 1 */
-#define CSI_FCR0_CSOF2F_Pos             (10U)
-#define CSI_FCR0_CSOF2F_Msk             (0x1U << CSI_FCR0_CSOF2F_Pos)            /*!< 0x00000400 */
-#define CSI_FCR0_CSOF2F                 CSI_FCR0_CSOF2F_Msk                      /*!< Clear Start of frame flag for virtual channel 2 */
-#define CSI_FCR0_CSOF3F_Pos             (11U)
-#define CSI_FCR0_CSOF3F_Msk             (0x1U << CSI_FCR0_CSOF3F_Pos)            /*!< 0x00000800 */
-#define CSI_FCR0_CSOF3F                 CSI_FCR0_CSOF3F_Msk                      /*!< Clear Start of frame flag for virtual channel 3 */
-#define CSI_FCR0_CEOF0F_Pos             (12U)
-#define CSI_FCR0_CEOF0F_Msk             (0x1U << CSI_FCR0_CEOF0F_Pos)            /*!< 0x00001000 */
-#define CSI_FCR0_CEOF0F                 CSI_FCR0_CEOF0F_Msk                      /*!< Clear End of frame flag for virtual channel 0 */
-#define CSI_FCR0_CEOF1F_Pos             (13U)
-#define CSI_FCR0_CEOF1F_Msk             (0x1U << CSI_FCR0_CEOF1F_Pos)            /*!< 0x00002000 */
-#define CSI_FCR0_CEOF1F                 CSI_FCR0_CEOF1F_Msk                      /*!< Clear End of frame flag for virtual channel 1 */
-#define CSI_FCR0_CEOF2F_Pos             (14U)
-#define CSI_FCR0_CEOF2F_Msk             (0x1U << CSI_FCR0_CEOF2F_Pos)            /*!< 0x00004000 */
-#define CSI_FCR0_CEOF2F                 CSI_FCR0_CEOF2F_Msk                      /*!< Clear End of frame flag for virtual channel 2 */
-#define CSI_FCR0_CEOF3F_Pos             (15U)
-#define CSI_FCR0_CEOF3F_Msk             (0x1U << CSI_FCR0_CEOF3F_Pos)            /*!< 0x00008000 */
-#define CSI_FCR0_CEOF3F                 CSI_FCR0_CEOF3F_Msk                      /*!< Clear End of frame flag for virtual channel 3 */
-#define CSI_FCR0_CSPKTF_Pos             (16U)
-#define CSI_FCR0_CSPKTF_Msk             (0x1U << CSI_FCR0_CSPKTF_Pos)            /*!< 0x00010000 */
-#define CSI_FCR0_CSPKTF                 CSI_FCR0_CSPKTF_Msk                      /*!< Clear Short packet flag */
-#define CSI_FCR0_CCCFIFOFF_Pos          (21U)
-#define CSI_FCR0_CCCFIFOFF_Msk          (0x1U << CSI_FCR0_CCCFIFOFF_Pos)         /*!< 0x00200000 */
-#define CSI_FCR0_CCCFIFOFF              CSI_FCR0_CCCFIFOFF_Msk                   /*!< Clear Clock changer FIFO full flag */
-#define CSI_FCR0_CCRCERRF_Pos           (24U)
-#define CSI_FCR0_CCRCERRF_Msk           (0x1U << CSI_FCR0_CCRCERRF_Pos)          /*!< 0x01000000 */
-#define CSI_FCR0_CCRCERRF               CSI_FCR0_CCRCERRF_Msk                    /*!< Clear CRC error flag */
-#define CSI_FCR0_CECCERRF_Pos           (25U)
-#define CSI_FCR0_CECCERRF_Msk           (0x1U << CSI_FCR0_CECCERRF_Pos)          /*!< 0x02000000 */
-#define CSI_FCR0_CECCERRF               CSI_FCR0_CECCERRF_Msk                    /*!< Clear ECC error flag */
-#define CSI_FCR0_CCECCERRF_Pos          (26U)
-#define CSI_FCR0_CCECCERRF_Msk          (0x1U << CSI_FCR0_CCECCERRF_Pos)         /*!< 0x04000000 */
-#define CSI_FCR0_CCECCERRF              CSI_FCR0_CCECCERRF_Msk                   /*!< Clear Corrected ECC error flag */
-#define CSI_FCR0_CIDERRF_Pos            (27U)
-#define CSI_FCR0_CIDERRF_Msk            (0x1U << CSI_FCR0_CIDERRF_Pos)           /*!< 0x08000000 */
-#define CSI_FCR0_CIDERRF                CSI_FCR0_CIDERRF_Msk                     /*!< Clear Data type ID error flag */
-#define CSI_FCR0_CSPKTERRF_Pos          (28U)
-#define CSI_FCR0_CSPKTERRF_Msk          (0x1U << CSI_FCR0_CSPKTERRF_Pos)         /*!< 0x10000000 */
-#define CSI_FCR0_CSPKTERRF              CSI_FCR0_CSPKTERRF_Msk                   /*!< Clear Short packet error flag */
-#define CSI_FCR0_CWDERRF_Pos            (29U)
-#define CSI_FCR0_CWDERRF_Msk            (0x1U << CSI_FCR0_CWDERRF_Pos)           /*!< 0x20000000 */
-#define CSI_FCR0_CWDERRF                CSI_FCR0_CWDERRF_Msk                     /*!< Clear Watchdog error flag */
-#define CSI_FCR0_CSYNCERRF_Pos          (30U)
-#define CSI_FCR0_CSYNCERRF_Msk          (0x1U << CSI_FCR0_CSYNCERRF_Pos)         /*!< 0x40000000 */
-#define CSI_FCR0_CSYNCERRF              CSI_FCR0_CSYNCERRF_Msk                   /*!< Clear Invalid synchronization error flag */
-
-/*******************  Bit definition for CSI_FCR1 register  *******************/
-#define CSI_FCR1_CESOTDL0F_Pos          (0U)
-#define CSI_FCR1_CESOTDL0F_Msk          (0x1U << CSI_FCR1_CESOTDL0F_Pos)         /*!< 0x00000001 */
-#define CSI_FCR1_CESOTDL0F              CSI_FCR1_CESOTDL0F_Msk                   /*!< Clear Start of transmission error flag on lane 0 */
-#define CSI_FCR1_CESOTSYNCDL0F_Pos      (1U)
-#define CSI_FCR1_CESOTSYNCDL0F_Msk      (0x1U << CSI_FCR1_CESOTSYNCDL0F_Pos)     /*!< 0x00000002 */
-#define CSI_FCR1_CESOTSYNCDL0F          CSI_FCR1_CESOTSYNCDL0F_Msk               /*!< Clear Start of transmission synchronization error flag on lane 0 */
-#define CSI_FCR1_CEESCDL0F_Pos          (2U)
-#define CSI_FCR1_CEESCDL0F_Msk          (0x1U << CSI_FCR1_CEESCDL0F_Pos)         /*!< 0x00000004 */
-#define CSI_FCR1_CEESCDL0F              CSI_FCR1_CEESCDL0F_Msk                   /*!< Clear D-PHY_RX lane 0 escape entry error flag */
-#define CSI_FCR1_CESYNCESCDL0F_Pos      (3U)
-#define CSI_FCR1_CESYNCESCDL0F_Msk      (0x1U << CSI_FCR1_CESYNCESCDL0F_Pos)     /*!< 0x00000008 */
-#define CSI_FCR1_CESYNCESCDL0F          CSI_FCR1_CESYNCESCDL0F_Msk               /*!< Clear D-PHY_RX lane 0 low power data transmission synchronization error flag */
-#define CSI_FCR1_CECTRLDL0F_Pos         (4U)
-#define CSI_FCR1_CECTRLDL0F_Msk         (0x1U << CSI_FCR1_CECTRLDL0F_Pos)        /*!< 0x00000010 */
-#define CSI_FCR1_CECTRLDL0F             CSI_FCR1_CECTRLDL0F_Msk                  /*!< Clear D-PHY_RX lane 0 control error flag */
-#define CSI_FCR1_CESOTDL1F_Pos          (8U)
-#define CSI_FCR1_CESOTDL1F_Msk          (0x1U << CSI_FCR1_CESOTDL1F_Pos)         /*!< 0x00000100 */
-#define CSI_FCR1_CESOTDL1F              CSI_FCR1_CESOTDL1F_Msk                   /*!< Clear Start of transmission error flag on lane 1 */
-#define CSI_FCR1_CESOTSYNCDL1F_Pos      (9U)
-#define CSI_FCR1_CESOTSYNCDL1F_Msk      (0x1U << CSI_FCR1_CESOTSYNCDL1F_Pos)     /*!< 0x00000200 */
-#define CSI_FCR1_CESOTSYNCDL1F          CSI_FCR1_CESOTSYNCDL1F_Msk               /*!< Clear Start of transmission synchronization error flag on lane 1 */
-#define CSI_FCR1_CEESCDL1F_Pos          (10U)
-#define CSI_FCR1_CEESCDL1F_Msk          (0x1U << CSI_FCR1_CEESCDL1F_Pos)         /*!< 0x00000400 */
-#define CSI_FCR1_CEESCDL1F              CSI_FCR1_CEESCDL1F_Msk                   /*!< Clear D-PHY_RX lane 1 escape entry error flag */
-#define CSI_FCR1_CESYNCESCDL1F_Pos      (11U)
-#define CSI_FCR1_CESYNCESCDL1F_Msk      (0x1U << CSI_FCR1_CESYNCESCDL1F_Pos)     /*!< 0x00000800 */
-#define CSI_FCR1_CESYNCESCDL1F          CSI_FCR1_CESYNCESCDL1F_Msk               /*!< Clear D-PHY_RX lane 1 low power data transmission synchronization error flag */
-#define CSI_FCR1_CECTRLDL1F_Pos         (12U)
-#define CSI_FCR1_CECTRLDL1F_Msk         (0x1U << CSI_FCR1_CECTRLDL1F_Pos)        /*!< 0x00001000 */
-#define CSI_FCR1_CECTRLDL1F             CSI_FCR1_CECTRLDL1F_Msk                  /*!< Clear D-PHY_RX lane 1 control error flag */
-
-/******************  Bit definition for CSI_SPDFR register  *******************/
-#define CSI_SPDFR_DATAFIELD_Pos         (0U)
-#define CSI_SPDFR_DATAFIELD_Msk         (0xFFFFU << CSI_SPDFR_DATAFIELD_Pos)     /*!< 0x0000FFFF */
-#define CSI_SPDFR_DATAFIELD             CSI_SPDFR_DATAFIELD_Msk                  /*!< Data field */
-#define CSI_SPDFR_DATATYPE_Pos          (16U)
-#define CSI_SPDFR_DATATYPE_Msk          (0x3FU << CSI_SPDFR_DATATYPE_Pos)        /*!< 0x003F0000 */
-#define CSI_SPDFR_DATATYPE              CSI_SPDFR_DATATYPE_Msk                   /*!< Data type class */
-#define CSI_SPDFR_VCHANNEL_Pos          (22U)
-#define CSI_SPDFR_VCHANNEL_Msk          (0x3U << CSI_SPDFR_VCHANNEL_Pos)         /*!< 0x00C00000 */
-#define CSI_SPDFR_VCHANNEL              CSI_SPDFR_VCHANNEL_Msk                   /*!< Virtual channel */
-
-/*******************  Bit definition for CSI_ERR1 register  *******************/
-#define CSI_ERR1_CRCDTERR_Pos           (0U)
-#define CSI_ERR1_CRCDTERR_Msk           (0x3FU << CSI_ERR1_CRCDTERR_Pos)         /*!< 0x0000003F */
-#define CSI_ERR1_CRCDTERR               CSI_ERR1_CRCDTERR_Msk                    /*!< Data type having a CRC error */
-#define CSI_ERR1_CRCVCERR_Pos           (6U)
-#define CSI_ERR1_CRCVCERR_Msk           (0x3U << CSI_ERR1_CRCVCERR_Pos)          /*!< 0x000000C0 */
-#define CSI_ERR1_CRCVCERR               CSI_ERR1_CRCVCERR_Msk                    /*!< Virtual channel having a CRC error */
-#define CSI_ERR1_CECCDTERR_Pos          (8U)
-#define CSI_ERR1_CECCDTERR_Msk          (0x3FU << CSI_ERR1_CECCDTERR_Pos)        /*!< 0x00003F00 */
-#define CSI_ERR1_CECCDTERR              CSI_ERR1_CECCDTERR_Msk                   /*!< Data type having a corrected ECC error */
-#define CSI_ERR1_CECCVCERR_Pos          (14U)
-#define CSI_ERR1_CECCVCERR_Msk          (0x3U << CSI_ERR1_CECCVCERR_Pos)         /*!< 0x0000C000 */
-#define CSI_ERR1_CECCVCERR              CSI_ERR1_CECCVCERR_Msk                   /*!< Virtual channel having a corrected ECC error */
-#define CSI_ERR1_IDDTERR_Pos            (16U)
-#define CSI_ERR1_IDDTERR_Msk            (0x3FU << CSI_ERR1_IDDTERR_Pos)          /*!< 0x003F0000 */
-#define CSI_ERR1_IDDTERR                CSI_ERR1_IDDTERR_Msk                     /*!< Data type in error */
-#define CSI_ERR1_IDVCERR_Pos            (22U)
-#define CSI_ERR1_IDVCERR_Msk            (0x3U << CSI_ERR1_IDVCERR_Pos)           /*!< 0x00C00000 */
-#define CSI_ERR1_IDVCERR                CSI_ERR1_IDVCERR_Msk                     /*!< Virtual channel having ID error */
-
-/*******************  Bit definition for CSI_ERR2 register  *******************/
-#define CSI_ERR2_SPKTDTERR_Pos          (0U)
-#define CSI_ERR2_SPKTDTERR_Msk          (0x3FU << CSI_ERR2_SPKTDTERR_Pos)        /*!< 0x0000003F */
-#define CSI_ERR2_SPKTDTERR              CSI_ERR2_SPKTDTERR_Msk                   /*!< Data type having a short packet error */
-#define CSI_ERR2_SPKTVCERR_Pos          (6U)
-#define CSI_ERR2_SPKTVCERR_Msk          (0x3U << CSI_ERR2_SPKTVCERR_Pos)         /*!< 0x000000C0 */
-#define CSI_ERR2_SPKTVCERR              CSI_ERR2_SPKTVCERR_Msk                   /*!< Virtual channel having a short packet error */
-#define CSI_ERR2_WDVCERR_Pos            (16U)
-#define CSI_ERR2_WDVCERR_Msk            (0x3U << CSI_ERR2_WDVCERR_Pos)           /*!< 0x00030000 */
-#define CSI_ERR2_WDVCERR                CSI_ERR2_WDVCERR_Msk                     /*!< Virtual channel having a watchdog error */
-#define CSI_ERR2_SYNCVCERR_Pos          (18U)
-#define CSI_ERR2_SYNCVCERR_Msk          (0x3U << CSI_ERR2_SYNCVCERR_Pos)         /*!< 0x000C0000 */
-#define CSI_ERR2_SYNCVCERR              CSI_ERR2_SYNCVCERR_Msk                   /*!< Virtual channel having synchronization error */
-
-/*****************  Bit definition for CSI_HHWCFGR register  ******************/
-#define CSI_HHWCFGR_TECHNO_Pos          (0U)
-#define CSI_HHWCFGR_TECHNO_Msk          (0xFU << CSI_HHWCFGR_TECHNO_Pos)         /*!< 0x0000000F */
-#define CSI_HHWCFGR_TECHNO              CSI_HHWCFGR_TECHNO_Msk                   /*!< Technology */
-
-/******************  Bit definition for CSI_HVERR register  *******************/
-#define CSI_HVERR_MINREV_Pos            (0U)
-#define CSI_HVERR_MINREV_Msk            (0xFU << CSI_HVERR_MINREV_Pos)           /*!< 0x0000000F */
-#define CSI_HVERR_MINREV                CSI_HVERR_MINREV_Msk                     /*!< Major revision */
-#define CSI_HVERR_MAJREV_Pos            (4U)
-#define CSI_HVERR_MAJREV_Msk            (0xFU << CSI_HVERR_MAJREV_Pos)           /*!< 0x000000F0 */
-#define CSI_HVERR_MAJREV                CSI_HVERR_MAJREV_Msk                     /*!< Major revision */
-
-/******************  Bit definition for CSI_HIPIDR register  ******************/
-#define CSI_HIPIDR_ID_Pos               (0U)
-#define CSI_HIPIDR_ID_Msk               (0xFFFFFFFFU << CSI_HIPIDR_ID_Pos)       /*!< 0xFFFFFFFF */
-#define CSI_HIPIDR_ID                   CSI_HIPIDR_ID_Msk                        /*!< Identification code */
-
-/******************  Bit definition for CSI_HSIDR register  *******************/
-#define CSI_HSIDR_SID_Pos               (0U)
-#define CSI_HSIDR_SID_Msk               (0xFFFFFFFFU << CSI_HSIDR_SID_Pos)       /*!< 0xFFFFFFFF */
-#define CSI_HSIDR_SID                   CSI_HSIDR_SID_Msk                        /*!< Size and ID */
-
-/*******************  Bit definition for CSI_PRCR register  *******************/
-#define CSI_PRCR_PEN_Pos                (1U)
-#define CSI_PRCR_PEN_Msk                (0x1U << CSI_PRCR_PEN_Pos)               /*!< 0x00000002 */
-#define CSI_PRCR_PEN                    CSI_PRCR_PEN_Msk                         /*!< When set to 0, this bit places the digital section of the D-PHY in the reset state */
-
-/*******************  Bit definition for CSI_PMCR register  *******************/
-#define CSI_PMCR_FRXMDL0_Pos            (0U)
-#define CSI_PMCR_FRXMDL0_Msk            (0x1U << CSI_PMCR_FRXMDL0_Pos)           /*!< 0x00000001 */
-#define CSI_PMCR_FRXMDL0                CSI_PMCR_FRXMDL0_Msk                     /*!< Force to Rx Mode the Data Lane 0 */
-#define CSI_PMCR_FRXMDL1_Pos            (1U)
-#define CSI_PMCR_FRXMDL1_Msk            (0x1U << CSI_PMCR_FRXMDL1_Pos)           /*!< 0x00000002 */
-#define CSI_PMCR_FRXMDL1                CSI_PMCR_FRXMDL1_Msk                     /*!< Force to Rx Mode the Data Lane 1 */
-#define CSI_PMCR_FTXSMDL0_Pos           (2U)
-#define CSI_PMCR_FTXSMDL0_Msk           (0x1U << CSI_PMCR_FTXSMDL0_Pos)          /*!< 0x00000004 */
-#define CSI_PMCR_FTXSMDL0               CSI_PMCR_FTXSMDL0_Msk                    /*!< Force to Tx Stop Mode the Data Lane 0 */
-#define CSI_PMCR_DTDL_Pos               (4U)
-#define CSI_PMCR_DTDL_Msk               (0x1U << CSI_PMCR_DTDL_Pos)              /*!< 0x00000010 */
-#define CSI_PMCR_DTDL                   CSI_PMCR_DTDL_Msk                        /*!< Disable Turn-around Data Lane 0 */
-#define CSI_PMCR_RTDL0_Pos              (8U)
-#define CSI_PMCR_RTDL0_Msk              (0x1U << CSI_PMCR_RTDL0_Pos)             /*!< 0x00000100 */
-#define CSI_PMCR_RTDL0                  CSI_PMCR_RTDL0_Msk                       /*!< Turn-around Request Data Lane 0 */
-#define CSI_PMCR_TUESDL0_Pos            (12U)
-#define CSI_PMCR_TUESDL0_Msk            (0x1U << CSI_PMCR_TUESDL0_Pos)           /*!< 0x00001000 */
-#define CSI_PMCR_TUESDL0                CSI_PMCR_TUESDL0_Msk                     /*!< Tx ULP Escape-mode Data Lane 0 */
-#define CSI_PMCR_TUEXDL0_Pos            (16U)
-#define CSI_PMCR_TUEXDL0_Msk            (0x1U << CSI_PMCR_TUEXDL0_Pos)           /*!< 0x00010000 */
-#define CSI_PMCR_TUEXDL0                CSI_PMCR_TUEXDL0_Msk                     /*!< Tx ULP Exit-sequence Data Lane 0 */
-
-/*******************  Bit definition for CSI_PFCR register  *******************/
-#define CSI_PFCR_CCFR_Pos               (0U)
-#define CSI_PFCR_CCFR_Msk               (0x3FU << CSI_PFCR_CCFR_Pos)             /*!< 0x0000003F */
-#define CSI_PFCR_CCFR                   CSI_PFCR_CCFR_Msk                        /*!< Configuration Clock Frequency Range selection */
-#define CSI_PFCR_HSFR_Pos               (8U)
-#define CSI_PFCR_HSFR_Msk               (0x7FU << CSI_PFCR_HSFR_Pos)             /*!< 0x00007F00 */
-#define CSI_PFCR_HSFR                   CSI_PFCR_HSFR_Msk                        /*!< PHY-high-speed Frequency Range selection */
-#define CSI_PFCR_DLD_Pos                (16U)
-#define CSI_PFCR_DLD_Msk                (0x1U << CSI_PFCR_DLD_Pos)               /*!< 0x00010000 */
-#define CSI_PFCR_DLD                    CSI_PFCR_DLD_Msk                         /*!< Data Lane Direction of lane0 */
-
-/******************  Bit definition for CSI_PTCR0 register  *******************/
-#define CSI_PTCR0_TCKEN_Pos             (0U)
-#define CSI_PTCR0_TCKEN_Msk             (0x1U << CSI_PTCR0_TCKEN_Pos)            /*!< 0x00000001 */
-#define CSI_PTCR0_TCKEN                 CSI_PTCR0_TCKEN_Msk                      /*!< Test-interface Clock Enable for the TDI bus into the PHY */
-#define CSI_PTCR0_TRSEN_Pos             (1U)
-#define CSI_PTCR0_TRSEN_Msk             (0x1U << CSI_PTCR0_TRSEN_Pos)            /*!< 0x00000002 */
-#define CSI_PTCR0_TRSEN                 CSI_PTCR0_TRSEN_Msk                      /*!< Test-interface Reset Enable for the TDI bus into the PHY */
-
-/******************  Bit definition for CSI_PTCR1 register  *******************/
-#define CSI_PTCR1_TDI_Pos               (0U)
-#define CSI_PTCR1_TDI_Msk               (0xFFU << CSI_PTCR1_TDI_Pos)             /*!< 0x000000FF */
-#define CSI_PTCR1_TDI                   CSI_PTCR1_TDI_Msk                        /*!< Test-interface Data In */
-#define CSI_PTCR1_TWM_Pos               (16U)
-#define CSI_PTCR1_TWM_Msk               (0x1U << CSI_PTCR1_TWM_Pos)              /*!< 0x00010000 */
-#define CSI_PTCR1_TWM                   CSI_PTCR1_TWM_Msk                        /*!< Test-interface Write Mode selector */
-
-/*******************  Bit definition for CSI_PTSR register  *******************/
-#define CSI_PTSR_TDO_Pos                (0U)
-#define CSI_PTSR_TDO_Msk                (0xFFU << CSI_PTSR_TDO_Pos)              /*!< 0x000000FF */
-#define CSI_PTSR_TDO                    CSI_PTSR_TDO_Msk                         /*!< CSI PHY test interface data output bus for read-back and internal probing functionalities */
-
-/******************  Bit definition for CSI_HWCFGR register  ******************/
-#define CSI_HWCFGR_TECHNO_Pos           (0U)
-#define CSI_HWCFGR_TECHNO_Msk           (0xFU << CSI_HWCFGR_TECHNO_Pos)          /*!< 0x0000000F */
-#define CSI_HWCFGR_TECHNO               CSI_HWCFGR_TECHNO_Msk                    /*!< Technology */
-#define CSI_HWCFGR_LANES_Pos            (4U)
-#define CSI_HWCFGR_LANES_Msk            (0xFU << CSI_HWCFGR_LANES_Pos)           /*!< 0x000000F0 */
-#define CSI_HWCFGR_LANES                CSI_HWCFGR_LANES_Msk                     /*!< amount of CSI DataLanes (excluding the ClockLane thus) */
-
-/*******************  Bit definition for CSI_VERR register  *******************/
-#define CSI_VERR_MINREV_Pos             (0U)
-#define CSI_VERR_MINREV_Msk             (0xFU << CSI_VERR_MINREV_Pos)            /*!< 0x0000000F */
-#define CSI_VERR_MINREV                 CSI_VERR_MINREV_Msk                      /*!< Major revision */
-#define CSI_VERR_MAJREV_Pos             (4U)
-#define CSI_VERR_MAJREV_Msk             (0xFU << CSI_VERR_MAJREV_Pos)            /*!< 0x000000F0 */
-#define CSI_VERR_MAJREV                 CSI_VERR_MAJREV_Msk                      /*!< Major revision */
-
-/******************  Bit definition for CSI_IPIDR register  *******************/
-#define CSI_IPIDR_ID_Pos                (0U)
-#define CSI_IPIDR_ID_Msk                (0xFFFFFFFFU << CSI_IPIDR_ID_Pos)        /*!< 0xFFFFFFFF */
-#define CSI_IPIDR_ID                    CSI_IPIDR_ID_Msk                         /*!< Identification code */
-
-/*******************  Bit definition for CSI_SIDR register  *******************/
-#define CSI_SIDR_SID_Pos                (0U)
-#define CSI_SIDR_SID_Msk                (0xFFFFFFFFU << CSI_SIDR_SID_Pos)        /*!< 0xFFFFFFFF */
-#define CSI_SIDR_SID                    CSI_SIDR_SID_Msk                         /*!< Size and ID */
-
-/******************************************************************************/
-/*                                                                            */
 /*                                DBGMCU                                      */
 /*                                                                            */
 /******************************************************************************/
@@ -10859,7 +9762,8 @@ typedef struct
 /******************************************************************************/
 #define DCMIPP_NUM_OF_PIPES               (0x3U)
 
-#define DCMIPPP_P1HISTOGRAM_AVAILABLE
+
+#define DCMIPP_P1HISTOGRAM_SUPPORT
 /******************  Bit definition for DCMIPP_IPGR1 register  *****************/
 #define DCMIPP_IPGR1_MEMORYPAGE_Pos         (0U)
 #define DCMIPP_IPGR1_MEMORYPAGE_Msk         (0x7U << DCMIPP_IPGR1_MEMORYPAGE_Pos)           /*!< 0x00000007 */
@@ -30094,31 +28998,6 @@ typedef struct
 #define LTDC_CCRCR_CCRC_Msk           (0xFFFFU << LTDC_CCRCR_CCRC_Pos)     /*!< 0x0000FFFF */
 #define LTDC_CCRCR_CCRC               LTDC_CCRCR_CCRC_Msk        /*!< computed CRC of frame */
 
-/******************  Bit definition for LTDC_RB0AR register  ******************/
-#define LTDC_RB0AR_ADDR_Pos           (0U)
-#define LTDC_RB0AR_ADDR_Msk           (0xFFFFFFFFU << LTDC_RB0AR_ADDR_Pos)         /*!< 0xFFFFFFFF */
-#define LTDC_RB0AR_ADDR               LTDC_RB0AR_ADDR_Msk        /*!< address of the rotation buffer 0 */
-
-/******************  Bit definition for LTDC_RB1AR register  ******************/
-#define LTDC_RB1AR_ADDR_Pos           (0U)
-#define LTDC_RB1AR_ADDR_Msk           (0xFFFFFFFFU << LTDC_RB1AR_ADDR_Pos)         /*!< 0xFFFFFFFF */
-#define LTDC_RB1AR_ADDR               LTDC_RB1AR_ADDR_Msk        /*!< address of the rotation buffer 1 */
-
-/******************  Bit definition for LTDC_RBPR register  *******************/
-#define LTDC_RBPR_PITCH_Pos           (0U)
-#define LTDC_RBPR_PITCH_Msk           (0xFFFFU << LTDC_RBPR_PITCH_Pos)     /*!< 0x0000FFFF */
-#define LTDC_RBPR_PITCH               LTDC_RBPR_PITCH_Msk        /*!< pitch in bytes of the rotation buffers 0 and 1 */
-
-/******************  Bit definition for LTDC_RIFCR register  ******************/
-#define LTDC_RIFCR_RIFBLUE_Pos        (0U)
-#define LTDC_RIFCR_RIFBLUE_Msk        (0xFFU << LTDC_RIFCR_RIFBLUE_Pos)      /*!< 0x000000FF */
-#define LTDC_RIFCR_RIFBLUE            LTDC_RIFCR_RIFBLUE_Msk     /*!< Blue component of the rotation intermediate frame */
-#define LTDC_RIFCR_RIFGREEN_Pos       (8U)
-#define LTDC_RIFCR_RIFGREEN_Msk       (0xFFU << LTDC_RIFCR_RIFGREEN_Pos)       /*!< 0x0000FF00 */
-#define LTDC_RIFCR_RIFGREEN           LTDC_RIFCR_RIFGREEN_Msk    /*!< Green component of the rotation intermediate frame */
-#define LTDC_RIFCR_RIFRED_Pos         (16U)
-#define LTDC_RIFCR_RIFRED_Msk         (0xFFU << LTDC_RIFCR_RIFRED_Pos)     /*!< 0x00FF0000 */
-#define LTDC_RIFCR_RIFRED             LTDC_RIFCR_RIFRED_Msk      /*!< Red component of the rotation intermediate frame */
 
 /******************  Bit definition for LTDC_FUTR register  *******************/
 #define LTDC_FUTR_THRE_Pos            (0U)
@@ -32861,12 +31740,12 @@ typedef struct
 #define RAMCFG_CCSR_CRCCS_Msk               (0xFFFFFFFFUL << RAMCFG_CCSR_CRCCS_Pos) /*!< 0xFFFFFFFF */
 #define RAMCFG_CCSR_CRCCS                   RAMCFG_CCSR_CRCCS_Msk                   /*!< CRC calculated signature */
 
+/*******************************************************/
 /*           Reset and Clock Control (RCC)             */
 /* Reference document :                                */
-/*  https://epm-st.st.com/ProjectServerST/             */
-/*  Tiny%20Panther%20(504)/Working%20documents/      */
-/*  Design/IP%20Design/DIGITAL_IP/ip_rcc_design/       */
-/*   TPanther_RCC_RegDesc.xml                          */
+/*     Chapter #20 "Reset and clock control (RCC)"     */
+/*     RM0506 - Reference Manual - STM32MP21xx         */
+/*     advanced ARM-based 32/64-bit MPUs               */
 /*******************************************************/
 /* Bit fields for RCC_SECCFGR0 register */
 #define RCC_SECCFGR0_SEC_Pos                     (0U)
@@ -34961,16 +33840,6 @@ typedef struct
 #define RCC_LTDCCFGR_LTDCLPEN_Msk                  (0x1U << RCC_LTDCCFGR_LTDCLPEN_Pos)                 /*!< 0x00000004 */
 #define RCC_LTDCCFGR_LTDCLPEN                      RCC_LTDCCFGR_LTDCLPEN_Msk                         /*!< LTDC clock enable during CSleep */
 
-/* Bit fields for RCC_CSICFGR register  ******************/
-#define RCC_CSICFGR_CSIRST_Pos                   (0U)
-#define RCC_CSICFGR_CSIRST_Msk                   (0x1U << RCC_CSICFGR_CSIRST_Pos)                    /*!< 0x00000001 */
-#define RCC_CSICFGR_CSIRST                       RCC_CSICFGR_CSIRST_Msk                            /*!< CSI reset */
-#define RCC_CSICFGR_CSIEN_Pos                    (1U)
-#define RCC_CSICFGR_CSIEN_Msk                    (0x1U << RCC_CSICFGR_CSIEN_Pos)                   /*!< 0x00000002 */
-#define RCC_CSICFGR_CSIEN                        RCC_CSICFGR_CSIEN_Msk                             /*!< CSI clock enable */
-#define RCC_CSICFGR_CSILPEN_Pos                  (2U)
-#define RCC_CSICFGR_CSILPEN_Msk                  (0x1U << RCC_CSICFGR_CSILPEN_Pos)                   /*!< 0x00000004 */
-#define RCC_CSICFGR_CSILPEN                      RCC_CSICFGR_CSILPEN_Msk                           /*!< CSI clock enable during CSleep */
 
 /* Bit fields for RCC_DCMIPPCFGR register */
 #define RCC_DCMIPPCFGR_DCMIPPRST_Pos               (0U)
@@ -49387,8 +48256,6 @@ typedef struct
 /******************************* CRC Instances ********************************/
 #define IS_CRC_ALL_INSTANCE(INSTANCE) (((INSTANCE) == CRC_S) || ((INSTANCE) == CRC_NS))
 
-/******************************* CSI Instances *******************************/
-#define IS_CSI_ALL_INSTANCE(INSTANCE) (((INSTANCE) == CSI_S) || ((INSTANCE) == CSI_NS))
 
 /******************************* DCACHE Instances *******************************/
 #define IS_DCACHE_ALL_INSTANCE(INSTANCE) (((INSTANCE) == DCACHE_S) || ((INSTANCE) == DCACHE_NS))
@@ -49624,9 +48491,9 @@ typedef struct
                                        ((INSTANCE) == I2C2_S) || ((INSTANCE) == I2C2_NS) || \
                                        ((INSTANCE) == I2C3_S) || ((INSTANCE) == I2C3_NS))
 /******************* I2C Instances : Group belongingness *********************/
-#define IS_I2C_GRP1_INSTANCE(INSTANCE) (((INSTANCE) == I2C1_NS) || ((INSTANCE) == I2C1_S))
-#define IS_I2C_GRP2_INSTANCE(INSTANCE) (((INSTANCE) == I2C2_NS) || ((INSTANCE) == I2C2_S))
-#define IS_I2C_GRP3_INSTANCE(INSTANCE) (((INSTANCE) == I2C3_NS) || ((INSTANCE) == I2C3_S))
+#define IS_I2C_GRP1_INSTANCE(INSTANCE) (((INSTANCE) == I2C1_NS) || ((INSTANCE) == I2C1_S)|| \
+                                        ((INSTANCE) == I2C2_NS) || ((INSTANCE) == I2C2_S))
+#define IS_I2C_GRP2_INSTANCE(INSTANCE) (((INSTANCE) == I2C3_NS) || ((INSTANCE) == I2C3_S))
 
 /************** I2C Instances : wakeup capability from stop modes *************/
 #define IS_I2C_WAKEUP_FROMSTOP_INSTANCE(INSTANCE) IS_I2C_ALL_INSTANCE(INSTANCE)
@@ -49643,14 +48510,13 @@ typedef struct
                                          ((INSTANCE) == I2C3_S) || ((INSTANCE) == I2C3_NS))
 
 /******************* SMBUS Instances : Group belongingness *********************/
-#define IS_SMBUS_GRP1_INSTANCE(INSTANCE) (((INSTANCE) == I2C1_NS) || ((INSTANCE) == I2C1_S))
-#define IS_SMBUS_GRP2_INSTANCE(INSTANCE) (((INSTANCE) == I2C2_NS) || ((INSTANCE) == I2C2_S))
-#define IS_SMBUS_GRP3_INSTANCE(INSTANCE) (((INSTANCE) == I2C3_NS) || ((INSTANCE) == I2C3_S))
+#define IS_SMBUS_GRP1_INSTANCE(INSTANCE) (((INSTANCE) == I2C1_NS) || ((INSTANCE) == I2C1_S)|| \
+                                          ((INSTANCE) == I2C2_NS) || ((INSTANCE) == I2C2_S)) 
+#define IS_SMBUS_GRP2_INSTANCE(INSTANCE) (((INSTANCE) == I2C3_NS) || ((INSTANCE) == I2C3_S))
 
 /************** SMBUS Instances : trigger input *******************************/
 #define IS_SMBUS_TRIGGER_INPUT_INSTANCE(INSTANCE) (IS_SMBUS_GRP1_INSTANCE(INSTANCE) ||\
-                                                   IS_SMBUS_GRP2_INSTANCE(INSTANCE) ||\
-												   IS_SMBUS_GRP3_INSTANCE(INSTANCE))
+                                                   IS_SMBUS_GRP2_INSTANCE(INSTANCE))
 
 /******************************* IPCC Instances *******************************/
 #define IS_IPCC_ALL_INSTANCE(INSTANCE) (((INSTANCE) == IPCC1_S) || ((INSTANCE) == IPCC1_NS))
@@ -50322,8 +49188,6 @@ typedef struct
 /******************************* DCACHE Instances ********************************/
 #define IS_DCACHE_ALL_INSTANCE(INSTANCE) ((INSTANCE) == DCACHE)
 
-/******************************* DCMI Instances *******************************/
-#define IS_CSI_ALL_INSTANCE(INSTANCE) ((INSTANCE) == CSI)
 
 /******************************* DCMI Instances *******************************/
 #define IS_DCMI_ALL_INSTANCE(INSTANCE) ((INSTANCE) == DCMI)
@@ -50555,17 +49419,16 @@ typedef struct
                                        ((INSTANCE) == I2C2) || \
                                        ((INSTANCE) == I2C3))
 /******************* I2C Instances : Group belongingness *********************/
-#define IS_I2C_GRP1_INSTANCE(INSTANCE) ((INSTANCE) == I2C1)
-#define IS_I2C_GRP2_INSTANCE(INSTANCE) ((INSTANCE) == I2C2)
-#define IS_I2C_GRP3_INSTANCE(INSTANCE) ((INSTANCE) == I2C3)
+#define IS_I2C_GRP1_INSTANCE(INSTANCE) (((INSTANCE) == I2C1) || \
+                                        ((INSTANCE) == I2C2))
+#define IS_I2C_GRP2_INSTANCE(INSTANCE) ((INSTANCE) == I2C3)
 
 /************** I2C Instances : wakeup capability from stop modes *************/
 #define IS_I2C_WAKEUP_FROMSTOP_INSTANCE(INSTANCE) IS_I2C_ALL_INSTANCE(INSTANCE)
 
 /************** I2C Instances : trigger input *********************************/
-#define IS_I2C_TRIGGER_INPUT_INSTANCE(INSTANCE) (IS_I2C_GRP1_INSTANCE(INSTANCE) ||\
-                                                 IS_I2C_GRP2_INSTANCE(INSTANCE) ||\
-												 IS_I2C_GRP3_INSTANCE(INSTANCE))
+#define IS_I2C_TRIGGER_INPUT_INSTANCE(INSTANCE) (IS_I2C_GRP1_INSTANCE(INSTANCE) || \
+                                                 IS_I2C_GRP2_INSTANCE(INSTANCE))
 
 /****************************** SMBUS Instances *******************************/
 
@@ -50573,14 +49436,13 @@ typedef struct
                                          ((INSTANCE) == I2C2) || \
                                          ((INSTANCE) == I2C3))
 /******************* SMBUS Instances : Group belongingness *********************/
-#define IS_SMBUS_GRP1_INSTANCE(INSTANCE) ((INSTANCE) == I2C1)
-#define IS_SMBUS_GRP2_INSTANCE(INSTANCE) ((INSTANCE) == I2C2)
-#define IS_SMBUS_GRP3_INSTANCE(INSTANCE) ((INSTANCE) == I2C3)
+#define IS_SMBUS_GRP1_INSTANCE(INSTANCE) (((INSTANCE) == I2C1)|| \
+                                          ((INSTANCE) == I2C2))
+#define IS_SMBUS_GRP2_INSTANCE(INSTANCE) ((INSTANCE) == I2C3)
 
 /************** SMBUS Instances : trigger input *******************************/
 #define IS_SMBUS_TRIGGER_INPUT_INSTANCE(INSTANCE) (IS_SMBUS_GRP1_INSTANCE(INSTANCE) ||\
-                                                   IS_SMBUS_GRP2_INSTANCE(INSTANCE) ||\
-												   IS_SMBUS_GRP3_INSTANCE(INSTANCE))
+                                                   IS_SMBUS_GRP2_INSTANCE(INSTANCE))
 /******************************* I2S Instances ****************************/
 #define IS_I2S_ALL_INSTANCE(INSTANCE) (((INSTANCE) == SPI1) || \
                                        ((INSTANCE) == SPI2) || \
@@ -50669,8 +49531,7 @@ typedef struct
 #define IS_RAMCFG_CRC_INSTANCE(INSTANCE) (((INSTANCE) == RAMCFG_RETRAM))
 
 /******************************* RNG Instances ********************************/
-#define IS_RNG_ALL_INSTANCE(INSTANCE) (((INSTANCE) == RNG1_S) || ((INSTANCE) == RNG1_NS) || ((INSTANCE) == RNG2_S) || \
-                                        ((INSTANCE) == RNG2_NS))
+#define IS_RNG_ALL_INSTANCE(INSTANCE) (((INSTANCE) == RNG1) || ((INSTANCE) == RNG2))
 
 /******************************* RTC Instances ********************************/
 #define IS_RTC_ALL_INSTANCE(INSTANCE) ((INSTANCE) == RTC)
@@ -51236,8 +50097,6 @@ typedef struct
 /******************************* CRYP VERSION ********************************/
 #define CRYP_VERSION(__INSTANCE__) ((__INSTANCE__)->VERR)
 
-/******************************* CSI VERSION ********************************/
-#define CSI_VERSION(__INSTANCE__) ((__INSTANCE__)->VERR)
 
 /******************************* DCACHE VERSION ********************************/
 #define DCACHE_VERSION(__INSTANCE__) ((__INSTANCE__)->VERR)
