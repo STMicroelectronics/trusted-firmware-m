@@ -294,7 +294,7 @@ DEFAULT_IRQ_HANDLER(EXTI1_14_IRQHandler)
 DEFAULT_IRQ_HANDLER(EXTI1_15_IRQHandler)
 DEFAULT_IRQ_HANDLER(IS2M_IRQHandler)
 DEFAULT_IRQ_HANDLER(DDRPERFM_IRQHandler)
-
+DEFAULT_IRQ_HANDLER(RESERVED_9_IRQHandler)
 /*----------------------------------------------------------------------------
   Exception / Interrupt Vector table
  *----------------------------------------------------------------------------*/
@@ -341,7 +341,7 @@ const VECTOR_TABLE_Type __VECTOR_TABLE[] __VECTOR_TABLE_ATTRIBUTE = {
 	IWDG4_RST_IRQHandler,        /* Independent Watchdog 4 Reset through EXTI */
 	0,
 	WWDG1_IRQHandler,            /* Window Watchdog 1 Early Wakeup interrupt */
-	0,
+	RESERVED_9_IRQHandler,
 	0,
 	0,
 	TAMP_IRQHandler,             /* Tamper interrupt (include LSECSS interrupts) */
