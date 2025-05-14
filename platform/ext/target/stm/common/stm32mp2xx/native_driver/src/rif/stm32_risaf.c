@@ -443,16 +443,21 @@ static int stm32_risaf_init(const struct device *dev)
 
 	stm32_risaf_get_hwconfig(dev);
 
-	if (drv_cfg->ndt_regions > drv_data->hw_nregions)
-		return -EINVAL;
+	if (drv_cfg->ndt_regions > drv_data->hw_nregions) {
+		err = -EINVAL;
+		goto out;
+	}
+
 
 	if (drv_data->variant->has_enc) {
-		if (!drv_cfg->entropy_dev)
-			return -EINVAL;
+		if (!drv_cfg->entropy_dev) {
+			err = -EINVAL;
+			goto out;
+		}
 
 		err = stm32_risaf_encryption_init(dev);
 		if (err)
-			return err;
+			goto out;
 	}
 
 	for(i = 0; i < drv_cfg->ndt_regions; i++) {
@@ -461,6 +466,7 @@ static int stm32_risaf_init(const struct device *dev)
 			break;
 	}
 
+out:
 	clk_disable(clk);
 
 	return err;
