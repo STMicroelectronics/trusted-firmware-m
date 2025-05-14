@@ -314,7 +314,7 @@ DEVICE_DT_INST_DEFINE(n,								  \
 
 /* MP21 configuration default values */
 static __unused struct stm32_rng_variant variant_stm32mp21 = {
-	.max_noise_clk_freq	= 40000000U,
+	.max_noise_clk_freq	= 4000000U,
 	.cr			= 0x00F01F00U,
 	.nscr			= 0x000001FFU,
 	.htcr			= 0x0000AAC7U,
