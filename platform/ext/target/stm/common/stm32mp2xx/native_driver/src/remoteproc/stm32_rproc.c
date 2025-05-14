@@ -214,9 +214,6 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 	if (err)
 		return err;
 
-	/* Restore a35 debug configuration */
-	stm32_bsec_restore_cortexa_debug_conf();
-
 	/*  check cpu is not in holbot */
 	return mmio_read32_poll_timeout(((uint32_t)&PWR_S->CPU1D1SR), cfgr,
 					!(cfgr & PWR_CPU1D1SR_HOLD_BOOT_Msk) ||
@@ -257,6 +254,9 @@ static __unused bool stm32mp2_a35_is_running(const struct device *dev)
 static __unused void stm32mp2_a35_irq_ack(const struct device *dev)
 {
 	stm32mp2_a35_release(dev);
+
+	/* Restore a35 debug configuration */
+	stm32_bsec_restore_cortexa_debug_conf();
 }
 
 static struct rproc_spec *stm32_rproc_get(const struct device *dev)
