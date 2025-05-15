@@ -63,6 +63,19 @@
          ]
       }
     },
-
+    {
+      "description": "TFM PM Partition",
+      "manifest": "../secure_fw/partitions/pm/tfm_pm.yaml",
+      "output_path": "secure_fw/partitions/pm",
+      "conditional": "TFM_PARTITION_PM",
+      "version_major": 0,
+      "version_minor": 1,
+      "pid": 273,
+      "linker_pattern": {
+        "library_list": [
+          "*tfm_*partition_pm*"
+         ]
+      }
+    },
   ]
 }

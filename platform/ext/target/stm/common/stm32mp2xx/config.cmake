@@ -54,6 +54,7 @@ if (STM32_M33TDCID)
 	set(TFM_PARTITION_SCP                 ON                   CACHE BOOL   "Use System Control Processor library in partition")
 	set(TFM_PARTITION_IPCC                ON                   CACHE BOOL   "Use IPCC partition")
 	set(TFM_PARTITION_NS_AGENT_MAILBOX    ON                   CACHE BOOL   "Enable Non-Secure Mailbox Agent partition")
+	set(TFM_PARTITION_PM                  ON                   CACHE BOOL   "Enable Power Management partition")
 	set(TFM_PLAT_SPECIFIC_MULTI_CORE_COMM ON                   CACHE BOOL   "Whether to use a platform specific inter-core communication instead of mailbox in dual-cpu topology")
 	set(CONFIG_TFM_ARM_RSE_COMMS_PLAT_HAL ON                   CACHE BOOL   "Whether to use a platform specific hal for platform/ext/arm/rse/common/rse_comms")
 	set(DDR_IMAGE_VERSION                 "0.1.0"              CACHE STRING "The version of DDR Firmware to avoid rollback")
@@ -74,6 +75,10 @@ endif()
 
 if (TFM_PARTITION_SCP)
 	list(APPEND MANIFEST_LISTS ${CMAKE_CURRENT_LIST_DIR}/manifest/tfm_manifest_list.yaml)
+endif()
+
+if (TFM_PARTITION_PM)
+	set(CONFIG_PM_DEVICE                 ON                    CACHE BOOL   "Enable power device support")
 endif()
 
 set(SCP_FW_VERSION                      "f70a89c8378429c65184"  CACHE STRING    "The version of SCP-firmware to use")

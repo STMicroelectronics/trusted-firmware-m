@@ -193,6 +193,10 @@ if (TFM_PARTITION_NS_AGENT_MAILBOX)
 	add_subdirectory(${PLATFORM_DIR}/ext/target/arm/rse/common/rse_comms rse)
 endif()
 
+if(TFM_PARTITION_PM)
+	add_subdirectory(${STM_FAMILLY_DIR}/secure_fw/partitions/pm pm)
+endif()
+
 # GNU ld has some strange behaviour to do with weak functions, and does not deal
 # well with strong functions in static libraries overriding weak functions in
 # object files.
@@ -418,6 +422,7 @@ install(FILES
 install(FILES
     ${STM_FAMILLY_DIR}/secure/services/src/tfm_scmi_api.c
     ${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c
+    ${STM_FAMILLY_DIR}/secure/services/src/tfm_pm_api.c
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx/secure/services/src
 )
 
