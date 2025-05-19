@@ -1,0 +1,12 @@
+/*
+ * Copyright (C) 2022 STMicroelectronics.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ */
+#ifndef __STM_PROFILE_H__
+#define __STM_PROFILE_H__
+
+#cmakedefine STM32_PROFILE_DEFINITION "@STM32_PROFILE_DEFINITION@"
+
+#endif /* __STM_PROFILE_H__ */

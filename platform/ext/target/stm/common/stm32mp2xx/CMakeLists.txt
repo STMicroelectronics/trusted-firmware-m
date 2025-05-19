@@ -140,6 +140,7 @@ target_sources(platform_s
 		${STM_FAMILLY_DIR}/native_driver/src/i2c/stm32_i2c.c
 		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_platform_system.c>
 		$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${STM_FAMILLY_DIR}/secure/nv_counters.c>
+		$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_ATTEST_HAL}>>:${STM_FAMILLY_DIR}/secure/attest_hal.c>
 		$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_OTP}>>:${STM_FAMILLY_DIR}/secure/otp.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/services/src/cpus.c>
 		${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_nvic.c
@@ -385,6 +386,10 @@ endif()
 
 #========================= Generate board model ===============================#
 include(${STM_FAMILLY_DIR}/stm_version.cmake)
+
+#========================= Generate profile definition ========================#
+configure_file(${STM_FAMILLY_DIR}/stm_profile.h.in
+               ${CMAKE_BINARY_DIR}/generated/stm_profile.h)
 
 #========================= Files for building NS side platform ================#
 install(DIRECTORY

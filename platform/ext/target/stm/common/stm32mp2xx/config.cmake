@@ -27,6 +27,7 @@ set(LOG_LEVEL_UNPRIV                    LOG_LEVEL_INFO  CACHE STRING    "Set tfm
 set(CONFIG_TFM_BACKTRACE_ON_CORE_PANIC  OFF             CACHE BOOL      "On fatal errors in secure firmware, log backtrace and then halt" FORCE)
 
 ## platform
+set(PLATFORM_DEFAULT_ATTEST_HAL         OFF         CACHE BOOL  "Use default attest hal implementation.")
 set(PLATFORM_DEFAULT_UART_STDOUT        OFF         CACHE BOOL  "Use default uart stdout implementation.")
 set(CONFIG_TFM_USE_TRUSTZONE            ON          CACHE BOOL  "Enable use of TrustZone to transition between NSPE and SPE")
 set(PLATFORM_DEFAULT_NV_COUNTERS        OFF         CACHE BOOL  "Use default nv counter implementation.")
@@ -36,6 +37,7 @@ set(PLATFORM_DEFAULT_PROVISIONING       OFF         CACHE BOOL  "Use default pro
 set(TFM_DUMMY_PROVISIONING              ON          CACHE BOOL  "Provision with dummy values. NOT to be used in production")
 set(STM32_OVERRIDE_OTP                  ON          CACHE BOOL  "Override the OTP key with dummy values if TFM_DUMMY_PROVISIONING is ON")
 set(TFM_PARTITION_PLATFORM              ON          CACHE BOOL  "Enable the TF-M Platform partition")
+set(STM32_PROFILE_DEFINITION		"STM32_PROFILE_MEDIUM"	CACHE STRING	"The default profile definition of platform")
 
 if (STM32_M33TDCID)
 	set(BL2                               ON                   CACHE BOOL   "Whether to build BL2" FORCE)
