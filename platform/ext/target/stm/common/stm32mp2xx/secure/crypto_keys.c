@@ -326,9 +326,6 @@ static enum tfm_plat_err_t tfm_plat_get_iak(uint8_t *buf, size_t buf_len,
 					    psa_key_type_t *type)
 {
 	enum tfm_plat_err_t err;
-#ifndef SYMMETRIC_INITIAL_ATTESTATION
-	psa_ecc_family_t curve_type;
-#endif /* SYMMETRIC_INITIAL_ATTESTATION */
 
 	err = tfm_plat_otp_read(PLAT_OTP_ID_IAK_LEN,
 				sizeof(size_t), (uint8_t*)key_len);
@@ -342,22 +339,11 @@ static enum tfm_plat_err_t tfm_plat_get_iak(uint8_t *buf, size_t buf_len,
 	}
 
 #ifdef SYMMETRIC_INITIAL_ATTESTATION
-	err = tfm_plat_otp_read(PLAT_OTP_ID_IAK_TYPE,
-				sizeof(psa_algorithm_t), (uint8_t*)algorithm);
-	if(err != TFM_PLAT_ERR_SUCCESS) {
-		return err;
-	}
-
+	*algorithm = PSA_ALG_HMAC(PSA_ALG_SHA_256);
 	*type = PSA_KEY_TYPE_HMAC;
 #else /* SYMMETRIC_INITIAL_ATTESTATION */
-	err = tfm_plat_otp_read(PLAT_OTP_ID_IAK_TYPE, sizeof(psa_ecc_family_t),
-				&curve_type);
-	if(err != TFM_PLAT_ERR_SUCCESS) {
-		return err;
-	}
-
 	*algorithm = PSA_ALG_ECDSA(PSA_ALG_SHA_256);
-	*type = PSA_KEY_TYPE_ECC_KEY_PAIR(curve_type);
+	*type = PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1);
 #endif /* SYMMETRIC_INITIAL_ATTESTATION */
 
 	return tfm_plat_otp_read(PLAT_OTP_ID_IAK, *key_len, buf);
