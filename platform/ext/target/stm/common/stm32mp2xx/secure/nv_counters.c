@@ -61,6 +61,7 @@ enum tfm_plat_err_t tfm_plat_init_nv_counter(void)
 	uint8_t data_width;
 	uint32_t magic;
 	int32_t cnt;
+	uint32_t nv_couter[NUM_NV_COUNTERS];
 
 	err = (enum tfm_plat_err_t)NV_COUNTERS_FLASH_DRIVER.Initialize(NULL);
 	if (err != ARM_DRIVER_OK)
@@ -91,13 +92,9 @@ enum tfm_plat_err_t tfm_plat_init_nv_counter(void)
 	if (magic == NV_COUNTERS_INITIALIZED)
 		return TFM_PLAT_ERR_SUCCESS;
 
-#if defined(STM32_PROV_FAKE)
-	uint32_t nv_couter[NUM_NV_COUNTERS];
+	IMSG("\033[1;31mNV_MM_COUNTER_INIT: counters are initialized.\033[0m\n");
 
-        WMSG("\033[1;31mNV_MM_COUNTER_INIT is not suitable for production! "
-	     "This device is \033[1;1mNOT SECURE \033[0m\n");
-
-        memset(nv_couter, 0, sizeof(nv_couter));
+	memset(nv_couter, 0, sizeof(nv_couter));
 	cnt = NV_COUNTERS_FLASH_DRIVER.ProgramData(NV_COUNTER_ADDR(0), nv_couter,
 						   sizeof(nv_couter) / data_width);
 	if (cnt < 0)
@@ -108,7 +105,6 @@ enum tfm_plat_err_t tfm_plat_init_nv_counter(void)
 						   NV_MAGIC_SZ / data_width);
 	if (cnt == (NV_MAGIC_SZ / data_width))
 		return TFM_PLAT_ERR_SUCCESS;
-#endif
 
 	return TFM_PLAT_ERR_SYSTEM_ERR;
 }

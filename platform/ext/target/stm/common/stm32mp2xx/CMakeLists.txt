@@ -37,7 +37,6 @@ target_compile_definitions(tfm_config
 	$<$<BOOL:${STM32_OVERRIDE_OTP}>:STM32_OVERRIDE_OTP>
         $<$<BOOL:${TFM_PARTITION_SCP}>:S_HEAP_SIZE=0x00020000>
         $<$<BOOL:${STM32_CACHE_ENABLED}>:STM32_CACHE_ENABLED>
-        STM32_PROV_FAKE=${STM32_PROV_FAKE}
 )
 
 target_include_directories(tfm_config

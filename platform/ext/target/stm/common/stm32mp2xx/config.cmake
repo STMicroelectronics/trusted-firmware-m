@@ -12,7 +12,6 @@ set(MBEDCRYPTO_BUILD_TYPE               minsizerel		CACHE STRING    "Build type 
 ### stm32 flag
 set(STM32_BOARD_MODEL           "stm32mp2"	            CACHE STRING	"Define board model name")
 set(STM32_IPC                   OFF                     CACHE BOOL      "Use IPC (rpmsg) to communicate with main processor")
-set(STM32_PROV_FAKE             OFF                     CACHE BOOL      "Provisioning with dummy values. NOT to be used in production")
 set(STM32_M33TDCID              OFF                     CACHE BOOL      "Define M33 like Trusted Domain Compartiment ID")
 set(STM32_DTS_DIR               "arm/stm"               CACHE STRING	"Define relative path of stm32 dts")
 set(STM32_CACHE_ENABLED         ON                      CACHE BOOL      "Enable cache")
