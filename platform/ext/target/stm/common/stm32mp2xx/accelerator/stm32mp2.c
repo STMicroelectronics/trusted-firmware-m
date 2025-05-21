@@ -43,3 +43,18 @@ int crypto_hw_accelerator_finish(void)
 	return 0;
 }
 
+/**
+ * \brief Apply permissions on debug signals
+ *
+ * \param[in]   permissions_mask   permission vector for debug signals
+ *                                 vector bits interpretation is specific
+ *                                 to a target and depends on the architecture
+ * \param[in]   len                length of permission vector
+ *
+ * \return 0 on success, non-zero otherwise
+ */
+int crypto_hw_apply_debug_permissions(uint8_t *permissions_mask __unused, uint32_t len __unused)
+{
+	//TODO Used by ADAC library when debug authentication is successful
+	return 0;
+}
