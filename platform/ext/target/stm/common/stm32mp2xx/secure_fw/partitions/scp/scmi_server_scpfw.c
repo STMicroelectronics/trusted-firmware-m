@@ -367,7 +367,7 @@ struct scpfw_config *scmi_scpfw_get_configuration(void)
 	return &scpfw_cfg;
 }
 static const char dummy[]="";
-extern int scp_com_init(const struct mbox_dt_spec *chan, void *user_data);
+extern int scp_com_init(const struct mbox_dt_spec *chan, const int agent_id);
 
 int32_t scmi_scpfw_cfg_early_init(void)
 {
@@ -393,7 +393,7 @@ int32_t scmi_scpfw_cfg_early_init(void)
 			/*  smt module  */
 			channel_cfg->shm.area = scmi_cfg[i]->dt_shm->area;
 			channel_cfg->shm.size = scmi_cfg[i]->dt_shm->size;
-			if (scp_com_init(scmi_cfg[i]->dt_chan, (void *)scmi_cfg[i]->dt_agent_id))
+			if (scp_com_init(scmi_cfg[i]->dt_chan, scmi_cfg[i]->dt_agent_id))
 				psa_panic();
 			channel_cfg->chan_mbx = (void *)(scmi_cfg[i]->dt_chan);
 		}
