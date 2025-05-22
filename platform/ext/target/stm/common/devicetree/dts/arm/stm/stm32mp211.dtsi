@@ -560,6 +560,16 @@
 			status = "disabled";
 		};
 
+		dbgmcu_mbx: mailbox@540a0100 {
+			compatible = "st,stm32mp21-dbgmcu-mbx";
+			reg = <0x540a0100 0xc>;
+			clocks = <&rcc CK_DBGMCU>;
+			interrupts = <208 0>,
+				     <209 0>;
+			interrupt-names = "dbg_auth_wr", "dbg_auth_rd";
+			status = "disabled";
+		};
+
 		rcc: rcc@54200000 {
 			compatible = "st,stm32mp21-rcc", "syscon";
 			reg = <0x54200000 0x10000>;
