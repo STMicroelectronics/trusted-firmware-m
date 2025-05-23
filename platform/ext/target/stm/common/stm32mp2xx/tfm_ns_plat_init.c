@@ -61,11 +61,14 @@ int32_t tfm_ns_platform_sec_ctx_call(void)
 	uint32_t event;
 
 	while(!tfm_ns_notif_get(&event)) {
-		if (event & TFM_SP_IPCC_RSE_NS_EVT)
+		if (tfm_ns_notif_get_pending(TFM_SP_IPCC_RSE_NS_EVT) == TFM_SP_IPCC_RSE_NS_EVT)
 			psa_call(TFM_MBOX_SERVICE_HANDLE, TFM_MBOX_SERVICE_SID, NULL, 0, NULL, 0);
-		if (event & TFM_SP_IPCC_SCMI_CA35_NS_EVT)
-		    tfm_secure_scmi_req(STM32MP25_AGENT_ID_CA35);
-		if (event & TFM_SP_IPCC_SCMI_CA35_BL31_NS_EVT)
+
+		if (tfm_ns_notif_get_pending(TFM_SP_IPCC_SCMI_CA35_NS_EVT) == TFM_SP_IPCC_SCMI_CA35_NS_EVT)
+			tfm_secure_scmi_req(STM32MP25_AGENT_ID_CA35);
+
+		if (tfm_ns_notif_get_pending(TFM_SP_IPCC_SCMI_CA35_BL31_NS_EVT)
+		    == TFM_SP_IPCC_SCMI_CA35_BL31_NS_EVT)
 			tfm_secure_scmi_req(STM32MP25_AGENT_ID_CA35_BL31);
 	}
 	return ARM_DRIVER_OK;
