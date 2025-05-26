@@ -12,6 +12,7 @@
 #define  __UART_H__
 
 #include <errno.h>
+#include <pm/device.h>
 
 /** @brief Parity modes */
 enum uart_config_parity {
@@ -90,6 +91,7 @@ struct uart_driver_api {
  *
  * @retval 0 If successful.
  * @retval -errno Negative errno code in case of failure.
+ * @retval -ECANCELED if device is not in activated state
  * @retval -ENOSYS If configuration is not supported by device
  *                  or driver does not support setting configuration in runtime.
  */
@@ -97,6 +99,9 @@ static inline int uart_configure(const struct device *dev,
 				 const struct uart_config *cfg)
 {
 	const struct uart_driver_api *api = dev->api;
+
+	if (!pm_device_is_active(dev))
+		return -ECANCELED;
 
 	if (api->configure == NULL)
 		return -ENOSYS;
@@ -117,7 +122,8 @@ static inline int uart_configure(const struct device *dev,
  *		  enabled. @ref SYS_FOREVER_MS disables timeout.
  *
  * @retval 0 If successful.
- * @retval -ENOTSUP If API is not enabled.
+ * @retval -ECANCELED if device is not in activated state
+ * @retval -ENOSYS If API is not enabled.
  * @retval -EBUSY If there is already an ongoing transfer.
  * @retval -errno Other negative errno value in case of failure.
  */
@@ -125,6 +131,9 @@ static inline int uart_tx(const struct device *dev, const uint8_t *buf,
 			  size_t len, int32_t timeout)
 {
 	const struct uart_driver_api *api = dev->api;
+
+	if (!pm_device_is_active(dev))
+		return -ECANCELED;
 
 	if (api->tx == NULL)
 		return -ENOSYS;
@@ -147,7 +156,8 @@ static inline int uart_tx(const struct device *dev, const uint8_t *buf,
  *		  for details.
  *
  * @retval 0 If successful.
- * @retval -ENOTSUP If API is not enabled.
+ * @retval -ECANCELED if device is not in activated state
+ * @retval -ENOSYS If API is not enabled.
  * @retval -EBUSY RX already in progress.
  * @retval -errno Other negative errno value in case of failure.
  *
@@ -156,6 +166,9 @@ static inline int uart_rx(const struct device *dev, uint8_t *buf,
 			  size_t len, int32_t timeout)
 {
 	const struct uart_driver_api *api = dev->api;
+
+	if (!pm_device_is_active(dev))
+		return -ECANCELED;
 
 	if (api->rx == NULL)
 		return -ENOSYS;
