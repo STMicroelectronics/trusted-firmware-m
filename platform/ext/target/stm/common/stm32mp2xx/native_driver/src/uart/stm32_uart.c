@@ -13,6 +13,7 @@
 #include <stdbool.h>
 
 #include <device.h>
+#include <pm/device.h>
 #include <lib/mmio.h>
 #include <lib/mmiopoll.h>
 #include <lib/timeout.h>
@@ -518,6 +519,37 @@ int stm32_uart_dt_init(const struct device *dev)
 	return stm32_uart_configure(dev, &drv_data->uart_config);
 }
 
+#ifdef CONFIG_PM_DEVICE
+static int stm32_uart_pm_action(const struct device *dev,
+			       enum pm_device_action action, uint32_t pm_hint)
+{
+	const struct stm32_uart_config *drv_cfg = dev_get_config(dev);
+	struct stm32_uart_data *drv_data = dev_get_data(dev);
+	int err = 0;
+
+       if (action == PM_DEVICE_ACTION_SUSPEND) {
+		err = pinctrl_apply_state_optional(drv_cfg->pcfg, PINCTRL_STATE_SLEEP);
+		if (err)
+			goto out;
+
+		clk_disable(drv_data->clk);
+	} else {
+		err = pinctrl_apply_state(drv_cfg->pcfg, PINCTRL_STATE_DEFAULT);
+		if (err)
+			goto out;
+
+		err = clk_enable(drv_data->clk);
+		if (err)
+			goto out;
+
+		err = stm32_uart_configure(dev, &drv_data->uart_config);
+	}
+
+out:
+       return err;
+}
+#endif
+
 #define _UART_CFG(n)									\
 {											\
 	.baudrate = DT_INST_PROP_OR(n, current_speed, 0),				\
@@ -542,8 +574,11 @@ static struct stm32_uart_data stm32_uart_data_##n = {					\
 	.uart_config = _UART_CFG(n),							\
 };											\
 											\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_uart_pm_action);					\
+											\
 DEVICE_DT_INST_DEFINE(n,								\
-		      &stm32_uart_dt_init, NULL,					\
+		      &stm32_uart_dt_init,						\
+		      PM_DEVICE_DT_INST_GET(n),						\
 		      &stm32_uart_data_##n,						\
 		      &stm32_uart_cfg_##n,						\
 		      CORE, 0,								\
