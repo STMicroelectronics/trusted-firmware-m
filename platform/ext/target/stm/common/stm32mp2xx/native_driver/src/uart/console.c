@@ -13,14 +13,6 @@
 
 static const struct device *dev_console = DEVICE_DT_GET(DT_CHOSEN(stdout_device));
 
-const struct uart_config uart_console_cfg = {
-		.baudrate = 115200,
-		.parity = UART_CFG_PARITY_NONE,
-		.stop_bits = UART_CFG_STOP_BITS_1,
-		.data_bits = UART_CFG_DATA_BITS_8,
-		.flow_ctrl = UART_CFG_FLOW_CTRL_NONE
-};
-
 int stdio_output_string(const unsigned char *str, uint32_t len)
 {
 	int32_t err;
@@ -87,8 +79,6 @@ static int uart_console_init(void)
 {
 	if (!device_is_ready(dev_console))
 		return -ENODEV;
-
-	uart_configure(dev_console, &uart_console_cfg);
 
 	return 0;
 }
