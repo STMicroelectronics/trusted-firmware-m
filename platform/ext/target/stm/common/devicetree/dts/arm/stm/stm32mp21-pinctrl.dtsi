@@ -77,4 +77,11 @@
 			bias-disable;
 		};
 	};
+
+	uart4_sleep_pins_a: uart4-sleep-0 {
+		pins {
+			pinmux = <STM32_PINMUX('H', 7, ANALOG)>, /* UART4_TX */
+				 <STM32_PINMUX('H', 8, ANALOG)>; /* UART4_RX */
+		};
+	};
 };

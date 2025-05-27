@@ -135,4 +135,11 @@
 			bias-disable;
 		};
 	};
+
+	uart5_sleep_pins_a: uart5-sleep-0 {
+		pins {
+			pinmux = <STM32_PINMUX('G', 9, ANALOG)>, /* UART5_TX */
+				 <STM32_PINMUX('G', 10, ANALOG)>; /* UART5_RX */
+		};
+	};
 };
