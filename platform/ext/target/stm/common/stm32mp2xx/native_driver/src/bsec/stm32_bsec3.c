@@ -826,7 +826,8 @@ static int stm32_bsec_dt_init(const struct device *dev)
 			drv_data->hw_key_valid = true;
 	}
 
-	drv_data->verr = io_read32(drv_cfg->base + _BSEC_VERR);
+	if (IS_ENABLED(STM32_M33TDCID))
+		drv_data->verr = io_read32(drv_cfg->base + _BSEC_VERR);
 
 	return stm32_bsec_shadow_init(dev);
 }
