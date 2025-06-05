@@ -143,6 +143,9 @@ static const struct device *nvmem_dev_from_otp_id(enum tfm_otp_element_id_t id)
 	case PLAT_OTP_ID_BOARD_ID:
 		dev = DT_INST_DEV_NVMEM(0, board_id);
 		break;
+	case PLAT_OTP_ID_STM32_CERTIF:
+		dev = DT_INST_DEV_NVMEM(0, stm32certif);
+		break;
 	default:
 		dev = NULL;
 		break;

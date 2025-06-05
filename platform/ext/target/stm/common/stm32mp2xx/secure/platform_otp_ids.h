@@ -59,6 +59,8 @@ enum tfm_otp_element_id_t {
     PLAT_OTP_ID_PACKAGE,
     PLAT_OTP_ID_BOARD_ID,
 
+    PLAT_OTP_ID_STM32_CERTIF,
+
     PLAT_OTP_ID_MAX = UINT32_MAX,
 };
 

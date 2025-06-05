@@ -13,16 +13,20 @@
 #include <string.h>
 #include <sys/endian.h>
 #include "psa_manifest/pid.h"
+#include "psa/crypto.h"
+#include "tfm_builtin_key_ids.h"
 #include "tfm_builtin_key_ids.h"
 #include "tfm_builtin_key_loader.h"
 #include "tfm_plat_crypto_keys.h"
+#include "tfm_plat_crypto_keys.h"
+#include "tfm_plat_otp.h"
 #include "tfm_plat_otp.h"
 
 #define NUMBER_OF_ELEMENTS_OF(x) sizeof(x)/sizeof(*x)
 #define MAPPED_TZ_NS_AGENT_DEFAULT_CLIENT_ID -0x3c000000
 #define TFM_NS_PARTITION_ID                  MAPPED_TZ_NS_AGENT_DEFAULT_CLIENT_ID
 
-
+#if defined(STM32_M33TDCID)
 #define SAES_NODE_NAME	saes
 #define HUK_SUBKEY_DIE_ID	2
 #define HUK_SUBKEY_MAX_LEN	32
@@ -317,6 +321,54 @@ static enum tfm_plat_err_t tfm_plat_get_huk(uint8_t *buf, size_t buf_len,
 
 	return TFM_PLAT_ERR_SUCCESS;
 }
+#else
+static enum tfm_plat_err_t tfm_plat_get_huk(uint8_t *buf, size_t buf_len,
+					    size_t *key_len,
+					    psa_key_bits_t *key_bits,
+					    psa_algorithm_t *algorithm,
+					    psa_key_type_t *type)
+{
+	uint8_t certif[128];
+	size_t certif_size;
+	int err;
+	psa_hash_operation_t operation = psa_hash_operation_init();
+	psa_status_t res;
+
+	if (buf_len > HUK_SUBKEY_MAX_LEN)
+		buf_len = HUK_SUBKEY_MAX_LEN;
+
+	err = tfm_plat_otp_get_size(PLAT_OTP_ID_STM32_CERTIF, &certif_size);
+	if (err)
+		return TFM_PLAT_ERR_SYSTEM_ERR;
+
+	err = tfm_plat_otp_read(PLAT_OTP_ID_STM32_CERTIF, certif_size, certif);
+	if (err)
+		return TFM_PLAT_ERR_SYSTEM_ERR;
+
+	res = psa_hash_setup(&operation, PSA_ALG_SHA_256);
+	if (res != PSA_SUCCESS)
+		goto psa_abort;
+
+	res = psa_hash_update(&operation, certif, certif_size);
+	if (res != PSA_SUCCESS)
+		goto psa_abort;
+
+	res = psa_hash_finish(&operation, buf, buf_len, key_len);
+	if (res != PSA_SUCCESS)
+		goto psa_abort;
+
+	*key_bits = *key_len * 8;
+	*algorithm = PSA_ALG_HKDF(PSA_ALG_SHA_256);
+	*type = PSA_KEY_TYPE_DERIVE;
+
+	return TFM_PLAT_ERR_SUCCESS;
+
+psa_abort:
+	(void)psa_hash_abort(&operation);
+
+	return TFM_PLAT_ERR_SYSTEM_ERR;
+}
+#endif
 
 #ifdef TFM_PARTITION_INITIAL_ATTESTATION
 static enum tfm_plat_err_t tfm_plat_get_iak(uint8_t *buf, size_t buf_len,
