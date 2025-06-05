@@ -57,3 +57,49 @@ void IPCC1_RX_S_IRQHandler(void)
 {
 	spm_handle_interrupt(ipcc_irq.p_pt, ipcc_irq.p_ildi);
 }
+struct irq_t test_sec_priv_irq = {0};
+
+extern enum tfm_hal_status_t test_sec_priv_irq_init(void *p_pt,
+					   const struct irq_load_info_t
+					   *p_ildi)
+{
+	test_sec_priv_irq.p_ildi = p_ildi;
+	test_sec_priv_irq.p_pt = p_pt;
+	NVIC_SetPriority(p_ildi->source, 1);
+	NVIC_ClearTargetState(p_ildi->source);
+	NVIC_DisableIRQ(p_ildi->source);
+
+	return TFM_HAL_SUCCESS;
+}
+
+struct irq_t test_sec_npriv_irq = {0};
+
+extern enum tfm_hal_status_t test_sec_npriv_irq_init(void *p_pt,
+					   const struct irq_load_info_t
+					   *p_ildi)
+{
+	test_sec_npriv_irq.p_ildi = p_ildi;
+	test_sec_npriv_irq.p_pt = p_pt;
+	NVIC_SetPriority(p_ildi->source, 1);
+	NVIC_ClearTargetState(p_ildi->source);
+	NVIC_DisableIRQ(p_ildi->source);
+
+	return TFM_HAL_SUCCESS;
+}
+
+
+
+
+void RESERVED_284_IRQHandler(void)
+{
+	spm_handle_interrupt(test_sec_priv_irq.p_pt, test_sec_priv_irq.p_ildi);
+}
+
+void RESERVED_285_IRQHandler(void)
+{
+	spm_handle_interrupt(test_sec_npriv_irq.p_pt, test_sec_npriv_irq.p_ildi);
+}
+
+
+
+

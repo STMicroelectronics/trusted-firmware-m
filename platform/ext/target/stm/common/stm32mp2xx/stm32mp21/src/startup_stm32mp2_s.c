@@ -282,6 +282,8 @@ DEFAULT_IRQ_HANDLER(EXTI1_13_IRQHandler)
 DEFAULT_IRQ_HANDLER(EXTI1_14_IRQHandler)
 DEFAULT_IRQ_HANDLER(EXTI1_15_IRQHandler)
 DEFAULT_IRQ_HANDLER(DDRPERFM_IRQHandler)
+DEFAULT_IRQ_HANDLER(RESERVED_284_IRQHandler)
+DEFAULT_IRQ_HANDLER(RESERVED_285_IRQHandler)
 
 /*----------------------------------------------------------------------------
   Exception / Interrupt Vector table
@@ -601,8 +603,8 @@ const VECTOR_TABLE_Type __VECTOR_TABLE[] __VECTOR_TABLE_ATTRIBUTE = {
 	EXTI1_13_IRQHandler,         /* EXTI1 Line 13 interrupt */
 	EXTI1_14_IRQHandler,         /* EXTI1 Line 14 interrupt */
 	EXTI1_15_IRQHandler,         /* EXTI1 Line 15 interrupt */
-	0,
-	0,
+	RESERVED_284_IRQHandler,
+	RESERVED_285_IRQHandler,
 	0,
 	0,
 	0,
