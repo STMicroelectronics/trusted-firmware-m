@@ -3290,6 +3290,9 @@ static int stm32mp21_clk_dt_init(const struct device *dev)
 	clk_stm32_init_oscillators(priv);
 
 	if (IS_ENABLED(STM32_BL2)) {
+		/* Errata to fix ROM code FSBLA authentication blocking failure */
+		io_setbits32(clk_stm32_get_rcc_base(priv) + U(0x890), BIT(1));
+
 		mmio_setbits_32(clk_stm32_get_rcc_base(priv) + RCC_DDRITFCFGR,
 				RCC_DDRITFCFGR_DDRSHR);
 		/* Enable DDR clock and remove reset */
