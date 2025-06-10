@@ -267,7 +267,7 @@ extern "C" {
  * @see DT_PHA_BY_IDX()
  */
 #define DT_RESET_ID_BY_IDX(node_id, idx) \
-	DT_PHA_BY_IDX(node_id, resets, idx, id)
+	DT_PHA_BY_IDX_OR(node_id, resets, idx, id, 0)
 
 /**
  * @brief Equivalent to DT_RESET_ID_BY_IDX(node_id, 0)

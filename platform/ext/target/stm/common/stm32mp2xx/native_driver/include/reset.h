@@ -52,10 +52,10 @@ struct reset_control {
  * @param idx logical index into "resets"
  * @return static initializer for a struct reset_control for the property
  */
-#define DT_RESET_CONTROL_GET_BY_IDX(node_id, idx)				\
-	{									\
-		.dev = DEVICE_DT_GET(DT_RESET_CTLR_BY_IDX(node_id, idx)),	\
-		.id = DT_RESET_ID_BY_IDX(node_id, idx)				\
+#define DT_RESET_CONTROL_GET_BY_IDX(node_id, idx)					\
+	{										\
+		.dev = DEVICE_DT_GET_OR_NULL(DT_RESET_CTLR_BY_IDX(node_id, idx)),	\
+		.id = DT_RESET_ID_BY_IDX(node_id, idx)					\
 	}
 
 /**
