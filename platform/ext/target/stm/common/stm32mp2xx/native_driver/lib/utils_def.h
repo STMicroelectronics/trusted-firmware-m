@@ -8,6 +8,7 @@
 #define UTILS_DEF_H
 
 #include <lib/utils_def_exp.h>
+#include <lib/ilog2.h>
 
 /* Compute the number of elements in the given array */
 #define ARRAY_SIZE(a)				\
@@ -25,6 +26,12 @@
 #else
 #define BIT				BIT_32
 #endif
+
+#define roundup_pow_of_two(n)						\
+	(((n) < 2) ? 1 : (1UL << (ilog2((n) - 1) + 1)))
+
+#define rounddown_pow_of_two(n)						\
+	(((n) < 2) ? 0 : (1UL << (ilog2(n))))
 
 /*
  * Create a contiguous bitmask starting at bit position @l and ending at
