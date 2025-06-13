@@ -399,6 +399,14 @@
 				max-frequency = <120000000>;
 				status = "disabled";
 			};
+
+			iwdg3: watchdog@54030000 {
+				compatible = "st,stm32mp13-iwdg";
+				reg = <0x54030000 0x400>;
+				clocks = <&rcc CK_BUS_IWDG3>, <&rcc LSI_CK>;
+				clock-names = "pclk", "kclk";
+				status = "disabled";
+			};
 		};
 
 		iac: iac@52090000 {
