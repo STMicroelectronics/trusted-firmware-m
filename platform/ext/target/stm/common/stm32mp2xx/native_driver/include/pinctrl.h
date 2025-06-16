@@ -301,6 +301,32 @@ static inline int pinctrl_apply_state(const struct pinctrl_dev_config *config,
 	return pinctrl_apply_state_direct(state);
 }
 
+/**
+ * @brief Apply an optional state from the given device configuration.
+ *
+ * @param config Pin control configuration.
+ * @param id Id of the state to be applied (see @ref PINCTRL_STATES).
+ *
+ * @retval 0 If state is optional (-ENOENT) or applied.
+ * @retval -errno Negative errno for other failures.
+ */
+static inline int pinctrl_apply_state_optional(const struct pinctrl_dev_config *config,
+					       uint8_t id)
+{
+	int ret;
+	const struct pinctrl_state *state;
+
+	ret = pinctrl_lookup_state(config, id, &state);
+
+	if (ret < 0) {
+		if (ret == -ENOENT)
+			return 0;
+		return ret;
+	}
+
+	return pinctrl_apply_state_direct(state);
+}
+
 #ifdef __cplusplus
 }
 #endif
