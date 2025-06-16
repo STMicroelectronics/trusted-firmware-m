@@ -329,4 +329,9 @@ void clk_stm32_register_clocks(struct clk_stm32_priv *priv);
 void clk_stm32_display_clock_summary(struct device *dev);
 #endif
 
+#ifdef CONFIG_PM_DEVICE
+int clk_stm32_save_context(const struct device *dev);
+void clk_stm32_restore_context(const struct device *dev);
+#endif
+
 #endif /* CLK_STM32_CORE_H */

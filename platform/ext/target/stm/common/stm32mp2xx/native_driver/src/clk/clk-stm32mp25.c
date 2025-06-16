@@ -26,6 +26,7 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 #include <lib/delay.h>
 #include <debug.h>
 #include <device.h>
+#include <pm/device.h>
 #include <clk.h>
 #include <stm32mp_clkfunc.h>
 #include <stm32mp2_clk.h>
@@ -1676,10 +1677,22 @@ static void clk_stm32_osc_disable(struct clk *clk)
 	clk_stm32_gate_ready_disable(clk);
 }
 
+static void __maybe_unused clk_stm32_osc_pm_restore(struct clk *clk)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+
+	if (!stm32_rcc_has_access_by_id(priv, RCC_RIF_OSCILLATORS))
+		return;
+
+	if (clk_is_enabled(clk) && clk_stm32_osc_enable(clk))
+		panic();
+}
+
 static const struct clk_ops clk_stm32_osc_ops = {
 	.enable		= clk_stm32_osc_enable,
 	.disable	= clk_stm32_osc_disable,
 	.is_enabled	= clk_stm32_gate_is_enabled,
+	.restore_context = clk_stm32_osc_pm_restore,
 };
 
 static unsigned long clk_stm32_msi_get_rate(__maybe_unused struct clk *clk,
@@ -1706,12 +1719,40 @@ static int clk_stm32_msi_set_rate(__maybe_unused struct clk *clk,
 	return clk_stm32_osc_msi_set_rate(priv, rate);
 }
 
+static int __maybe_unused clk_stm32_pm_save_rate(struct clk *clk)
+{
+	/*
+	 * Update the frequency in the clock framework in case this clock is
+	 * registered before its parent.
+	 */
+
+	clk->rate = clk_get_rate(clk);
+
+	return 0;
+}
+
+static void __maybe_unused clk_stm32_osc_msi_pm_restore(struct clk *clk)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+
+	if (!stm32_rcc_has_access_by_id(priv, RCC_RIF_OSCILLATORS))
+		return;
+
+	if (clk_stm32_msi_set_rate(clk, clk->rate, clk->parent->rate))
+		panic();
+
+	if (clk_is_enabled(clk) && clk_stm32_osc_enable(clk))
+		panic();
+}
+
 static const struct clk_ops clk_stm32_osc_msi_ops = {
 	.enable	= clk_stm32_osc_enable,
 	.disable	= clk_stm32_osc_disable,
 	.is_enabled	= clk_stm32_gate_is_enabled,
 	.get_rate	= clk_stm32_msi_get_rate,
 	.set_rate	= clk_stm32_msi_set_rate,
+	.save_context	= clk_stm32_pm_save_rate,
+	.restore_context = clk_stm32_osc_msi_pm_restore,
 };
 
 static int clk_stm32_osc_ker_enable(struct clk *clk)
@@ -1750,9 +1791,22 @@ static int clk_stm32_hse_div_set_rate(struct clk *clk,
 	return clk_stm32_divider_set_rate(clk, rate, parent_rate);
 }
 
+static void __maybe_unused clk_stm32_hse_div_pm_restore(struct clk *clk)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+
+	if (!stm32_rcc_has_access_by_id(priv, RCC_RIF_OSCILLATORS))
+		return;
+
+	if (clk_stm32_hse_div_set_rate(clk, clk->rate, clk->parent->rate))
+		panic();
+}
+
 static const struct clk_ops  clk_stm32_hse_div_ops = {
 	.get_rate = clk_stm32_divider_get_rate,
 	.set_rate = clk_stm32_hse_div_set_rate,
+	.save_context = clk_stm32_pm_save_rate,
+	.restore_context = clk_stm32_hse_div_pm_restore,
 };
 
 static int clk_stm32_hsediv2_enable(struct clk *clk)
@@ -1790,11 +1844,24 @@ static unsigned long clk_stm32_hsediv2_get_rate(__maybe_unused struct clk *clk,
 	return prate / 2;
 }
 
+static void __maybe_unused clk_stm32_hsediv2_pm_restore(struct clk *clk)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_gate_cfg *cfg = clk->priv;
+
+	if (!stm32_rcc_has_access_by_id(priv, RCC_RIF_OSCILLATORS))
+		return;
+
+	if (clk_is_enabled(clk))
+		stm32_gate_endisable(priv, cfg->gate_id, true);
+}
+
 static const struct clk_ops clk_hsediv2_ops = {
 	.enable		= clk_stm32_hsediv2_enable,
 	.disable	= clk_stm32_hsediv2_disable,
 	.is_enabled	= clk_stm32_gate_is_enabled,
 	.get_rate	= clk_stm32_hsediv2_get_rate,
+	.restore_context = clk_stm32_hsediv2_pm_restore,
 };
 
 struct clk_stm32_pll_cfg {
@@ -1910,15 +1977,36 @@ static bool clk_stm32_pll_is_enabled(struct clk *clk)
 	return stm32_gate_is_enabled(priv, cfg->gate_id);
 }
 
+static void __maybe_unused clk_stm32_pll_pm_restore(struct clk *clk)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_pll_cfg *cfg = clk->priv;
+	size_t pidx = 0;
+	int ret = 0;
+
+	/* Restore only the parent */
+	ret = clk_get_parent_idx(clk, clk->parent, &pidx);
+	if (ret)
+		panic();
+
+	ret = stm32_mux_set_parent(priv, cfg->mux_id, pidx);
+	if (ret)
+		panic();
+
+	if (clk_is_enabled(clk) && clk_stm32_pll_enable(clk))
+		panic();
+}
+
 static const struct clk_ops clk_stm32_pll_ops = {
 	.get_parent	= clk_stm32_pll_get_parent,
 	.get_rate	= clk_stm32_pll_get_rate,
 	.enable		= clk_stm32_pll_enable,
 	.disable	= clk_stm32_pll_disable,
 	.is_enabled	= clk_stm32_pll_is_enabled,
+	.restore_context = clk_stm32_pll_pm_restore,
 };
 
-static void clk_stm32_pll_pm_restore(struct clk *clk)
+static void __maybe_unused clk_stm32_pll1_pm_restore(struct clk *clk)
 {
 	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
 	struct clk_stm32_pll_cfg *cfg = clk->priv;
@@ -1937,7 +2025,7 @@ static void clk_stm32_pll_pm_restore(struct clk *clk)
 
 static const struct clk_ops clk_stm32_pll1_ops = {
 	.get_parent		= clk_stm32_pll_get_parent,
-	.restore_context	= clk_stm32_pll_pm_restore,
+	.restore_context	= clk_stm32_pll1_pm_restore,
 };
 
 static int clk_stm32_pll3_enable(struct clk *clk)
@@ -2387,10 +2475,23 @@ static bool clk_stm32_rif_gate_is_enabled(struct clk *clk)
 	return stm32_gate_is_enabled(priv, cfg->gate_id);
 }
 
+static void __maybe_unused clk_stm32_rif_gate_pm_restore(struct clk *clk)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_rif_gate_cfg *cfg = clk->priv;
+
+	if (!stm32_rcc_has_access_by_id(priv, cfg->sec_id))
+		return;
+
+	if (clk_is_enabled(clk))
+		stm32_gate_endisable(priv, cfg->gate_id, true);
+}
+
 static const struct clk_ops  clk_stm32_rif_gate_ops = {
 	.enable	= clk_stm32_rif_gate_enable,
 	.disable	= clk_stm32_rif_gate_disable,
 	.is_enabled	= clk_stm32_rif_gate_is_enabled,
+	.restore_context = clk_stm32_rif_gate_pm_restore,
 };
 
 struct clk_stm32_rif_composite_cfg {
@@ -2485,6 +2586,32 @@ static bool clk_stm32_rif_composite_gate_is_enabled(struct clk *clk)
 	return stm32_gate_is_enabled(priv, cfg->gate_id);
 }
 
+static void __maybe_unused clk_stm32_rif_composite_pm_restore(struct clk *clk)
+{
+	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
+	struct clk_stm32_rif_composite_cfg *cfg = clk->priv;
+
+	if (!stm32_rcc_has_access_by_id(priv, cfg->sec_id))
+		return;
+
+	if (cfg->mux_id != NO_MUX) {
+		size_t pidx = 0;
+
+		if (clk_get_parent_idx(clk, clk->parent, &pidx))
+			panic();
+
+		if (stm32_mux_set_parent(priv, cfg->mux_id, pidx))
+			panic();
+	}
+
+	if (cfg->div_id != NO_DIV &&
+	    stm32_div_set_rate(priv, cfg->div_id, clk->rate, clk->parent->rate))
+		panic();
+
+	if (cfg->gate_id != NO_GATE && clk_is_enabled(clk))
+		stm32_gate_endisable(priv, cfg->gate_id, true);
+}
+
 static const struct clk_ops clk_stm32_rif_composite_ops = {
 	.get_parent	= clk_stm32_rif_composite_get_parent,
 	.set_parent	= clk_stm32_rif_composite_set_parent,
@@ -2493,6 +2620,8 @@ static const struct clk_ops clk_stm32_rif_composite_ops = {
 	.enable		= clk_stm32_rif_composite_gate_enable,
 	.disable	= clk_stm32_rif_composite_gate_disable,
 	.is_enabled	= clk_stm32_rif_composite_gate_is_enabled,
+	.save_context	= clk_stm32_pm_save_rate,
+	.restore_context = clk_stm32_rif_composite_pm_restore,
 };
 
 const struct clk_ops ck_timer_ops = {
@@ -3700,6 +3829,47 @@ out:
 	return 0;
 }
 
+#ifdef CONFIG_PM_DEVICE
+static int stm32_rcc_pm_suspend(const struct device *dev)
+{
+	const struct stm32_rcc_config *drv_cfg = dev_get_config(dev);
+
+	clk_stm32_save_context(dev);
+
+	/* Set c1msrd for bootrom use. It's reset by HW during standby */
+	io_write32(drv_cfg->base + RCC_C1MSRDCR,
+		   drv_cfg->c1msrd & _RCC_C1MSRDCR_C1MSRD_MASK);
+
+	return 0;
+}
+
+static int stm32_rcc_pm_resume(const struct device *dev)
+{
+	struct clk_stm32_priv *priv = (struct clk_stm32_priv *)dev_get_data(dev);
+
+	/* Restore clock tree */
+	if (stm32mp2_init_clock_tree(priv))
+		panic();
+
+	clk_stm32_restore_context(dev);
+
+	return 0;
+}
+
+static int stm32_rcc_pm_action(const struct device *dev,
+			       enum pm_device_action action, uint32_t pm_hint)
+{
+	int err = 0;
+
+	if (action == PM_DEVICE_ACTION_SUSPEND)
+		err = stm32_rcc_pm_suspend(dev);
+	else
+		err = stm32_rcc_pm_resume(dev);
+
+	return err;
+}
+#endif
+
 static const uint32_t stm32mp25_bclk[] = DT_PROP_OR(DT_DRV_INST(0), st_busclk, {});
 static const uint32_t stm32mp25_kclk[] = DT_PROP_OR(DT_DRV_INST(0), st_kerclk, {});
 static const uint32_t stm32mp25_fclk[] = DT_PROP_OR(DT_DRV_INST(0), st_flexgen, {});
@@ -3760,9 +3930,11 @@ static struct clk_controller_api stm32mp25_clk_api = {
 	.get = stm32_clk_get,
 };
 
+PM_DEVICE_DT_INST_DEFINE(0, stm32_rcc_pm_action);
+
 DEVICE_DT_INST_DEFINE(0,
 		      &stm32mp25_clk_dt_init,
-		      NULL,
+		      PM_DEVICE_DT_INST_GET(0),
 		      &stm32mp25_clock_data,
 		      &stm32mp25_rcc_cfg,
 		      INITLEVEL_RCC, PRIORITY_RCC,

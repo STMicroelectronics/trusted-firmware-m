@@ -616,6 +616,46 @@ void clk_stm32_display_clock_summary(struct device *dev)
 }
 #endif
 
+#ifdef CONFIG_PM_DEVICE
+int clk_stm32_save_context(const struct device *dev)
+{
+	struct clk_stm32_priv *priv = (struct clk_stm32_priv *)dev_get_data(dev);
+	unsigned int i = 0;
+	int err = 0;
+
+	for (i = 0; i < priv->nb_clk_refs; i++) {
+		struct clk *clk = priv->clk_refs[i];
+
+		if (!clk)
+			continue;
+
+		err = clk_save_context(clk);
+		if (err) {
+			EMSG("[%s] failed to save context of clock %d\n",
+			     __func__, i);
+			return err;
+		}
+	}
+
+	return 0;
+}
+
+void clk_stm32_restore_context(const struct device *dev)
+{
+	struct clk_stm32_priv *priv = (struct clk_stm32_priv *)dev_get_data(dev);
+	unsigned int i = 0;
+
+	for (i = 0; i < priv->nb_clk_refs; i++) {
+		struct clk *clk = priv->clk_refs[i];
+
+		if (!clk)
+			continue;
+
+		clk_restore_context(clk);
+	}
+}
+#endif
+
 struct clk *stm32mp_rcc_clock_id_to_clk(struct clk_stm32_priv *priv, unsigned long clock_id)
 {
 	if (clock_id > priv->nb_clk_refs)
