@@ -30,6 +30,7 @@
 #include <stm32_dcache.h>
 #include <stm32_tamp.h>
 #include <stm_version.h>
+#include <watchdog.h>
 
 #ifdef CRYPTO_HW_ACCELERATOR
 #include "crypto_hw.h"
@@ -482,6 +483,24 @@ static int stm32mp2_prep_a35_fw(void) {
 SYS_INIT(stm32mp2_prep_a35_fw, CORE, 30);
 #endif /* (DT_NODE_EXISTS(DT_NODELABEL(ca35_cube_fw))) */
 #endif /* defined(STM32_BOOT_DEV_SDMMC1) || defined(STM32_BOOT_DEV_SDMMC2) */
+
+static int __unused stm32mp2_watchdog_init(void)
+{
+	int err;
+
+	err = watchdog_start(NULL);
+	if (err)
+		BOOT_LOG_ERR("watchdog start fail:%d", err);
+
+	return err;
+}
+#if DT_NODE_HAS_STATUS_OKAY(DT_CHOSEN(tfm_watchdog))
+/*
+ * If "tfm,watchdog" is defined in chosen node (DT) the system watchdog
+ * is started at bootime. the timout must be defined in watchdog device node.
+ */
+SYS_INIT(stm32mp2_watchdog_init, POST_CORE, 1);
+#endif
 
 /**
   * @brief  Platform init
