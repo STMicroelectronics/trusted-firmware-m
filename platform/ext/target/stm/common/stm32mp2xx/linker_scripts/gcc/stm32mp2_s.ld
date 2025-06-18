@@ -458,6 +458,10 @@ SECTIONS
     Image$$ER_TFM_DATA$$Base = ADDR(.TFM_DATA);
     Image$$ER_TFM_DATA$$Limit = ADDR(.TFM_DATA) + SIZEOF(.TFM_DATA) + SIZEOF(.TFM_BSS);
 
+#ifdef PM_DEVICE_SLOTS_AREA
+    PM_DEVICE_SLOTS_AREA
+#endif
+
 #if defined(CONFIG_TFM_USE_TRUSTZONE)
     Image$$ER_VENEER$$Base = ADDR(.gnu.sgstubs);
     Image$$VENEER_ALIGN$$Limit = ADDR(.sgstubs_end);

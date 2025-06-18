@@ -66,11 +66,11 @@
 		. = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
 	} > FLASH
 
-
-	pm_device_slots_area : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
-	{
-		_pm_device_slots_list_start = .;
-		KEEP(*(SORT_BY_NAME(._pm_device_slots.static.*)));
-		_pm_device_slots_list_end = .;
-		. = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
-	} > FLASH
+#define PM_DEVICE_SLOTS_AREA \
+	pm_device_slots_area (NOLOAD) : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT) \
+	{ \
+		_pm_device_slots_list_start = .; \
+		KEEP(*(SORT_BY_NAME(._pm_device_slots.static.*))); \
+		_pm_device_slots_list_end = .; \
+		. = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT); \
+	} > RAM AT> RAM
