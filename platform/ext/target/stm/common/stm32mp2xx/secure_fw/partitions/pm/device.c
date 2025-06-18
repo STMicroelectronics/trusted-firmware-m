@@ -8,6 +8,7 @@
 #include <iterable_sections.h>
 #include <tfm_sp_log.h>
 #include <stdint.h>
+#include <utilities.h>
 
 #include <pm/device.h>
 
