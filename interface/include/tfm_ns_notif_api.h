@@ -49,6 +49,14 @@ int32_t tfm_ns_notif_get(uint32_t *event);
  */
 int32_t tfm_ns_notif_set_mask(uint32_t mask);
 
+/**
+ * \brief NS interface function to retrieve events in ns variable
+ * maintaining event posted by secure
+ * \return Returns  0 on success
+ *	   else return error code
+ */
+uint32_t tfm_ns_notif_get_pending(uint32_t val);
+
 #ifdef __cplusplus
 }
 #endif
