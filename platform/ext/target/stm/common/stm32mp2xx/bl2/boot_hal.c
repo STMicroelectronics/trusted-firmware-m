@@ -189,8 +189,6 @@ int32_t boot_platform_post_init(void)
 	return 0;
 }
 
-#if defined(STM32_CACHE_ENABLED)
-/* Override for cache operations */
 void boot_platform_quit(struct boot_arm_vector_table *vt)
 {
 	/*
@@ -254,6 +252,11 @@ void boot_platform_quit(struct boot_arm_vector_table *vt)
 	}
 	#endif /* FLASH_DEV_NAME_SCRATCH */
 
+	if(stm32_bsec_increment_hdpl()){
+		EMSG("failed to increment HDPL\n");
+		panic();
+	}
+
 	vt_cpy = vt;
 	#if defined(__ARM_ARCH_8M_MAIN__) || defined(__ARM_ARCH_8M_BASE__) \
 	|| defined(__ARM_ARCH_8_1M_MAIN__)
@@ -266,13 +269,15 @@ void boot_platform_quit(struct boot_arm_vector_table *vt)
 	#endif /* defined(__ARM_ARCH_8M_MAIN__) || defined(__ARM_ARCH_8M_BASE__) \
 	|| defined(__ARM_ARCH_8_1M_MAIN__) */
 
-	/* Invalidate all the memory range accessible by the M-33 */
-	if (stm32_dcache_clean(0x0, 0xFFFFFFFF))
-		panic();
-	if (stm32_dcache_full_inv())
-		panic();
-	if (stm32_dcache_disable())
-		panic();
+	if (IS_ENABLED(STM32_CACHE_ENABLED)){
+		/* Invalidate all the memory range accessible by the M-33 */
+		if (stm32_dcache_clean(0x0, 0xFFFFFFFF))
+			panic();
+		if (stm32_dcache_full_inv())
+			panic();
+		if (stm32_dcache_disable())
+			panic();
+	}
 
 	__set_MSP(vt_cpy->msp);
 	__DSB();
@@ -280,7 +285,6 @@ void boot_platform_quit(struct boot_arm_vector_table *vt)
 
 	boot_jump_to_next_image(vt_cpy->reset);
 }
-#endif
 
 int boot_platform_post_load(uint32_t image_id)
 {
