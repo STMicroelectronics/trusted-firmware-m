@@ -109,12 +109,12 @@ void pm_resume_devices(uint32_t pm_hint);
 
 static inline bool pm_device_is_active(const struct device *dev)
 {
-	if (IS_ENABLED(CONFIG_PM_DEVICE)) {
-		struct pm_device *pm = dev->pm;
-		return (pm == NULL) || (pm->state == PM_DEVICE_STATE_ACTIVE);
-	} else {
-		return true;
-	}
+#ifdef CONFIG_PM_DEVICE
+	struct pm_device *pm = dev->pm;
+	return (pm == NULL) || (pm->state == PM_DEVICE_STATE_ACTIVE);
+#else
+	return true;
+#endif
 }
 
 #endif /* TFM_PM_DEVICE_H */
