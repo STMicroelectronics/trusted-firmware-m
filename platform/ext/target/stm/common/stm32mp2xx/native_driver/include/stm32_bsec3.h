@@ -35,6 +35,7 @@
 
 void stm32_bsec_write_debug_conf(uint32_t val);
 void stm32_bsec_restore_cortexa_debug_conf(void);
+int stm32_bsec_increment_hdpl(void);
 
 /*
  * STM32 driver Interface

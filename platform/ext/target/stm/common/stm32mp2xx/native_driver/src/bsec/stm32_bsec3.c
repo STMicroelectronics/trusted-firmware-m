@@ -37,6 +37,8 @@
 #define _BSEC_OTPSR			U(0xE44)
 #define _BSEC_DBGMCR			U(0xE8C)
 #define _BSEC_AP_UNLOCK			U(0xE90)
+#define _BSEC_HDPLMSR			U(0xE94)
+#define _BSEC_HDPLMCR			U(0xE98)
 #define _BSEC_DBGACR			U(0xEAC)
 #define _BSEC_VERR			U(0xFF4)
 #define _BSEC_IPIDR			U(0xFF8)
@@ -86,6 +88,9 @@
 #define _HIDEUP_ERROR			(LOCK_SHADOW_R | LOCK_SHADOW_W | \
 					 LOCK_SHADOW_P | LOCK_ERROR)
 
+/* BSEC_HDPLMCR register fields */
+#define BSEC_HDPLMCR_INC_MAGIC		U(0x60B166E7)
+
 /* 32 bit by OTP bank in each register */
 #define _BSEC_OTP_BIT_MASK		GENMASK_32(4, 0)
 #define _BSEC_OTP_BIT_SHIFT		0
@@ -122,6 +127,10 @@
 #define BSEC_DBGxCR_DUMMY_ADAC		U(0xb4b4b400)
 #define BSEC_AP_UNLOCK_DUMMY_ADAC	U(0x000000b4)
 
+#define HDPL_ARRAY_SIZE			U(4)
+
+static const uint8_t hdpl_array[HDPL_ARRAY_SIZE] = {0xB4, 0x51, 0x8A, 0x6F};
+
 struct nvmem_cell {
 	const char *cell_label;
 	uint32_t otp_id;
@@ -154,6 +163,7 @@ struct stm32_bsec_variant {
 	unsigned int oem_key_first_otp;
 	uint32_t denr_all_mask;
 	uint32_t denr_key;
+	bool has_hdpl;
 };
 
 struct stm32_bsec_data {
@@ -361,6 +371,42 @@ void stm32_bsec_restore_cortexa_debug_conf(void)
 		return;
 
 	mmio_write_32(drv_cfg->base + _BSEC_DBGACR, BSEC_DBGxCR_DUMMY_ADAC);
+}
+
+int stm32_bsec_increment_hdpl(void)
+{
+	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
+	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
+	uint32_t hdpl, hdpl_inc;
+	uint32_t i;
+
+	if (!drv_data->variant->has_hdpl)
+		return 0;
+
+	hdpl = io_read32(drv_cfg->base + _BSEC_HDPLMSR);
+	for (i = 0; i < HDPL_ARRAY_SIZE; i++) {
+		if (hdpl_array[i] == hdpl)
+			break;
+	}
+
+	if (i == HDPL_ARRAY_SIZE) {
+		EMSG("Unsupported HDPL value %x\n", hdpl);
+		return -EINVAL;
+	}
+
+	io_write32(drv_cfg->base + _BSEC_HDPLMCR, BSEC_HDPLMCR_INC_MAGIC);
+
+	if (i < HDPL_ARRAY_SIZE - 1)
+		i++;
+
+	hdpl_inc = io_read32(drv_cfg->base + _BSEC_HDPLMSR);
+	if (hdpl_inc != hdpl_array[i]) {
+		EMSG("Error fail to increment HDPL, %x but expecting %x\n",
+		     hdpl_inc, hdpl_array[i]);
+		return -EINVAL;
+	}
+
+	return 0;
 }
 
 static inline int _otp_is_valid(uint32_t status)
@@ -820,6 +866,7 @@ static __unused struct stm32_bsec_variant variant_stm32mp21 = {
 	.max_id = STM32MP2_OTP_MAX_ID,
 	.denr_all_mask = GENMASK(17, 0),
 	.denr_key = 0xdeb00000,
+	.has_hdpl = true,
 };
 
 static __unused struct stm32_bsec_variant variant_stm32mp25 = {
@@ -833,6 +880,7 @@ static __unused struct stm32_bsec_variant variant_stm32mp25 = {
 	.max_id = STM32MP2_OTP_MAX_ID,
 	.denr_all_mask = GENMASK(15, 0),
 	.denr_key = 0xdeb60000,
+	.has_hdpl = false,
 };
 
 #undef DT_DRV_COMPAT
