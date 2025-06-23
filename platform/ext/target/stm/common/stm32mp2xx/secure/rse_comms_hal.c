@@ -45,7 +45,11 @@ static void rx_psa(const struct device *dev,
 		   struct mbox_msg *data)
 {
 	tfm_multi_core_hal_receive(CLIENT_ID_OWNER_MAGIC, CLIENT_ID_OWNER_MAGIC, 0);
+#if IPCC_LEGACY
+	psa_call(TFM_MBOX_SERVICE_HANDLE, TFM_MBOX_SERVICE_SID, NULL, 0, NULL, 0);
+#else
 	tfm_ns_notif_flih(TFM_SP_IPCC_RSE_NS_EVT);
+#endif
 }
 
 static inline bool sendmsg(void *msg, size_t msg_len)

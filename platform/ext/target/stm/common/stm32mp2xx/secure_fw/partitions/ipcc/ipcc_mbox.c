@@ -31,7 +31,12 @@ psa_status_t tfm_ipcc_entry(void)
 	psa_irq_enable(ipcc_irq.p_ildi->signal);
 	do {
 		psa_wait(ipcc_irq.p_ildi->signal, PSA_BLOCK);
+#if IPCC_LEGACY
+		ipcc_flih();
+		psa_eoi(ipcc_irq.p_ildi->signal);
+#else
 		psa_panic();
+#endif
 	} while(1);
 
 }
