@@ -38,6 +38,7 @@ target_compile_definitions(tfm_config
 	$<$<BOOL:${STM32_OVERRIDE_OTP}>:STM32_OVERRIDE_OTP>
         $<$<BOOL:${TFM_PARTITION_SCP}>:S_HEAP_SIZE=0x00020000>
         $<$<BOOL:${STM32_CACHE_ENABLED}>:STM32_CACHE_ENABLED>
+        $<$<BOOL:${TFM_PLATFORM_WDT_API}>:TFM_PLATFORM_WDT_API>
 )
 
 target_include_directories(tfm_config
@@ -121,6 +122,8 @@ target_sources(platform_s
 		${STM_FAMILLY_DIR}/native_driver/src/mtd/nor/spi_nor.c
 		${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_rif.c
 		${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_rcc_rif.c
+		$<$<BOOL:${TFM_PLATFORM_WDT_API}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_wdt_api.c>
+		$<$<BOOL:${TFM_PLATFORM_WDT_API}>:${STM_FAMILLY_DIR}/secure/services/src/wdt.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/power/stm32mp2_pwr.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_rifsc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_risaf.c>
@@ -218,6 +221,7 @@ target_sources(tfm_s
         ${STM_FAMILLY_DIR}/native_driver/src/nvmem/nvmem.c
         ${STM_FAMILLY_DIR}/native_driver/src/spi/stm32_omm.c
         ${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_rcc_rif.c
+	$<$<BOOL:${TFM_PLATFORM_WDT_API}>:${STM_FAMILLY_DIR}/secure/services/src/wdt.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/power/stm32mp2_pwr.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_rifsc.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_risaf.c>
@@ -437,6 +441,7 @@ install(FILES
 install(FILES
     ${STM_FAMILLY_DIR}/secure/services/src/tfm_scmi_api.c
     ${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c
+    ${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_wdt_api.c
     ${STM_FAMILLY_DIR}/secure/services/src/tfm_pm_api.c
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx/secure/services/src
 )

@@ -80,6 +80,7 @@ target_sources(platform_ns
         ${STM_FAMILLY_DIR}/native_driver/src/pinctrl/stm32_pinctrl.c
         ${STM_FAMILLY_DIR}/native_driver/src/uart/console.c
         ${STM_FAMILLY_DIR}/native_driver/src/uart/stm32_uart.c
+        $<$<BOOL:${TFM_PLATFORM_WDT_API}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_wdt_api.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
         $<$<BOOL:${TFM_PARTITION_PM}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_pm_api.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_scmi_api.c>

@@ -88,6 +88,10 @@ if (TFM_PARTITION_PM)
 	set(CONFIG_PM_DEVICE                 ON                    CACHE BOOL   "Enable power device support")
 endif()
 
+if (TFM_PARTITION_PLATFORM)
+	set(TFM_PLATFORM_WDT_API             ON                    CACHE BOOL   "Enable platform watchdog support")
+endif()
+
 set(SCP_FW_VERSION                      "f70a89c8378429c65184"  CACHE STRING    "The version of SCP-firmware to use")
 set(SCP_FW_PATH                         "DOWNLOAD"              CACHE PATH      "Path to SCP-firmware or DOWNLOAD to fetch automatically")
 set(CFG_SCPFW_MOD_POWER_DOMAIN          ON                      CACHE BOOL      "Set ON to enaable Power domain modules")
