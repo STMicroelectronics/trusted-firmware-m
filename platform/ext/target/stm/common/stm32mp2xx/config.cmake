@@ -33,8 +33,8 @@ set(PLATFORM_DEFAULT_NV_COUNTERS        OFF         CACHE BOOL  "Use default nv 
 set(PLATFORM_DEFAULT_OTP_WRITEABLE      OFF         CACHE BOOL  "Use on chip flash with write support")
 set(PLATFORM_DEFAULT_OTP                OFF         CACHE BOOL  "Use trusted on-chip flash to implement OTP memory")
 set(PLATFORM_DEFAULT_PROVISIONING       OFF         CACHE BOOL  "Use default provisioning implementation")
-set(TFM_DUMMY_PROVISIONING              OFF         CACHE BOOL  "Provision with dummy values. NOT to be used in production")
-set(STM32_OVERRIDE_OTP                  OFF         CACHE BOOL  "Override the OTP key with dummy values if TFM_DUMMY_PROVISIONING is ON")
+set(TFM_DUMMY_PROVISIONING              ON          CACHE BOOL  "Provision with dummy values. NOT to be used in production")
+set(STM32_OVERRIDE_OTP                  ON          CACHE BOOL  "Override the OTP key with dummy values if TFM_DUMMY_PROVISIONING is ON")
 set(TFM_PARTITION_PLATFORM              ON          CACHE BOOL  "Enable the TF-M Platform partition")
 
 if (STM32_M33TDCID)
