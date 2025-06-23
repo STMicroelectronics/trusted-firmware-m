@@ -106,7 +106,7 @@
  * which copies bsec otp to shadow memory.
  * must be aligned with [TDCID loader]stm32_bsec3 driver
  */
-#ifdef STM32MP215Cxx
+#ifdef STM32MP21xxxx
 #define STM32MP2_OTP_MAX_ID		363
 #define OTP_MAX_SIZE			(STM32MP2_OTP_MAX_ID + 1U)
 #else
