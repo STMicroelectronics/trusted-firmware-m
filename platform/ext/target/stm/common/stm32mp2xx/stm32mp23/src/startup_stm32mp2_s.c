@@ -192,9 +192,9 @@ DEFAULT_IRQ_HANDLER(USBH_OHCI_IRQHandler)
 DEFAULT_IRQ_HANDLER(DCMI_PSSI_IRQHandler)
 DEFAULT_IRQ_HANDLER(CSI_IRQHandler)
 DEFAULT_IRQ_HANDLER(DSI_IRQHandler)
-#if defined(STM32MP235Cxx)
+#if defined(STM32MP2_HAS_CRYPTO)
 DEFAULT_IRQ_HANDLER(CRYP1_IRQHandler)
-#endif /* STM32MP235Cxx */
+#endif /* STM32MP2_HAS_CRYPTO */
 DEFAULT_IRQ_HANDLER(HASH_IRQHandler)
 DEFAULT_IRQ_HANDLER(PKA_IRQHandler)
 DEFAULT_IRQ_HANDLER(FPU_IRQHandler)
@@ -221,10 +221,10 @@ DEFAULT_IRQ_HANDLER(IPCC1_RX_IRQHandler)
 DEFAULT_IRQ_HANDLER(IPCC1_TX_IRQHandler)
 DEFAULT_IRQ_HANDLER(IPCC1_RX_S_IRQHandler)
 DEFAULT_IRQ_HANDLER(IPCC1_TX_S_IRQHandler)
+#if defined(STM32MP2_HAS_CRYPTO)
 DEFAULT_IRQ_HANDLER(SAES_IRQHandler)
-#if defined(STM32MP235Cxx)
 DEFAULT_IRQ_HANDLER(CRYP2_IRQHandler)
-#endif /* STM32MP235Cxx */
+#endif /* STM32MP2_HAS_CRYPTO */
 DEFAULT_IRQ_HANDLER(GPU_IRQHandler)
 DEFAULT_IRQ_HANDLER(MDF1_FLT0_IRQHandler)
 DEFAULT_IRQ_HANDLER(MDF1_FLT1_IRQHandler)
@@ -481,11 +481,11 @@ const VECTOR_TABLE_Type __VECTOR_TABLE[] __VECTOR_TABLE_ATTRIBUTE = {
 	DCMI_PSSI_IRQHandler,        /* DCMI & PSSI global interrupt */
 	CSI_IRQHandler,              /* CSI-2 interrupt */
 	DSI_IRQHandler,              /* DSI Host controller global interrupt */
-#if defined(STM32MP235Cxx)
+#if defined(STM32MP2_HAS_CRYPTO)
 	CRYP1_IRQHandler,            /* Crypto1 interrupt */
-#else /* STM32MP235Cxx */
+#else /* STM32MP2_HAS_CRYPTO */
 	0,
-#endif /* else STM32MP235Cxx */
+#endif /* STM32MP2_HAS_CRYPTO */
 	HASH_IRQHandler,             /* Hash interrupt */
 	PKA_IRQHandler,              /* PKA interrupt */
 	FPU_IRQHandler,              /* FPU global interrupt */
@@ -520,12 +520,13 @@ const VECTOR_TABLE_Type __VECTOR_TABLE[] __VECTOR_TABLE_ATTRIBUTE = {
 	0,
 	0,
 	0,
+#if defined(STM32MP2_HAS_CRYPTO)
 	SAES_IRQHandler,             /* Secure AES */
-#if defined(STM32MP235Cxx)
 	CRYP2_IRQHandler,            /* Crypto2 interrupt */
-#else /* STM32MP235Cxx */
+#else /* STM32MP2_HAS_CRYPTO */
 	0,
-#endif /* else STM32MP235Cxx */
+	0,
+#endif /* STM32MP2_HAS_CRYPTO */
 	0,
 	0,
 	GPU_IRQHandler,              /* GPU global Interrupt */

@@ -207,10 +207,9 @@ DEFAULT_IRQ_HANDLER(USBH_OHCI_IRQHandler)
 DEFAULT_IRQ_HANDLER(DCMI_PSSI_IRQHandler)
 DEFAULT_IRQ_HANDLER(CSI_IRQHandler)
 DEFAULT_IRQ_HANDLER(DSI_IRQHandler)
-#if defined(STM32MP257Cxx)
+#if defined(STM32MP2_HAS_CRYPTO)
 DEFAULT_IRQ_HANDLER(CRYP1_IRQHandler)
-#else /* STM32MP257Cxx */
-#endif /* else STM32MP257Cxx */
+#endif /* STM32MP2_HAS_CRYPTO */
 DEFAULT_IRQ_HANDLER(HASH_IRQHandler)
 DEFAULT_IRQ_HANDLER(PKA_IRQHandler)
 DEFAULT_IRQ_HANDLER(FPU_IRQHandler)
@@ -245,11 +244,10 @@ DEFAULT_IRQ_HANDLER(IPCC2_RX_IRQHandler)
 DEFAULT_IRQ_HANDLER(IPCC2_TX_IRQHandler)
 DEFAULT_IRQ_HANDLER(IPCC2_RX_S_IRQHandler)
 DEFAULT_IRQ_HANDLER(IPCC2_TX_S_IRQHandler)
+#if defined(STM32MP2_HAS_CRYPTO)
 DEFAULT_IRQ_HANDLER(SAES_IRQHandler)
-#if defined(STM32MP257Cxx)
 DEFAULT_IRQ_HANDLER(CRYP2_IRQHandler)
-#else /* STM32MP257Cxx */
-#endif /* else STM32MP257Cxx */
+#endif /* STM32MP2_HAS_CRYPTO */
 DEFAULT_IRQ_HANDLER(I2C5_IRQHandler)
 DEFAULT_IRQ_HANDLER(USB3DR_WAKEUP_IRQHandler)
 DEFAULT_IRQ_HANDLER(GPU_IRQHandler)
@@ -518,11 +516,11 @@ const pFunc __VECTOR_TABLE[] __VECTOR_TABLE_ATTRIBUTE = {
 	DCMI_PSSI_IRQHandler,        /* DCMI & PSSI global interrupt */
 	CSI_IRQHandler,              /* CSI-2 interrupt */
 	DSI_IRQHandler,              /* DSI Host controller global interrupt */
-#if defined(STM32MP257Cxx)
+#if defined(STM32MP2_HAS_CRYPTO)
 	CRYP1_IRQHandler,            /* Crypto1 interrupt */
-#else /* STM32MP257Cxx */
+#else /* STM32MP2_HAS_CRYPTO */
 	0,
-#endif /* else STM32MP257Cxx */
+#endif /* STM32MP2_HAS_CRYPTO */
 	HASH_IRQHandler,             /* Hash interrupt */
 	PKA_IRQHandler,              /* PKA interrupt */
 	FPU_IRQHandler,              /* FPU global interrupt */
@@ -557,12 +555,13 @@ const pFunc __VECTOR_TABLE[] __VECTOR_TABLE_ATTRIBUTE = {
 	IPCC2_TX_IRQHandler,         /* Mailbox 2 TX Free interrupt */
 	IPCC2_RX_S_IRQHandler,       /* Mailbox 2 RX Occupied secure interrupt */
 	IPCC2_TX_S_IRQHandler,       /* Mailbox 2 TX Free secure interrupt */
+#if defined(STM32MP2_HAS_CRYPTO)
 	SAES_IRQHandler,             /* Secure AES */
-#if defined(STM32MP257Cxx)
 	CRYP2_IRQHandler,            /* Crypto2 interrupt */
-#else /* STM32MP257Cxx */
+#else /* STM32MP2_HAS_CRYPTO */
 	0,
-#endif /* else STM32MP257Cxx */
+	0,
+#endif /* STM32MP2_HAS_CRYPTO */
 	I2C5_IRQHandler,             /* I2C5 global interrupt */
 	USB3DR_WAKEUP_IRQHandler,    /* USB3 remote wake up from USB2PHY1 interrupt */
 	GPU_IRQHandler,              /* GPU global Interrupt */
