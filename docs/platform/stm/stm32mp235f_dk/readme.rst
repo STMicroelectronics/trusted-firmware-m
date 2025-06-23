@@ -3,7 +3,7 @@ stm32mp235f_dk
 ###############
 
 The `stm32mp235f_dk`_ evaluation board is designed as a complete demonstration and development platform for evaluating
-the capabilities of the `STM32MP25`_ microprocessor devices.
+the capabilities of the `STM32MP23`_ microprocessor devices.
 
 *****
 Build
@@ -151,14 +151,15 @@ Flashing, run and debugging
 
       .. code::
 
-         [INF] welcome to stm32mp257f eval1
-         [INF] Beginning provisioning
-         [INF] DUMMY_PROVISIONING is not suitable for production!
-         [INF] This device is NOT SECURE
+	 [INF] welcome to MCUboot: v2.1.0-stm32mp-[version]
+	 [INF] board: stm32mp235f disco
+	 [WRN] This device was provisioned with dummy keys.
+
+	 [WRN] This device is NOT SECURE
+
+	 [WRN] NV_MM_COUNTER_INIT is not suitable for production! This device is NOT SECURE
 
    .. group-tab:: M33-TD flavor
-
-      * To start in m33tdcid, The :ref:`m33tdcid_flash_layout` must be loaded in external nor and the boot pin must be set to nor.
 
       * To debug, add this flag ``-DDEBUG_AUTHENTICATION=FULL`` at build command line. With this flag, BL2 opens debug port and waits a debugger connection.
 
@@ -167,25 +168,39 @@ Flashing, run and debugging
 
       .. code::
 
-         [INF] welcome
-         [INF] mcu sysclk: 400000000
-         [INF] Starting bootloader
-         [INF] Beginning provisioning
-         [INF] DUMMY_PROVISIONING is not suitable for production!
-         [INF] This device is NOT SECURE
-         [INF] Primary   slot: version=1.7.0+0
-         [INF] Secondary slot: version=1.7.0+0
-         [INF] RAM loading to 0x80000000 is succeeded.
-         [INF] Image 0 loaded from the primary slot
-         [INF] Bootloader chainload address offset: 0x100000
-         [INF] Jumping to the first image slot
-         [INF] Enable Macronix quad support
+	 [INF] welcome to MCUboot: v2.1.0-stm32mp-[version]
+	 [INF] board: stm32mp235f disco
+	 [INF] dts: stm32mp235f-dk-cm33tdcid-ostl-sdcard-bl2.dts
+	 [INF] boot device: sdmmc1
+	 [INF] mcu sysclk: 400000000
+	 [INF] Starting bootloader
+	 [WRN] This device was provisioned with dummy keys.
 
-         [INF] welcome to stm32mp257f eval1
-         [INF] Beginning provisioning
-         [INF] DUMMY_PROVISIONING is not suitable for production!
-         [INF] This device is NOT SECURE
-         Non-Secure system starting...
+	 [WRN] This device is NOT SECURE
+
+	 [WRN] NV_MM_COUNTER_INIT is not suitable for production! This device is NOT SECURE
+
+	 [INF] PSA Crypto init done, sig_type: EC-P256
+	 [INF] Primary   slot: version=0.1.0+0
+	 [INF] Secondary slot: version=0.1.0+0
+	 [INF] Image 1 RAM loading to 0xe060000 is succeeded.
+	 [INF] Image 1 loaded from the primary slot
+	 [INF] BL2: image 1, enable DDR-FW
+	 [INF] Primary   slot: version=2.1.2+0
+	 [INF] Secondary slot: version=2.1.2+0
+	 [INF] Image 0 RAM loading to 0x80000000 is succeeded.
+	 [INF] Image 0 loaded from the primary slot
+	 [INF] Bootloader chainload address offset: 0x104400
+	 [INF] Jumping to the first image slot
+	 [INF] welcome to TF-M: v2.1.0-stm32mp-[version]
+	 [INF] board: stm32mp235f disco
+	 [INF] dts: stm32mp235f-dk-cm33tdcid-ostl-sdcard-s.dts
+	 [WAR] This device was provisioned with dummy keys.
+	 [WAR] This device is NOT SECURE
+	 [    0.000000] SCP-firmware v2.13.0-stm32mp-[version]
+	 [    0.000000]
+	 [    0.000000] [FWK] Module initialization complete!
+	 Non-Secure system starting..
 
 -------------
 
@@ -193,5 +208,5 @@ Flashing, run and debugging
 *SPDX-License-Identifier: BSD-3-Clause*
 
 .. _stm32mp235f_dk: https://www.st.com/en/evaluation-tools/stm32mp235f-dk.html
-.. _STM32MP25: https://www.st.com/en/microcontrollers-microprocessors/stm32mp2-series.html
+.. _STM32MP23: https://www.st.com/en/microcontrollers-microprocessors/stm32mp2-series.html
 .. _How_to_protect_the_coprocessor_firmware: https://wiki.st.com/stm32mpu/wiki/How_to_protect_the_coprocessor_firmware
