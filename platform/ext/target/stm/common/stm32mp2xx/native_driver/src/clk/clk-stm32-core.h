@@ -312,7 +312,7 @@ struct clk *stm32mp_rcc_clock_id_to_clk(struct clk_stm32_priv *priv,
 
 #define STM32_DT_OSCI_FREQ_CFG(_node_id, _id)				\
 	[_id] = {							\
-		.enabled = DT_NODE_HAS_STATUS(_node_id, okay),		\
+		.enabled = DT_NODE_HAS_STATUS_OKAY(_node_id),		\
 		.freq = DT_PROP(_node_id, clock_frequency),		\
 		.bypass = DT_PROP_OR(_node_id, st_bypass, false),	\
 		.digbyp = DT_PROP_OR(_node_id, st_digbyp, false),	\

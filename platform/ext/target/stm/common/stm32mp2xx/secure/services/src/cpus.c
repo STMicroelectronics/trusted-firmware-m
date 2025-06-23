@@ -60,14 +60,14 @@ static __unused const struct cpu_ctrl_api ctrl_remoteproc = {
 	{										\
 		.name = DEVICE_DT_NAME(node_id),					\
 		.method = ENABLE_METHOD_NONE,						\
-		.enable_at_startup = DT_NODE_HAS_STATUS(node_id, okay),			\
+		.enable_at_startup = DT_NODE_HAS_STATUS_OKAY(node_id),			\
 	}
 
 #define EN_METHODE_INVAL(node_id)							\
 	{										\
 		.name = DEVICE_DT_NAME(node_id),					\
 		.method = ENABLE_METHOD_INVAL,						\
-		.enable_at_startup = DT_NODE_HAS_STATUS(node_id, okay),			\
+		.enable_at_startup = DT_NODE_HAS_STATUS_OKAY(node_id),			\
 	}
 
 #define EN_METHODE_REMOTEPROC(node_id)							\
@@ -76,7 +76,7 @@ static __unused const struct cpu_ctrl_api ctrl_remoteproc = {
 		.method = ENABLE_METHOD_REMOTEPROC,					\
 		.dev_ctrl = DEVICE_DT_GET_OR_NULL(DT_RPROCS_CTLR(node_id)),		\
 		.ctrl_api = &ctrl_remoteproc,						\
-		.enable_at_startup = DT_NODE_HAS_STATUS(node_id, okay),			\
+		.enable_at_startup = DT_NODE_HAS_STATUS_OKAY(node_id),			\
 	}
 
 #define DEFINE_COPRO_STATE(node_id)							\

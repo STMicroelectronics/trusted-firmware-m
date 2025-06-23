@@ -525,7 +525,7 @@ __unused void stm32_pwr_regulator_restore(void)
 			 CORE, 7, &ops);
 
 #define REGULATOR_PWR_DEFINE_COND(inst, child, macro_desc, name, reg)				\
-	COND_CODE_1(DT_NODE_HAS_STATUS(DT_INST_CHILD(inst, child), okay),			\
+	COND_CODE_1(DT_NODE_HAS_STATUS_OKAY(DT_INST_CHILD(inst, child)),			\
 		    (REGULATOR_POWER_DEFINE(DT_INST_CHILD(inst, child),				\
 					    inst ## _ ## child,					\
 					    macro_desc, name, reg,				\
@@ -533,7 +533,7 @@ __unused void stm32_pwr_regulator_restore(void)
 		    ())
 
 #define FIXED_PWR_DEFINE_COND(inst, child, macro_desc, name, reg)				\
-	COND_CODE_1(DT_NODE_HAS_STATUS(DT_INST_CHILD(inst, child), okay),			\
+	COND_CODE_1(DT_NODE_HAS_STATUS_OKAY(DT_INST_CHILD(inst, child)),			\
 		    (REGULATOR_POWER_DEFINE(DT_INST_CHILD(inst, child),				\
 					      inst ## _ ## child,				\
 					      macro_desc, name, reg, stm32_pwr_regu_fixed_ops)),\
