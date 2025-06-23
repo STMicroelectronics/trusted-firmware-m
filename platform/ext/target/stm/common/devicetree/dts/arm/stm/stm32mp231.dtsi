@@ -94,6 +94,7 @@
 			      <&id_otp>,
 			      <&package_otp>,
 			      <&hconf1_otp>,
+			      <&stm32certif>,
 			      <&bl2_rotpk_0>,
 			      <&bl2_rotpk_1>,
 			      <&bl2_rotpk_2>,
@@ -105,6 +106,7 @@
 				   "id_otp",
 				   "package_otp",
 				   "hconf1_otp",
+				   "stm32certif",
 				   "bl2_rotpk_0",
 				   "bl2_rotpk_1",
 				   "bl2_rotpk_2",
@@ -575,6 +577,11 @@
 			hconf1_otp: otp124@1f0 {
 				#nvmem-cell-cells = <0>;
 				reg = <0x1f0 0x4>;
+			};
+
+			stm32certif: otp128@200 {
+				#nvmem-cell-cells = <0>;
+				reg = <0x200 0x40>;
 			};
 
 			bl2_rotpk_0: otp184@2e0 {
