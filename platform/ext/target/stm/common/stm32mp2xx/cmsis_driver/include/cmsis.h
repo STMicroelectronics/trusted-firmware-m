@@ -21,4 +21,13 @@
 
 #include "stm32mp2xx.h"
 
+#if defined(STM32MP215Cxx) || defined(STM32MP213Cxx) || defined(STM32MP211Cxx) ||\
+    defined(STM32MP215Fxx) || defined(STM32MP213Fxx) || defined(STM32MP211Fxx) ||\
+    defined(STM32MP235Cxx) || defined(STM32MP233Cxx) || defined(STM32MP231Cxx) ||\
+    defined(STM32MP235Fxx) || defined(STM32MP233Fxx) || defined(STM32MP231Fxx) ||\
+    defined(STM32MP257Cxx) || defined(STM32MP255Cxx) || defined(STM32MP253Cxx) || defined(STM32MP251Cxx) ||\
+    defined(STM32MP257Fxx) || defined(STM32MP255Fxx) || defined(STM32MP253Fxx) || defined(STM32MP251Fxx)
+#define STM32MP2_HAS_CRYPTO
+#endif
+
 #endif /*__CMSIS_H__*/
