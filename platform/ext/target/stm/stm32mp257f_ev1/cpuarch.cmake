@@ -18,5 +18,5 @@ set(STM_DIR ${STM_BOARD_DIR}/..)
 include(${STM_DIR}/common/stm32mp2xx/stm32mp25/cpuarch.cmake)
 
 add_compile_definitions(
-	STM32MP257Cxx
+	STM32MP257Fxx
 )
