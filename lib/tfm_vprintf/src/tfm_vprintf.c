@@ -75,8 +75,9 @@ static void output_val(tfm_log_output_str output_func, void *priv,
     const char pad_char = zero_padding ? '0' : ' ';
 
     /* not support base < 10 to not increase buf */
-    if (base < 10)
+    if (base < 10) {
         assert(0);
+    }
 
     /* Ensure buffer ends with NULL character */
     *buf_ptr-- = '\0';
