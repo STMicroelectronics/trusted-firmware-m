@@ -16,7 +16,7 @@ fetch_remote_library(
     LIB_SOURCE_PATH_VAR     SCP_FW_PATH
     LIB_PATCH_DIR           ${CMAKE_CURRENT_LIST_DIR}
     FETCH_CONTENT_ARGS
-        GIT_REPOSITORY      ssh://gerrit.st.com:29418/mpu/oe/optee/SCP-firmware
+        GIT_REPOSITORY      https://github.com/STMicroelectronics/SCP-firmware
         GIT_TAG             ${SCP_FW_VERSION}
         # ToDo: set GIT_SHALLOW to 'TRUE' when SCP_FW_VERSION will be set to a tag
         # (instead of a commit hash) with the new release.
