@@ -15,6 +15,8 @@
 #include <errno.h>
 
 #include <device.h>
+#include <pm/device.h>
+
 #include <stm32mp2_clk.h>
 #if defined(STM32MP21xxxx)
 #include <stm32mp21_rcc.h>
@@ -86,6 +88,17 @@ static int stm32_rcc_rif_init(const struct device *dev)
 	return stm32_rifprot_init(dev_cfg->rif_ctl);
 }
 
+#ifdef CONFIG_PM_DEVICE
+static int stm32_rcc_rif_pm_action(const struct device *dev,
+				  enum pm_device_action action, uint32_t pm_hint)
+{
+	if (action == PM_DEVICE_ACTION_RESUME)
+		return stm32_rcc_rif_init(dev);
+
+	return 0;
+}
+#endif
+
 #define _STM32_RCC_RIF_INIT(n, level, priority)					\
 										\
 BUILD_ASSERT(DT_INST_PROP_LEN_OR(n, st_protreg, 1) <= RCC_NB_RIF_RES,		\
@@ -105,7 +118,10 @@ static const struct stm32_rcc_rif_config rcc_rif_cfg_##n = {			\
 	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),					\
 };										\
 										\
-DEVICE_DT_INST_DEFINE(n, &stm32_rcc_rif_init, NULL,				\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_rcc_rif_pm_action);				\
+										\
+DEVICE_DT_INST_DEFINE(n, &stm32_rcc_rif_init,					\
+		      PM_DEVICE_DT_INST_GET(n),					\
 		      NULL, &rcc_rif_cfg_##n,					\
 		      level, priority,						\
 		      &stm32_rcc_rif_firewall_api);
