@@ -169,6 +169,7 @@ target_link_libraries(platform_s
         lib_qsort
         tfm_log
         tfm_log_unpriv
+        tfm_sp_log
 )
 
 if(TFM_PARTITION_CRYPTO)
