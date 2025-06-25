@@ -1,7 +1,7 @@
 
-#####################
-v2.1.0-stm32mp-r1-rc4
-#####################
+#################
+v2.1.0-stm32mp-r1
+#################
 
 based on :doc:`tfm 2.1.0 </releases/2.1.0>`
 
@@ -9,6 +9,13 @@ based on :doc:`tfm 2.1.0 </releases/2.1.0>`
 New major features
 ******************
 
+- Rebase on tfm 2.1.0
+- Allow to share bsec information with other component.
+- Add stm32mp21 support for m33 and a35 td flavor mode.
+- Add support of stm32mp215f dk board.
+- Update mailbox sharing, needed to PSA support.
+- Activate CACHE support
+- Improve sdmmc and ospi throughput
 - Add entopy framework and stm32 RNG driver.
 - Update DDR encryption.
 - Manage DDR authentication.
@@ -19,6 +26,12 @@ New major features
 - Provide API for SCMI services to M33 NS.
 - Add support of stm32mp21 cut 1.1.
 - Add mce encryption for stm32mp21.
+- Add nvmem framework
+- Read otp map in devicetree and use bsec nvmem
+- Read soc revision
+- Fix debug issue on stm32mp21
+- Display software version and board info
+- Update CMSIS header
 
 ****************
 Tested platforms

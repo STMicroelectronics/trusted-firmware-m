@@ -1,7 +1,6 @@
-Known issues
-------------
-
-known issues on this release:
+************
+Issues fixed
+************
 
 .. list-table::
 
