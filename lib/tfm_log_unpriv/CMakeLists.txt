@@ -27,10 +27,3 @@ target_link_libraries(tfm_log_unpriv
     PRIVATE
         tfm_sprt
 )
-
-# Not actually used by the tfm_log library but required
-# to prevent preprocessor error on undefined LOG_LEVEL_UNPRIV
-target_compile_definitions(tfm_log_unpriv
-    PRIVATE
-        LOG_LEVEL_UNPRIV=0
-)
