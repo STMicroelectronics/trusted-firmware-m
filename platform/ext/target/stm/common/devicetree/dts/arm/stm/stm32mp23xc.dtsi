@@ -4,7 +4,7 @@
  *
  */
 
-#include <dt-bindings/rif/stm32mp23-rifsc.h>
+#include <dt-bindings/rif/stm32mp25-rifsc.h>
 
 &rifsc {
 	saes: saes@52050000 {
