@@ -14,7 +14,7 @@ endif()
 # set specific stm32mp23 config
 ########################## STM32 #######################################
 set(STM32_BOARD_MODEL          "stm32mp23xxxx"  CACHE STRING   "Define board model name" FORCE)
-set(STM32_STM32MP25_SOC_REV    "revY"           CACHE STRING   "Set soc revision: revY, revX")
+set(STM32_STM32MP23_SOC_REV    "revY"           CACHE STRING   "Set soc revision: revY, revX")
 
 # set specific board config
 set(STM32_IPC                   ON              CACHE BOOL     "Use IPC (rpmsg) to communicate with main processor" FORCE)
