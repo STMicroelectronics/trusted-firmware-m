@@ -630,7 +630,7 @@ const VECTOR_TABLE_Type __VECTOR_TABLE[] __VECTOR_TABLE_ATTRIBUTE = {
 	EXTI1_13_IRQHandler,         /* EXTI1 Line 13 interrupt */
 	EXTI1_14_IRQHandler,         /* EXTI1 Line 14 interrupt */
 	EXTI1_15_IRQHandler,         /* EXTI1 Line 15 interrupt */
-	RESERVED_284_IRQHanlder,
+	RESERVED_284_IRQHandler,
 	RESERVED_285_IRQHandler,
 	0,
 	0,
