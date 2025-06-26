@@ -1,0 +1,30 @@
+#-------------------------------------------------------------------------------
+# Copyright (c) 2022-2023, Arm Limited. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+#-------------------------------------------------------------------------------
+{
+  "psa_framework_version": 1.1,
+  "name": "TFM_SP_ADAC",
+  "type": "PSA-ROT",
+  "priority": "NORMAL",
+  "model": "SFN",
+  "entry_init": "tfm_adac_init",
+  "stack_size": "0x0800",
+  "services" : [
+    {
+      "name": "TFM_ADAC_SERVICE",
+      "sid": "0x00000160",
+      "non_secure_clients": true,
+      "connection_based": false,
+      "stateless_handle": auto,
+      "version": 1,
+      "version_policy": "STRICT"
+    }
+  ],
+  "dependencies": [
+    "TFM_PLATFORM_SERVICE",
+    "TFM_CRYPTO"
+  ]
+}

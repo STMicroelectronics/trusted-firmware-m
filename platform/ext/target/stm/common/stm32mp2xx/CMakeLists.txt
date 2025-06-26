@@ -197,9 +197,11 @@ if (TFM_PARTITION_SCP)
 	add_subdirectory(${STM_FAMILLY_DIR}/lib/SCP-firmware SCP-firmware)
 	add_subdirectory(${STM_FAMILLY_DIR}/secure_fw/partitions/scp scp)
 endif()
+
 if (TFM_PARTITION_IPCC)
 	add_subdirectory(${STM_FAMILLY_DIR}/secure_fw/partitions/ipcc ipcc)
 endif()
+
 if (TFM_PARTITION_NS_AGENT_MAILBOX)
 	add_subdirectory(${PLATFORM_DIR}/ext/target/arm/rse/common/rse_comms rse)
 endif()

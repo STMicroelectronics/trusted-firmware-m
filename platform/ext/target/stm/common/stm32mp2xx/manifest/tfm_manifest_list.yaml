@@ -77,5 +77,33 @@
          ]
       }
     },
+    {
+      "description": "TFM ADAC Service Partition",
+      "manifest": "../secure_fw/partitions/adac/tfm_adac.yaml",
+      "output_path": "secure_fw/partitions/adac",
+      "conditional": "TFM_PARTITION_ADAC",
+      "version_major": 0,
+      "version_minor": 1,
+      "pid": 276,
+      "linker_pattern": {
+        "library_list": [
+          "*tfm_*partition_adac.*"
+        ]
+      }
+    },
+    {
+      "description": "TFM DBGMCU Partition",
+      "manifest": "../secure_fw/partitions/dbgmcu/tfm_dbgmcu.yaml",
+      "output_path": "secure_fw/partitions/dbgmcu",
+      "conditional": "TFM_PARTITION_DBGMCU",
+      "version_major": 0,
+      "version_minor": 1,
+      "pid": 277,
+      "linker_pattern": {
+        "library_list": [
+          "*tfm_*partition_dbgmcu*"
+         ]
+      }
+    },
   ]
 }

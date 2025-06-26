@@ -30,6 +30,17 @@ target_compile_definitions(tfm_config
 )
 
 #========================= Platform Secure ====================================#
+
+if (STM32_M33TDCID AND ${PLATFORM_PSA_ADAC_SECURE_DEBUG})
+    if (TFM_PARTITION_DBGMCU)
+        add_subdirectory(${STM_FAMILLY_DIR}/secure_fw/partitions/dbgmcu dbgmcu)
+    endif()
+
+    if (TFM_PARTITION_ADAC)
+        add_subdirectory(${STM_FAMILLY_DIR}/secure_fw/partitions/adac adac)
+    endif()
+endif() #STM32_M33TDCID AND ${PLATFORM_PSA_ADAC_SECURE_DEBUG}
+
 target_sources(platform_s
     PRIVATE
         ${STM_SOC_DIR}/src/system_stm32mp2xx_m33.c
