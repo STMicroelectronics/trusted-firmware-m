@@ -29,6 +29,7 @@ __PACKED_STRUCT tfm_psa_rot_provisioning_data_t {
 	uint8_t implementation_id[12];
 	uint8_t entropy_seed[64];
 	uint8_t stm32certif[64];
+	uint8_t adac_rotpkh[32];
 #if defined(STM32_BL2)
 	uint8_t tfm_fw_pkh[32];
 	uint8_t ddr_fw_pkh[32];
@@ -68,6 +69,14 @@ static const struct tfm_psa_rot_provisioning_data_t psa_rot_prov_data = {
 		0xa3, 0x66, 0x8c, 0x0d, 0x97, 0x55, 0x53, 0xca,
 		0x12, 0x13, 0x23, 0x34, 0x0a, 0x05, 0x89, 0x78,
 	},
+#if defined(PLATFORM_PSA_ADAC_SECURE_DEBUG)
+	.adac_rotpkh = {
+		0x2a, 0x53, 0x51, 0xc2, 0x83, 0x87, 0x66, 0x35,
+		0x09, 0x75, 0x4a, 0xd2, 0x07, 0xbe, 0xf6, 0x4a,
+		0xbe, 0xc7, 0x31, 0x06, 0x05, 0xbe, 0x4d, 0xb3,
+		0x1e, 0x10, 0xac, 0x01, 0xd4, 0x0c, 0xac, 0x7d,
+	},
+#endif
 #if defined(STM32_BL2)
 #if defined(MCUBOOT_SIGN_RSA) && (MCUBOOT_SIGN_RSA_LEN == 3072)
 	.tfm_fw_pkh = {
@@ -163,6 +172,9 @@ static const struct device *nvmem_dev_from_otp_id(enum tfm_otp_element_id_t id)
 	case PLAT_OTP_ID_STM32_CERTIF:
 		dev = DT_INST_DEV_NVMEM(0, stm32certif);
 		break;
+	case PLAT_OTP_ID_SECURE_DEBUG_PK:
+		dev = DT_INST_DEV_NVMEM(0, adac_rotpkh);
+		break;
 	default:
 		dev = NULL;
 		break;
@@ -216,6 +228,14 @@ static enum tfm_plat_err_t stm32_set_default_value(enum tfm_otp_element_id_t id,
 
 		memcpy((void *)out, psa_rot_prov_data.stm32certif, out_len);
 		break;
+#if PLATFORM_PSA_ADAC_SECURE_DEBUG
+	case PLAT_OTP_ID_SECURE_DEBUG_PK:
+		if (out_len > sizeof(psa_rot_prov_data.adac_rotpkh))
+			return TFM_PLAT_ERR_INVALID_INPUT;
+
+		memcpy((void *)out, psa_rot_prov_data.adac_rotpkh, out_len);
+		break;
+#endif /* PLATFORM_PSA_ADAC_SECURE_DEBUG */
 #if defined(STM32_BL2)
 	case PLAT_OTP_ID_BL2_ROTPK_0:
 		if (out_len > sizeof(psa_rot_prov_data.tfm_fw_pkh))
