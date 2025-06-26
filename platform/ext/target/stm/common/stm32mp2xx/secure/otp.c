@@ -29,9 +29,9 @@ __PACKED_STRUCT tfm_psa_rot_provisioning_data_t {
 	uint8_t implementation_id[12];
 	uint8_t entropy_seed[64];
 #if defined(STM32_BL2)
-	uint8_t bl2_rotpk_0[32];
-	uint8_t bl2_rotpk_1[32];
-	uint8_t bl2_rotpk_2[32];
+	uint8_t tfm_fw_pkh[32];
+	uint8_t ddr_fw_pkh[32];
+	uint8_t ca35_fw_pkh[32];
 #endif
 };
 
@@ -59,38 +59,38 @@ static const struct tfm_psa_rot_provisioning_data_t psa_rot_prov_data = {
 	},
 #if defined(STM32_BL2)
 #if defined(MCUBOOT_SIGN_RSA) && (MCUBOOT_SIGN_RSA_LEN == 3072)
-	.bl2_rotpk_0 = {
+	.tfm_fw_pkh = {
 		0xbf, 0xe6, 0xd8, 0x6f, 0x88, 0x26, 0xf4, 0xff,
 		0x97, 0xfb, 0x96, 0xc4, 0xe6, 0xfb, 0xc4, 0x99,
 		0x3e, 0x46, 0x19, 0xfc, 0x56, 0x5d, 0xa2, 0x6a,
 		0xdf, 0x34, 0xc3, 0x29, 0x48, 0x9a, 0xdc, 0x38,
 	},
-	.bl2_rotpk_1 = {
+	.ddr_fw_pkh = {
 		0xb3, 0x60, 0xca, 0xf5, 0xc9, 0x8c, 0x6b, 0x94,
 		0x2a, 0x48, 0x82, 0xfa, 0x9d, 0x48, 0x23, 0xef,
 		0xb1, 0x66, 0xa9, 0xef, 0x6a, 0x6e, 0x4a, 0xa3,
 		0x7c, 0x19, 0x19, 0xed, 0x1f, 0xcc, 0xc0, 0x49,
 	},
-	.bl2_rotpk_2 = {
+	.ca35_fw_pkh = {
 		0xbf, 0xe6, 0xd8, 0x6f, 0x88, 0x26, 0xf4, 0xff,
 		0x97, 0xfb, 0x96, 0xc4, 0xe6, 0xfb, 0xc4, 0x99,
 		0x3e, 0x46, 0x19, 0xfc, 0x56, 0x5d, 0xa2, 0x6a,
 		0xdf, 0x34, 0xc3, 0x29, 0x48, 0x9a, 0xdc, 0x38,
 	},
 #elif defined(MCUBOOT_SIGN_EC256)
-	.bl2_rotpk_0 = {
+	.tfm_fw_pkh = {
 		0xe3, 0x04, 0x66, 0xf6, 0xb8, 0x47, 0x0c, 0x1f, \
 		0x29, 0x07, 0x0b, 0x17, 0xf1, 0xe2, 0xd3, 0xe9, \
 		0x4d, 0x44, 0x5e, 0x3f, 0x60, 0x80, 0x87, 0xfd, \
 		0xc7, 0x11, 0xe4, 0x38, 0x2b, 0xb5, 0x38, 0xb6, \
 	},
-	.bl2_rotpk_1 = {
+	.ddr_fw_pkh = {
 		0x82, 0xa5, 0xb4, 0x43, 0x59, 0x48, 0x53, 0xd4, \
 		0xbf, 0x0f, 0xdd, 0x89, 0xa9, 0x14, 0xa5, 0xdc, \
 		0x16, 0xf8, 0x67, 0x54, 0x82, 0x07, 0xd7, 0x07, \
 		0x7e, 0x74, 0xd8, 0x0c, 0x06, 0x3e, 0xfd, 0xa9, \
 	},
-	.bl2_rotpk_2 = {
+	.ca35_fw_pkh = {
 		0xe3, 0x04, 0x66, 0xf6, 0xb8, 0x47, 0x0c, 0x1f, \
 		0x29, 0x07, 0x0b, 0x17, 0xf1, 0xe2, 0xd3, 0xe9, \
 		0x4d, 0x44, 0x5e, 0x3f, 0x60, 0x80, 0x87, 0xfd, \
@@ -109,18 +109,24 @@ static const struct device *nvmem_dev_from_otp_id(enum tfm_otp_element_id_t id)
 
 	switch (id) {
 #if defined(STM32_BL2)
+#if (MCUBOOT_IMAGE_NUMBER == 3)
 	case PLAT_OTP_ID_BL2_ROTPK_0:
-		dev = DT_INST_DEV_NVMEM(0, bl2_rotpk_0);
+		dev = DT_INST_DEV_NVMEM(0, tfm_fw_pkh);
 		break;
 	case PLAT_OTP_ID_BL2_ROTPK_1:
-		dev = DT_INST_DEV_NVMEM(0, bl2_rotpk_1);
+		dev = DT_INST_DEV_NVMEM(0, ca35_fw_pkh);
 		break;
 	case PLAT_OTP_ID_BL2_ROTPK_2:
-		dev = DT_INST_DEV_NVMEM(0, bl2_rotpk_2);
+		dev = DT_INST_DEV_NVMEM(0, ddr_fw_pkh);
 		break;
-	case PLAT_OTP_ID_BL2_ROTPK_3:
-		dev = DT_INST_DEV_NVMEM(0, bl2_rotpk_3);
+#else
+	case PLAT_OTP_ID_BL2_ROTPK_0:
+		dev = DT_INST_DEV_NVMEM(0, tfm_fw_pkh);
 		break;
+	case PLAT_OTP_ID_BL2_ROTPK_1:
+		dev = DT_INST_DEV_NVMEM(0, ddr_fw_pkh);
+		break;
+#endif
 #endif
 	case PLAT_OTP_ID_IAK:
 		dev = DT_INST_DEV_NVMEM(0, iak);
@@ -195,23 +201,33 @@ static enum tfm_plat_err_t stm32_set_default_value(enum tfm_otp_element_id_t id,
 		break;
 #if defined(STM32_BL2)
 	case PLAT_OTP_ID_BL2_ROTPK_0:
-		if (out_len > sizeof(psa_rot_prov_data.bl2_rotpk_0))
+		if (out_len > sizeof(psa_rot_prov_data.tfm_fw_pkh))
 			return TFM_PLAT_ERR_INVALID_INPUT;
 
-		memcpy((void*)out, psa_rot_prov_data.bl2_rotpk_0, out_len);
+		memcpy((void*)out, psa_rot_prov_data.tfm_fw_pkh, out_len);
 		break;
+#if (MCUBOOT_IMAGE_NUMBER == 3)
 	case PLAT_OTP_ID_BL2_ROTPK_1:
-		if (out_len > sizeof(psa_rot_prov_data.bl2_rotpk_1))
+		if (out_len > sizeof(psa_rot_prov_data.ca35_fw_pkh))
 			return TFM_PLAT_ERR_INVALID_INPUT;
 
-		memcpy((void*)out, psa_rot_prov_data.bl2_rotpk_1, out_len);
+		memcpy((void*)out, psa_rot_prov_data.ca35_fw_pkh, out_len);
 		break;
+
 	case PLAT_OTP_ID_BL2_ROTPK_2:
-		if (out_len > sizeof(psa_rot_prov_data.bl2_rotpk_2))
+		if (out_len > sizeof(psa_rot_prov_data.ddr_fw_pkh))
 			return TFM_PLAT_ERR_INVALID_INPUT;
 
-		memcpy((void *)out, psa_rot_prov_data.bl2_rotpk_2, out_len);
+		memcpy((void *)out, psa_rot_prov_data.ddr_fw_pkh, out_len);
 		break;
+#else
+	case PLAT_OTP_ID_BL2_ROTPK_1:
+		if (out_len > sizeof(psa_rot_prov_data.ddr_fw_pkh))
+			return TFM_PLAT_ERR_INVALID_INPUT;
+
+		memcpy((void*)out, psa_rot_prov_data.ddr_fw_pkh, out_len);
+		break;
+#endif
 #endif
 	default:
 		return TFM_PLAT_ERR_UNSUPPORTED;

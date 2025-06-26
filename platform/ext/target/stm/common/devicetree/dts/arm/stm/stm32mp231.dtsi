@@ -95,9 +95,9 @@
 			      <&package_otp>,
 			      <&hconf1_otp>,
 			      <&stm32certif>,
-			      <&bl2_rotpk_0>,
-			      <&bl2_rotpk_1>,
-			      <&bl2_rotpk_2>,
+			      <&tfm_fw_pkh>,
+			      <&ddr_fw_pkh>,
+			      <&ca35_fw_pkh>,
 			      <&entropy_seed>,
 			      <&iak>;
 		nvmem-cell-names = "implementation_id",
@@ -107,9 +107,9 @@
 				   "package_otp",
 				   "hconf1_otp",
 				   "stm32certif",
-				   "bl2_rotpk_0",
-				   "bl2_rotpk_1",
-				   "bl2_rotpk_2",
+				   "tfm_fw_pkh",
+				   "ddr_fw_pkh",
+				   "ca35_fw_pkh",
 				   "entropy_seed",
 				   "iak";
 		status = "okay";
@@ -584,17 +584,17 @@
 				reg = <0x200 0x40>;
 			};
 
-			bl2_rotpk_0: otp184@2e0 {
+			tfm_fw_pkh: otp184@2e0 {
 				#nvmem-cell-cells = <0>;
 				reg = <0x2e0 0x20>;
 			};
 
-			bl2_rotpk_1: otp192@300 {
+			ddr_fw_pkh: otp192@300 {
 				#nvmem-cell-cells = <0>;
 				reg = <0x300 0x20>;
 			};
 
-			bl2_rotpk_2: otp200@320 {
+			ca35_fw_pkh: otp200@320 {
 				#nvmem-cell-cells = <0>;
 				reg = <0x320 0x20>;
 			};
