@@ -62,13 +62,8 @@
 #define _RISAF_REG_CFGR_BREN		BIT(_RISAF_REG_CFGR_BREN_SHIFT)
 #define _RISAF_REG_CFGR_SEC_SHIFT	U(8)
 #define _RISAF_REG_CFGR_SEC		BIT(_RISAF_REG_CFGR_SEC_SHIFT)
-#ifdef STM32MP21xxxx
 #define _RISAF_REG_CFGR_ENC_SHIFT	U(14)
 #define _RISAF_REG_CFGR_ENC		GENMASK_32(15, 14)
-#else /* STM32MP21xxxx */
-#define _RISAF_REG_CFGR_ENC_SHIFT	U(15)
-#define _RISAF_REG_CFGR_ENC		BIT(_RISAF_REG_CFGR_ENC_SHIFT)
-#endif /* STM32MP21xxxx */
 #define _RISAF_REG_CFGR_PRIVC_SHIFT	U(16)
 #define _RISAF_REG_CFGR_PRIVC_MASK	GENMASK_32(23, 16)
 #define _RISAF_REG_CFGR_ALL_MASK	(_RISAF_REG_CFGR_BREN | \
@@ -325,8 +320,7 @@ static void stm32_risaf_dt_to_region(const struct device *dev,
 	region->start_addr = dt_region->start_addr;
 	region->end_addr = dt_region->end_addr;
 
-	*enc_mode = _FLD_GET(DT_RISAF_ENC, dt_region->st_protreg) <<
-		    _RISAF_REG_CFGR_ENC_SHIFT;
+	*enc_mode = _FLD_GET(DT_RISAF_ENC, dt_region->st_protreg);
 }
 
 static int stm32_risaf_get_nbsubregions(const struct device *dev,
@@ -366,6 +360,12 @@ static int stm32_risaf_region_cfg(const struct device *dev,
 	uint32_t enc_mode;
 
 	stm32_risaf_dt_to_region(dev, idx, &region, &enc_mode);
+	/* MCE encryption is not available on these SoCs */
+	if ((IS_ENABLED(STM32MP23xxxx) || IS_ENABLED(STM32MP25xxxx)) &&
+	    enc_mode == RIF_ENC_MCE_EN) {
+		EMSG("RISAF region cannot be configured with MCE encryption\n");
+		return -EINVAL;
+	}
 
 	nbsubregions = stm32_risaf_get_nbsubregions(dev, idx, &region);
 
@@ -602,7 +602,6 @@ static int stm32_risaf_init(const struct device *dev)
 		err = -EINVAL;
 		goto out;
 	}
-
 
 	for (i = 0; i < drv_cfg->ndt_regions; i++) {
 		if (drv_cfg->dt_regions[i].ndt_regions > drv_data->hw_nsubregions) {
