@@ -45,7 +45,6 @@ target_sources(platform_s
     PRIVATE
         ${STM_SOC_DIR}/src/system_stm32mp2xx_m33.c
         ${STM_FAMILLY_DIR}/native_driver/src/clk/clk-stm32mp21.c
-        ${STM_FAMILLY_DIR}/native_driver/src/regulator/stm32mp2_pmic.c
         $<$<AND:$<BOOL:${STM32_M33TDCID}>,$<BOOL:${PLATFORM_PSA_ADAC_SECURE_DEBUG}>>:${STM_FAMILLY_DIR}/native_driver/src/mbox/stm32_dbgmcu_mbx.c>
         $<$<AND:$<BOOL:${STM32_M33TDCID}>,$<BOOL:${PLATFORM_PSA_ADAC_SECURE_DEBUG}>>:${STM_FAMILLY_DIR}/secure/services/src/tfm_adac_api.c>
 )
@@ -62,7 +61,6 @@ if(BL2)
         PRIVATE
             ${STM_SOC_DIR}/src/system_stm32mp2xx_m33.c
             ${STM_FAMILLY_DIR}/native_driver/src/clk/clk-stm32mp21.c
-            ${STM_FAMILLY_DIR}/native_driver/src/regulator/stm32mp2_pmic.c
     )
 
     target_sources(bl2
