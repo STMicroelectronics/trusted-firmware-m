@@ -22,6 +22,9 @@
 #include <dt-bindings/reset/st,stm32mp25-rcc.h>
 #endif
 
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
+	     "only one rcc reset compatible node is supported");
+
 #define RESET_ID_MASK		GENMASK_32(31, 5)
 #define RESET_ID_SHIFT		5
 #define RESET_BIT_POS_MASK	GENMASK_32(4, 0)
@@ -34,7 +37,38 @@
 /* registers offset */
 #define _RCC_BDCR		U(0X400)
 #define _RCC_C1RSTCSETR		U(0x404)
+#define _RCC_C2BOOTRSTSCLRR	U(0x428)
 #define _RCC_CPUBOOTCR		U(0x434)
+
+/* Bit definition for RCC_C2BOOTRSTSCLRR register */
+#define _C2BOOTRSTSCLRR_PORRSTF			BIT(0)
+#define _C2BOOTRSTSCLRR_BORRSTF			BIT(1)
+#define _C2BOOTRSTSCLRR_PADRSTF			BIT(2)
+#define _C2BOOTRSTSCLRR_HCSSRSTF		BIT(3)
+#define _C2BOOTRSTSCLRR_VCORERSTF		BIT(4)
+#define _C2BOOTRSTSCLRR_SYSC1RSTF		BIT(6)
+#define _C2BOOTRSTSCLRR_SYSC2RSTF		BIT(7)
+#define _C2BOOTRSTSCLRR_IWDG1SYSRSTF		BIT(8)
+#define _C2BOOTRSTSCLRR_IWDG2SYSRSTF		BIT(9)
+#define _C2BOOTRSTSCLRR_IWDG3SYSRSTF		BIT(10)
+#define _C2BOOTRSTSCLRR_IWDG4SYSRSTF		BIT(11)
+#define _C2BOOTRSTSCLRR_IWDG5SYSRSTF		BIT(12)
+#define _C2BOOTRSTSCLRR_C2RSTF			BIT(14)
+#define _C2BOOTRSTSCLRR_RETCRCERRRSTF		BIT(17)
+#define _C2BOOTRSTSCLRR_RETECCFAILCRCRSTF	BIT(18)
+#define _C2BOOTRSTSCLRR_RETECCFAILRESTRSTF	BIT(19)
+#define _C2BOOTRSTSCLRR_STBYC2RSTF		BIT(21)
+#define _C2BOOTRSTSCLRR_D2STBYRSTF		BIT(23)
+
+#define _C2BOOTRSTSCLRR_IWDGXSYSRSTF (_C2BOOTRSTSCLRR_IWDG1SYSRSTF | \
+				      _C2BOOTRSTSCLRR_IWDG2SYSRSTF | \
+				      _C2BOOTRSTSCLRR_IWDG3SYSRSTF | \
+				      _C2BOOTRSTSCLRR_IWDG4SYSRSTF | \
+				      _C2BOOTRSTSCLRR_IWDG5SYSRSTF)
+
+#define _C2BOOTRSTSCLRR_RETRAMERRF (_C2BOOTRSTSCLRR_RETCRCERRRSTF | \
+				    _C2BOOTRSTSCLRR_RETECCFAILCRCRSTF | \
+				    _C2BOOTRSTSCLRR_RETECCFAILRESTRSTF)
 
 #define _RCC_BDCR_RTCSRC_MASK	GENMASK(17, 16)
 
@@ -259,3 +293,45 @@ DEVICE_DT_INST_DEFINE(0,
 		      NULL, &stm32_reset_cfg,
 		      PRE_CORE, 0,
 		      &stm32_reset_com_api);
+
+static int __unused stm32_reset_reason(void)
+{
+	const struct device *dev = DEVICE_DT_INST_GET(0);
+	const struct stm32_reset_config *drv_cfg = dev_get_config(dev);
+	const char *reason_str = "Unidentified";
+	uint32_t rstsr;
+
+	rstsr = io_read32(drv_cfg->base + _RCC_C2BOOTRSTSCLRR);
+
+	if (rstsr & _C2BOOTRSTSCLRR_PADRSTF) {
+		if (rstsr & _C2BOOTRSTSCLRR_PORRSTF)
+			reason_str = "Power-on reset (por_rstn)";
+		else if (rstsr & _C2BOOTRSTSCLRR_BORRSTF)
+			reason_str = "Brownout reset (bor_rstn)";
+		else if (rstsr & (_C2BOOTRSTSCLRR_SYSC2RSTF |
+				     _C2BOOTRSTSCLRR_SYSC1RSTF))
+			reason_str = "System reset (SYSRST)";
+		else if (rstsr & _C2BOOTRSTSCLRR_HCSSRSTF)
+			reason_str = "Clock failure on HSE";
+		else if (rstsr & _C2BOOTRSTSCLRR_IWDGXSYSRSTF)
+			reason_str = "IWDG system reset (iwdgX_out_rst)";
+		else if (rstsr & _C2BOOTRSTSCLRR_RETRAMERRF)
+			reason_str = "System exits from Standby with errors";
+		else
+			reason_str = "Pin reset from NRST";
+	} else {
+		if (rstsr & (_C2BOOTRSTSCLRR_STBYC2RSTF |
+			      _C2BOOTRSTSCLRR_D2STBYRSTF))
+			reason_str = "System exits from Standby";
+		else if (rstsr & _C2BOOTRSTSCLRR_C2RSTF)
+			reason_str = "CM33 reset by CA35 (C2RST)";
+	}
+
+	IMSG("Reset reason: %s (0x%x)", reason_str, rstsr);
+
+	return 0;
+}
+
+#if defined(STM32_M33TDCID) && (STM32_BL2)
+SYS_INIT(stm32_reset_reason, CORE, 2);
+#endif
