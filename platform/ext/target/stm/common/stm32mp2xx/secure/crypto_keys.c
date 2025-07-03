@@ -15,11 +15,8 @@
 #include "psa_manifest/pid.h"
 #include "psa/crypto.h"
 #include "tfm_builtin_key_ids.h"
-#include "tfm_builtin_key_ids.h"
 #include "tfm_builtin_key_loader.h"
 #include "tfm_plat_crypto_keys.h"
-#include "tfm_plat_crypto_keys.h"
-#include "tfm_plat_otp.h"
 #include "tfm_plat_otp.h"
 
 #define NUMBER_OF_ELEMENTS_OF(x) sizeof(x)/sizeof(*x)
