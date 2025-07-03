@@ -91,24 +91,24 @@ tfm_attest_hal_get_profile_definition(uint32_t *size, uint8_t *buf)
 	return TFM_PLAT_ERR_SUCCESS;
 }
 
-static bool is_boot_seed_zero(const uint8_t boot_seed[32])
+static bool is_boot_seed_zero(uint32_t size, const uint8_t *boot_seed)
 {
-	uint8_t zero_array[32] = {0};
+	uint8_t zero_array[BOOT_SEED_SIZE] = {0};
 
-	return memcmp((const void *)boot_seed, zero_array, 32) == 0;
+	return memcmp(boot_seed, zero_array, size) == 0;
 }
 
 enum tfm_plat_err_t tfm_plat_get_boot_seed(uint32_t size, uint8_t *buf)
 {
-	static uint8_t boot_seed[32] = {0}; /* persistent value */
+	static uint8_t boot_seed[BOOT_SEED_SIZE] = {0}; /* persistent value */
+
+	if (size > BOOT_SEED_SIZE)
+		return TFM_PLAT_ERR_MAX_VALUE;
 
 	/* Get a random value only at first call */
-	if (is_boot_seed_zero(boot_seed))
-		if (entropy_get_entropy(NULL, boot_seed, sizeof(boot_seed)))
+	if (is_boot_seed_zero(size, &boot_seed[0]))
+		if (entropy_get_entropy(NULL, boot_seed, size))
 			return TFM_PLAT_ERR_SYSTEM_ERR;
-
-	if (size > sizeof(boot_seed))
-		return TFM_PLAT_ERR_MAX_VALUE;
 
 	memcpy(buf, boot_seed, size);
 
