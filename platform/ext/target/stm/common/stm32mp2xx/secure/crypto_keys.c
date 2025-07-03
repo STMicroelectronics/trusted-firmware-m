@@ -24,6 +24,7 @@
 #define TFM_NS_PARTITION_ID                  MAPPED_TZ_NS_AGENT_DEFAULT_CLIENT_ID
 
 #define HUK_SUBKEY_MAX_LEN	32
+#define HUK_MAX_DATA_LEN	25
 
 #if defined(STM32_M33TDCID)
 #define SAES_NODE_NAME	saes
@@ -174,7 +175,7 @@ static int crypto_keys_kdf(const struct device *dev,
 	int res = 0;
 	uint32_t index = 0;
 	uint32_t index_be = 0;
-	uint8_t *data = NULL;
+	uint8_t data[HUK_MAX_DATA_LEN + sizeof(uint32_t)] = {0};
 	size_t data_index = 0;
 	size_t subkey_index = 0;
 	size_t data_size = input_size + sizeof(index_be);
@@ -184,8 +185,7 @@ static int crypto_keys_kdf(const struct device *dev,
 		return -EINVAL;
 
 	/* For each K(i) we will add an index */
-	data = malloc(data_size);
-	if (!data)
+	if (input_size > HUK_MAX_DATA_LEN)
 		return -ENOMEM;
 
 	data_index = 0;
@@ -213,7 +213,6 @@ static int crypto_keys_kdf(const struct device *dev,
 	}
 
 out:
-	free(data);
 	if (res)
 		memset(subkey, 0, subkey_size);
 
@@ -226,7 +225,7 @@ out:
  * @param usage: intended usage of the subkey
  * @param const_data: constant data to generate different subkeys with the same
  *		      usage
- * @param const_data_len: length of constant data
+ * @param const_data_len: length of constant data (maximum size: HUK_MAX_DATA)
  * @param subkey: the generated subkey
  * @param subkey_len: required size of the subkey, sizes larger than
  *		      HUK_SUBKEY_MAX_LEN are not accepted.
@@ -241,17 +240,17 @@ static int subkey_derive(const struct device *dev, uint32_t usage,
 			 uint8_t *subkey, size_t subkey_len)
 {
 	int res = -EPERM;
-	uint8_t *input = NULL;
+	uint8_t input[HUK_MAX_DATA_LEN] = {0};
 	size_t input_index = 0;
 	size_t subkey_bitlen = 0;
 	uint8_t separator = 0;
+	size_t data_size = const_data_len + sizeof(separator) + sizeof(usage) +
+			   sizeof(subkey_bitlen) + AES_BLOCK_SIZE;
 
 	if ((!dev) || !device_is_ready(dev))
 		return -ENODEV;
 
-	input = malloc(const_data_len + sizeof(separator) + sizeof(usage) +
-		       sizeof(subkey_bitlen) + AES_BLOCK_SIZE);
-	if (!input)
+	if (sizeof(input) < data_size)
 		return -ENOMEM;
 
 	input_index = 0;
@@ -283,7 +282,7 @@ static int subkey_derive(const struct device *dev, uint32_t usage,
 				       input, input_index,
 				       input + input_index);
 	if (res)
-		goto out;
+		return res;
 
 	/* We just added K(0) to input */
 	input_index += AES_BLOCK_SIZE;
@@ -291,8 +290,6 @@ static int subkey_derive(const struct device *dev, uint32_t usage,
 	res = crypto_keys_kdf(dev, STM32_SAES_KEY_DHU, NULL, AES_KEYSIZE_128,
 			      input, input_index, subkey, subkey_len);
 
-out:
-	free(input);
 	return res;
 }
 /* end of HUK subkey section */
