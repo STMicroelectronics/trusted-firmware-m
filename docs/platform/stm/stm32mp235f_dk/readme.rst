@@ -28,7 +28,6 @@ These build generate:
 
     * **M33TDCID** boot device (bl2 dt file must be aligned):
 
-      - default, serial nor (ospi): ``-DSTM32_BOOT_DEV=ospi``
       - sdcard (sdmmc1): ``-DSTM32_BOOT_DEV=sdmmc1``
       - emmc (sdmmc2): ``-DSTM32_BOOT_DEV=sdmmc2``
 
@@ -40,6 +39,11 @@ These build generate:
       - ``-DDTS_BOARD_S=<dts_file_secure>``
       - ``-DDTS_BOARD_NS=<dts_file_non_secure>``
       - ``-DDTS_BOARD_BL2=<dts_file_bl2>``
+
+    * If your board isn't provisionned with real secret you should enable dummy provisionning.
+      - ``-DTFM_DUMMY_PROVISIONING=ON``
+    * When dummy provisioning enabled you can also override OTP values with dummy provisionning.
+      - ``-DSTM32_OVERRIDE_OTP=ON``
 
 Building TF-M secure and non secure with|out regression tests
 =============================================================
@@ -58,6 +62,8 @@ clone the tf-m-tests repository in ``<TF-M-TESTS_DIRECTORY>``.
                  -DTFM_TOOLCHAIN_FILE=<TF-M_DIRECTORY>/toolchain_GNUARM.cmake \
                  -DTFM_PROFILE=profile_medium \
                  -DSTM32_M33TDCID=ON \
+                 -DSTM32_BOOT_DEV=sdmmc1 \
+                 -DTFM_PARTITION_PROTECTED_STORAGE=OFF \
                  -DTEST_S=ON -DTEST_NS=ON \
                  -DCMAKE_BUILD_TYPE=Relwithdebinfo
          $ cmake --build <BUILD_DIRECTORY>/build_spe -- install
@@ -77,6 +83,8 @@ clone the tf-m-tests repository in ``<TF-M-TESTS_DIRECTORY>``.
                  -DTFM_TOOLCHAIN_FILE=<TF-M_DIRECTORY>/toolchain_GNUARM.cmake \
                  -DTFM_PROFILE=profile_medium \
                  -DSTM32_M33TDCID=ON \
+                 -DSTM32_BOOT_DEV=sdmmc1 \
+                 -DTFM_PARTITION_PROTECTED_STORAGE=OFF \
                  -DTEST_S=ON -DTEST_NS=ON \
                  -DCMAKE_BUILD_TYPE=Relwithdebinfo -G "Unix Makefiles"
          $ cmake --build <BUILD_DIRECTORY>/build_spe -- install
@@ -107,6 +115,8 @@ The secure and non secure binaries must be assembled then signed (see CubeIDE pr
                  -DTFM_TOOLCHAIN_FILE=<TF-M_DIRECTORY>/toolchain_GNUARM.cmake \
                  -DTFM_PROFILE=profile_medium \
                  -DSTM32_M33TDCID=ON \
+                 -DSTM32_BOOT_DEV=sdmmc1 \
+                 -DTFM_PARTITION_PROTECTED_STORAGE=OFF \
                  -DCMAKE_BUILD_TYPE=Relwithdebinfo
          $ cmake --build <BUILD_DIRECTORY>/build_spe -- install
 
@@ -119,6 +129,8 @@ The secure and non secure binaries must be assembled then signed (see CubeIDE pr
                  -DTFM_TOOLCHAIN_FILE=<TF-M_DIRECTORY>/toolchain_GNUARM.cmake \
                  -DTFM_PROFILE=profile_medium \
                  -DSTM32_M33TDCID=ON \
+                 -DSTM32_BOOT_DEV=sdmmc1 \
+                 -DTFM_PARTITION_PROTECTED_STORAGE=OFF \
                  -DCMAKE_BUILD_TYPE=Relwithdebinfo -G "Unix Makefiles"
          $ cmake --build <BUILD_DIRECTORY>/build_spe -- install
 
