@@ -87,6 +87,7 @@ static int stm32_rtc_init(const struct device *dev)
 	if (!rtc_clk || !pclk)
 		return -ENODEV;
 
+	/* Unbalanced clock enable: keep RTC running */
 	err = clk_enable(rtc_clk);
 	if (err)
 		return err;
@@ -98,7 +99,6 @@ static int stm32_rtc_init(const struct device *dev)
 	err = stm32_rifprot_init(cfg->rif_ctl);
 
 	clk_disable(pclk);
-	clk_disable(rtc_clk);
 
 	return err;
 }
