@@ -207,6 +207,11 @@ if (TFM_PARTITION_SCP)
 	add_subdirectory(${STM_FAMILY_DIR}/secure_fw/partitions/scp scp)
 endif()
 
+if (TFM_PARTITION_STL)
+	add_subdirectory(${STM_FAMILY_DIR}/lib/stl libstl)
+	add_subdirectory(${STM_FAMILY_DIR}/secure_fw/partitions/stl stl)
+endif()
+
 if (TFM_PARTITION_IPCC)
 	add_subdirectory(${STM_FAMILY_DIR}/secure_fw/partitions/ipcc ipcc)
 endif()

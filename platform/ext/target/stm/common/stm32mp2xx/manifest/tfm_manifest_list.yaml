@@ -105,5 +105,19 @@
          ]
       }
     },
+    {
+      "description": "TFM STL Partition",
+      "manifest": "../secure_fw/partitions/stl/tfm_stl.yaml",
+      "output_path": "secure_fw/partitions/stl",
+      "conditional": "TFM_PARTITION_STL",
+      "version_major": 0,
+      "version_minor": 1,
+      "pid": 274,
+      "linker_pattern": {
+        "library_list": [
+          "*tfm_*partition_stl*"
+         ]
+      }
+    },
   ]
 }
