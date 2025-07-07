@@ -41,7 +41,7 @@ enum tfm_platform_err_t tfm_platform_hal_ioctl(tfm_platform_ioctl_req_t request,
 					       psa_outvec *out_vec)
 {
 	switch(request) {
-#ifdef STM32_M33TDCID
+#ifdef TFM_PLATFORM_CPU_API
 	case TFM_PLATFORM_IOCTL_CPU_SERVICE:
 		return cpus_service(in_vec, out_vec);
 #endif

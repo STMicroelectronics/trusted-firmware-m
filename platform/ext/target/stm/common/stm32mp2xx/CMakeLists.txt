@@ -39,6 +39,7 @@ target_compile_definitions(tfm_config
         $<$<BOOL:${TFM_PARTITION_SCP}>:S_HEAP_SIZE=0x00020000>
         $<$<BOOL:${STM32_CACHE_ENABLED}>:STM32_CACHE_ENABLED>
         $<$<BOOL:${TFM_PLATFORM_WDT_API}>:TFM_PLATFORM_WDT_API>
+        $<$<BOOL:${TFM_PLATFORM_CPU_API}>:TFM_PLATFORM_CPU_API>
 )
 
 target_include_directories(tfm_config
@@ -124,6 +125,8 @@ target_sources(platform_s
 		${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_rcc_rif.c
 		$<$<BOOL:${TFM_PLATFORM_WDT_API}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_wdt_api.c>
 		$<$<BOOL:${TFM_PLATFORM_WDT_API}>:${STM_FAMILLY_DIR}/secure/services/src/wdt.c>
+		$<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
+		$<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILLY_DIR}/secure/services/src/cpus.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/power/stm32mp2_pwr.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_rifsc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_risaf.c>
@@ -140,14 +143,12 @@ target_sources(platform_s
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/tamper/stm32_tamp.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/remoteproc/rproc_core.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/remoteproc/stm32_rproc.c>
-		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
 		$<$<BOOL:${STM32_CACHE_ENABLED}>:${STM_FAMILLY_DIR}/native_driver/src/core/stm32_dcache.c>
 		${STM_FAMILLY_DIR}/native_driver/src/i2c/stm32_i2c.c
 		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_platform_system.c>
 		$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${STM_FAMILLY_DIR}/secure/nv_counters.c>
 		$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_ATTEST_HAL}>>:${STM_FAMILLY_DIR}/secure/attest_hal.c>
 		$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_OTP}>>:${STM_FAMILLY_DIR}/secure/otp.c>
-		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/services/src/cpus.c>
 		${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_nvic.c
 )
 
@@ -222,7 +223,8 @@ target_sources(tfm_s
         ${STM_FAMILLY_DIR}/native_driver/src/nvmem/nvmem.c
         ${STM_FAMILLY_DIR}/native_driver/src/spi/stm32_omm.c
         ${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_rcc_rif.c
-	$<$<BOOL:${TFM_PLATFORM_WDT_API}>:${STM_FAMILLY_DIR}/secure/services/src/wdt.c>
+        $<$<BOOL:${TFM_PLATFORM_WDT_API}>:${STM_FAMILLY_DIR}/secure/services/src/wdt.c>
+        $<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILLY_DIR}/secure/services/src/cpus.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/power/stm32mp2_pwr.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_rifsc.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/rif/stm32_risaf.c>
@@ -230,7 +232,6 @@ target_sources(tfm_s
 	$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/crypto/stm32_saes.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/regulator/stm32mp2_pmic.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/regulator/stm32mp25_pwr_regul.c>
-        $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/services/src/cpus.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/rtc/stm32_rtc.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/memc/stm32_fmc.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/native_driver/src/dma/stm32_hpdma.c>
