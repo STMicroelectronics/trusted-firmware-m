@@ -44,6 +44,7 @@ set(MCUBOOT_VERSION                     "v2.1.0"    CACHE STRING    "The version
 set(PLATFORM_PSA_ADAC_SECURE_DEBUG      FALSE       CACHE BOOL      "Whether to use psa-adac secure debug.")
 set(PLATFORM_PSA_ADAC_SOURCE_PATH       "DOWNLOAD"  CACHE PATH      "Path to source dir of psa-adac.")
 set(PLATFORM_PSA_ADAC_VERSION           "5f5490cebe66" CACHE STRING "The version of psa-adac to use.")
+set(PLATFORM_PSA_ADAC_GIT_REMOTE        "https://git.trustedfirmware.org/shared/psa-adac.git" CACHE STRING "The URL (or path) to retrieve psa-adac from.")
 
 set(PLATFORM_IS_FVP                     FALSE       CACHE BOOL      "Whether to enable FVP or FPGA build of the platform.")
 
