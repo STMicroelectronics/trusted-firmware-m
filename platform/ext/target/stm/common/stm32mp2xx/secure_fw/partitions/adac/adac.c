@@ -12,6 +12,7 @@
 #include <psa/error.h>
 #include <psa_adac_platform.h>
 #include <tfm_plat_otp.h>
+#include <util_macro.h>
 
 #define ROTPK_SIZE 32
 
@@ -32,19 +33,22 @@ psa_status_t adac_service_request(void)
 
 psa_status_t adac_sp_init(bool *is_service_enabled)
 {
-	enum plat_otp_lcs_t lcs = PLAT_OTP_LCS_UNKNOWN;
 	enum tfm_plat_err_t err;
 
 	*is_service_enabled = false;
 
-	/* Read LCS from OTP */
-	err = tfm_plat_otp_read(PLAT_OTP_ID_LCS, sizeof(lcs), (uint8_t *)&lcs);
-	if (err != TFM_PLAT_ERR_SUCCESS)
-		return PSA_ERROR_SERVICE_FAILURE;
+	if (!IS_ENABLED(TFM_DUMMY_PROVISIONING)) { /* Skip LCS check if dummy provisioning */
+		enum plat_otp_lcs_t lcs = PLAT_OTP_LCS_UNKNOWN;
 
-	/* ADAC service is only enabled if device is in secure state */
-	if (lcs != PLAT_OTP_LCS_SECURED)
-		return PSA_ERROR_SERVICE_FAILURE;
+		/* Read LCS from OTP */
+		err = tfm_plat_otp_read(PLAT_OTP_ID_LCS, sizeof(lcs), (uint8_t *)&lcs);
+		if (err != TFM_PLAT_ERR_SUCCESS)
+			return PSA_ERROR_SERVICE_FAILURE;
+
+		/* ADAC service is only enabled if device is in secure state */
+		if (lcs != PLAT_OTP_LCS_SECURED)
+			return PSA_ERROR_SERVICE_FAILURE;
+	}
 
 	err = tfm_plat_otp_read(PLAT_OTP_ID_SECURE_DEBUG_PK, ROTPK_SIZE, secure_debug_rotpk);
 	if (err != TFM_PLAT_ERR_SUCCESS)
