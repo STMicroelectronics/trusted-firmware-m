@@ -20,3 +20,6 @@ set(STM32_IPC                   ON              CACHE BOOL      "Use IPC (rpmsg)
 set(STM32_PROV_FAKE             ON              CACHE BOOL      "Provisioning with dummy values. NOT to be used in production" FORCE)
 set(STM32_HEADER_MAJOR_VER      2               CACHE STRING    "Define stm32 header major version: 2" FORCE)
 set(STM32_HEADER_MINOR_VER      3               CACHE STRING    "Define stm32 header minor version: 0,3" FORCE)
+
+set(PLATFORM_PSA_ADAC_GIT_REMOTE "https://github.com/STMicroelectronics/psa-adac" CACHE STRING "The URL (or path) to retrieve psa-adac from.")
+set(PLATFORM_PSA_ADAC_VERSION "v1.0-stm32mp-r1" CACHE STRING    "The version of psa-adac to use.")
