@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <stm32_bsec3.h>
 #include "crypto_hw.h"
 #include "entropy.h"
 #include "stm32mp2.h"
@@ -84,8 +85,15 @@ int crypto_hw_accelerator_finish(void)
  *
  * \return 0 on success, non-zero otherwise
  */
-int crypto_hw_apply_debug_permissions(uint8_t *permissions_mask __unused, uint32_t len __unused)
+int crypto_hw_apply_debug_permissions(uint8_t *permissions_mask, uint32_t len __unused)
 {
-	//TODO Used by ADAC library when debug authentication is successful
-	return 0;
+	uint32_t perm_mask;
+
+	/*
+	 * permissions_mask is given by psa-adac library, with len == 16,
+	 * but permission mask on this platform is defined on 32 bits
+	 */
+	memcpy(&perm_mask, permissions_mask, sizeof(uint32_t));
+
+	return stm32_bsec_write_debug_conf(perm_mask);
 }
