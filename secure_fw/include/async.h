@@ -14,6 +14,6 @@
 /**
  * The signal number for the Secure Partition message acknowledgment.
  */
-#define ASYNC_MSG_REPLY    (0x00000004u)
+#define ASYNC_MSG_REPLY    (0x80000000u)
 
 #endif /* __ASYNC_H__ */
