@@ -99,7 +99,8 @@ if (TFM_PARTITION_PLATFORM)
 	set(TFM_PLATFORM_WDT_API             ON                    CACHE BOOL   "Enable platform watchdog support")
 endif()
 
-set(CFG_SCPFW_MOD_POWER_DOMAIN          ON                      CACHE BOOL      "Set ON to enaable Power domain modules")
+set(CFG_SCPFW_MOD_POWER_DOMAIN          ON                      CACHE BOOL      "Set ON to enable power domain modules")
+set(CFG_SCPFW_MOD_SCMI_SYSTEM_POWER     ON                      CACHE BOOL      "Set ON to enable scmi system power domain modules")
 set(PLATFORM_SLIH_IRQ_TEST_SUPPORT      OFF                     CACHE BOOL      "Platform supports SLIH IRQ tests")
 set(PLATFORM_FLIH_IRQ_TEST_SUPPORT      OFF                     CACHE BOOL      "Platform supports FLIH IRQ tests")
 

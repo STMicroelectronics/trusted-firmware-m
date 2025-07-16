@@ -19,5 +19,4 @@ endif()
 #After soc config
 set(STM32_BOARD_MODEL                   "stm32mp215f dk"        CACHE STRING    "Define board model name" FORCE)
 set(STM32_DDR_PHY_FILE                  "lpddr4_pmu_train.bin"  CACHE STRING    "Set ddr phy binary name need for your board" FORCE)
-set(CFG_SCPFW_MOD_POWER_DOMAIN          OFF                     CACHE BOOL      "Disable Power domain modules" FORCE)
 set(TFM_PARTITION_PROTECTED_STORAGE     OFF                     CACHE BOOL      "Enable Protected Storage partition" FORCE)
