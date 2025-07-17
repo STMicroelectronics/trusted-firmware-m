@@ -287,7 +287,6 @@ enum stpmic2_prop_id {
 	STPMIC2_PWRCTRL_SEL,	/* takes arg = pwrctrl line number */
 	STPMIC2_MAIN_PREG_MODE,	/* takes arg = preg mode HP=1, CCM=2 */
 	STPMIC2_ALT_PREG_MODE,	/* takes arg = preg mode HP=1, CCM=2 */
-	STPMIC2_BYPASS_UV,	/* takes arg = bypass voltage in uV */
 	STPMIC2_ALTERNATE_SOURCE,
 };
 
@@ -505,7 +504,6 @@ struct regu_stpmic2_config {
 struct regu_stpmic2_data {
 	struct regulator_common_data data;
 	bool st_mask_reset;
-	bool st_bypass;
 	bool st_pwrctrl;
 	bool st_pwrctrl_reset;
 	bool st_sink_source;
@@ -798,9 +796,6 @@ static int stpmic2_parse_prop(const struct device *dev)
 	if (drv_data->st_pwrctrl)
 		err |= stpmic2_set_prop(dev, STPMIC2_PWRCTRL_EN, 0);
 
-	if (drv_data->st_bypass)
-		err |= stpmic2_set_prop(dev, STPMIC2_BYPASS, 1);
-
 	if (drv_data->st_sink_source)
 		err |= stpmic2_set_prop(dev, STPMIC2_SINK_SOURCE, 0);
 
@@ -851,7 +846,6 @@ static const struct regulator_driver_api stpmic2_api = {
 #define REGULATOR_STPMIC2_DEFINE(node_id, id, macro_desc, reg_id, pd, ranges)		\
 	static struct regu_stpmic2_data data_##id = {					\
 		.st_mask_reset = DT_PROP(node_id, st_mask_reset),			\
-		.st_bypass = DT_PROP(node_id, st_regulator_bypass),			\
 		.st_pwrctrl = DT_PROP(node_id, st_pwrctrl_enable),			\
 		.st_pwrctrl_reset = DT_PROP(node_id, st_pwrctrl_reset),			\
 		.st_pwrctrl_sel = DT_PROP_OR(node_id, st_pwrctrl_sel, 0),		\
