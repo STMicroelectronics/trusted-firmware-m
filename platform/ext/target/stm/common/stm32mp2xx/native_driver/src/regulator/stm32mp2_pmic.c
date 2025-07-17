@@ -681,6 +681,10 @@ static int stpmic2_reg_set_voltage(const struct device *dev, int32_t min_uv,
 	uint16_t idx = 0;
 	int err;
 
+	/* if st_bypass_uv value is requested, set bypass and return */
+	if (drv_data->st_bypass_uv && min_uv == max_uv && max_uv == drv_data->st_bypass_uv)
+		return stpmic2_set_prop(dev, STPMIC2_BYPASS, 1);
+
 	err = linear_range_group_get_win_index(regu_desc->ranges,
 					       regu_desc->nranges,
 					       min_uv, max_uv, &idx);
@@ -691,13 +695,6 @@ static int stpmic2_reg_set_voltage(const struct device *dev, int32_t min_uv,
 	if (err)
 		return -EINVAL;
 
-	/* if st_bypass_uv value is requested, set bypass and return */
-	if (drv_data->st_bypass_uv && val_uv == drv_data->st_bypass_uv) {
-		err = stpmic2_set_prop(dev, STPMIC2_BYPASS, 1);
-		if (err)
-			return err;
-	}
-
 	reg_idx = (idx << regu_desc->volt_shift) & regu_desc->volt_mask;
 
 	err = i2c_reg_update_byte_dt(&drv_cfg->i2c,
@@ -707,7 +704,7 @@ static int stpmic2_reg_set_voltage(const struct device *dev, int32_t min_uv,
 		return err;
 
 	/* maybe clear bypass after set voltage */
-	if (drv_data->st_bypass_uv && val_uv != drv_data->st_bypass_uv) {
+	if (drv_data->st_bypass_uv) {
 		err = stpmic2_set_prop(dev, STPMIC2_BYPASS, 0);
 		if (err)
 			return err;
