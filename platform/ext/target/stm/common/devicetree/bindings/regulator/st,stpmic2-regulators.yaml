@@ -55,11 +55,6 @@ child-binding:
         mask reset for this regulator, the regulator configuration
         is maintained during pmic reset.
 
-    st,regulator-bypass:
-      type: boolean
-      description: |
-        enable bypass mode if it's available on this regulator.
-
     st,pwrctrl-enable:
       type: boolean
       description: |
