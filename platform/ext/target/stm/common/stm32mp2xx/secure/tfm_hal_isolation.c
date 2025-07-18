@@ -12,10 +12,11 @@
 #include <device_cfg.h>
 #include <string.h>
 #include <tfm_hal_isolation.h>
-#include "mmio_defs.h"
-#include <mpu_armv8m_drv.h>
 #include <sau_armv8m_drv.h>
+#include <mmio_defs.h>
+#include <init.h>
 
+#include <mpu_armv8m_drv.h>
 
 #define PROT_BOUNDARY_VAL \
     ((1U << HANDLE_ATTR_PRIV_POS) & HANDLE_ATTR_PRIV_MASK)
@@ -144,6 +145,7 @@ FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_set_up_static_boundaries(uintptr_t *
 {
 	/* Set up isolation boundaries between SPE and NSPE */
 	sau_init();
+	sys_init_run_level(INIT_LEVEL_ARCH);
 
 	/* Set up static isolation boundaries inside SPE */
 #ifdef CONFIG_TFM_ENABLE_MEMORY_PROTECT
