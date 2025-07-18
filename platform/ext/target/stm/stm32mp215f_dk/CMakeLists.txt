@@ -15,24 +15,10 @@ target_compile_definitions(platform_region_defs
         STM32MP_DDR_DUAL_AXI_PORT=1
 )
 
-# Specify the location of platform specific build dependencies.
-target_sources(tfm_s
-    PRIVATE
-    ${STM_BOARD_DIR}/plat_device.c
-)
-
-if(BL2)
-    target_sources(bl2
-        PRIVATE
-            ${STM_BOARD_DIR}/plat_device.c
-    )
-endif()
-
 #========================= Files for building NS side platform ================#
 install(FILES
     ${TARGET_PLATFORM_PATH}/config.cmake
     ${TARGET_PLATFORM_PATH}/cpuarch.cmake
-    ${TARGET_PLATFORM_PATH}/plat_device.c
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}
 )
 
