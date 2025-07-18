@@ -40,6 +40,7 @@ set(MBEDCRYPTO_GIT_REMOTE               "https://github.com/Mbed-TLS/mbedtls.git
 
 set(MCUBOOT_PATH                        "DOWNLOAD"  CACHE PATH      "Path to MCUboot (or DOWNLOAD to fetch automatically")
 set(MCUBOOT_VERSION                     "v2.1.0"    CACHE STRING    "The version of MCUboot to use")
+set(MCUBOOT_FORCE_PATCH                 OFF         CACHE BOOL      "Always apply MCUboot patches")
 
 set(PLATFORM_PSA_ADAC_SECURE_DEBUG      FALSE       CACHE BOOL      "Whether to use psa-adac secure debug.")
 set(PLATFORM_PSA_ADAC_SOURCE_PATH       "DOWNLOAD"  CACHE PATH      "Path to source dir of psa-adac.")
