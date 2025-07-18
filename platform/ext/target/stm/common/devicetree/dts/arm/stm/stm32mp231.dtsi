@@ -25,6 +25,13 @@
 			compatible = "arm,cortex-m33";
 			device_type = "cpu";
 			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			sau: sau@e000edd0 {
+				compatible = "arm,armv8m-sau";
+				reg = <0xe000edd0 0x20>;
+			};
 		};
 	};
 
