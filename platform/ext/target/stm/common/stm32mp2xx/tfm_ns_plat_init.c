@@ -5,7 +5,6 @@
  *
  */
 #include <Driver_Common.h>
-#include <plat_device.h>
 #include <uart_stdout.h>
 #include <init.h>
 #include "cmsis.h"
@@ -21,9 +20,6 @@ int32_t tfm_ns_platform_init (void)
 {
 	sys_init_run_level(INIT_LEVEL_PRE_CORE);
 	sys_init_run_level(INIT_LEVEL_CORE);
-
-	if (stm32_platform_ns_init())
-		return ARM_DRIVER_ERROR;
 
 	stdio_init();
 

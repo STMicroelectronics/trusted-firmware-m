@@ -68,7 +68,6 @@ target_sources(platform_ns
         ${STM_SOC_DIR}/src/system_stm32mp2xx_m33.c
         ${DEVICETREE_DIR}/initlevel.c
         ${STM_FAMILLY_DIR}/tfm_ns_plat_init.c
-        ${STM_BOARD_DIR}/plat_device.c
         ${STM_FAMILLY_DIR}/native_driver/src/clk/clk.c
         ${STM_FAMILLY_DIR}/native_driver/src/clk/clk-stm32-core.c
         ${STM_FAMILLY_DIR}/native_driver/src/clk/stm32mp_clkfunc.c

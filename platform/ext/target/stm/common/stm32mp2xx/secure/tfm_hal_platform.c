@@ -7,7 +7,6 @@
 #include <cmsis.h>
 #include <tfm_hal_platform.h>
 #include <tfm_plat_defs.h>
-#include <plat_device.h>
 #include <target_cfg.h>
 #include <region.h>
 #include <init.h>
@@ -41,9 +40,6 @@ enum tfm_hal_status_t tfm_hal_platform_init(void)
 	}
 
 	sys_init_run_level(INIT_LEVEL_CORE);
-
-	if (stm32_platform_s_init())
-		return TFM_HAL_ERROR_GENERIC;
 
 	stdio_init();
 
