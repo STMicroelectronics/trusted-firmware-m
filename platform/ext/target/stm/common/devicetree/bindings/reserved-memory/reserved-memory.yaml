@@ -27,6 +27,13 @@ properties:
     type: int
     const: 0
 
+  arm,sau-nsc:
+    type: boolean
+    description: |
+      Add this property if the SAU region is Non-secure callable.
+      Controls whether Non-secure state is permitted to execute a Secure Gateway
+      instruction from this region.
+
   st,protreg:
     type: array
     description: |
