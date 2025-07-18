@@ -9,6 +9,7 @@
 
 extern const struct init_entry __init_start[];
 extern const struct init_entry __init_EARLY_start[];
+extern const struct init_entry __init_ARCH_start[];
 extern const struct init_entry __init_PRE_CORE_start[];
 extern const struct init_entry __init_CORE_start[];
 extern const struct init_entry __init_POST_CORE_start[];
@@ -19,6 +20,7 @@ void sys_init_run_level(enum init_level level)
 {
 	static const struct init_entry *levels[] = {
 		__init_EARLY_start,
+		__init_ARCH_start,
 		__init_PRE_CORE_start,
 		__init_CORE_start,
 		__init_POST_CORE_start,

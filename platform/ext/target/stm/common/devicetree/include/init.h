@@ -199,6 +199,7 @@ struct init_entry {
 
 enum init_level {
 	INIT_LEVEL_EARLY = 0,
+	INIT_LEVEL_ARCH,
 	INIT_LEVEL_PRE_CORE,
 	INIT_LEVEL_CORE,
 	INIT_LEVEL_POST_CORE,
