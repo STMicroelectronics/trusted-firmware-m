@@ -12,7 +12,6 @@
 #include <device_cfg.h>
 #include <string.h>
 #include <tfm_hal_isolation.h>
-#include <sau_armv8m_drv.h>
 #include <mmio_defs.h>
 #include <init.h>
 
@@ -144,7 +143,6 @@ enum tfm_hal_status_t __maybe_unused tfm_hal_mpu_init(void)
 FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_set_up_static_boundaries(uintptr_t *p_spm_boundary)
 {
 	/* Set up isolation boundaries between SPE and NSPE */
-	sau_init();
 	sys_init_run_level(INIT_LEVEL_ARCH);
 
 	/* Set up static isolation boundaries inside SPE */

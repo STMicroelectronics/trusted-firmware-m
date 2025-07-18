@@ -216,6 +216,7 @@ endif()
 target_sources(tfm_s
 	PRIVATE
         ${STM_FAMILLY_DIR}/native_driver/src/timer/systick.c
+        ${STM_FAMILLY_DIR}/native_driver/src/core/sau_armv8m_drv.c
         ${STM_FAMILLY_DIR}/native_driver/src/syscfg/stm32_syscfg.c
         ${STM_FAMILLY_DIR}/native_driver/src/i2c/stm32_i2c.c
         ${STM_FAMILLY_DIR}/native_driver/src/entropy/stm32_rng.c
