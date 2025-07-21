@@ -1,0 +1,29 @@
+# Copyright (c) 2025, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  On STM32MP21, the debug authentication protocol implements a bidirectional
+  communication between the debugger (host) and the target (STM32MP21) through
+  a mailbox interface located in the DBGMCU.
+
+compatible: "st,stm32mp21-dbgmcu-mbx"
+
+include:
+  - base.yaml
+  - entropy-device.yaml
+
+properties:
+  reg:
+    required: true
+
+  clocks:
+    required: true
+
+  interrupts:
+    required: true
+
+  interrupt-names:
+    type: string-array
+    description: |
+      - "dbg_auth_wr" Detection of debugger write in DBG_AUTH_HOST register,
+      - "dbg_auth_rd" Detection of debugger read DBG_AUTH_DEV register.
