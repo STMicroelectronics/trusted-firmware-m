@@ -479,6 +479,10 @@ if (EXISTS ${STM32_CA35_FW})
 	set(BL2_SOURCE ${CMAKE_SOURCE_DIR}/bl2)
 	set(API_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/api_ns)
 
+	if (NOT EXISTS ${MCUBOOT_KEY_A35FW})
+		set(MCUBOOT_KEY_A35FW ${MCUBOOT_KEY_S})
+	endif()
+
 	configure_file(${STM_FAMILY_DIR}/bl2/ca35fw_signing_layout.c.in ${STM_FAMILY_DIR}/bl2/ca35fw_signing_layout.c @ONLY)
 	add_library(signing_layout_for_ca35_fw OBJECT ${STM_FAMILY_DIR}/bl2/ca35fw_signing_layout.c)
 
@@ -506,7 +510,7 @@ if (EXISTS ${STM32_CA35_FW})
 		#Sign secure binary image with provided secret key
 		COMMAND ${Python3_EXECUTABLE} ${BL2_SOURCE}/ext/mcuboot/scripts/wrapper/wrapper.py
 			--layout $<TARGET_OBJECTS:signing_layout_for_ca35_fw>
-			-k ${MCUBOOT_KEY_S}
+			-k ${MCUBOOT_KEY_A35FW}
 			--public-key-format $<IF:$<BOOL:${MCUBOOT_HW_KEY}>,full,hash>
 			--align ${MCUBOOT_ALIGN_VAL}
 			--pad
