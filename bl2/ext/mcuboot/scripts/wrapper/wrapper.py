@@ -132,8 +132,12 @@ def wrap(key, key_pswd, align, version, header_size, pad_header, layout, pad,
     key = imgtool.main.load_key(key, passwd=key_pswd) if key else None
     enckey = imgtool.main.load_key(encrypt) if encrypt else None
     if enckey and key:
-        if (isinstance(key, imgtool.keys.RSA) and
-           not isinstance(enckey, imgtool.keys.RSAPublic)):
+        if ((isinstance(key, keys.ECDSA256P1) and
+             not isinstance(enckey, keys.ECDSA256P1Public))
+           or (isinstance(key, keys.ECDSA384P1) and
+               not isinstance(enckey, keys.ECDSA384P1Public))
+                or (isinstance(key, keys.RSA) and
+                    not isinstance(enckey, keys.RSAPublic))):
             # FIXME
             raise click.UsageError("Signing and encryption must use the same "
                                    "type of key")
