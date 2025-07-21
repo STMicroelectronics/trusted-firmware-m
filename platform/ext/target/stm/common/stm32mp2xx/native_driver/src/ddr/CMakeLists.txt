@@ -78,8 +78,8 @@ find_package(Python3)
 set(BL2_SOURCE ${CMAKE_SOURCE_DIR}/bl2)
 set(API_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/api_ns)
 
-if (NOT EXISTS ${DDRFW_KEY})
-	set(DDRFW_KEY ${MCUBOOT_KEY_NS})
+if (NOT EXISTS ${MUCBOOT_KEY_DDRFW})
+	set(MUCBOOT_KEY_DDRFW ${MCUBOOT_KEY_NS})
 endif()
 
 configure_file(signing_layout.c.in ${CMAKE_CURRENT_BINARY_DIR}/signing_layout.c @ONLY)
@@ -110,7 +110,7 @@ add_custom_command(OUTPUT ddr_phy_signed.bin
 	COMMAND ${Python3_EXECUTABLE} ${BL2_SOURCE}/ext/mcuboot/scripts/wrapper/wrapper.py
 		-v ${DDR_IMAGE_VERSION}
 		--layout $<TARGET_OBJECTS:signing_layout_for_ddr_phy>
-		-k ${DDRFW_KEY}
+		-k ${MUCBOOT_KEY_DDRFW}
 		--public-key-format $<IF:$<BOOL:${MCUBOOT_HW_KEY}>,full,hash>
 		--align ${MCUBOOT_ALIGN_VAL}
                 --pad
