@@ -166,6 +166,7 @@
 #define IPCC_IRQ			DT_IRQ(DT_NODELABEL(ipcc1), irq)
 #define IPCC_IRQ_LEGACY                 RESERVED_309
 #endif
+#define DBG_AUTH_HOST_IRQ		DT_IRQ_BY_NAME(DT_NODELABEL(dbgmcu_mbx), dbg_auth_wr, irq)
 #endif
 
 #endif /* __REGION_DEFS_H__ */
