@@ -55,7 +55,6 @@ add_subdirectory(${STM_FAMILLY_DIR}/lib/qsort qsort)
 target_include_directories(platform_ns
     PUBLIC
         ${CMAKE_BINARY_DIR}/generated
-        ${STM_FAMILLY_DIR}/native_driver
         ${STM_FAMILLY_DIR}/native_driver/include
         ${STM_FAMILLY_DIR}/cmsis_driver/include
         ${STM_FAMILLY_DIR}/secure/services/include
