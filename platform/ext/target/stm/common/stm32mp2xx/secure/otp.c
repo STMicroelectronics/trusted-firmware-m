@@ -26,9 +26,7 @@
 #ifdef TFM_DUMMY_PROVISIONING
 __PACKED_STRUCT tfm_psa_rot_provisioning_data_t {
 	uint8_t iak[32];
-	uint8_t implementation_id[12];
 	uint8_t entropy_seed[64];
-	uint8_t stm32certif[64];
 	uint8_t adac_rotpkh[32];
 #if defined(STM32_BL2)
 	uint8_t tfm_fw_pkh[32];
@@ -44,11 +42,6 @@ static const struct tfm_psa_rot_provisioning_data_t psa_rot_prov_data = {
 		0xEC, 0x6F, 0x9A, 0x00, 0x2A, 0x7D, 0xC0, 0x50,
 		0x4B, 0x92, 0xA1, 0x93, 0x71, 0x34, 0x58, 0x5F,
 	},
-	.implementation_id = {
-		0xAA, 0xAA, 0xAA, 0xAA,
-		0xBB, 0xBB, 0xBB, 0xBB,
-		0xCC, 0xCC, 0xCC, 0xCC,
-	},
 	.entropy_seed = {
 		0x12, 0x13, 0x23, 0x34, 0x0a, 0x05, 0x89, 0x78,
 		0xa3, 0x66, 0x8c, 0x0d, 0x97, 0x55, 0x53, 0xca,
@@ -58,16 +51,6 @@ static const struct tfm_psa_rot_provisioning_data_t psa_rot_prov_data = {
 		0xd9, 0x77, 0x93, 0x28, 0xb0, 0x5e, 0x02, 0xfa,
 		0x58, 0xb4, 0x16, 0xc8, 0x0f, 0x38, 0x91, 0xbb,
 		0x28, 0x17, 0xcd, 0x8a, 0xc9, 0x53, 0x72, 0x66,
-	},
-	.stm32certif = {
-		0x28, 0x17, 0xcd, 0x8a, 0xc9, 0x53, 0x72, 0x66,
-		0x58, 0xb4, 0x16, 0xc8, 0x0f, 0x38, 0x91, 0xbb,
-		0xd9, 0x77, 0x93, 0x28, 0xb0, 0x5e, 0x02, 0xfa,
-		0xde, 0xc4, 0x5f, 0x66, 0x21, 0x52, 0xf9, 0x39,
-		0x75, 0xc8, 0x5a, 0x8d, 0x9e, 0x11, 0x8f, 0x85,
-		0xb5, 0x76, 0x18, 0x62, 0x29, 0xc6, 0xb6, 0x79,
-		0xa3, 0x66, 0x8c, 0x0d, 0x97, 0x55, 0x53, 0xca,
-		0x12, 0x13, 0x23, 0x34, 0x0a, 0x05, 0x89, 0x78,
 	},
 #if defined(PLATFORM_PSA_ADAC_SECURE_DEBUG)
 	.adac_rotpkh = {
@@ -183,7 +166,24 @@ static const struct device *nvmem_dev_from_otp_id(enum tfm_otp_element_id_t id)
 	return dev;
 }
 
+static bool __maybe_unused is_factory_fused_otp(enum tfm_otp_element_id_t id)
+{
+	switch (id) {
+	case PLAT_OTP_ID_BOARD_ID:
+	case PLAT_OTP_ID_IMPLEMENTATION_ID:
+	case PLAT_OTP_ID_PACKAGE:
+	case PLAT_OTP_ID_STM32_CERTIF:
+	case PLAT_OTP_ID_REV_ID:
+	case PLAT_OTP_ID_RPN:
+		return true;
+
+	default:
+		return false;
+	}
+}
+
 #if TFM_DUMMY_PROVISIONING
+#if !STM32_OVERRIDE_OTP
 static enum tfm_plat_err_t stm32_check_otp_check_value(size_t out_len, uint8_t *out)
 {
 	for (int i = 0; i < out_len; i++) {
@@ -193,6 +193,7 @@ static enum tfm_plat_err_t stm32_check_otp_check_value(size_t out_len, uint8_t *
 
 	return TFM_PLAT_ERR_INVALID_INPUT;
 }
+#endif /* !STM32_OVERRIDE_OTP */
 
 static enum tfm_plat_err_t stm32_set_default_value(enum tfm_otp_element_id_t id,
 						   size_t out_len, uint8_t *out)
@@ -210,23 +211,11 @@ static enum tfm_plat_err_t stm32_set_default_value(enum tfm_otp_element_id_t id,
 
 		memcpy((void *)out, psa_rot_prov_data.iak, out_len);
 		break;
-	case PLAT_OTP_ID_IMPLEMENTATION_ID:
-		if (out_len > sizeof(psa_rot_prov_data.implementation_id))
-			return TFM_PLAT_ERR_INVALID_INPUT;
-
-		memcpy((void *)out, psa_rot_prov_data.implementation_id, out_len);
-		break;
 	case PLAT_OTP_ID_ENTROPY_SEED:
 		if (out_len > sizeof(psa_rot_prov_data.entropy_seed))
 			return TFM_PLAT_ERR_INVALID_INPUT;
 
 		memcpy((void *)out, psa_rot_prov_data.entropy_seed, out_len);
-		break;
-	case PLAT_OTP_ID_STM32_CERTIF:
-		if (out_len > sizeof(psa_rot_prov_data.stm32certif))
-			return TFM_PLAT_ERR_INVALID_INPUT;
-
-		memcpy((void *)out, psa_rot_prov_data.stm32certif, out_len);
 		break;
 #if PLATFORM_PSA_ADAC_SECURE_DEBUG
 	case PLAT_OTP_ID_SECURE_DEBUG_PK:
@@ -359,10 +348,6 @@ enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
 		err = nvmem_get_cell_size(dev_nvmem, &cell_size);
 		if (!err) {
 			err = nvmem_read_cell(dev_nvmem, cell_size, out, &read_len);
-#if TFM_DUMMY_PROVISIONING
-			if (!err && stm32_check_otp_check_value(cell_size, out))
-				err = stm32_set_default_value(id, cell_size, out);
-#endif
 		}
 		break;
 	default:
@@ -376,10 +361,12 @@ enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
 			return TFM_PLAT_ERR_NOT_PERMITTED;
 		}
 #if TFM_DUMMY_PROVISIONING
+		if (!is_factory_fused_otp(id)) {
 #if !STM32_OVERRIDE_OTP
-		if (!err && stm32_check_otp_check_value(out_len, out))
+			if (!err && stm32_check_otp_check_value(out_len, out))
 #endif
-			err = stm32_set_default_value(id, out_len, out);
+				err = stm32_set_default_value(id, out_len, out);
+		}
 #endif
 		break;
 	}
