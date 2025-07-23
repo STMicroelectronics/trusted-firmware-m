@@ -36,11 +36,9 @@
 	     psa_get(MAILBOX_SIGNAL_GET_ACTIVE(signals), &msg); \
 	     psa_reply(msg.handle, PSA_SUCCESS); }
 
-#if defined(STM32_M33TDCID)
 /* Use stored NV seed to provide entropy */
 #undef CRYPTO_NV_SEED
 #define CRYPTO_NV_SEED 0
 #define CRYPTO_EXT_RNG 1
-#endif
 
 #endif /* __CONFIG_TFM_STM32MP2_H__ */
