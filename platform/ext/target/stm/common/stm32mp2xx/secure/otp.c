@@ -26,7 +26,6 @@
 #ifdef TFM_DUMMY_PROVISIONING
 __PACKED_STRUCT tfm_psa_rot_provisioning_data_t {
 	uint8_t iak[32];
-	uint8_t entropy_seed[64];
 	uint8_t adac_rotpkh[32];
 #if defined(STM32_BL2)
 	uint8_t tfm_fw_pkh[32];
@@ -41,16 +40,6 @@ static const struct tfm_psa_rot_provisioning_data_t psa_rot_prov_data = {
 		0xEA, 0x31, 0x19, 0x35, 0x64, 0xCB, 0xA9, 0x1F,
 		0xEC, 0x6F, 0x9A, 0x00, 0x2A, 0x7D, 0xC0, 0x50,
 		0x4B, 0x92, 0xA1, 0x93, 0x71, 0x34, 0x58, 0x5F,
-	},
-	.entropy_seed = {
-		0x12, 0x13, 0x23, 0x34, 0x0a, 0x05, 0x89, 0x78,
-		0xa3, 0x66, 0x8c, 0x0d, 0x97, 0x55, 0x53, 0xca,
-		0xb5, 0x76, 0x18, 0x62, 0x29, 0xc6, 0xb6, 0x79,
-		0x75, 0xc8, 0x5a, 0x8d, 0x9e, 0x11, 0x8f, 0x85,
-		0xde, 0xc4, 0x5f, 0x66, 0x21, 0x52, 0xf9, 0x39,
-		0xd9, 0x77, 0x93, 0x28, 0xb0, 0x5e, 0x02, 0xfa,
-		0x58, 0xb4, 0x16, 0xc8, 0x0f, 0x38, 0x91, 0xbb,
-		0x28, 0x17, 0xcd, 0x8a, 0xc9, 0x53, 0x72, 0x66,
 	},
 #if defined(PLATFORM_PSA_ADAC_SECURE_DEBUG)
 	.adac_rotpkh = {
@@ -137,9 +126,6 @@ static const struct device *nvmem_dev_from_otp_id(enum tfm_otp_element_id_t id)
 	case PLAT_OTP_ID_IMPLEMENTATION_ID:
 		dev = DT_INST_DEV_NVMEM(0, implementation_id);
 		break;
-	case PLAT_OTP_ID_ENTROPY_SEED:
-		dev = DT_INST_DEV_NVMEM(0, entropy_seed);
-		break;
 	case PLAT_OTP_ID_RPN:
 		dev = DT_INST_DEV_NVMEM(0, rpn_otp);
 		break;
@@ -210,12 +196,6 @@ static enum tfm_plat_err_t stm32_set_default_value(enum tfm_otp_element_id_t id,
 			return TFM_PLAT_ERR_INVALID_INPUT;
 
 		memcpy((void *)out, psa_rot_prov_data.iak, out_len);
-		break;
-	case PLAT_OTP_ID_ENTROPY_SEED:
-		if (out_len > sizeof(psa_rot_prov_data.entropy_seed))
-			return TFM_PLAT_ERR_INVALID_INPUT;
-
-		memcpy((void *)out, psa_rot_prov_data.entropy_seed, out_len);
 		break;
 #if PLATFORM_PSA_ADAC_SECURE_DEBUG
 	case PLAT_OTP_ID_SECURE_DEBUG_PK:
