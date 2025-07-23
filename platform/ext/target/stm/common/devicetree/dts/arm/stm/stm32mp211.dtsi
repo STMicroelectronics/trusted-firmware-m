@@ -106,7 +106,6 @@
 			      <&ddr_fw_pkh>,
 			      <&ca35_fw_pkh>,
 			      <&adac_rotpkh>,
-			      <&entropy_seed>,
 			      <&iak>;
 		nvmem-cell-names = "implementation_id",
 				   "rpn_otp",
@@ -119,7 +118,6 @@
 				   "ddr_fw_pkh",
 				   "ca35_fw_pkh",
 				   "adac_rotpkh",
-				   "entropy_seed",
 				   "iak";
 		status = "okay";
 	};
@@ -553,11 +551,6 @@
 			adac_rotpkh: otp238@3b8 {
 				#nvmem-cell-cells = <0>;
 				reg = <0x3b8 0x20>;
-			};
-
-			entropy_seed: otp323@50c {
-				#nvmem-cell-cells = <0>;
-				reg = <0x50c 0x40>;
 			};
 
 			iak: otp340@550 {
