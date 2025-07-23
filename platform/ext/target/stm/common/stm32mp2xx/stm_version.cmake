@@ -28,7 +28,7 @@ if(NOT "${STM32_VERSION_FULL}" STREQUAL "${STM32_GIT_VERSION}")
     file(REMOVE ${CMAKE_BINARY_DIR}/generated/stm_version.h)
 endif()
 
-configure_file(${STM_FAMILLY_DIR}/stm_version.h.in
+configure_file(${STM_FAMILY_DIR}/stm_version.h.in
                ${CMAKE_BINARY_DIR}/generated/stm_version.h)
 
 set(STM32_GIT_VERSION        "${STM32_VERSION_FULL}"        CACHE STRING  "stm32 git version")

@@ -6,9 +6,9 @@
 #
 #-------------------------------------------------------------------------------
 
-# set familly platform config
-if (EXISTS ${STM_FAMILLY_DIR}/config.cmake)
-	include(${STM_FAMILLY_DIR}/config.cmake)
+# set family platform config
+if (EXISTS ${STM_FAMILY_DIR}/config.cmake)
+	include(${STM_FAMILY_DIR}/config.cmake)
 endif()
 
 # set specific stm32mp23 config

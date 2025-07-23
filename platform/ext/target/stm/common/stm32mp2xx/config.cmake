@@ -93,7 +93,7 @@ if (TFM_PARTITION_PLATFORM)
 	set(TFM_PLATFORM_WDT_API             ON                    CACHE BOOL   "Enable platform watchdog support")
 endif()
 
-set(SCP_FW_VERSION                      "5f1d11fcbad159461a25"  CACHE STRING    "The version of SCP-firmware to use")
+set(SCP_FW_VERSION                      "dcc7368ed4bb0cee3bf7"  CACHE STRING    "The version of SCP-firmware to use")
 set(SCP_FW_PATH                         "DOWNLOAD"              CACHE PATH      "Path to SCP-firmware or DOWNLOAD to fetch automatically")
 set(CFG_SCPFW_MOD_POWER_DOMAIN          ON                      CACHE BOOL      "Set ON to enaable Power domain modules")
 set(PLATFORM_SLIH_IRQ_TEST_SUPPORT      OFF                     CACHE BOOL      "Platform supports SLIH IRQ tests")

@@ -22,13 +22,13 @@ target_compile_definitions(platform_bl2
 # be visible in the platform_s always, due to the compilation of provisioning.c
 target_include_directories(platform_s
     PUBLIC
-        ${STM_FAMILLY_DIR}/accelerator
+        ${STM_FAMILY_DIR}/accelerator
 )
 
 # Same for platform_bl2
 target_include_directories(platform_bl2
     PUBLIC
-        ${STM_FAMILLY_DIR}/accelerator
+        ${STM_FAMILY_DIR}/accelerator
 )
 
 ################################ BL2 ###########################################
@@ -48,7 +48,7 @@ if(BL2)
             $<$<C_COMPILER_ID:ARMClang>:-Wno-unused-parameter>
     )
 endif()
-include(${STM_FAMILLY_DIR}/accelerator/CMakeLists.txt)
+include(${STM_FAMILY_DIR}/accelerator/CMakeLists.txt)
 
 if (TFM_PARTITION_CRYPTO)
     set(STM_LIB_TARGET crypto_service_crypto_hw)

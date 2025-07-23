@@ -8,7 +8,7 @@
 cmake_policy(SET CMP0076 NEW)
 
 #def for stm32mp2
-include(${STM_FAMILLY_DIR}/CMakeLists.txt)
+include(${STM_FAMILY_DIR}/CMakeLists.txt)
 
 # specific for stm32mp21
 if (NOT ${STM32_STM32MP21_SOC_REV} STREQUAL "revA" AND
@@ -33,20 +33,20 @@ target_compile_definitions(tfm_config
 
 if (STM32_M33TDCID AND ${PLATFORM_PSA_ADAC_SECURE_DEBUG})
     if (TFM_PARTITION_DBGMCU)
-        add_subdirectory(${STM_FAMILLY_DIR}/secure_fw/partitions/dbgmcu dbgmcu)
+        add_subdirectory(${STM_FAMILY_DIR}/secure_fw/partitions/dbgmcu dbgmcu)
     endif()
 
     if (TFM_PARTITION_ADAC)
-        add_subdirectory(${STM_FAMILLY_DIR}/secure_fw/partitions/adac adac)
+        add_subdirectory(${STM_FAMILY_DIR}/secure_fw/partitions/adac adac)
     endif()
 endif() #STM32_M33TDCID AND ${PLATFORM_PSA_ADAC_SECURE_DEBUG}
 
 target_sources(platform_s
     PRIVATE
         ${STM_SOC_DIR}/src/system_stm32mp2xx_m33.c
-        ${STM_FAMILLY_DIR}/native_driver/src/clk/clk-stm32mp21.c
-        $<$<AND:$<BOOL:${STM32_M33TDCID}>,$<BOOL:${PLATFORM_PSA_ADAC_SECURE_DEBUG}>>:${STM_FAMILLY_DIR}/native_driver/src/mbox/stm32_dbgmcu_mbx.c>
-        $<$<AND:$<BOOL:${STM32_M33TDCID}>,$<BOOL:${PLATFORM_PSA_ADAC_SECURE_DEBUG}>>:${STM_FAMILLY_DIR}/secure/services/src/tfm_adac_api.c>
+        ${STM_FAMILY_DIR}/native_driver/src/clk/clk-stm32mp21.c
+        $<$<AND:$<BOOL:${STM32_M33TDCID}>,$<BOOL:${PLATFORM_PSA_ADAC_SECURE_DEBUG}>>:${STM_FAMILY_DIR}/native_driver/src/mbox/stm32_dbgmcu_mbx.c>
+        $<$<AND:$<BOOL:${STM32_M33TDCID}>,$<BOOL:${PLATFORM_PSA_ADAC_SECURE_DEBUG}>>:${STM_FAMILY_DIR}/secure/services/src/tfm_adac_api.c>
 )
 
 target_sources(tfm_s
@@ -60,7 +60,7 @@ if(BL2)
     target_sources(platform_bl2
         PRIVATE
             ${STM_SOC_DIR}/src/system_stm32mp2xx_m33.c
-            ${STM_FAMILLY_DIR}/native_driver/src/clk/clk-stm32mp21.c
+            ${STM_FAMILY_DIR}/native_driver/src/clk/clk-stm32mp21.c
     )
 
     target_sources(bl2

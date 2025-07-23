@@ -35,13 +35,13 @@ target_include_directories(platform_region_defs
     INTERFACE
         partition
         ${PLATFORM_NS_API_DIR}/include
-        ${STM_FAMILLY_DIR}/native_driver/include
-        ${STM_FAMILLY_DIR}/cmsis_driver/include
+        ${STM_FAMILY_DIR}/native_driver/include
+        ${STM_FAMILY_DIR}/cmsis_driver/include
 )
 
 target_include_directories(tfm_config
     INTERFACE
-        $<BUILD_INTERFACE:${STM_FAMILLY_DIR}>
+        $<BUILD_INTERFACE:${STM_FAMILY_DIR}>
         $<BUILD_INTERFACE:${STM_SOC_DIR}>
 )
 
@@ -50,14 +50,14 @@ target_link_libraries(platform_region_defs
         dt_platform_ns_defs
 )
 
-add_subdirectory(${STM_FAMILLY_DIR}/lib/qsort qsort)
+add_subdirectory(${STM_FAMILY_DIR}/lib/qsort qsort)
 
 target_include_directories(platform_ns
     PUBLIC
         ${CMAKE_BINARY_DIR}/generated
-        ${STM_FAMILLY_DIR}/native_driver/include
-        ${STM_FAMILLY_DIR}/cmsis_driver/include
-        ${STM_FAMILLY_DIR}/secure/services/include
+        ${STM_FAMILY_DIR}/native_driver/include
+        ${STM_FAMILY_DIR}/cmsis_driver/include
+        ${STM_FAMILY_DIR}/secure/services/include
         ${PLATFORM_NS_API_DIR}/include
         ${PLATFORM_NS_API_DIR}/ext/cmsis/Include
         ${PLATFORM_NS_API_DIR}/ext/cmsis/Include/m-profile
@@ -67,21 +67,21 @@ target_sources(platform_ns
     PRIVATE
         ${STM_SOC_DIR}/src/system_stm32mp2xx_m33.c
         ${DEVICETREE_DIR}/initlevel.c
-        ${STM_FAMILLY_DIR}/tfm_ns_plat_init.c
-        ${STM_FAMILLY_DIR}/native_driver/src/clk/clk.c
-        ${STM_FAMILLY_DIR}/native_driver/src/clk/clk-stm32-core.c
-        ${STM_FAMILLY_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
-        ${STM_FAMILLY_DIR}/native_driver/src/reset/core.c
-        ${STM_FAMILLY_DIR}/native_driver/src/reset/stm32_reset.c
-        ${STM_FAMILLY_DIR}/native_driver/src/timer/systick.c
-        ${STM_FAMILLY_DIR}/native_driver/src/pinctrl/common.c
-        ${STM_FAMILLY_DIR}/native_driver/src/pinctrl/stm32_pinctrl.c
-        ${STM_FAMILLY_DIR}/native_driver/src/uart/console.c
-        ${STM_FAMILLY_DIR}/native_driver/src/uart/stm32_uart.c
-        $<$<BOOL:${TFM_PLATFORM_WDT_API}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_wdt_api.c>
-        $<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
-        $<$<BOOL:${TFM_PARTITION_PM}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_pm_api.c>
-        $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_scmi_api.c>
+        ${STM_FAMILY_DIR}/tfm_ns_plat_init.c
+        ${STM_FAMILY_DIR}/native_driver/src/clk/clk.c
+        ${STM_FAMILY_DIR}/native_driver/src/clk/clk-stm32-core.c
+        ${STM_FAMILY_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
+        ${STM_FAMILY_DIR}/native_driver/src/reset/core.c
+        ${STM_FAMILY_DIR}/native_driver/src/reset/stm32_reset.c
+        ${STM_FAMILY_DIR}/native_driver/src/timer/systick.c
+        ${STM_FAMILY_DIR}/native_driver/src/pinctrl/common.c
+        ${STM_FAMILY_DIR}/native_driver/src/pinctrl/stm32_pinctrl.c
+        ${STM_FAMILY_DIR}/native_driver/src/uart/console.c
+        ${STM_FAMILY_DIR}/native_driver/src/uart/stm32_uart.c
+        $<$<BOOL:${TFM_PLATFORM_WDT_API}>:${STM_FAMILY_DIR}/secure/services/src/tfm_ioctl_wdt_api.c>
+        $<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
+        $<$<BOOL:${TFM_PARTITION_PM}>:${STM_FAMILY_DIR}/secure/services/src/tfm_pm_api.c>
+        $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/secure/services/src/tfm_scmi_api.c>
 )
 
 target_compile_definitions(platform_ns
@@ -103,17 +103,17 @@ target_sources(tfm_ns
     PRIVATE
         ${STM_SOC_DIR}/src/startup_stm32mp2_ns.c
         ${DEVICETREE_DIR}/initlevel.c
-        ${STM_FAMILLY_DIR}/tfm_ns_plat_init.c
-        ${STM_FAMILLY_DIR}/native_driver/src/clk/clk.c
-        ${STM_FAMILLY_DIR}/native_driver/src/clk/clk-stm32-core.c
-        ${STM_FAMILLY_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
-        ${STM_FAMILLY_DIR}/native_driver/src/reset/core.c
-        ${STM_FAMILLY_DIR}/native_driver/src/reset/stm32_reset.c
-        ${STM_FAMILLY_DIR}/native_driver/src/timer/systick.c
-        ${STM_FAMILLY_DIR}/native_driver/src/pinctrl/common.c
-        ${STM_FAMILLY_DIR}/native_driver/src/pinctrl/stm32_pinctrl.c
-        ${STM_FAMILLY_DIR}/native_driver/src/uart/console.c
-        ${STM_FAMILLY_DIR}/native_driver/src/uart/stm32_uart.c
-        $<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
-        $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILLY_DIR}/secure/services/src/tfm_scmi_api.c>
+        ${STM_FAMILY_DIR}/tfm_ns_plat_init.c
+        ${STM_FAMILY_DIR}/native_driver/src/clk/clk.c
+        ${STM_FAMILY_DIR}/native_driver/src/clk/clk-stm32-core.c
+        ${STM_FAMILY_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
+        ${STM_FAMILY_DIR}/native_driver/src/reset/core.c
+        ${STM_FAMILY_DIR}/native_driver/src/reset/stm32_reset.c
+        ${STM_FAMILY_DIR}/native_driver/src/timer/systick.c
+        ${STM_FAMILY_DIR}/native_driver/src/pinctrl/common.c
+        ${STM_FAMILY_DIR}/native_driver/src/pinctrl/stm32_pinctrl.c
+        ${STM_FAMILY_DIR}/native_driver/src/uart/console.c
+        ${STM_FAMILY_DIR}/native_driver/src/uart/stm32_uart.c
+        $<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
+        $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/secure/services/src/tfm_scmi_api.c>
 )

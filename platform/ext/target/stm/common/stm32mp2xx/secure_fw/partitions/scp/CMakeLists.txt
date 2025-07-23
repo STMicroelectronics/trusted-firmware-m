@@ -51,7 +51,7 @@ set(DISABLE_CPPCHECK ON)
 set(TARGET_FILE_DIR ${SCP_FW_PATH})
 set(CMAKE_SOURCE_DIR ${SCP_SOURCE_DIR})
 set(SCP_TFM_DIR ${STM_DIR}/../../../../)
-set(SCP_TFM_PLAT_DIR ${STM_FAMILLY_DIR})
+set(SCP_TFM_PLAT_DIR ${STM_FAMILY_DIR})
 add_subdirectory(${SCP_FW_PATH} scmi-fw)
 add_dependencies(scmi-fw dt_platform_s_gen_h)
 
@@ -101,13 +101,13 @@ target_include_directories(tfm_psa_rot_partition_scp
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         ${CMAKE_BINARY_DIR}/generated/secure_fw/partitions/scp
         ${SCP_FW_PATH}/arch/none/tfm/include
-        ${STM_FAMILLY_DIR}/native_driver/src/clk
+        ${STM_FAMILY_DIR}/native_driver/src/clk
 
 )
 target_include_directories(tfm_partitions
     INTERFACE
         ${CMAKE_BINARY_DIR}/generated/secure_fw/partitions/scp
-        ${STM_FAMILLY_DIR}/native_driver/include
+        ${STM_FAMILY_DIR}/native_driver/include
 
 )
 
