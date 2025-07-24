@@ -14,6 +14,7 @@
 #include <tfm_plat_otp.h>
 #include <tfm_strnlen.h>
 
+#include <debug.h>
 #include <stdbool.h>
 #include "entropy.h"
 #include "stm_profile.h"
@@ -91,7 +92,7 @@ tfm_attest_hal_get_profile_definition(uint32_t *size, uint8_t *buf)
 	return TFM_PLAT_ERR_SUCCESS;
 }
 
-static bool is_boot_seed_zero(uint32_t size, const uint8_t *boot_seed)
+static bool __maybe_unused is_boot_seed_zero(uint32_t size, const uint8_t *boot_seed)
 {
 	uint8_t zero_array[BOOT_SEED_SIZE] = {0};
 
@@ -100,17 +101,32 @@ static bool is_boot_seed_zero(uint32_t size, const uint8_t *boot_seed)
 
 enum tfm_plat_err_t tfm_plat_get_boot_seed(uint32_t size, uint8_t *buf)
 {
-	static uint8_t boot_seed[BOOT_SEED_SIZE] = {0}; /* persistent value */
-
 	if (size > BOOT_SEED_SIZE)
 		return TFM_PLAT_ERR_MAX_VALUE;
 
-	/* Get a random value only at first call */
-	if (is_boot_seed_zero(size, &boot_seed[0]))
-		if (entropy_get_entropy(NULL, boot_seed, size))
-			return TFM_PLAT_ERR_SYSTEM_ERR;
+	if (IS_ENABLED(STM32_M33TDCID)) {
+		static uint8_t boot_seed[BOOT_SEED_SIZE] = {0}; /* persistent value */
 
-	memcpy(buf, boot_seed, size);
+		/* Get a random value only at first call */
+		if (is_boot_seed_zero(size, &boot_seed[0]))
+			if (entropy_get_entropy(NULL, boot_seed, size))
+				return TFM_PLAT_ERR_SYSTEM_ERR;
+
+		memcpy(buf, boot_seed, size);
+	} else if (IS_ENABLED(TFM_DUMMY_PROVISIONING)) {
+		static const uint8_t dummy_boot_seed[BOOT_SEED_SIZE] = {
+			0x40, 0xd1, 0x46, 0xc8, 0x4d, 0xa0, 0x74, 0xb0,
+			0xa7, 0x60, 0x8c, 0x98, 0x02, 0x7d, 0x2b, 0x24,
+			0xe8, 0x5f, 0xc3, 0xa2, 0xab, 0x85, 0x71, 0x27,
+			0x78, 0x48, 0xd3, 0x5f, 0x00, 0x12, 0xf6, 0xae,
+		};
+
+		memcpy(buf, dummy_boot_seed, size);
+	} else {
+		/* Not supported yet */
+		EMSG("Unsupported boot seed\r\n");
+		return TFM_PLAT_ERR_UNSUPPORTED;
+	}
 
 	return TFM_PLAT_ERR_SUCCESS;
 }
