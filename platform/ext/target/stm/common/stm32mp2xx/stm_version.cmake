@@ -6,7 +6,7 @@
 #-------------------------------------------------------------------------------
 
 execute_process(COMMAND git describe --tags --always
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    WORKING_DIRECTORY ${STM_SOC_DIR}
     OUTPUT_VARIABLE STM32_VERSION_FULL
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
