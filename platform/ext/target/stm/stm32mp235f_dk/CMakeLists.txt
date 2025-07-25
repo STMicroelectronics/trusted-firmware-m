@@ -10,9 +10,9 @@ cmake_policy(SET CMP0076 NEW)
 include(${STM_SOC_DIR}/CMakeLists.txt)
 #========================= Platform defs ===============================#
 target_compile_definitions(platform_region_defs
-	INTERFACE
-		$<$<BOOL:${STM32_CACHE_ENABLED}>:STM32_CACHE_ENABLED>
-		STM32MP_DDR_DUAL_AXI_PORT=1
+    INTERFACE
+        $<$<BOOL:${STM32_CACHE_ENABLED}>:STM32_CACHE_ENABLED>
+        STM32MP_DDR_DUAL_AXI_PORT=1
 )
 
 #========================= Files for building NS side platform ================#
