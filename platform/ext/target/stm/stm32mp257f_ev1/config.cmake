@@ -19,7 +19,7 @@ endif()
 
 # set common soc config
 if (EXISTS ${STM_SOC_DIR}/config.cmake)
-	include(${STM_SOC_DIR}/config.cmake)
+    include(${STM_SOC_DIR}/config.cmake)
 endif()
 
 #After soc config

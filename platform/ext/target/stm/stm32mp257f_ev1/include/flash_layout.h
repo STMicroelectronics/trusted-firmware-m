@@ -200,9 +200,6 @@
 #define FLASH_AREA_BL2_OFFSET		FLASH_IMAGE_OFFSET
 #define FLASH_AREA_BL2_SIZE		RETRAM_SZ
 
-//#define FLASH_S_PARTITION_SIZE		IMAGE_S_CODE_SIZE + BL2_HEADER_SIZE
-//#define FLASH_NS_PARTITION_SIZE		IMAGE_NS_CODE_SIZE + BL2_TRAILER_SIZE
-
 /*
  * Not used, only the RAM loading firmware upgrade operation
  * is supported on STM32MP2. The maximum number of status entries
@@ -319,6 +316,7 @@
                                          ((x) == DDR_FIRMWARE_ID) ? FLASH_AREA_3_ID : \
                                          255 )
 #endif
+
 /*
  * On stm32mp2, only the RAM loading firmware upgrade operation
  * is supported. The scratch area is not used
@@ -331,7 +329,10 @@
 #define FLASH_AREA_IMAGE_SCRATCH        255
 
 /*
- * DDR firmware
+ * DDR firmware is copied from boot device to mcuram memory
+ *   - boot device is defined by ddr_fw_primary_partition of dt
+ *   - mcuram is defined reserved memory of dt
+ *
  *   considerate the mcuram like the max size of ddr fw size
  */
 #define DDR_FW_SIZE			DT_REG_SIZE(DT_NODELABEL(ddr_fw_buffer)) /* exclusif for ddr */

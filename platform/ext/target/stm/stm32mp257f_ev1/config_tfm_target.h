@@ -8,4 +8,5 @@
 #define __CONFIG_TFM_TARGET_H__
 
 #include <config_tfm_stm32mp25.h>
+
 #endif /* __CONFIG_TFM_TARGET_H__ */
