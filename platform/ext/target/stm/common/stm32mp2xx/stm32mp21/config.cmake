@@ -23,3 +23,8 @@ set(STM32_HEADER_MINOR_VER      3               CACHE STRING    "Define stm32 he
 
 set(PLATFORM_PSA_ADAC_GIT_REMOTE "https://github.com/STMicroelectronics/psa-adac" CACHE STRING "The URL (or path) to retrieve psa-adac from.")
 set(PLATFORM_PSA_ADAC_VERSION "v1.0-stm32mp-r1" CACHE STRING    "The version of psa-adac to use.")
+if (STM32_M33TDCID)
+    set(PLATFORM_PSA_ADAC_SECURE_DEBUG TRUE     CACHE BOOL      "Whether to use psa-adac secure debug.")
+    set(TFM_PARTITION_ADAC      ON              CACHE BOOL      "Enable ADAC partition")
+    set(TFM_PARTITION_DBGMCU    ON              CACHE BOOL      "Enable DBGMCU partition")
+endif()
