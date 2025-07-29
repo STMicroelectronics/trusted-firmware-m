@@ -574,7 +574,6 @@
 			interrupts = <208 0>,
 				     <209 0>;
 			interrupt-names = "dbg_auth_wr", "dbg_auth_rd";
-			status = "disabled";
 		};
 
 		rcc: rcc@54200000 {
