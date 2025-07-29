@@ -17,8 +17,6 @@
 #ifndef __DEVICE_CFG_H__
 #define __DEVICE_CFG_H__
 
-#include <flash_layout.h>
-
 /**
  * \file device_cfg.h
  * \brief Configuration file driver re-targeting
