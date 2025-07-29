@@ -26,10 +26,6 @@
  *
  * This is a default device configuration file with all peripherals enabled.
  */
-/* uart */
-#define STM_USART5			1
-#define DEFAULT_UART_BAUDRATE		115200
-
 /* storage */
 #define STM32_FLASH_DDR
 #define FLASH_DDR_SIZE			(0x4000000)	/* limit to 64MB */
