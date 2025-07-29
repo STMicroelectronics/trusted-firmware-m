@@ -10,6 +10,7 @@
 #include <region.h>
 #include <target_cfg.h>
 #include <device_cfg.h>
+#include <region_defs.h>
 #include <string.h>
 #include <tfm_hal_isolation.h>
 #include <mmio_defs.h>
