@@ -22,6 +22,7 @@
 #include "device_cfg.h"
 #include "devicetree.h"
 #include <cmsis_fixed_partitions.h>
+#include <soc_config.h>
 
 /*
  * In M33tdcid
@@ -61,36 +62,6 @@
  *       Z:0x0000_0000 - Z:0x0008_0000		    Secure image
  *       Z:0x0008_0000 - Z:0x0010_0000		    Non-secure image
  */
-
-/* This header file is included from linker scatter file as well, where only a
- * limited C constructs are allowed. Therefore it is not possible to include
- * here the platform_base_address.h to access flash related defines. To resolve
- * this some of the values are redefined here with different names, these are
- * marked with comment.
- */
-#define S_RETRAM_ALIAS_BASE		(0x0E040000)
-#define NS_RETRAM_ALIAS_BASE		(0x0A040000)
-#define RETRAM_SZ			(0x18000)		/* 128KB */
-
-#define S_SRAM1_ALIAS_BASE		(0x0E060000)
-#define NS_SRAM1_ALIAS_BASE		(0x0A060000)
-#define SRAM1_SZ			(0x10000)		/* 64KB */
-
-#define S_SYSRAM_ALIAS_BASE		(0x0E000000)
-#define NS_SYSRAM_ALIAS_BASE		(0x0A000000)
-#define SYSRAM_SZ			(0x40000)		/* 256KB */
-
-#define S_BKPSRAM_ALIAS_BASE		(0x52000000)
-#define NS_BKPSRAM_ALIAS_BASE		(0x42000000)
-#define BKPSRAM_SZ			(0x2000)		/* 8KB */
-
-#define S_BKPREG_ALIAS_BASE		(0x56010000 + 0x100)	/* tamp base + bkpreg offset */
-#define NS_BKPREG_ALIAS_BASE		(0x46010000 + 0x100)
-#define BKPREG_SZ			(0x80)			/* 128B */
-
-#define OSPI_MEM_BASE			(0x60000000)
-
-#define NS_DDR_ALIAS_BASE		(0x80000000)
 
 /* 3 areas are available to define all regions of cache */
 #define NS_REMAP3_ALIAS_BASE		(0x18000000)

@@ -158,15 +158,4 @@
 #define BOOT_TFM_SHARED_DATA_LIMIT	(BOOT_TFM_SHARED_DATA_BASE)
 #endif
 
-#if STM32_M33TDCID
-#if IPCC_LEGACY
-#define IPCC_IRQ_LEGACY			DT_IRQ(DT_NODELABEL(ipcc1), irq)
-#define IPCC_IRQ                        RESERVED_309
-#else
-#define IPCC_IRQ			DT_IRQ(DT_NODELABEL(ipcc1), irq)
-#define IPCC_IRQ_LEGACY                 RESERVED_309
-#endif
-#define DBG_AUTH_HOST_IRQ		DT_IRQ_BY_NAME(DT_NODELABEL(dbgmcu_mbx), dbg_auth_wr, irq)
-#endif
-
 #endif /* __REGION_DEFS_H__ */

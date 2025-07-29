@@ -19,8 +19,6 @@
 
 #include <flash_layout.h>
 
-#include <dt-bindings/clock/st,stm32mp21-rcc.h>
-
 /**
  * \file device_cfg.h
  * \brief Configuration file driver re-targeting
@@ -36,31 +34,14 @@
 
 /* storage */
 #define STM32_FLASH_DDR
-#define FLASH_DDR_BASE			NS_DDR_ALIAS_BASE
-#define FLASH_DDR_CLK			CLK_UNDEF
 #define FLASH_DDR_SIZE			(0x4000000)	/* limit to 64MB */
 #define FLASH_DDR_SECTOR_SIZE		(0x00001000)	/* 4 kB */
 #define FLASH_DDR_PROGRAM_UNIT		(0x1)		/* Minimum write size */
 
 #undef STM32_FLASH_RETRAM
-#define FLASH_RETRAM_BASE		S_RETRAM_ALIAS_BASE
-#define FLASH_RETRAM_CLK		CK_BUS_RETRAM
-#define FLASH_RETRAM_SIZE		RETRAM_SZ	/* 128 kB */
-#define FLASH_RETRAM_SECTOR_SIZE	(0x0000100)	/* 256 B */
-#define FLASH_RETRAM_PROGRAM_UNIT	(0x1)		/* Minimum write size */
 
 #define STM32_FLASH_BKPSRAM
-#define FLASH_BKPSRAM_BASE		S_BKPSRAM_ALIAS_BASE
-#define FLASH_BKPSRAM_CLK		CK_BUS_BKPSRAM
-#define FLASH_BKPSRAM_SIZE		BKPSRAM_SZ	/* 8 kB */
-#define FLASH_BKPSRAM_SECTOR_SIZE	(0x0000100)	/* 256 B */
-#define FLASH_BKPSRAM_PROGRAM_UNIT	(0x1)		/* Minimum write size */
 
 #define STM32_FLASH_BKPREG
-#define FLASH_BKPREG_BASE		S_BKPREG_ALIAS_BASE
-#define FLASH_BKPREG_CLK		CK_BUS_RTC
-#define FLASH_BKPREG_SIZE		BKPREG_SZ	/* 128 B */
-#define FLASH_BKPREG_SECTOR_SIZE	(0x4)		/* 32-bit backup registers */
-#define FLASH_BKPREG_PROGRAM_UNIT	(0x4)		/* Minimum write size */
 
 #endif  /* __DEVICE_CFG_H__ */
