@@ -75,7 +75,7 @@ install(FILES
     ${STM_SOC_DIR}/config.cmake
     ${STM_SOC_DIR}/cpuarch.cmake
     ${STM_SOC_DIR}/CMakeLists.txt
-    ${STM_SOC_DIR}/config_tfm_stm32mp21.h
+    ${STM_SOC_DIR}/config_tfm_soc.h
     ${STM_SOC_DIR}/soc_config.h
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx/stm32mp21
 )
