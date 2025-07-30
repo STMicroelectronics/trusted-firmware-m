@@ -31,6 +31,7 @@ if(BL2)
     target_link_libraries(bl2_mbedcrypto
         PUBLIC
             bl2_crypto_hw
+            platform_bl2
             cmsis
     )
     target_include_directories(bl2_mbedcrypto
