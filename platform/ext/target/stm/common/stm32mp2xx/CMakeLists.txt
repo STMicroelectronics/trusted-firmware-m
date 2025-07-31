@@ -6,6 +6,9 @@
 #-------------------------------------------------------------------------------
 cmake_policy(SET CMP0076 NEW)
 
+#fetch stm32cube for soc header files
+include(${STM_FAMILY_DIR}/lib/stm32cubemp2/stm32cube.cmake)
+
 #========================= Device tree ========================================#
 include(${STM_DEVICETREE_DIR}/gen_dt.cmake)
 
@@ -46,6 +49,11 @@ target_include_directories(tfm_config
     INTERFACE
         $<BUILD_INTERFACE:${STM_FAMILY_DIR}>
         $<BUILD_INTERFACE:${STM_SOC_DIR}>
+)
+
+target_link_libraries(tfm_config
+    INTERFACE
+	$<BUILD_INTERFACE:stm32cube::header>
 )
 
 target_include_directories(platform_region_defs

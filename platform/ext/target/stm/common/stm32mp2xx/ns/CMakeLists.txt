@@ -12,6 +12,8 @@
 
 add_library(platform_ns)
 
+include(stm32cube_config)
+add_subdirectory(${STM32CUBE_MP2_PATH} stm32cube)
 
 #========================= Device tree ========================================#
 include(${STM_DEVICETREE_DIR}/gen_dt.cmake)
@@ -43,6 +45,11 @@ target_include_directories(tfm_config
     INTERFACE
         $<BUILD_INTERFACE:${STM_FAMILY_DIR}>
         $<BUILD_INTERFACE:${STM_SOC_DIR}>
+)
+
+target_link_libraries(tfm_config
+    INTERFACE
+        $<BUILD_INTERFACE:stm32cube_header>
 )
 
 target_link_libraries(platform_region_defs
