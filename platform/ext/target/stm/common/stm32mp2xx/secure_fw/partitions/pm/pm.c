@@ -10,12 +10,14 @@
 #include <pm/pm.h>
 #include <psa/error.h>
 #include <psa/service.h>
+#include <stm32_dcache.h>
+#include <stm32mp2_lp_fw_api.h>
 #include <tfm_sp_log.h>
 #include <uapi/tfm_pm_api.h>
 
-#define STM32_PM_HINT PM_HINT_POWER_STATE | PM_HINT_CLOCK_STATE | PM_HINT_IO_STATE
+#include "critical_section.h"
 
-extern const uint8_t __tfm_lp_fw_start[];
+#define STM32_PM_HINT PM_HINT_POWER_STATE | PM_HINT_CLOCK_STATE | PM_HINT_IO_STATE
 
 typedef struct context {
 	uint32_t VTOR;
@@ -29,8 +31,6 @@ typedef struct context {
 } cm33_context_t;
 
 cm33_context_t tfm_context;
-
-typedef void (*p_fw_fn)(void);
 
 void save_it_status(void)
 {
@@ -50,7 +50,26 @@ void restore_it_status(void)
 
 void jump_low_power_fw(enum pm_suspend_mode_t lpmode)
 {
-	p_fw_fn lp_fw_entry;
+	stm32mp2_lp_fw_suspend_mode_t lpfwmode;
+
+	switch(lpmode)
+	{
+	case PM_STOP2:
+		lpfwmode = STM32MP2_LP_FW_LPMODE_STOP2;
+		break;
+	case PM_LP_STOP2:
+		lpfwmode = STM32MP2_LP_FW_LPMODE_LP_STOP2;
+		break;
+	case PM_LPLV_STOP2:
+		lpfwmode = STM32MP2_LP_FW_LPMODE_LPLV_STOP2;
+		break;
+	case PM_STANDBY1:
+		lpfwmode = STM32MP2_LP_FW_LPMODE_STANDBY1;
+		break;
+	default:
+		/* Unexpected value */
+		return;
+	}
 
 	save_it_status();
 
@@ -62,8 +81,14 @@ void jump_low_power_fw(enum pm_suspend_mode_t lpmode)
 	tfm_context.CONTROL = __get_CONTROL();
 	tfm_context.FPSCR = __get_FPSCR();
 
-	lp_fw_entry = (p_fw_fn) *((uint32_t *)(__tfm_lp_fw_start + 4));
-	lp_fw_entry();
+	stm32mp2_lp_fw_set_lpmode(lpfwmode);
+	stm32mp2_lp_fw_mark_data_valid();
+
+	/* Clean cache in order to prevent unsynchronized shared data */
+	if (stm32_dcache_clean(0x0, 0xFFFFFFFF))
+		return;
+
+	stm32mp2_lp_fw_exec();
 
 	/* restore tfm execution context */
 	__set_MSPLIM(tfm_context.MSPLIM);
@@ -78,24 +103,29 @@ void jump_low_power_fw(enum pm_suspend_mode_t lpmode)
 
 static int _pm_suspend(enum pm_suspend_mode_t mode)
 {
+	struct critical_section_t cs_assert = CRITICAL_SECTION_STATIC_INIT;
 	/* prepare suspend context*/
 
 	/* IT: mask, wakeup, fault ?*/
 	/* cache ? */
 	/* mpu ? */
 
+	CRITICAL_SECTION_ENTER(cs_assert);
+
 	/* call suspend of each device */
 	if (IS_ENABLED(CONFIG_PM_DEVICE)) {
 		if (!pm_suspend_devices(STM32_PM_HINT)) {
 			pm_resume_devices(STM32_PM_HINT);
+			CRITICAL_SECTION_LEAVE(cs_assert);
 			return -EINVAL;
 		}
 	}
 
-	/* jump_lp_fw */
 	jump_low_power_fw(mode);
 
 	pm_resume_devices(STM32_PM_HINT);
+
+	CRITICAL_SECTION_LEAVE(cs_assert);
 
 	return 0;
 }
@@ -126,5 +156,14 @@ psa_status_t tfm_pm_suspend(const psa_msg_t *msg)
 
 psa_status_t tfm_pm_power_off(void)
 {
+	stm32mp2_lp_fw_set_lpmode(STM32MP2_LP_FW_LPMODE_OFF);
+	stm32mp2_lp_fw_mark_data_valid();
+
+	/* Clean cache in order to prevent unsynchronized shared data */
+	if (!stm32_dcache_clean(0x0, 0xFFFFFFFF))
+		return PSA_ERROR_GENERIC_ERROR;
+
+	stm32mp2_lp_fw_exec();
+
 	return PSA_SUCCESS;
 }

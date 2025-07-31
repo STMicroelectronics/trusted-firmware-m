@@ -10,7 +10,8 @@ endif()
 cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0079 NEW)
 
-add_subdirectory(${STM_FAMILY_DIR}/lib/stm32mp2-low-power stm32mp2_low_power)
+set(STM32MP2_LP_SRC_PATH ${STM_FAMILY_DIR}/lib/stm32mp2-low-power)
+add_subdirectory(${STM32MP2_LP_SRC_PATH} stm32mp2_low_power)
 
 ########################### LP Partition ###################################
 add_library(tfm_psa_rot_partition_pm STATIC)
@@ -18,8 +19,8 @@ add_library(tfm_psa_rot_partition_pm STATIC)
 target_sources(tfm_psa_rot_partition_pm
   PRIVATE
         pm_init.c
-	device.c
-	pm.c
+        device.c
+        pm.c
 )
 
 # The generated sources
@@ -47,7 +48,8 @@ target_link_libraries(tfm_psa_rot_partition_pm
     PRIVATE
         platform_s
         tfm_config
-	tfm_sprt
+        tfm_sprt
+        ${STM32MP2_LP_TARGET}::api
 )
 
 set(TFM_LP_FW "${STM32MP2_LP_OUT_DIR}/${STM32MP2_LP_OUT_BIN}.o")
