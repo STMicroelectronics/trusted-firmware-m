@@ -93,6 +93,7 @@ if (TFM_PARTITION_PLATFORM)
 	set(TFM_PLATFORM_WDT_API             ON                    CACHE BOOL   "Enable platform watchdog support")
 endif()
 
+set(SCP_FW_GIT_REMOTE                   "https://github.com/STMicroelectronics/SCP-firmware" CACHE STRING "Git remote to fetch the SCP firmware from")
 set(SCP_FW_VERSION                      "dcc7368ed4bb0cee3bf7"  CACHE STRING    "The version of SCP-firmware to use")
 set(SCP_FW_PATH                         "DOWNLOAD"              CACHE PATH      "Path to SCP-firmware or DOWNLOAD to fetch automatically")
 set(CFG_SCPFW_MOD_POWER_DOMAIN          ON                      CACHE BOOL      "Set ON to enaable Power domain modules")
