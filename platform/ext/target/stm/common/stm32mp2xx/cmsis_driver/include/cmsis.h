@@ -30,4 +30,9 @@
 #define STM32MP2_HAS_CRYPTO
 #endif
 
+/**
+  \brief Exception / Interrupt Handler Function Prototype
+*/
+typedef void(*VECTOR_TABLE_Type)(void);
+
 #endif /*__CMSIS_H__*/
