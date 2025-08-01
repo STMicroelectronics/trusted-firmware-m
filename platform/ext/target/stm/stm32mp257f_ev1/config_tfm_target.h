@@ -7,6 +7,6 @@
 #ifndef __CONFIG_TFM_TARGET_H__
 #define __CONFIG_TFM_TARGET_H__
 
-#include <config_tfm_stm32mp25.h>
+#include <config_tfm_soc.h>
 
 #endif /* __CONFIG_TFM_TARGET_H__ */
