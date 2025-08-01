@@ -63,11 +63,6 @@
  *       Z:0x0008_0000 - Z:0x0010_0000		    Non-secure image
  */
 
-/* 3 areas are available to define all regions of cache */
-#define NS_REMAP3_ALIAS_BASE		(0x18000000)
-#define NS_REMAP2_ALIAS_BASE		(0x10000000)
-#define NS_REMAP1_ALIAS_BASE		(0x00000000)
-
 /*
  * Offset and size definition in flash area used by assemble.py
  * Image not take account the bl2 header
@@ -161,11 +156,6 @@
 
 #define FLASH_BASE_ADDRESS		(OSPI1_MEM_BASE)
 #define FLASH_AREA_IMAGE_SECTOR_SIZE	TFM_HAL_FLASH_PROGRAM_UNIT
-
-#define FLASH_IMAGE_OFFSET		0x0
-
-#define FLASH_AREA_BL2_OFFSET		FLASH_IMAGE_OFFSET
-#define FLASH_AREA_BL2_SIZE		RETRAM_SZ
 
 /*
  * Not used, only the RAM loading firmware upgrade operation

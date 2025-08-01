@@ -61,26 +61,9 @@
  */
 #define S_CODE_VECTOR_TABLE_SIZE ((320 + 16) * 4)
 
-/* Alias definitions for secure and non-secure areas*/
-#define S_RETRAM_ALIAS(x)		S_RETRAM_ALIAS_BASE + (x)
-#define NS_RETRAM_ALIAS(x)		NS_RETRAM_ALIAS_BASE + (x)
-
-#define S_SRAM1_ALIAS(x)		S_SRAM1_ALIAS_BASE + (x)
-#define NS_SRAM1_ALIAS(x)		NS_SRAM1_ALIAS_BASE + (x)
-
-#define S_SRAM2_ALIAS(x)		S_SRAM2_ALIAS_BASE + (x)
-#define NS_SRAM2_ALIAS(x)		NS_SRAM2_ALIAS_BASE + (x)
-
-#define S_SYSRAM_ALIAS(x)		S_SYSRAM_ALIAS_BASE + (x)
-#define NS_SYSRAM_ALIAS(x)		NS_SYSRAM_ALIAS_BASE + (x)
-
-#define S_BKPSRAM_ALIAS(x)		S_BKPSRAM_ALIAS_BASE + (x)
-#define NS_BKPSRAM_ALIAS(x)		NS_BKPSRAM_ALIAS_BASE + (x)
-
 /* Non-Secure not aliased, managed by SAU */
 #define NS_DDR_ALIAS(x)			NS_DDR_ALIAS_BASE + (x)
 #define NS_OSPI_MEM_ALIAS(x)		OSPI_MEM_BASE + (x)
-#define NS_REMAP_ALIAS(area, x)		(NS_REMAP##area##_ALIAS_BASE + (x))
 
 /* Image load address used by imgtool.py */
 #define S_IMAGE_LOAD_ADDRESS		DDR_CAHB_ALIAS(DDR_CAHB_OFFSET)
