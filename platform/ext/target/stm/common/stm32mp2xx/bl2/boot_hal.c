@@ -48,7 +48,9 @@ extern ARM_DRIVER_FLASH FLASH_DEV_NAME_5;
 int stm32mp2_init_debug(void)
 {
 #if defined(DAUTH_NONE)
+	stm32_bsec_write_debug_conf(DBG_PERM_MASK_NONE);
 #elif defined(DAUTH_NS_ONLY)
+	stm32_bsec_write_debug_conf(DBG_PERM_MASK_NS_ONLY);
 #elif defined(DAUTH_FULL)
 	BOOT_LOG_WRN("\033[1;31m*******************************\033[0m");
 	BOOT_LOG_WRN("\033[1;31m* The debug port is full open *\033[0m");
