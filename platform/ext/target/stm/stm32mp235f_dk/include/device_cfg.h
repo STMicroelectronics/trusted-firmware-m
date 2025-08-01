@@ -26,10 +26,6 @@
  *
  * This is a default device configuration file with all peripherals enabled.
  */
-/* uart */
-#define STM_USART5			1
-#define DEFAULT_UART_BAUDRATE		115200
-
 /* storage */
 #define STM32_FLASH_DDR
 #define FLASH_DDR_SIZE			(0x4000000)	/* limit to 64MB */
@@ -42,8 +38,6 @@
 
 #define STM32_FLASH_BKPREG
 
-#define SPI_NOR_FLASH_SIZE		(0x4000000)	/* 64 MB */
-#define SPI_NOR_FLASH_SECTOR_SIZE	(0x1000)	/* 4KB */
 #define SPI_NOR_FLASH_PAGE_SIZE		(256)		/* 256B */
 
 #endif  /* __DEVICE_CFG_H__ */
