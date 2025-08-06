@@ -105,6 +105,7 @@
 			      <&tfm_fw_pkh>,
 			      <&ddr_fw_pkh>,
 			      <&ca35_fw_pkh>,
+			      <&fip_edmk>,
 			      <&iak>;
 		nvmem-cell-names = "implementation_id",
 				   "rpn_otp",
@@ -116,6 +117,7 @@
 				   "tfm_fw_pkh",
 				   "ddr_fw_pkh",
 				   "ca35_fw_pkh",
+				   "fip_edmk",
 				   "iak";
 		status = "okay";
 	};
@@ -602,6 +604,11 @@
 			ca35_fw_pkh: otp200@320 {
 				#nvmem-cell-cells = <0>;
 				reg = <0x320 0x20>;
+			};
+
+			fip_edmk: otp260@410 {
+				#nvmem-cell-cells = <0>;
+				reg = <0x410 0x20>;
 			};
 
 			iak: otp352@580 {
