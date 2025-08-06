@@ -93,9 +93,16 @@ typedef int (*sk_cipher_ctx_init_t)(const struct device *dev, struct sk_cipher_c
 typedef int (*sk_cipher_update_t)(const struct device *dev, bool last_block,
 			     uint8_t *data_in, uint8_t *data_out,
 			     size_t data_size);
+
+typedef int (*sk_cipher_wrap_t)(const struct device *dev, bool wrap, int share_id,
+				uint8_t *key_in, uint8_t *key_out);
+
+typedef int (*sk_cipher_reset_t)(const struct device *dev);
 struct sk_cipher_driver_api {
 	sk_cipher_ctx_init_t ctx_init;
 	sk_cipher_update_t update;
+	sk_cipher_wrap_t wrap;
+	sk_cipher_reset_t reset;
 };
 
 static const struct device *const skcipher_dev = DEVICE_DT_GET_OR_NULL(DT_CHOSEN(tfm_skcipher));
@@ -104,8 +111,9 @@ static const struct device *const skcipher_dev = DEVICE_DT_GET_OR_NULL(DT_CHOSEN
  * @brief Start an AES computation.
  * @param dev: SAES device
  * @param config: SAES configuration, see sk_cipher_config_t
- * @note this function doesn't access to hardware but stores in driver data the
- * 	 ctx values
+ * @note this function doesn't access to hardware registers but stores in driver
+ * 	 data the ctx values. Nonetheless it reset the peripheral and acquire
+ *	 firewall rights.
  *
  * @retval 0 if OK a standard errno in case of error.
  */
@@ -154,6 +162,70 @@ static inline int sk_cipher_update(const struct device *dev, bool last_block, ui
 		return -ENOSYS;
 
 	return api->update(dev, last_block, data_in, data_out, data_len);
+}
+
+/**
+ * @brief Wrap or unwrap a secret key. Only two modes are available:
+ * ECB and CBC. sk_cipher_ctx_init must be called before usage.
+ * If supported by hardware, the function can perform a hardware key
+ * sharing of an unwrapped key. In that case, share_id must be set to a
+ * value corresponding to the targeted peripheral. This value is
+ * platform dependent.
+ *
+ * @param dev: Pointer to the sk cipher device instance.
+ * @param wrap: Set to true to wrap a key; otherwise, the function
+ * unwraps the key.
+ * @param share_id: if not null, enable key sharing with the peripheral
+ * with the corresponding ID. The recommended way to stop the sharing process is
+ * by calling sk_cipher_reset.
+ * @param data_in: Pointer to the cleartext key in the case of a wrap, or a
+ * wrapped key in the case of an unwrap.
+ * @param data_out: Pointer to save the wrapped key in the case of a wrap.
+ * This parameter is unused otherwise.
+ *
+ * @retval 0 if successful, or a standard errno in the case of an error.
+ */
+static inline int sk_cipher_wrap(const struct device *dev, bool wrap, int share_id,
+				 uint8_t *key_in, uint8_t *key_out)
+{
+	const struct sk_cipher_driver_api *api;
+
+	if (!dev)
+		dev = skcipher_dev;
+
+	if ((!dev) || !device_is_ready(dev))
+		return -ENODEV;
+
+	api = dev->api;
+
+	if (api->wrap == NULL)
+		return -ENOSYS;
+
+	return api->wrap(dev, wrap, share_id, key_in, key_out);
+}
+
+/**
+ * @brief reset the hardware peripheral.
+ *
+ * @param dev: Pointer to the sk cipher device instance.
+ *
+ */
+static inline int sk_cipher_reset(const struct device *dev)
+{
+	const struct sk_cipher_driver_api *api;
+
+	if (!dev)
+		dev = skcipher_dev;
+
+	if ((!dev) || !device_is_ready(dev))
+		return -ENODEV;
+
+	api = dev->api;
+
+	if (api->reset == NULL)
+		return -ENOSYS;
+
+	return api->reset(dev);
 }
 
 #endif /* SK_CIPHER_H */
