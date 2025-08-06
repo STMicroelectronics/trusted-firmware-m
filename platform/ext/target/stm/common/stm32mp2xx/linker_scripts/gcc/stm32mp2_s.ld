@@ -246,6 +246,17 @@ SECTIONS
         . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
     } > FLASH
 
+#if defined(TFM_PARTITION_PM)
+    tfm_lp_fw ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT) (READONLY) :
+    {
+	__tfm_lp_fw_start = .;
+	KEEP(TFM_LP_FW(.data*))
+	__tfm_lp_fw_end = .;
+
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
+    } > FLASH
+#endif
+
 #include <linker/devices.ld>
 
     .TFM_UNPRIV_CODE ALIGN(TFM_LINKER_UNPRIV_CODE_ALIGNMENT) :
