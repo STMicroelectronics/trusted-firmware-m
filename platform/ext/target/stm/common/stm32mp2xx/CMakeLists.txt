@@ -298,6 +298,7 @@ if(BL2)
 			$<$<STREQUAL:${STM32_BOOT_DEV},ospi>:${STM_FAMILY_DIR}/cmsis_driver/src/driver_spi_flash.c>
 			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_FAMILY_DIR}/cmsis_driver/src/driver_mmc_flash.c>
 			${STM_FAMILY_DIR}/bl2/boot_hal.c
+			${STM_FAMILY_DIR}/bl2/banner.c
 			${STM_FAMILY_DIR}/bl2/flash_map_bl2.c
 			${STM_FAMILY_DIR}/cmsis_driver/src/driver_flash_mm.c
 			${STM_FAMILY_DIR}/native_driver/src/core/mpu_armv8m_drv.c
@@ -363,6 +364,7 @@ if(BL2)
 	# object files.
 	target_sources(bl2
 		PRIVATE
+            ${STM_FAMILY_DIR}/bl2/banner.c
             ${STM_FAMILY_DIR}/native_driver/src/timer/systick.c
             ${STM_FAMILY_DIR}/native_driver/src/uart/console.c
             ${STM_FAMILY_DIR}/native_driver/src/syscfg/stm32_syscfg.c
