@@ -532,7 +532,7 @@ static __unused int stm32_risaf_install_mce_encryption_key(const struct device *
 	return err;
 }
 
-static int stm32_risaf_encryption_init(const struct device *dev)
+static __unused int stm32_risaf_encryption_init(const struct device *dev)
 {
 	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
 	struct stm32_risaf_data *drv_data = dev_get_data(dev);
@@ -564,6 +564,23 @@ out:
 	return err;
 }
 
+static __unused int stm32_risaf_encryption_check(const struct device *dev)
+{
+	struct stm32_risaf_data *drv_data = dev_get_data(dev);
+	bool result = false;
+
+	if (drv_data->variant->default_encryption_fn)
+		result |= stm32_risaf_region_need_encryption_key(dev);
+
+	if (drv_data->variant->mce_encryption_fn)
+		result |= stm32_risaf_region_need_mce_encryption_key(dev);
+
+	if (result)
+		return -EINVAL;
+
+	return 0;
+}
+
 static int stm32_risaf_init(const struct device *dev)
 {
 	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
@@ -588,19 +605,29 @@ static int stm32_risaf_init(const struct device *dev)
 
 
 	for (i = 0; i < drv_cfg->ndt_regions; i++) {
-		if (drv_cfg->dt_regions[i].ndt_regions > drv_data->hw_nsubregions)
-			return -EINVAL;
-	}
-
-	if (drv_data->variant->has_enc) {
-		if (!drv_cfg->entropy_dev) {
+		if (drv_cfg->dt_regions[i].ndt_regions > drv_data->hw_nsubregions) {
 			err = -EINVAL;
 			goto out;
 		}
+	}
 
-		err = stm32_risaf_encryption_init(dev);
-		if (err)
+	if (IS_ENABLED(STM32_BL2)) {
+		if (drv_data->variant->has_enc) {
+			if (!drv_cfg->entropy_dev) {
+				err = -EINVAL;
+				goto out;
+			}
+
+			err = stm32_risaf_encryption_init(dev);
+			if (err)
+				goto out;
+		}
+	} else {
+		err = stm32_risaf_encryption_check(dev);
+		if (err) {
+			EMSG("[%s] encryption key not initialized by BL2\n", dev->name);
 			goto out;
+		}
 	}
 
 	for (i = 0; i < drv_cfg->ndt_regions; i++) {
