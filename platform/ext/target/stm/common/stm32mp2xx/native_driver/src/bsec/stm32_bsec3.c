@@ -291,15 +291,15 @@ static int __maybe_unused stm32_bsec_shadow_read_otp(uint32_t *val,
 
 /*
  * bsec_write_otp: write value in BSEC data register.
- * val: value to write.
+ * value: value to write.
  * otp: OTP number.
  * return value: 0 if no error.
  */
-static int __maybe_unused stm32_bsec_write_otp(uint32_t val, uint32_t otp)
+static int __maybe_unused stm32_bsec_write_otp(uint32_t value, uint32_t otp)
 {
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
 	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
-	bool value = false;
+	bool sw_lock = false;
 	int ret;
 
 	if (otp > drv_data->variant->max_id)
@@ -310,15 +310,15 @@ static int __maybe_unused stm32_bsec_write_otp(uint32_t val, uint32_t otp)
 
 	/* for HW shadowed OTP, update value in FVR register */
 	if (is_fuse_shadowed(otp)) {
-		ret = stm32_bsec_read_sw_lock(otp, &value);
+		ret = stm32_bsec_read_sw_lock(otp, &sw_lock);
 		if (ret)
 			return ret;
 
-		if (value)
+		if (sw_lock)
 			return -EPERM;
 
 
-		io_write32(drv_cfg->base + _BSEC_FVR(otp), val);
+		io_write32(drv_cfg->base + _BSEC_FVR(otp), value);
 	}
 
 	return 0;
