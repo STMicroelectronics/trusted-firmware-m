@@ -25,7 +25,6 @@
 };
 
 &rcc {
-	st,syscfg-safe-reset = <&syscfg 0x2018 0x1>;
 	st,c1msrd = <2>;
 
 	st,busclk = <
