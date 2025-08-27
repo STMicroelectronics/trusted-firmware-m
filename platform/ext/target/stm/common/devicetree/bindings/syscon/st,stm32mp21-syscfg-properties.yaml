@@ -7,7 +7,6 @@ include:
   - name: st,stm32mp25-syscfg-properties.yaml
     property-allowlist:
       - st,syscfg-dlyb
-      - st,syscfg-safe-reset
       - st,syscfg-vddio
 
 properties:
