@@ -39,9 +39,6 @@ struct div_cfg {
 struct stm32_rcc_config {
 	uintptr_t base;
 	const uint32_t c1msrd;
-	const struct device *syscfg;
-	const uint32_t saferst_reg;
-	const uint32_t saferst_mask;
 	const struct stm32_osci_dt_cfg *osci;
 	const uint32_t nosci;
 	const struct stm32_pll_dt_cfg *pll;

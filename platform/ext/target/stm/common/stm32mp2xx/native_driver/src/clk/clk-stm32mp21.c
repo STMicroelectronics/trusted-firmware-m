@@ -211,6 +211,12 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 #define RCC_RIF_HSIFMON		113
 
 /*
+ * Safe reset control register.
+ * Should be enabled after the boot.
+ */
+#define SYSCFG_SAFERSTCR	0x2018
+
+/*
  * GATE CONFIG
  */
 
@@ -3269,13 +3275,13 @@ static int clk_stm32_apply_rcc_config(const struct device *dev)
 {
 #if (IS_ENABLED(STM32_M33TDCID) && IS_ENABLED(STM32_SEC))
 	const struct stm32_rcc_config *drv_cfg = dev_get_config(dev);
+	const struct device *syscfg = DEVICE_DT_GET(DT_NODELABEL(syscfg));
 
 	io_write32(drv_cfg->base + RCC_C1MSRDCR,
 		   drv_cfg->c1msrd & _RCC_C1MSRDCR_C1MSRD_MASK);
 
-	if (drv_cfg->syscfg && drv_cfg->saferst_reg != INT32_MAX)
-		syscon_setbits(drv_cfg->syscfg,
-			       drv_cfg->saferst_reg, drv_cfg->saferst_mask);
+	/* Force the safe reset */
+	syscon_setbits(syscfg, SYSCFG_SAFERSTCR, 0x1);
 #endif
 	return 0;
 }
@@ -3361,9 +3367,6 @@ static struct stm32_pll_dt_cfg stm32_pll[] = {
 const struct stm32_rcc_config stm32mp21_rcc_cfg = {
 	.base = DT_INST_REG_ADDR(0),
 	.c1msrd = DT_INST_PROP_OR(0, st_c1msrd, 0),
-	.syscfg = DEVICE_DT_GET_OR_NULL(DT_INST_PHANDLE(0, st_syscfg_safe_reset)),
-	.saferst_reg = DT_INST_PHA_OR(0, st_syscfg_safe_reset, offset, INT32_MAX),
-	.saferst_mask = DT_INST_PHA_OR(0, st_syscfg_safe_reset, mask, 0),
 	.busclk = stm32mp21_bclk,
 	.nbusclk = ARRAY_SIZE(stm32mp21_bclk),
 	.kernelclk = stm32mp21_kclk,
