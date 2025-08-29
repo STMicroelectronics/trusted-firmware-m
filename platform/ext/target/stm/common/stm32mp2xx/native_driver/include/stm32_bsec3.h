@@ -12,7 +12,37 @@
 #include <lib/utils_def.h>
 #include <tfm_plat_otp.h>
 
-#define DBG_FULL GENMASK_32(11, 1)
+/* Debug permission mask */
+#define STM32MP2_PERM_MASK_A35NSTO	BIT(0) /* A35 Non-Secure Trace-only */
+#define STM32MP2_PERM_MASK_A35NSFD	BIT(1) /* A35 Non-Secure Full-Debug */
+#define STM32MP2_PERM_MASK_A35STO	BIT(2) /* A35 Secure Trace-only */
+#define STM32MP2_PERM_MASK_A35SFD	BIT(3) /* A35 Secure Full-Debug */
+#define STM32MP2_PERM_MASK_M33NSTO	BIT(4) /* M33 Non-Secure Trace-only */
+#define STM32MP2_PERM_MASK_M33NSFD	BIT(5) /* M33 Non-Secure Full-Debug */
+#define STM32MP2_PERM_MASK_M33STO	BIT(6) /* M33 Secure Trace-only */
+#define STM32MP2_PERM_MASK_M33SFD	BIT(7) /* M33 Secure Full-Debug */
+#define STM32MP21_PERM_MASK_A35HDPL	BIT(8) /* A35 Minimal Debug level */
+#define STM32MP21_PERM_MASK_A35HDP(lvl) (STM32MP21_PERM_MASK_A35HDPL << (lvl))
+#define STM32MP21_PERM_MASK_M33HDPL	BIT(12) /* M33 Minimal Debug level */
+#define STM32MP21_PERM_MASK_M33HDP(lvl) (STM32MP21_PERM_MASK_M33HDPL << (lvl))
+#define STM32MP2_PERM_MASK_A35SDDIS	BIT(16) /* A35 Secure Debug Disabled */
+#define STM32MP2_PERM_MASK_A35NSDDIS	BIT(17) /* A35 Non-Sec Debug Disabled */
+#define STM32MP2_PERM_MASK_M33SDDIS	BIT(18) /* M33 Secure Debug Disabled */
+#define STM32MP2_PERM_MASK_M33NSDDIS	BIT(19) /* M33 Non-Sec Debug Disabled */
+#define STM32MP2_PERM_MASK_WAITATTACH	BIT(31) /* Wait for attach at boot time */
+
+#define DBG_PERM_MASK_FULL_MP2		(STM32MP2_PERM_MASK_A35NSTO | STM32MP2_PERM_MASK_A35NSFD | \
+					 STM32MP2_PERM_MASK_A35STO | STM32MP2_PERM_MASK_A35SFD |   \
+					 STM32MP2_PERM_MASK_M33NSTO | STM32MP2_PERM_MASK_M33NSFD | \
+					 STM32MP2_PERM_MASK_M33STO | STM32MP2_PERM_MASK_M33SFD)
+
+#ifdef STM32MP21xxxx
+#define DBG_PERM_MASK_FULL		(DBG_PERM_MASK_FULL_MP2 |	 \
+					 STM32MP21_PERM_MASK_A35HDP(0) | \
+					 STM32MP21_PERM_MASK_M33HDP(0))
+#else
+#define DBG_PERM_MASK_FULL		DBG_PERM_MASK_FULL_MP2
+#endif
 
 /* Magic use to indicated valid SHADOW = 'B' 'S' 'E' 'C' */
 #define BSEC_MAGIC			0x42534543
@@ -33,7 +63,7 @@
 #define STATUS_PROVISIONING		BIT(1)
 #define STATUS_SECURE			BIT(0)
 
-void stm32_bsec_write_debug_conf(uint32_t val);
+int stm32_bsec_write_debug_conf(uint32_t perm_mask);
 void stm32_bsec_restore_cortexa_debug_conf(void);
 int stm32_bsec_increment_hdpl(void);
 

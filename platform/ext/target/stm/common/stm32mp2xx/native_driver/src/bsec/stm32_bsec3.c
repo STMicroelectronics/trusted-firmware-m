@@ -62,16 +62,19 @@
 #define _BSEC_LOCKR_GWLOCK_MASK		BIT(0)
 
 /* BSEC_DENR register fields */
+#define _BSEC_DENR_DBG_FULL		GENMASK_32(11, 0)
+
 /* Compute DENR_RCODE (SECDED ECC) as HAMMING(17,12) with parity */
-#define PARITY_4BIT(x)		((((x) >> 3) ^ ((x) >> 2) ^ ((x) >> 1) ^ (x)) & 1)
-#define PARITY_12BIT(x)		PARITY_4BIT(((x) >> 8) ^ ((x) >> 4) ^ (x))
-#define _BSEC_DENR_RCODE(x)	(((PARITY_12BIT((x) & 0x800)) << 17) | \
-				 ((PARITY_12BIT((x) & 0x7f0)) << 16) | \
-				 ((PARITY_12BIT((x) & 0x78e)) << 15) | \
-				 ((PARITY_12BIT((x) & 0x66d)) << 14) | \
-				 ((PARITY_12BIT((x) & 0xd5b)) << 13) | \
-				 ((PARITY_12BIT((x) ^ 0xcb7)) << 12))
-#define BSEC_DENR_v(x) (_BSEC_DENR_RCODE((x) & DBG_FULL) | ((x) & DBG_FULL))
+#define PARITY_4BIT(x)			((((x) >> 3) ^ ((x) >> 2) ^ ((x) >> 1) ^ (x)) & 1)
+#define PARITY_12BIT(x)			PARITY_4BIT(((x) >> 8) ^ ((x) >> 4) ^ (x))
+#define _BSEC_DENR_RCODE(x)		(((PARITY_12BIT((x) & 0x800)) << 17) | \
+					 ((PARITY_12BIT((x) & 0x7f0)) << 16) | \
+					 ((PARITY_12BIT((x) & 0x78e)) << 15) | \
+					 ((PARITY_12BIT((x) & 0x66d)) << 14) | \
+					 ((PARITY_12BIT((x) & 0xd5b)) << 13) | \
+					 ((PARITY_12BIT((x) & 0xcb7)) << 12))
+#define BSEC_DENR_v(x)			(_BSEC_DENR_RCODE((x) & _BSEC_DENR_DBG_FULL) | \
+					 ((x) & _BSEC_DENR_DBG_FULL))
 
 /* BSEC_SR register fields */
 #define _BSEC_SR_HVALID_MASK		BIT(1)
@@ -131,6 +134,19 @@
 
 static const uint8_t hdpl_array[HDPL_ARRAY_SIZE] = {0xB4, 0x51, 0x8A, 0x6F};
 
+/* BSEC_DBGMCR, BSEC_DBGACR, BSEC_AP_UNLOCK registers fields & constants */
+#define BSEC_AUTH_UNLOCK_MASK		GENMASK_32(15, 8)
+#define BSEC_AUTH_UNLOCK_SHIFT		8
+#define BSEC_AUTH_HDPL_MASK		GENMASK_32(23, 16)
+#define BSEC_AUTH_HDPL_SHIFT		16
+#define BSEC_AUTH_SEC_MASK		GENMASK_32(31, 24)
+#define BSEC_AUTH_SEC_SHIFT		24
+#define BSEC_AP_UNLOCK_MASK		GENMASK_32(7, 0)
+#define BSEC_AP_UNLOCK_SHIFT		0
+#define BSEC_AUTH_UNLOCKED		0xb4
+#define BSEC_AUTH_LOCKED		0xff
+#define BSEC_DBGxCR_NOT_SET		0x00000bad
+
 struct nvmem_cell {
 	const char *cell_label;
 	uint32_t otp_id;
@@ -171,6 +187,7 @@ struct stm32_bsec_data {
 	bool hw_key_valid;
 	struct bsec_mirror *p_mirror;
 	uint32_t verr;
+	uint32_t dbgacr;
 };
 
 static const struct device *bsec_dev;
@@ -334,29 +351,128 @@ static int __maybe_unused stm32_bsec_write_otp(uint32_t value, uint32_t otp)
 	return 0;
 }
 
-void stm32_bsec_write_debug_conf(uint32_t val)
+void stm32_bsec_parse_permissions(uint32_t perm_mask,
+				  uint32_t *dbg_en_val,
+				  uint32_t *dbg_a_ctrl_val,
+				  uint32_t *dbg_m_ctrl_val,
+				  uint32_t *ap_unlock)
+{
+	*dbg_en_val = 0;
+	*dbg_a_ctrl_val = 0;
+	*dbg_m_ctrl_val = 0;
+	*ap_unlock = 0;
+
+	/* TODO: manage ADAC_SOC_MASK (OTP 101) */
+
+	/* Prepare value for BSEC debug enable register */
+	if (!(perm_mask & STM32MP2_PERM_MASK_A35NSDDIS)) {
+		if (perm_mask & STM32MP2_PERM_MASK_A35NSTO)
+			*dbg_en_val |= BSEC_DENR_NIDENA;
+		if (perm_mask & STM32MP2_PERM_MASK_A35NSFD)
+			*dbg_en_val |= BSEC_DENR_NIDENA | BSEC_DENR_DBGENA;
+	}
+	if (!(perm_mask & STM32MP2_PERM_MASK_A35SDDIS)) {
+		if (perm_mask & STM32MP2_PERM_MASK_A35STO)
+			*dbg_en_val |= BSEC_DENR_SPNIDENA;
+		if (perm_mask & STM32MP2_PERM_MASK_A35SFD)
+			*dbg_en_val |= BSEC_DENR_SPNIDENA | BSEC_DENR_SPIDENA;
+	}
+	if (!(perm_mask & STM32MP2_PERM_MASK_M33NSDDIS)) {
+		if (perm_mask & STM32MP2_PERM_MASK_M33NSTO)
+			*dbg_en_val |= BSEC_DENR_NIDENM;
+		if (perm_mask & STM32MP2_PERM_MASK_M33NSFD)
+			*dbg_en_val |= BSEC_DENR_NIDENM | BSEC_DENR_DBGENM;
+	}
+	if (!(perm_mask & STM32MP2_PERM_MASK_M33SDDIS)) {
+		if (perm_mask & STM32MP2_PERM_MASK_M33STO)
+			*dbg_en_val |= BSEC_DENR_SPNIDENM;
+		if (perm_mask & STM32MP2_PERM_MASK_M33SFD)
+			*dbg_en_val |= BSEC_DENR_SPNIDENM | BSEC_DENR_SPIDENM;
+	}
+	if (*dbg_en_val != 0) /* At least one debug profile is enabled */
+		*dbg_en_val |= BSEC_DENR_DEVICEEN | BSEC_DENR_HDPEN | BSEC_DENR_DBGSWEN;
+
+	/* Prepare values for BSEC debug control registers */
+	if (IS_ENABLED(STM32MP21xxxx)) {
+		int8_t lvl = HDPL_ARRAY_SIZE - 1;
+
+		for (lvl = HDPL_ARRAY_SIZE - 1; lvl >= 0; lvl--) {
+			if (perm_mask & STM32MP21_PERM_MASK_A35HDP(lvl)) {
+				*dbg_a_ctrl_val |= _FLD_PREP(BSEC_AUTH_HDPL, hdpl_array[lvl]);
+				break;
+			}
+		}
+		for (lvl = HDPL_ARRAY_SIZE - 1; lvl >= 0; lvl--) {
+			if (perm_mask & STM32MP21_PERM_MASK_M33HDP(lvl)) {
+				*dbg_m_ctrl_val |= _FLD_PREP(BSEC_AUTH_HDPL, hdpl_array[lvl]);
+				break;
+			}
+		}
+
+		if (!(perm_mask & STM32MP2_PERM_MASK_A35NSDDIS))
+			*dbg_a_ctrl_val |= _FLD_PREP(BSEC_AUTH_UNLOCK, BSEC_AUTH_UNLOCKED);
+		if (!(perm_mask & STM32MP2_PERM_MASK_A35SDDIS))
+			*dbg_a_ctrl_val |= _FLD_PREP(BSEC_AUTH_SEC, BSEC_AUTH_UNLOCKED);
+		if (!(perm_mask & STM32MP2_PERM_MASK_M33NSDDIS))
+			*dbg_m_ctrl_val |= _FLD_PREP(BSEC_AUTH_UNLOCK, BSEC_AUTH_UNLOCKED);
+		if (!(perm_mask & STM32MP2_PERM_MASK_M33SDDIS))
+			*dbg_m_ctrl_val |= _FLD_PREP(BSEC_AUTH_SEC, BSEC_AUTH_UNLOCKED);
+
+		if ((_FLD_GET(BSEC_AUTH_UNLOCK, *dbg_a_ctrl_val) == BSEC_AUTH_UNLOCKED) ||
+		    (_FLD_GET(BSEC_AUTH_UNLOCK, *dbg_m_ctrl_val) == BSEC_AUTH_UNLOCKED))
+			/* At least one is unlocked, unlock the access port */
+			*ap_unlock = _FLD_PREP(BSEC_AP_UNLOCK, BSEC_AUTH_UNLOCKED);
+		else 	/* Both are locked, lock the access port */
+			*ap_unlock = _FLD_PREP(BSEC_AP_UNLOCK, BSEC_AUTH_LOCKED);
+	}
+
+	/* TODO: STM32MP2_PERM_MASK_WAITATTACH */
+}
+
+int stm32_bsec_write_debug_conf(uint32_t perm_mask)
 {
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
 	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
-	uint32_t masked_val = val & drv_data->variant->denr_all_mask;
+	uint32_t denr, dbgacr, dbgmcr, ap_unlock;
 
 	if (!IS_ENABLED(STM32_M33TDCID))
-		return;
+		return 0;
 
 	if (is_bsec_write_locked())
 		panic();
 
+	stm32_bsec_parse_permissions(perm_mask, &denr, &dbgacr, &dbgmcr, &ap_unlock);
+
+	denr &= drv_data->variant->denr_all_mask;
+
 	if (drv_data->verr >= BSEC_VERR_1_2)
-		masked_val = BSEC_DENR_v(masked_val);
+		denr = BSEC_DENR_v(denr);
 
 	mmio_write_32(drv_cfg->base + _BSEC_DENR,
-		      drv_data->variant->denr_key | masked_val);
+		      drv_data->variant->denr_key | denr);
+
+	if (mmio_read_32(drv_cfg->base + _BSEC_DENR) != (drv_data->variant->denr_key | denr))
+		return -EIO;
 
 	if (drv_data->verr >= BSEC_VERR_1_2) {
-		mmio_write_32(drv_cfg->base + _BSEC_DBGACR, BSEC_DBGxCR_DUMMY_ADAC);
-		mmio_write_32(drv_cfg->base + _BSEC_DBGMCR, BSEC_DBGxCR_DUMMY_ADAC);
-		mmio_write_32(drv_cfg->base + _BSEC_AP_UNLOCK, BSEC_AP_UNLOCK_DUMMY_ADAC);
+		mmio_write_32(drv_cfg->base + _BSEC_DBGACR, dbgacr);
+		mmio_write_32(drv_cfg->base + _BSEC_DBGMCR, dbgmcr);
+		mmio_write_32(drv_cfg->base + _BSEC_AP_UNLOCK, ap_unlock);
+
+		/*
+		 * Can't check the value of DBGACR, since Cortex-A may be under reset. The write
+		 * could have been ignored, but the value will be written later when the Cortex-A
+		 * starts.
+		 */
+		if (mmio_read_32(drv_cfg->base + _BSEC_DBGMCR) != dbgmcr)
+			return -EIO;
+		if (mmio_read_32(drv_cfg->base + _BSEC_AP_UNLOCK) != ap_unlock)
+			return -EIO;
+
+		drv_data->dbgacr = dbgacr;
 	}
+
+	return 0;
 }
 
 void stm32_bsec_restore_cortexa_debug_conf(void)
@@ -785,8 +901,10 @@ static int stm32_bsec_dt_init(const struct device *dev)
 			drv_data->hw_key_valid = true;
 	}
 
-	if (IS_ENABLED(STM32_M33TDCID))
+	if (IS_ENABLED(STM32_M33TDCID)) {
 		drv_data->verr = io_read32(drv_cfg->base + _BSEC_VERR);
+		drv_data->dbgacr = BSEC_DBGxCR_NOT_SET;
+	}
 
 	return stm32_bsec_shadow_init(dev);
 }
