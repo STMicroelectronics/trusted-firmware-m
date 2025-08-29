@@ -1540,12 +1540,6 @@ static const struct clk_ops clk_stm32_osc_ops = {
 	.is_enabled	= clk_stm32_gate_is_enabled,
 };
 
-static const struct clk_ops clk_stm32_osc_msi_ops = {
-	.enable	= clk_stm32_osc_enable,
-	.disable	= clk_stm32_osc_disable,
-	.is_enabled	= clk_stm32_gate_is_enabled,
-};
-
 static int clk_stm32_osc_ker_enable(struct clk *clk)
 {
 	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
@@ -2288,19 +2282,6 @@ const struct clk_ops ck_timer_ops = {
 		.dev = DT_RCC_DEVICE,\
 	}
 
-#define STM32_OSC_MSI(_name, _parent, _flags, _gate_id)\
-	struct clk _name = {\
-		.ops = &clk_stm32_osc_msi_ops,\
-		.priv = &(struct clk_stm32_gate_cfg) {\
-			.gate_id = _gate_id,\
-		},\
-		CLOCK_NAME(#_name)\
-		.flags = (_flags),\
-		.num_parents = 1,\
-		.parents = PARENT(_parent),\
-		.dev = DT_RCC_DEVICE,\
-	}
-
 #define STM32_OSC_KER(_name, _parent, _flags, _gate_id)\
 	struct clk _name = {\
 		.ops = &clk_stm32_osc_ker_ops,\
@@ -2469,7 +2450,7 @@ static STM32_DT_OSC(clk_lse);
 /* Oscillator clocks */
 static STM32_OSC(ck_hsi, &clk_hsi,0, GATE_HSI);
 static STM32_OSC(ck_hse, &clk_hse, 0, GATE_HSE);
-static STM32_OSC_MSI(ck_msi, &clk_msi, 0, GATE_MSI);
+static STM32_OSC(ck_msi, &clk_msi, 0, GATE_MSI);
 static STM32_OSC(ck_lsi, &clk_lsi, 0, GATE_LSI);
 static STM32_OSC(ck_lse, &clk_lse, 0, GATE_LSE);
 
