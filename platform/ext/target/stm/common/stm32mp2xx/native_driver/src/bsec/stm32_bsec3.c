@@ -126,10 +126,6 @@
 
 #define BSEC_VERR_1_2			U(0x00000012)
 
-/* Dummy value for ADAC emulation on BSEC_DBGMCR and BSEC_DBGACR */
-#define BSEC_DBGxCR_DUMMY_ADAC		U(0xb4b4b400)
-#define BSEC_AP_UNLOCK_DUMMY_ADAC	U(0x000000b4)
-
 #define HDPL_ARRAY_SIZE			U(4)
 
 static const uint8_t hdpl_array[HDPL_ARRAY_SIZE] = {0xB4, 0x51, 0x8A, 0x6F};
@@ -479,6 +475,7 @@ void stm32_bsec_restore_cortexa_debug_conf(void)
 {
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(bsec_dev);
 	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
+	uint32_t dbgacr = BSEC_DBGxCR_NOT_SET;
 
 	if (!IS_ENABLED(STM32_M33TDCID))
 		return;
@@ -486,7 +483,20 @@ void stm32_bsec_restore_cortexa_debug_conf(void)
 	if (drv_data->verr < BSEC_VERR_1_2)
 		return;
 
-	mmio_write_32(drv_cfg->base + _BSEC_DBGACR, BSEC_DBGxCR_DUMMY_ADAC);
+#if defined(DAUTH_NONE)
+	dbgacr = 0;
+#elif defined(DAUTH_NS_ONLY)
+	dbgacr = 0x00b4b400;
+#elif defined(DAUTH_FULL)
+	dbgacr = 0xb4b4b400;
+#elif defined(DAUTH_CHIP_DEFAULT)
+	dbgacr = drv_data->dbgacr;
+#endif
+
+	if (dbgacr == BSEC_DBGxCR_NOT_SET)
+		return;
+
+	mmio_write_32(drv_cfg->base + _BSEC_DBGACR, dbgacr);
 }
 
 int stm32_bsec_increment_hdpl(void)
