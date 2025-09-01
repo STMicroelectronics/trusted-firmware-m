@@ -32,12 +32,11 @@
 #define IS_ALIGNED_U32(x)		IS_ALIGNED_WITH_TYPE(x, uint32_t)
 
 #define SAES_TIMEOUT_US			U(100000)
-#define TIMEOUT_US_1MS			U(1000)
-#define SAES_RESET_DELAY		U(20)
+#define SAES_RESET_DELAY_US		U(20)
 #define SAES_SUSPSIZE			U(8)
 
 #define IS_CHAINING_MODE(mode, cr) \
-	!!(cr & _FLD_PREP(_SAES_CR_CHMOD, _SAES_CR_CHMOD_##mode))
+	!!((cr & _SAES_CR_CHMOD_MASK) == _FLD_PREP(_SAES_CR_CHMOD, _SAES_CR_CHMOD_##mode))
 
 #define SET_CHAINING_MODE(mode) \
 	(_FLD_PREP(_SAES_CR_CHMOD, _SAES_CR_CHMOD_##mode))
@@ -174,6 +173,20 @@ static int wait_key_valid(uintptr_t base)
 	return err;
 }
 
+static int wait_for_not_busy(uintptr_t base)
+{
+	uint32_t sr;
+	int err;
+
+	err = mmio_read32_poll_timeout((base + _SAES_SR), sr, !(sr & _SAES_SR_BUSY),
+				       SAES_TIMEOUT_US);
+
+	if (err)
+		EMSG("%s: timeout, SR: %x\n", __func__, sr);
+
+	return err;
+}
+
 static int stm32_saes_acquire_sem(const struct stm32_saes_config *drv_cfg)
 {
 	struct firewall_spec *firewall;
@@ -201,7 +214,6 @@ static int saes_start(const struct device *dev)
 	const struct stm32_saes_config *drv_cfg = dev_get_config(dev);
 	struct stm32_saes_data *drv_dat = dev_get_data(dev);
 	struct stm32_saes_context *ctx = &drv_dat->ctx;
-	uint32_t sr;
 	int err;
 
 	err = stm32_saes_acquire_sem(drv_cfg);
@@ -211,17 +223,11 @@ static int saes_start(const struct device *dev)
 	/* Reset SAES */
 	if (!(io_read32(ctx->base + _SAES_SR) & _SAES_SR_BUSY)) {
 		io_setbits32(ctx->base + _SAES_CR, _SAES_CR_IPRST);
-		udelay(SAES_RESET_DELAY);
+		udelay(SAES_RESET_DELAY_US);
 		io_clrbits32(ctx->base + _SAES_CR, _SAES_CR_IPRST);
 	}
 
-	err = mmio_read32_poll_timeout((ctx->base + _SAES_SR), sr, !(sr & _SAES_SR_BUSY),
-				       SAES_TIMEOUT_US);
-
-	if (err)
-		EMSG("%s: busy timeout, SR: %x\n", __func__, sr);
-
-	return err;
+	return wait_for_not_busy(ctx->base);
 }
 
 static void saes_end(const struct device *dev, int prev_error)
@@ -233,7 +239,7 @@ static void saes_end(const struct device *dev, int prev_error)
 	if (prev_error) {
 		/* Reset SAES */
 		io_setbits32(ctx->base + _SAES_CR, _SAES_CR_IPRST);
-		udelay(SAES_RESET_DELAY);
+		udelay(SAES_RESET_DELAY_US);
 		io_clrbits32(ctx->base + _SAES_CR, _SAES_CR_IPRST);
 	}
 
@@ -573,6 +579,143 @@ out:
 	return res;
 }
 
+static int stm32_saes_wrap_init(const struct device *dev, bool wrap, int share_id)
+{
+	struct stm32_saes_data *drv_dat = dev_get_data(dev);
+	struct stm32_saes_context *ctx = &drv_dat->ctx;
+
+	/* force usage of DHUK for wrapping process */
+	ctx->cr &= ~(_SAES_CR_KEYSEL_MASK);
+	ctx->cr |= _FLD_PREP(_SAES_CR_KEYSEL, _SAES_CR_KEYSEL_DHUK);
+
+	/* force datatype to NONE, mandatory for wrapping. */
+	ctx->cr &= ~(_SAES_CR_DATATYPE_MASK);
+	ctx->cr |= _FLD_PREP(_SAES_CR_DATATYPE, _SAES_CR_DATATYPE_NONE);
+
+	switch (share_id)
+	{
+	case 0: /* No key sharing */
+		ctx->cr |= _FLD_PREP(_SAES_CR_KEYMOD, _SAES_CR_KEYMOD_WRAPPED);
+		break;
+	case 1: /* CRYP1 peripheral key sharing */
+		ctx->cr |= _FLD_PREP(_SAES_CR_KEYMOD, _SAES_CR_KEYMOD_SHARED);
+		ctx->cr |= _FLD_PREP(_SAES_CR_KSHAREID, _SAES_CR_KSHAREID_CRYP1);
+		break;
+	case 2: /* CRYP2 peripheral key sharing */
+		ctx->cr |= _FLD_PREP(_SAES_CR_KEYMOD, _SAES_CR_KEYMOD_SHARED);
+		ctx->cr |= _FLD_PREP(_SAES_CR_KSHAREID, _SAES_CR_KSHAREID_CRYP2);
+		break;
+	default:
+		return -ENODEV;
+	}
+
+	ctx->cr &= ~(_SAES_CR_MODE_MASK);
+
+	if (wrap) {
+		ctx->cr |= _FLD_PREP(_SAES_CR_MODE, _SAES_CR_MODE_ENC);
+	} else {
+		ctx->cr |= _FLD_PREP(_SAES_CR_MODE, _SAES_CR_MODE_KEYPREP);
+	}
+
+	return 0;
+}
+
+/**
+ * @brief Wraps or unwraps a secret key using ECB or CBC mode, with optional
+ * hardware key sharing support. More info in sk_cipher.h
+ *
+ * When key sharing is set the key is available to the shared peripheral until
+ * SAES is initialized again.
+ *
+ * @param dev Pointer to the cipher device instance.
+ * @param wrap True to wrap a key, false to unwrap.
+ * @param share_id Optional ID to enable hardware key sharing with a peripheral.
+ * @param data_in Input key data (cleartext for wrap, wrapped for unwrap).
+ * @param data_out Output buffer for wrapped key (used only when wrapping).
+ *
+ * @return 0 on success, or an error code on failure.
+ */
+int stm32_saes_wrap(const struct device *dev, bool wrap, int share_id,
+				 uint8_t *key_in, uint8_t *key_out)
+{
+	struct stm32_saes_data *drv_dat = dev_get_data(dev);
+	struct stm32_saes_context *ctx = &drv_dat->ctx;
+	int res = 0;
+	size_t key_size;
+	uint32_t i = U(0);
+
+	/* Only ECB and CBC are available */
+	if (!IS_CHAINING_MODE(ECB, ctx->cr) && !IS_CHAINING_MODE(CBC, ctx->cr))
+		return -EPERM;
+
+	/* Key size must be set with a ctx init, 192 bit unsupported yet. */
+	key_size = saes_get_keysize(ctx);
+	if (key_size != AES_KEYSIZE_128 && key_size != AES_KEYSIZE_256)
+		return -EINVAL;
+
+	res = stm32_saes_wrap_init(dev, wrap, share_id);
+	if(res)
+		return res;
+
+	/* Disable the SAES peripheral */
+	io_clrbits32(ctx->base + _SAES_CR, _SAES_CR_EN);
+
+	if (wait_for_not_busy(ctx->base))
+		goto out;
+
+	io_setbits32(ctx->base + _SAES_CR, ctx->cr);
+
+	/* TODO: CBC: IV could be set here in wrap mode */
+
+	if (wait_key_valid(ctx->base))
+		goto out;
+
+	if (!wrap) {
+		/* unwrap specific process */
+		io_setbits32(ctx->base + _SAES_CR, _SAES_CR_EN);
+
+		res = wait_computation_completed(ctx->base);
+		if (res)
+			goto out;
+
+		/* SAES is automatically disabled here */
+		clear_computation_completed(ctx->base);
+
+		io_clrsetbits32(ctx->base + _SAES_CR, _SAES_CR_MODE_MASK,
+				_FLD_PREP(_SAES_CR_MODE, _SAES_CR_MODE_DEC));
+
+		/* TODO: CBC: IV could be set here in unwrap mode */
+
+	}
+
+	/* TODO: CBC: not in refman but load IV at this moment could work... */
+
+	/* Activate SAES. */
+	io_setbits32(ctx->base + _SAES_CR, _SAES_CR_EN);
+
+	/* key_size is always one or two block size */
+	while (key_size - i >= AES_BLOCK_SIZE) {
+		write_block(ctx->base, key_in + i);
+
+		res = wait_computation_completed(ctx->base);
+		if (res)
+			goto out;
+
+		/* Never read DOUTR when unwraping, this causes an error */
+		if (wrap)
+			read_block(ctx->base, key_out + i);
+
+		clear_computation_completed(ctx->base);
+
+		/* Process next block */
+		i += AES_BLOCK_SIZE;
+	}
+
+out:
+	saes_end(dev, res);
+	return res;
+}
+
 /**
  * @brief Start an AES computation.
  * @param dev: SAES device
@@ -744,6 +887,25 @@ int stm32_saes_ctx_init(const struct device *dev, struct sk_cipher_config_t *con
 	return saes_start(dev);
 }
 
+int stm32_saes_reset(const struct device *dev)
+{
+	const struct stm32_saes_config *drv_cfg = dev_get_config(dev);
+	struct stm32_saes_data *drv_dat = dev_get_data(dev);
+	struct stm32_saes_context *ctx = &drv_dat->ctx;
+	int err;
+
+	err = stm32_saes_acquire_sem(drv_cfg);
+	if (err)
+		return err;
+
+	/* Reset SAES */
+	io_setbits32(ctx->base + _SAES_CR, _SAES_CR_IPRST);
+	udelay(SAES_RESET_DELAY_US);
+	io_clrbits32(ctx->base + _SAES_CR, _SAES_CR_IPRST);
+
+	stm32_saes_release_sem(drv_cfg);
+}
+
 static int __maybe_unused stm32_saes_probe(const struct device *dev)
 {
 	const struct stm32_saes_config *drv_cfg = dev_get_config(dev);
@@ -779,6 +941,8 @@ static int __maybe_unused stm32_saes_probe(const struct device *dev)
 static const struct sk_cipher_driver_api __maybe_unused stm32_saes_api = {
 	.ctx_init = stm32_saes_ctx_init,
 	.update = stm32_saes_update,
+	.wrap = stm32_saes_wrap,
+	.reset = stm32_saes_reset,
 };
 
 #define DT_CLOCK_CONTROL_GET_BY_IDX(node_id, idx)					\
