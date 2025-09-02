@@ -38,4 +38,6 @@ int32_t scmi_server_msg_process_thread(unsigned int channel_id, void *in_buf,
  */
 int32_t scmi_server_get_channel(unsigned int channel_id, int *handle);
 
+int32_t scmi_server_smt_provide_async_msg(unsigned int channel_id, void *out_buf, size_t *out_sz);
+
 #endif /* SCMI_SERVER_H */

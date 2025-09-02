@@ -32,6 +32,18 @@ int32_t scmi_server_get_channel(unsigned int channel_id, int *handle)
 	return TFM_SCMI_SUCCESS;
 }
 
+int32_t scmi_server_smt_provide_async_msg(unsigned int channel_id, void *out_buf, size_t *out_sz)
+{
+	int32_t res = TFM_SCMI_INVAL_PARAM;
+	int fwk_id = 0;
+
+	res = scmi_server_get_channel(channel_id, &fwk_id);
+	if (!res)
+		scmi_provide_mbx_msg(fwk_id, out_buf, out_sz);
+
+	return res;
+}
+
 int32_t scmi_server_smt_process_thread(unsigned int channel_id)
 {
 	int32_t res = TFM_SCMI_INVAL_PARAM;
