@@ -43,7 +43,7 @@ Services
 
 * Implementation ID: otp[5..7].
 
-* Entropy seed: otp[332..347].
+* Entropy seed is provided by RNG peripheral.
 
 * IAK: key => otp[348..355]. len, type and id are fixed.
 
