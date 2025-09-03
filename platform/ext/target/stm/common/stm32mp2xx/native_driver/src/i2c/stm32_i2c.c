@@ -16,6 +16,7 @@
 #include <inttypes.h>
 
 #include <device.h>
+#include <pm/device.h>
 #include <clk.h>
 #include <i2c.h>
 #include <pinctrl.h>
@@ -273,7 +274,7 @@ struct stm32_i2c_config {
 	const clk_subsys_t clk_subsys;
 	const struct pinctrl_dev_config *pcfg;
 	const struct reset_control rst_ctl;
-	uint32_t clk_frequency;
+	uint32_t bitrate;
 	uint32_t rise_time;
 	uint32_t fall_time;
 	bool analog_filter;
@@ -645,9 +646,6 @@ static int stm32_i2c_setup_timing(const struct device *dev, uint32_t *timing)
 		return 0;
 	}
 
-	drv_data->bitrate_saved = drv_data->bitrate;
-	drv_data->frequency_saved = clock_src;
-
 	do {
 		err = i2c_compute_timing(dev, clock_src, timing);
 		if (err) {
@@ -665,6 +663,10 @@ static int stm32_i2c_setup_timing(const struct device *dev, uint32_t *timing)
 		EMSG("Impossible to compute I2C timings\n");
 		return err;
 	}
+
+	drv_data->bitrate_saved = drv_data->bitrate;
+	drv_data->frequency_saved = clock_src;
+	drv_data->timing_saved = *timing;
 
 	DMSG("I2C Freq(%"PRIu32"Hz), Clk Source(%lu)\n",
 	     drv_data->bitrate, clock_src);
@@ -816,6 +818,7 @@ static int __maybe_unused stm32_i2c_init(const struct device *dev)
 {
 	const struct stm32_i2c_config *drv_cfg = dev_get_config(dev);
 	struct stm32_i2c_data *drv_data = dev_get_data(dev);
+	uint32_t i2c_config;
 	int err;
 
 	err = pinctrl_apply_state(drv_cfg->pcfg, PINCTRL_STATE_DEFAULT);
@@ -835,14 +838,37 @@ static int __maybe_unused stm32_i2c_init(const struct device *dev)
 		return err;
 
 	drv_data->digital_filter_coef = 0;
-	drv_data->bitrate = drv_cfg->clk_frequency;
 
-	err = stm32_i2c_setup(dev);
+	i2c_config = I2C_MODE_CONTROLLER | i2c_map_dt_bitrate(drv_cfg->bitrate);
+	err = stm32_i2c_configure(dev, i2c_config);
 
 	clk_disable(drv_data->clk);
 
 	return err;
 }
+
+#ifdef CONFIG_PM_DEVICE
+static int stm32_i2c_pm_action(const struct device *dev,
+			       enum pm_device_action action, uint32_t pm_hint)
+{
+	const struct stm32_i2c_config *drv_cfg = dev_get_config(dev);
+	struct stm32_i2c_data *drv_data = dev_get_data(dev);
+	int err = 0;
+
+	if (action == PM_DEVICE_ACTION_SUSPEND) {
+		err = pinctrl_apply_state_optional(drv_cfg->pcfg, PINCTRL_STATE_SLEEP);
+	} else {
+		err = pinctrl_apply_state(drv_cfg->pcfg, PINCTRL_STATE_DEFAULT);
+		if (err)
+			goto out;
+
+		err = stm32_i2c_configure(dev, drv_data->i2c_config);
+	}
+
+out:
+       return err;
+}
+#endif
 
 #define STM32_I2C_INIT(n)							\
 										\
@@ -854,7 +880,7 @@ static const struct stm32_i2c_config cfg_##n = {				\
 	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),		\
 	.rst_ctl = DT_INST_RESET_CONTROL_GET(n),				\
 	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(n),				\
-	.clk_frequency = DT_INST_PROP_OR(n, clock_frequency, 100000),           \
+	.bitrate = DT_INST_PROP_OR(n, clock_frequency, 100000),			\
 	.rise_time = DT_INST_PROP_OR(n, i2c_scl_rising_time_ns, 25),		\
 	.fall_time = DT_INST_PROP_OR(n, i2c_scl_falling_time_ns, 10),		\
 	.analog_filter = DT_INST_PROP_OR(n, i2c_analog_filter, false),		\
@@ -862,8 +888,11 @@ static const struct stm32_i2c_config cfg_##n = {				\
 										\
 static struct stm32_i2c_data data_##n = {};					\
 										\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_i2c_pm_action);				\
+										\
 DEVICE_DT_INST_DEFINE(n,							\
-		      &stm32_i2c_init, NULL,					\
+		      &stm32_i2c_init,						\
+		      PM_DEVICE_DT_INST_GET(n),					\
 		      &data_##n, &cfg_##n,					\
 		      CORE, 5,							\
 		      &stm32_i2c_api);
