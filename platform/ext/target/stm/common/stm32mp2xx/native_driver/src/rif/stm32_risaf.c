@@ -637,6 +637,8 @@ static int stm32_risaf_init(const struct device *dev)
 
 out:
 	clk_disable(clk);
+	if (err)
+		panic();
 
 	return err;
 }
