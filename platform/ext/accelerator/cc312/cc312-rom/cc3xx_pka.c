@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, The TrustedFirmware-M Contributors. All rights reserved.
+ * Copyright (c) 2023-2024, The TrustedFirmware-M Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  *
@@ -19,7 +19,12 @@
 
 #define PKA_WORD_SIZE  8
 #define PKA_WORD_BIT_SIZE  (PKA_WORD_SIZE * 8)
+
+#ifdef CC3XX_CONFIG_HW_VERSION_CC310
+#define PKA_SRAM_SIZE 0x1000 /* 4KiB */
+#else
 #define PKA_SRAM_SIZE 0x1800 /* 6KiB */
+#endif
 
 /* The hardware requires and extra word and byte to deal with carries etc
  * (which would then later be removed by a reduction operation). The TRM
@@ -161,6 +166,9 @@ static void pka_init_from_state(void)
 
     P_CC3XX->misc.pka_clk_enable = 1;
     P_CC3XX->pka.pka_sw_reset = 1;
+
+    /* Wait for SW reset to complete before proceeding */
+    while(!P_CC3XX->pka.pka_done) {}
 
     /* The TRM says that this register is a byte-size, but it is in fact a
      * bit-size.
@@ -1275,4 +1283,3 @@ void cc3xx_lowlevel_pka_reduce(cc3xx_pka_reg_id_t r0)
      */
     cc3xx_lowlevel_pka_and(r0, CC3XX_PKA_REG_N_MASK, r0);
 }
-

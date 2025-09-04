@@ -43,13 +43,19 @@ psa_status_t tfm_spm_agent_psa_call(psa_handle_t handle,
 
     status = spm_associate_call_params(p_connection, control, params->p_invecs, params->p_outvecs);
     if (status != PSA_SUCCESS) {
+        if (IS_STATIC_HANDLE(handle)) {
+            spm_free_connection(p_connection);
+        }
         return status;
     }
 
     /* Set Mailbox client data in connection handle for message reply. */
     p_connection->client_data = client_data_stateless;
 
-    return backend_messaging(p_connection);
+    status = backend_messaging(p_connection);
+
+    p_connection->status = TFM_HANDLE_STATUS_ACTIVE;
+    return status;
 }
 
 #if CONFIG_TFM_CONNECTION_BASED_SERVICE_API == 1
@@ -77,7 +83,10 @@ psa_handle_t tfm_spm_agent_psa_connect(uint32_t sid, uint32_t version,
     /* Set Mailbox client data in connection handle for message reply. */
     p_connection->client_data = client_data;
 
-    return backend_messaging(p_connection);
+    status = backend_messaging(p_connection);
+
+    p_connection->status = TFM_HANDLE_STATUS_ACTIVE;
+    return status;
 }
 
 psa_status_t tfm_spm_agent_psa_close(psa_handle_t handle,

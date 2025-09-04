@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2019-2021, Arm Limited. All rights reserved.
+ * SPDX-FileCopyrightText: Copyright The TrustedFirmware-M Contributors
+ * Copyright (C) 2025 Analog Devices, Inc.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  *
@@ -24,6 +25,10 @@
 
 #define psa_crypto_init \
         PSA_FUNCTION_NAME(psa_crypto_init)
+#define psa_can_do_hash \
+        PSA_FUNCTION_NAME(psa_can_do_hash)
+#define psa_can_do_cipher \
+        PSA_FUNCTION_NAME(psa_can_do_cipher)
 #define psa_key_derivation_get_capacity \
         PSA_FUNCTION_NAME(psa_key_derivation_get_capacity)
 #define psa_key_derivation_set_capacity \
@@ -162,5 +167,8 @@
         PSA_FUNCTION_NAME(psa_asymmetric_decrypt)
 #define psa_generate_key \
         PSA_FUNCTION_NAME(psa_generate_key)
-
+#define psa_key_derivation_verify_key \
+        PSA_FUNCTION_NAME(psa_key_derivation_verify_key)
+#define psa_key_derivation_verify_bytes \
+        PSA_FUNCTION_NAME(psa_key_derivation_verify_bytes)
 #endif /* CRYPTO_SPE_H */

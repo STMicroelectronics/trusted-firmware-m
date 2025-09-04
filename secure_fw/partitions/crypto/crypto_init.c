@@ -112,6 +112,11 @@ static psa_status_t tfm_crypto_get_scratch_owner(int32_t *id)
 
 static psa_status_t tfm_crypto_alloc_scratch(size_t requested_size, void **buf)
 {
+    /* Prevent ALIGN() from overflowing */
+    if (requested_size > SIZE_MAX - (TFM_CRYPTO_IOVEC_ALIGNMENT - 1)) {
+        return PSA_ERROR_INSUFFICIENT_MEMORY;
+    }
+
     /* Ensure alloc_index remains aligned to the required iovec alignment */
     requested_size = ALIGN(requested_size, TFM_CRYPTO_IOVEC_ALIGNMENT);
 
@@ -232,6 +237,16 @@ static psa_status_t tfm_crypto_call_srv(const psa_msg_t *msg)
     for (i = 0; i < out_len; i++) {
         if (out_vec[i].base != NULL) {
             psa_unmap_outvec(msg->handle, i, out_vec[i].len);
+        }
+    }
+
+    /*
+     * Unmap from the second element because the first element is read when
+     * parsing the message, hence it is never mapped.
+     */
+    for (i = 1; i < in_len; i++) {
+        if (in_vec[i].base != NULL) {
+            psa_unmap_invec(msg->handle, i);
         }
     }
 #else

@@ -12,6 +12,7 @@
 #include "thread.h"
 #include "tfm_arch.h"
 #include "utilities.h"
+#include "private/assert.h"
 #include "critical_section.h"
 
 /* Declaration of current thread pointer. */
@@ -84,6 +85,7 @@ static void insert_by_prior(struct thread_t **head, struct thread_t *node)
 void thrd_start(struct thread_t *p_thrd, thrd_fn_t fn, thrd_fn_t exit_fn, void *param)
 {
     SPM_ASSERT(p_thrd != NULL);
+    SPM_ASSERT(fn != NULL);
 
     /* Insert a new thread with priority */
     insert_by_prior(&LIST_HEAD, p_thrd);

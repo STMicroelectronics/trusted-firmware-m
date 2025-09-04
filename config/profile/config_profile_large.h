@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Arm Limited. All rights reserved.
+ * Copyright (c) 2022-2024, Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  *
@@ -31,6 +31,16 @@
 #endif
 
 /* Crypto Partition Configs */
+
+/*
+ * The service assumes that the client interface and internal
+ * interface towards the library that provides the PSA Crypto
+ * core component maintain the same ABI. This is not the default
+ * when using the Mbed TLS reference implementation
+ */
+#ifndef CRYPTO_LIBRARY_ABI_COMPAT
+#define CRYPTO_LIBRARY_ABI_COMPAT (0)
+#endif
 
 /*
  * Heap size for the crypto backend
@@ -98,6 +108,11 @@
 /* Use stored NV seed to provide entropy */
 #ifndef CRYPTO_NV_SEED
 #define CRYPTO_NV_SEED                         1
+#endif
+
+/* Use external RNG to provide entropy */
+#ifndef CRYPTO_EXT_RNG
+#define CRYPTO_EXT_RNG                         0
 #endif
 
 /*
@@ -185,7 +200,11 @@
 
 /* The stack size of the Internal Trusted Storage Secure Partition */
 #ifndef ITS_STACK_SIZE
+#ifndef ITS_ENCRYPTION
 #define ITS_STACK_SIZE                         0x720
+#else
+#define ITS_STACK_SIZE                         0xC00
+#endif
 #endif
 
 /* PS Partition Configs */

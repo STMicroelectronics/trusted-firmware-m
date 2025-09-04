@@ -1,0 +1,41 @@
+diff --git a/src/common/pico_sync/sem.c b/src/common/pico_sync/sem.c
+index 9044817..8fc4458 100644
+--- a/src/common/pico_sync/sem.c
++++ b/src/common/pico_sync/sem.c
+@@ -15,7 +15,7 @@ void sem_init(semaphore_t *sem, int16_t initial_permits, int16_t max_permits) {
+ }
+ 
+ int __time_critical_func(sem_available)(semaphore_t *sem) {
+-#ifdef __GNUC__
++#if defined(__GNUC__) && !defined(__STRICT_ANSI__)
+     return *(volatile typeof(sem->permits) *) &sem->permits;
+ #else
+     static_assert(sizeof(sem->permits) == 2, "");
+diff --git a/src/rp2_common/hardware_flash/flash.c b/src/rp2_common/hardware_flash/flash.c
+index adae078..8a0f857 100644
+--- a/src/rp2_common/hardware_flash/flash.c
++++ b/src/rp2_common/hardware_flash/flash.c
+@@ -299,7 +299,7 @@ static void flash_devinfo_update_field(uint16_t wdata, uint16_t mask) {
+     // Boot RAM does not support exclusives, but does support RWTYPE SET/CLR/XOR (with byte
+     // strobes). Can't use hw_write_masked because it performs a 32-bit write.
+     io_rw_16 *devinfo = flash_devinfo_ptr();
+-    *hw_xor_alias(devinfo) = (*devinfo ^ wdata) & mask;
++    *(io_rw_32 *)hw_xor_alias_untyped(devinfo) = (*devinfo ^ wdata) & mask;
+ }
+ 
+ // This is a RAM function because may be called during flash programming to enable save/restore of
+diff --git a/src/rp2_common/pico_multicore/multicore.c b/src/rp2_common/pico_multicore/multicore.c
+index f8f5660..725e313 100644
+--- a/src/rp2_common/pico_multicore/multicore.c
++++ b/src/rp2_common/pico_multicore/multicore.c
+@@ -101,8 +101,8 @@ int core1_wrapper(int (*entry)(void), void *stack_base) {
+ void multicore_reset_core1(void) {
+     // Use atomic aliases just in case core 1 is also manipulating some PSM state
+     io_rw_32 *power_off = (io_rw_32 *) (PSM_BASE + PSM_FRCE_OFF_OFFSET);
+-    io_rw_32 *power_off_set = hw_set_alias(power_off);
+-    io_rw_32 *power_off_clr = hw_clear_alias(power_off);
++    io_rw_32 *power_off_set = hw_set_alias_untyped(power_off);
++    io_rw_32 *power_off_clr = hw_clear_alias_untyped(power_off);
+ 
+     // Hard-reset core 1.
+     // Reading back confirms the core 1 reset is in the correct state, but also
