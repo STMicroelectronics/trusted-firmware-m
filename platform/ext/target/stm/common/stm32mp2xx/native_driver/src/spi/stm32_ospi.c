@@ -16,6 +16,8 @@
 #include <pinctrl.h>
 #include <reset.h>
 #include <syscon.h>
+#include <pm/device.h>
+#include <pm/pm.h>
 
 /* OCTOSPI registers */
 #define _OSPI_CR			0x00U
@@ -788,7 +790,7 @@ static void stm32_ospi_release_bus(const struct device *dev)
 	mmio_clrbits_32(drv_cfg->base + _OSPI_CR, _OSPI_CR_EN);
 }
 
-int stm32_omi_init(const struct device *dev)
+static __unused int stm32_omi_init(const struct device *dev)
 {
 	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
 	struct stm32_omi_data *drv_data = dev_get_data(dev);
@@ -824,6 +826,41 @@ int stm32_omi_init(const struct device *dev)
 
 	return 0;
 }
+
+#ifdef CONFIG_PM_DEVICE
+static __unused int stm32_omi_pm_action(const struct device *dev,
+					enum pm_device_action action,
+					uint32_t pm_hint)
+{
+	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	struct clk *clk;
+	int ret;
+
+	clk = clk_get(drv_cfg->clk_dev, drv_cfg->clk_subsys);
+	if (clk == NULL) {
+		return -ENODEV;
+	}
+
+	if (action == PM_DEVICE_ACTION_SUSPEND) {
+		clk_disable(clk);
+
+		return pinctrl_apply_state_optional(drv_cfg->pcfg,
+						    PINCTRL_STATE_SLEEP);
+	}
+
+	if (!PM_HINT_IS_STATE(pm_hint, CONTEXT)) {
+		ret = pinctrl_apply_state_optional(drv_cfg->pcfg,
+						   PINCTRL_STATE_DEFAULT);
+		if (ret != 0) {
+			return ret;
+		}
+
+		return clk_enable(clk);
+	}
+
+	return stm32_omi_init(dev);
+}
+#endif
 
 static __maybe_unused const struct spi_bus_ops stm32_ospi_bus_ops = {
 	.claim_bus = stm32_ospi_claim_bus,
@@ -861,8 +898,11 @@ static const struct stm32_omi_config stm32_omi_cfg_##n = {			\
 										\
 static struct stm32_omi_data stm32_omi_data_##n = {};				\
 										\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_omi_pm_action);				\
+										\
 DEVICE_DT_INST_DEFINE(n,							\
-		      &stm32_omi_init, NULL,					\
+		      &stm32_omi_init,						\
+		      PM_DEVICE_DT_INST_GET(n),					\
 		      &stm32_omi_data_##n, &stm32_omi_cfg_##n,			\
 		      CORE, 12,							\
 		      &stm32_ospi_bus_ops);
