@@ -12,6 +12,7 @@
 #include <debug.h>
 #include <spi_nor.h>
 #include <spi_mem.h>
+#include <pm/device.h>
 
 #define DT_DRV_COMPAT			jedec_spi_nor
 
@@ -252,7 +253,7 @@ static int spi_nor_write_sr_cr(const struct device *dev, uint8_t *sr_cr)
 	return 0;
 }
 
-static int spi_nor_quad_enable(const struct device *dev)
+static int spi_nor_default_quad_enable(const struct device *dev)
 {
 	uint8_t sr_cr[2];
 	int ret;
@@ -283,6 +284,29 @@ static int spi_nor_quad_enable(const struct device *dev)
 	}
 
 	return 0;
+}
+
+static int spi_nor_quad_enable(const struct device *dev, uint8_t id)
+{
+	struct spi_nor_data *dev_data = dev_get_data(dev);
+	int ret = 0;
+
+	if ((dev_data->read_op.data.buswidth == 4U) ||
+	    (dev_data->write_op.data.buswidth == 4U)) {
+		switch (id) {
+		case MACRONIX_ID:
+			INFO("Enable Macronix quad support\n");
+			ret = spi_nor_macronix_quad_enable(dev);
+			break;
+		case MICRON_ID:
+			break;
+		default:
+			ret = spi_nor_default_quad_enable(dev);
+			break;
+		}
+	}
+
+	return ret;
 }
 
 static int spi_nor_clean_bar(const struct device *dev)
@@ -637,27 +661,46 @@ static __maybe_unused int spi_nor_init(const struct device *dev)
 		}
 	}
 
-	if ((dev_data->read_op.data.buswidth == 4U) ||
-	    (dev_data->write_op.data.buswidth == 4U)) {
-		switch (id) {
-		case MACRONIX_ID:
-			INFO("Enable Macronix quad support\n");
-			ret = spi_nor_macronix_quad_enable(dev);
-			break;
-		case MICRON_ID:
-			break;
-		default:
-			ret = spi_nor_quad_enable(dev);
-			break;
-		}
+	ret = spi_nor_quad_enable(dev, id);
+	if (ret != 0) {
+		return ret;
 	}
 
-	if ((ret == 0) && dev_cfg->use_bank) {
+	if (dev_cfg->use_bank) {
 		ret = spi_nor_read_bar(dev);
 	}
 
 	return ret;
 }
+
+#ifdef CONFIG_PM_DEVICE
+static __maybe_unused int spi_nor_pm_action(const struct device *dev,
+					    enum pm_device_action action,
+					    uint32_t pm_hint)
+{
+	const struct spi_nor_config *dev_cfg = dev_get_config(dev);
+	int ret = 0;
+	uint8_t id;
+
+	if (action == PM_DEVICE_ACTION_RESUME) {
+		ret = spi_nor_read_id(dev, &id);
+		if (ret != 0) {
+			return ret;
+		}
+
+		ret = spi_nor_quad_enable(dev, id);
+		if (ret != 0) {
+			return ret;
+		}
+
+		if (dev_cfg->use_bank) {
+			ret = spi_nor_read_bar(dev);
+		}
+	}
+
+	return ret;
+}
+#endif
 
 static __maybe_unused const struct spi_nor_ops spi_nor_ops = {
 	.read = spi_nor_read,
@@ -700,8 +743,11 @@ static const struct spi_nor_config spi_nor_cfg_##n = {					\
 											\
 static struct spi_nor_data spi_nor_data_##n = {};					\
 											\
+PM_DEVICE_DT_INST_DEFINE(n, spi_nor_pm_action);						\
+											\
 DEVICE_DT_INST_DEFINE(n,								\
-		      &spi_nor_init, NULL,						\
+		      &spi_nor_init,							\
+		      PM_DEVICE_DT_INST_GET(n),						\
 		      &spi_nor_data_##n, &spi_nor_cfg_##n,				\
 		      CORE, 13,								\
 		      &spi_nor_ops);
