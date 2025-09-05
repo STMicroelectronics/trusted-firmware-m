@@ -52,11 +52,6 @@ target_link_libraries(tfm_psa_rot_partition_pm
 
 set(TFM_LP_FW "${STM32MP2_LP_OUT_DIR}/${STM32MP2_LP_OUT_BIN}.o")
 
-add_custom_target(tfm_lp_fw ALL
-    DEPENDS ${STM32MP2_LP_TARGET}
-    DEPENDS ${TFM_LP_FW}
-)
-
 add_custom_command(
     OUTPUT ${TFM_LP_FW}
     DEPENDS $<TARGET_FILE_DIR:${STM32MP2_LP_TARGET}>/${STM32MP2_LP_OUT_BIN}
@@ -66,7 +61,12 @@ add_custom_command(
     COMMENT "generate low power firmware object included in tfm (${STM32MP2_LP_OUT_BIN}.o)"
 )
 
-add_dependencies(tfm_s_scatter tfm_lp_fw)
+add_custom_target(tfm_lp_fw_gen ALL
+    DEPENDS ${TFM_LP_FW}
+)
+
+add_dependencies(tfm_lp_fw_gen ${STM32MP2_LP_TARGET}_bin)
+add_dependencies(tfm_s_scatter tfm_lp_fw_gen)
 
 ############################ Partition Defs ####################################
 
