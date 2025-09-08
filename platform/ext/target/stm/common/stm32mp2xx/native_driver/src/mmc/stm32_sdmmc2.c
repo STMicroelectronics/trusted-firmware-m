@@ -19,6 +19,8 @@
 #include <mmc.h>
 #include <regulator.h>
 #include <stm32_dcache.h>
+#include <pm/device.h>
+#include <pm/pm.h>
 
 /* Registers offsets */
 #define _SDMMC_POWER				0x00U
@@ -142,9 +144,11 @@ struct stm32_sdmmc2_config {
 
 struct stm32_sdmmc2_data {
 	struct mmc_dev_info dev_info;
+	struct clk *clk;
 	uint32_t pin_ckin;
 	uint32_t negedge;
 	uint32_t dirpol;
+	unsigned int width;
 	bool next_cmd_is_acmd;
 };
 
@@ -154,7 +158,6 @@ static int stm32_sdmmc2_init(const struct device *dev)
 {
 	const struct stm32_sdmmc2_config *drv_cfg = dev_get_config(dev);
 	struct stm32_sdmmc2_data *drv_data = dev_get_data(dev);
-	struct clk *clk = clk_get(drv_cfg->clk_dev, drv_cfg->clk_subsys);
 	uint32_t clock_div;
 	uint32_t freq = _STM32MP_MMC_INIT_FREQ;
 	int ret;
@@ -203,7 +206,7 @@ static int stm32_sdmmc2_init(const struct device *dev)
 		freq = MIN(drv_cfg->max_freq, freq);
 	}
 
-	clock_div = div_round_up(clk_get_rate(clk), freq * 2U);
+	clock_div = div_round_up(clk_get_rate(drv_data->clk), freq * 2U);
 	mmio_write_32(drv_cfg->base + _SDMMC_CLKCR, _SDMMC_CLKCR_HWFC_EN |
 		      clock_div | drv_data->negedge | drv_data->pin_ckin);
 	mmio_write_32(drv_cfg->base + _SDMMC_POWER,
@@ -603,17 +606,15 @@ static struct mmc_dev_info *stm32_sdmmc2_get_dev_info(const struct device *dev)
 	return &drv_data->dev_info;
 }
 
-static int stm32_sdmmc2_mmc_init(const struct device *dev)
+static __unused int stm32_sdmmc2_mmc_init(const struct device *dev)
 {
 	const struct stm32_sdmmc2_config *drv_cfg = dev_get_config(dev);
 	struct stm32_sdmmc2_data *drv_data = dev_get_data(dev);
 	struct mmc_dev_info *dev_info = &drv_data->dev_info;
-	struct clk *clk;
-	unsigned int width;
 	int ret;
 
-	clk = clk_get(drv_cfg->clk_dev, drv_cfg->clk_subsys);
-	if (clk == NULL) {
+	drv_data->clk = clk_get(drv_cfg->clk_dev, drv_cfg->clk_subsys);
+	if (drv_data->clk == NULL) {
 		return -ENODEV;
 	}
 
@@ -643,32 +644,67 @@ static int stm32_sdmmc2_mmc_init(const struct device *dev)
 
 	switch (drv_cfg->bus_width) {
 	case 1:
-		width = MMC_BUS_WIDTH_1;
+		drv_data->width = MMC_BUS_WIDTH_1;
 		break;
 	case 4:
-		width = MMC_BUS_WIDTH_4;
+		drv_data->width = MMC_BUS_WIDTH_4;
 		break;
 	case 8:
-		width = MMC_BUS_WIDTH_8;
+		drv_data->width = MMC_BUS_WIDTH_8;
 		break;
 	default:
 		return -EINVAL;
 	}
 
-	ret = clk_enable(clk);
+	ret = clk_enable(drv_data->clk);
 	if (ret != 0) {
 		return ret;
 	}
 
-	ret = mmc_init(dev, clk_get_rate(clk), width);
+	ret = mmc_init(dev, clk_get_rate(drv_data->clk), drv_data->width);
 	if (ret != 0) {
-		clk_disable(clk);
+		clk_disable(drv_data->clk);
 	}
 
 	return ret;
 }
 
-static const struct mmc_ops stm32_sdmmc2_mmc_ops = {
+#ifdef CONFIG_PM_DEVICE
+static __unused int stm32_sdmmc_pm_action(const struct device *dev,
+					  enum pm_device_action action,
+					  uint32_t pm_hint)
+{
+	const struct stm32_sdmmc2_config *drv_cfg = dev_get_config(dev);
+	struct stm32_sdmmc2_data *drv_data = dev_get_data(dev);
+	int ret;
+
+	if (action == PM_DEVICE_ACTION_SUSPEND) {
+		clk_disable(drv_data->clk);
+
+		return pinctrl_apply_state_optional(drv_cfg->pcfg,
+						    PINCTRL_STATE_SLEEP);
+	}
+
+	ret = pinctrl_apply_state_optional(drv_cfg->pcfg,
+					   PINCTRL_STATE_DEFAULT);
+	if (ret != 0) {
+		return ret;
+	}
+
+	ret = clk_enable(drv_data->clk);
+	if (ret != 0) {
+		return ret;
+	}
+
+	if (!PM_HINT_IS_STATE(pm_hint, CONTEXT)) {
+		return 0;
+	}
+
+	return mmc_init(dev, clk_get_rate(drv_data->clk), drv_data->width);
+}
+#endif
+
+static __maybe_unused const struct mmc_ops stm32_sdmmc2_mmc_ops = {
 	.init = stm32_sdmmc2_init,
 	.send_cmd = stm32_sdmmc2_send_cmd,
 	.set_ios = stm32_sdmmc2_set_ios,
@@ -700,8 +736,11 @@ static const struct stm32_sdmmc2_config stm32_sdmmc2_mmc_cfg_##n = {		\
 										\
 static struct stm32_sdmmc2_data stm32_sdmmc2_mmc_data_##n = {};			\
 										\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_sdmmc_pm_action);				\
+										\
 DEVICE_DT_INST_DEFINE(n,							\
-		      &stm32_sdmmc2_mmc_init, NULL,				\
+		      &stm32_sdmmc2_mmc_init,					\
+		      PM_DEVICE_DT_INST_GET(n),					\
 		      &stm32_sdmmc2_mmc_data_##n, &stm32_sdmmc2_mmc_cfg_##n,	\
 		      CORE, 12,							\
 		      &stm32_sdmmc2_mmc_ops);
