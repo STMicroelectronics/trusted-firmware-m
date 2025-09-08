@@ -463,6 +463,7 @@ install(FILES
     ${STM_FAMILY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c
     ${STM_FAMILY_DIR}/secure/services/src/tfm_ioctl_wdt_api.c
     ${STM_FAMILY_DIR}/secure/services/src/tfm_pm_api.c
+    ${STM_FAMILY_DIR}/secure/services/src/tfm_stl_api.c
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx/secure/services/src
 )
 

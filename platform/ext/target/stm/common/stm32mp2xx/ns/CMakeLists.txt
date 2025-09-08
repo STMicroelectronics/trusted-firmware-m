@@ -89,6 +89,7 @@ target_sources(platform_ns
         $<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
         $<$<BOOL:${TFM_PARTITION_PM}>:${STM_FAMILY_DIR}/secure/services/src/tfm_pm_api.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/secure/services/src/tfm_scmi_api.c>
+        $<$<BOOL:${TFM_PARTITION_STL}>:${STM_FAMILY_DIR}/secure/services/src/tfm_stl_api.c>
 )
 
 target_compile_definitions(platform_ns
@@ -123,4 +124,5 @@ target_sources(tfm_ns
         ${STM_FAMILY_DIR}/native_driver/src/uart/stm32_uart.c
         $<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/secure/services/src/tfm_scmi_api.c>
+        $<$<BOOL:${TFM_PARTITION_STL}>:${STM_FAMILY_DIR}/secure/services/src/tfm_stl_api.c>
 )

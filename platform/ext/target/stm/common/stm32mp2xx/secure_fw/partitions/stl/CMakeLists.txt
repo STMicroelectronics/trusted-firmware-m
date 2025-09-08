@@ -71,6 +71,12 @@ target_link_libraries(tfm_partitions
         tfm_psa_rot_partition_stl
 )
 
+############################### install ##############################
+install(FILES
+    ${STM32CUBE_STL_PATH}/include/stl_user_api.h
+    DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx/secure/services/include
+)
+
 ###############################  #####################################
 
 cmake_policy(SET CMP0079 NEW)
