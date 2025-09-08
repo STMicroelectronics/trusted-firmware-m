@@ -22,6 +22,9 @@
 
 #include <stm32_rif.h>
 
+#include <pm/device.h>
+#include <pm/pm.h>
+
 /* FMC offset register */
 #define _FMC_CFGR			U(0x020)
 #define _FMC_SECCFGR			U(0x300)
@@ -144,6 +147,37 @@ err:
 	return err;
 }
 
+#ifdef CONFIG_PM_DEVICE
+static __unused int stm32_fmc_pm_action(const struct device *dev,
+					enum pm_device_action action,
+					uint32_t pm_hint)
+{
+	const struct stm32_fmc_config *cfg = dev_get_config(dev);
+
+	if (action == PM_DEVICE_ACTION_SUSPEND) {
+		/* Check controller 0 access */
+		if (!is_fmc_controller_secure(dev, 0)) {
+			return 0;
+		}
+
+		return pinctrl_apply_state_optional(cfg->pctrl_cfg,
+						    PINCTRL_STATE_SLEEP);
+	}
+
+	if (!PM_HINT_IS_STATE(pm_hint, CONTEXT)) {
+		/* Check controller 0 access */
+		if (!is_fmc_controller_secure(dev, 0)) {
+			return 0;
+		}
+
+		return pinctrl_apply_state_optional(cfg->pctrl_cfg,
+						    PINCTRL_STATE_DEFAULT);
+	}
+
+	return stm32_fmc_init(dev);
+}
+#endif
+
 #define STM32_FMC_INIT(n)								\
 											\
 static __unused const struct rif_base rbase_##n = {					\
@@ -168,7 +202,10 @@ static const struct stm32_fmc_config fmc_cfg_##n = {					\
 											\
 static struct stm32_fmc_data fmc_data_##n = {};						\
 											\
-DEVICE_DT_INST_DEFINE(n, &stm32_fmc_init, NULL,						\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_fmc_pm_action);					\
+											\
+DEVICE_DT_INST_DEFINE(n, &stm32_fmc_init,						\
+		      PM_DEVICE_DT_INST_GET(n),						\
 		      &fmc_data_##n, &fmc_cfg_##n,					\
 		      CORE, 10, NULL);
 
