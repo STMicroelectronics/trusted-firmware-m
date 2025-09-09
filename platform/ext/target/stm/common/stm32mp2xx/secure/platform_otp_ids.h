@@ -21,6 +21,8 @@ enum tfm_otp_element_id_t {
     PLAT_OTP_ID_IAK_TYPE,
     PLAT_OTP_ID_IAK_ID,
 
+    PLAT_OTP_ID_FIP_EDMK,
+
     PLAT_OTP_ID_BOOT_SEED,
     PLAT_OTP_ID_LCS,
     PLAT_OTP_ID_IMPLEMENTATION_ID,

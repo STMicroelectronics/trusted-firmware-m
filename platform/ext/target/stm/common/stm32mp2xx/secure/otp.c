@@ -144,6 +144,9 @@ static const struct device *nvmem_dev_from_otp_id(enum tfm_otp_element_id_t id)
 	case PLAT_OTP_ID_SECURE_DEBUG_PK:
 		dev = DT_INST_DEV_NVMEM(0, adac_rotpkh);
 		break;
+	case PLAT_OTP_ID_FIP_EDMK:
+		dev = DT_INST_DEV_NVMEM(0, fip_edmk);
+		break;
 	default:
 		dev = NULL;
 		break;
