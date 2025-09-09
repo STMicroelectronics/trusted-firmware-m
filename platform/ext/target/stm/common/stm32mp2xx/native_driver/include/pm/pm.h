@@ -19,7 +19,7 @@
  * PM_HINT_CLOCK_STATE - When set clock shall be suspended/restored
  * PM_HINT_POWER_STATE - When set device power shall be suspended/restored
  * PM_HINT_IO_STATE - When set IO pins shall be suspended/restored
- * PM_HINT_CONTEXT_STATE - When set the full context be suspended/restored
+ * PM_HINT_CONTEXT_STATE - When set the full context shall be suspended/restored
  * PM_HINT_PLATFORM_STATE_MASK - Bit mask reserved for platform specific hints
  * PM_HINT_PLATFORM_STATE_SHIFT - LSBit position of platform specific hints mask
  */
@@ -29,6 +29,12 @@
 #define PM_HINT_CONTEXT_STATE		BIT(3)
 #define PM_HINT_PLATFORM_STATE_MASK	GENMASK_32(31, 16)
 #define PM_HINT_PLATFORM_STATE_SHIFT	U(16)
+
+#define PM_HINT_STATE(x)		((x) & ~PM_HINT_PLATFORM_STATE_MASK)
+#define PM_HINT_PLATFORM_STATE(x) \
+	(((x) & PM_HINT_PLATFORM_STATE_MASK) >> PM_HINT_PLATFORM_STATE_SHIFT)
+
+#define PM_HINT_IS_STATE(x, name) (!!((x) & PM_HINT_ ## name ## _STATE))
 
 /**
  * @brief suspend the system in hint state
