@@ -13,6 +13,7 @@
 
 #include <cpus.h>
 #include <wdt.h>
+#include <stm32_keyshare.h>
 
 #if defined(STM32MP21xxxx)
 #include <dt-bindings/reset/st,stm32mp21-rcc.h>
@@ -48,6 +49,12 @@ enum tfm_platform_err_t tfm_platform_hal_ioctl(tfm_platform_ioctl_req_t request,
 #ifdef TFM_PLATFORM_WDT_API
 	case TFM_PLATFORM_IOCTL_WDT_SERVICE:
 		return watchdog_service(in_vec, out_vec);
+#endif
+#ifdef STM32_HW_KEYSHARE
+	case TFM_PLATFORM_IOCTL_KEYSHARE_START:
+		return stm32_keyshare_enable(in_vec, out_vec);
+	case TFM_PLATFORM_IOCTL_KEYSHARE_STOP:
+		return stm32_keyshare_disable(in_vec, out_vec);
 #endif
 	default:
 		return TFM_PLATFORM_ERR_NOT_SUPPORTED;

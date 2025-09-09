@@ -43,6 +43,7 @@ target_compile_definitions(tfm_config
         $<$<BOOL:${STM32_CACHE_ENABLED}>:STM32_CACHE_ENABLED>
         $<$<BOOL:${TFM_PLATFORM_WDT_API}>:TFM_PLATFORM_WDT_API>
         $<$<BOOL:${TFM_PLATFORM_CPU_API}>:TFM_PLATFORM_CPU_API>
+        $<$<BOOL:${STM32_HW_KEYSHARE}>:STM32_HW_KEYSHARE>
 )
 
 target_include_directories(tfm_config
@@ -153,6 +154,7 @@ target_sources(platform_s
 		$<$<BOOL:${STM32_CACHE_ENABLED}>:${STM_FAMILY_DIR}/native_driver/src/core/stm32_dcache.c>
 		${STM_FAMILY_DIR}/native_driver/src/i2c/stm32_i2c.c
 		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${STM_FAMILY_DIR}/secure/services/src/tfm_platform_system.c>
+		$<$<BOOL:${STM32_HW_KEYSHARE}>:${STM_FAMILY_DIR}/secure/services/src/stm32_keyshare.c>
 		$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${STM_FAMILY_DIR}/secure/nv_counters.c>
 		$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_ATTEST_HAL}>>:${STM_FAMILY_DIR}/secure/attest_hal.c>
 		$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_OTP}>>:${STM_FAMILY_DIR}/secure/otp.c>
