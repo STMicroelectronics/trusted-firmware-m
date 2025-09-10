@@ -13,15 +13,16 @@
 
 #include <debug.h>
 
-#include "lib/delay.h"
+#include <lib/delay.h>
 #include <lib/mmio.h>
 #include <lib/mmiopoll.h>
-#include "lib/timeout.h"
+#include <lib/timeout.h>
 #include <lib/utils_def.h>
 #include <cmsis.h>
 #include <clk.h>
 
 #include <entropy.h>
+#include <firewall.h>
 #include <string.h>
 #include <strings.h>
 
@@ -216,6 +217,8 @@ struct stm32_risaf_config {
 	const int ndt_regions;
 	const struct device *entropy_dev;
 	const uint32_t st_mce_keysize;
+	const struct firewall_spec *firewall_ctrls;
+	const int n_firewall_ctrls;
 };
 
 struct stm32_risaf_data {
@@ -585,6 +588,7 @@ static int stm32_risaf_init(const struct device *dev)
 {
 	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
 	struct stm32_risaf_data *drv_data = dev_get_data(dev);
+	struct firewall_spec *firewall;
 	struct clk *clk;
 	int i, err;
 
@@ -592,9 +596,18 @@ static int stm32_risaf_init(const struct device *dev)
 	if (!clk)
 		return -ENODEV;
 
+	/* set firewall access right needed to setup risaf ip block */
+	for_each_firewall(drv_cfg->firewall_ctrls, firewall, drv_cfg->n_firewall_ctrls, i) {
+		err = firewall_set_configuration(firewall);
+		if (err != 0) {
+			EMSG("[%s] fail to set firewall conf %d\n", dev->name, i);
+			goto out_access;
+		}
+	}
+
 	err = clk_enable(clk);
 	if (err)
-		return err;
+		goto out_access;
 
 	stm32_risaf_get_hwconfig(dev);
 
@@ -639,6 +652,14 @@ out:
 	clk_disable(clk);
 	if (err)
 		panic();
+
+out_access:
+	/* release firewall access right */
+	for_each_firewall(drv_cfg->firewall_ctrls, firewall, drv_cfg->n_firewall_ctrls, i) {
+		err = firewall_release_configuration(firewall);
+		if (err)
+			EMSG("[%s] release firewall[%d] err:%d\n", dev->name, i, err);
+	}
 
 	return err;
 }
@@ -720,12 +741,16 @@ static __unused const struct stm32_risaf_variant stm32mp21_enc_variant = {
 											\
 _INST_RISAF_REGIONS_DEFINE(n)								\
 											\
+DT_INST_ACCESS_CTRLS_DEFINE(n);								\
+											\
 static const struct stm32_risaf_config stm32_risaf_cfg_##name####n = {			\
 	.base = DT_INST_REG_ADDR(n),							\
 	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),				\
 	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),			\
 	.dt_regions = _RISAF_REGIONS_GET(DT_DRV_INST(n)),				\
 	.ndt_regions = _RISAF_REGION_NUM(DT_DRV_INST(n)),				\
+	.firewall_ctrls = DT_INST_ACCESS_CTRLS_GET(n),					\
+	.n_firewall_ctrls = DT_INST_ACCESS_CTRLS_NUM(n),				\
 	.entropy_dev = DEVICE_DT_GET_OR_NULL(DT_INST_ENTROPY_CTLR(n)),			\
 	.st_mce_keysize = DT_INST_PROP_OR(n, st_mce_keysize_bits,			\
 					  RISAF_KEY_128BITS)				\
