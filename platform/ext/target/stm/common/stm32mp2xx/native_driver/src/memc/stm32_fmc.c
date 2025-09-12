@@ -80,8 +80,9 @@ static int stm32_fmc_setup(const struct device *dev)
 	 * semwl=mycid and semaphore mode and filtering enabled
 	 */
 
-	err = pinctrl_apply_state(cfg->pctrl_cfg, PINCTRL_STATE_DEFAULT);
-	if ((err != 0) && (err != -ENOENT))
+	err = pinctrl_apply_state_optional(cfg->pctrl_cfg,
+					   PINCTRL_STATE_DEFAULT);
+	if (err != 0)
 		return err;
 
 	if (cfg->cclken) {

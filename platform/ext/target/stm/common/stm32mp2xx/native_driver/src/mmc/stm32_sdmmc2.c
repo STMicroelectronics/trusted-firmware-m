@@ -617,8 +617,9 @@ static int stm32_sdmmc2_mmc_init(const struct device *dev)
 		return -ENODEV;
 	}
 
-	ret = pinctrl_apply_state(drv_cfg->pcfg, PINCTRL_STATE_DEFAULT);
-	if ((ret != 0) && (ret != -ENOENT)) {
+	ret = pinctrl_apply_state_optional(drv_cfg->pcfg,
+					   PINCTRL_STATE_DEFAULT);
+	if (ret != 0) {
 		return ret;
 	}
 
