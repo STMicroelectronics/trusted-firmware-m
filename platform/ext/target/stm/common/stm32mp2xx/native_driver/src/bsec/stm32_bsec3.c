@@ -537,6 +537,13 @@ int stm32_bsec_increment_hdpl(void)
 	return 0;
 }
 
+bool stm32_bsec_is_huk_ready(void)
+{
+	struct stm32_bsec_data *drv_data = dev_get_data(bsec_dev);
+
+	return drv_data->hw_key_valid;
+}
+
 static inline int _otp_is_valid(uint32_t status)
 {
 	return !(status & (STATUS_SECURE | LOCK_ERROR));

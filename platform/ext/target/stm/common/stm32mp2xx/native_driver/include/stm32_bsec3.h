@@ -78,6 +78,7 @@
 int stm32_bsec_write_debug_conf(uint32_t perm_mask);
 void stm32_bsec_restore_cortexa_debug_conf(void);
 int stm32_bsec_increment_hdpl(void);
+bool stm32_bsec_is_huk_ready(void);
 
 /*
  * STM32 driver Interface
