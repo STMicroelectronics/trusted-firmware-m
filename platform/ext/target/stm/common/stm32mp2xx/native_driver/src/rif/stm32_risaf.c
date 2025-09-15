@@ -21,6 +21,7 @@
 #include <cmsis.h>
 #include <clk.h>
 
+#include <crypto_hw.h>
 #include <entropy.h>
 #include <firewall.h>
 #include <string.h>
@@ -551,6 +552,12 @@ static __unused int stm32_risaf_encryption_init(const struct device *dev)
 	err = entropy_get_entropy(drv_cfg->entropy_dev, key, variant->max_key_sz / BITS_PER_BYTES);
 	if (err) {
 		EMSG("[%s] Could not get specific entropy\n", dev->name);
+		goto out;
+	}
+
+	if (variant->mce_encryption_fn && !crypto_hw_is_key_ready(TFM_PLAT_HUK)) {
+		EMSG("[%s] HUK is not ready\n", dev->name);
+		err = -ENOENT;
 		goto out;
 	}
 
