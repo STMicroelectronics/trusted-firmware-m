@@ -10,6 +10,9 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
+
+#include "tfm_plat_hw_keys.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,6 +31,15 @@ int crypto_hw_accelerator_init(void);
  * \return 0 on success, non-zero otherwise
  */
 int crypto_hw_accelerator_finish(void);
+
+/**
+ * \brief Check that crypto key is ready
+ *
+ * \param[in] key  Key to check if it's ready
+ *
+ * \return True if the key is ready, False otherwise
+ */
+bool crypto_hw_is_key_ready(enum tfm_plat_hw_key_t key);
 
 /*
  * \brief  This function performs key derivation

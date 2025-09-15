@@ -7,10 +7,12 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 #include <stm32_bsec3.h>
 #include "crypto_hw.h"
 #include "entropy.h"
 #include "stm32mp2.h"
+#include "tfm_plat_hw_keys.h"
 
 #define ENTROPY_SEED_SIZE	128 /* MBEDTLS_ENTROPY_MAX_GATHER */
 
@@ -73,6 +75,21 @@ int crypto_hw_accelerator_init(void)
 int crypto_hw_accelerator_finish(void)
 {
 	return 0;
+}
+
+/*
+ * \brief Check that crypto key is ready
+ */
+bool crypto_hw_is_key_ready(enum tfm_plat_hw_key_t key)
+{
+	switch (key) {
+	case TFM_PLAT_HUK:
+		return stm32_bsec_is_huk_ready();
+	case TFM_PLAT_BHK:
+		return false;
+	default:
+		return false;
+	}
 }
 
 /**
