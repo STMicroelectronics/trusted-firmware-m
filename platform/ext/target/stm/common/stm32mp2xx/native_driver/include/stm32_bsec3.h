@@ -60,9 +60,9 @@
 #define BSEC_MAGIC			0x42534543
 
 /* state bitfield */
-#define BSEC_STATE_SEC_OPEN		U(0x0)
-#define BSEC_STATE_SEC_CLOSED		U(0x1)
-#define BSEC_STATE_INVALID		U(0x3)
+#define BSEC_STATE_SEC_CLOSED		U(0x0)
+#define BSEC_STATE_SEC_OPEN		U(0x1)
+#define BSEC_STATE_INVALID		U(0x2)
 #define BSEC_STATE_MASK			GENMASK_32(1, 0)
 #define BSEC_HARDWARE_KEY		BIT(8)
 
