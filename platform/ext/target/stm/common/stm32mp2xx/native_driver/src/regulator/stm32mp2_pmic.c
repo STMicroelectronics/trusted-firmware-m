@@ -497,19 +497,17 @@ struct regu_stpmic2_config {
 	struct regulator_common_config common;
 	struct i2c_dt_spec i2c;
 	const struct regu_stpmic2_desc desc;
-	int32_t	st_bypass_uv;
-	bool  st_mask_reset;
-};
-
-struct regu_stpmic2_data {
-	struct regulator_common_data data;
 	bool st_mask_reset;
 	bool st_pwrctrl;
 	bool st_pwrctrl_reset;
 	bool st_sink_source;
 	bool st_alternate_source;
 	int32_t st_pwrctrl_sel;
-	int32_t	st_bypass_uv;
+	int32_t st_bypass_uv;
+};
+
+struct regu_stpmic2_data {
+	struct regulator_common_data data;
 };
 
 static int stpmic2_update_en_crs(const struct device *dev,
@@ -533,7 +531,6 @@ static int stpmic2_set_prop(const struct device *dev,
 {
 	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
-	struct regu_stpmic2_data *drv_data = dev_get_data(dev);
 	int err = 0;
 
 	switch (prop) {
@@ -609,7 +606,7 @@ static int stpmic2_set_prop(const struct device *dev,
 		return i2c_reg_update_byte_dt(&drv_cfg->i2c,
 					      regu_desc->pwrctrl_cr,
 					      PWRCTRL_SEL_MASK,
-					      _FLD_PREP(PWRCTRL_SEL, drv_data->st_pwrctrl_sel));
+					      _FLD_PREP(PWRCTRL_SEL, drv_cfg->st_pwrctrl_sel));
 	case STPMIC2_MAIN_PREG_MODE:
 		if ((!regu_desc->has_preg) || (arg > 2))
 			return -ENOTSUP;
@@ -673,14 +670,13 @@ static int stpmic2_reg_set_voltage(const struct device *dev, int32_t min_uv,
 {
 	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
-	struct regu_stpmic2_data *drv_data = dev_get_data(dev);
 	uint8_t reg_idx;
 	int32_t val_uv;
 	uint16_t idx = 0;
 	int err;
 
 	/* if st_bypass_uv value is requested, set bypass and return */
-	if (drv_data->st_bypass_uv && min_uv == max_uv && max_uv == drv_data->st_bypass_uv)
+	if (drv_cfg->st_bypass_uv && min_uv == max_uv && max_uv == drv_cfg->st_bypass_uv)
 		return stpmic2_set_prop(dev, STPMIC2_BYPASS, 1);
 
 	err = linear_range_group_get_win_index(regu_desc->ranges,
@@ -702,7 +698,7 @@ static int stpmic2_reg_set_voltage(const struct device *dev, int32_t min_uv,
 		return err;
 
 	/* maybe clear bypass after set voltage */
-	if (drv_data->st_bypass_uv) {
+	if (drv_cfg->st_bypass_uv) {
 		err = stpmic2_set_prop(dev, STPMIC2_BYPASS, 0);
 		if (err)
 			return err;
@@ -715,11 +711,10 @@ static int stpmic2_reg_get_voltage(const struct device *dev, int32_t *volt_uv)
 {
 	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
-	struct regu_stpmic2_data *drv_data = dev_get_data(dev);
 	uint8_t val;
 	int err;
 
-	if (drv_data->st_bypass_uv != 0 && regu_desc->has_bypass) {
+	if (drv_cfg->st_bypass_uv != 0 && regu_desc->has_bypass) {
 
 		err = i2c_reg_read_byte_dt(&drv_cfg->i2c,
 					   regu_desc->en_cr, &val);
@@ -727,7 +722,7 @@ static int stpmic2_reg_get_voltage(const struct device *dev, int32_t *volt_uv)
 			return err;
 
 		if (val & LDO_BYPASS) {
-			*volt_uv = drv_data->st_bypass_uv;
+			*volt_uv = drv_cfg->st_bypass_uv;
 			return 0;
 		}
 	}
@@ -781,25 +776,25 @@ static int stpmic2_reg_show(const struct device *dev)
 
 static int stpmic2_parse_prop(const struct device *dev)
 {
-	struct regu_stpmic2_data *drv_data = dev_get_data(dev);
+	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	int err = 0;
 
-	if (drv_data->st_mask_reset)
+	if (drv_cfg->st_mask_reset)
 		err |= stpmic2_set_prop(dev, STPMIC2_MASK_RESET, 0);
 
-	if (drv_data->st_pwrctrl_sel)
+	if (drv_cfg->st_pwrctrl_sel)
 		err |= stpmic2_set_prop(dev, STPMIC2_PWRCTRL_SEL, 0);
 
-	if (drv_data->st_pwrctrl_reset)
+	if (drv_cfg->st_pwrctrl_reset)
 		err |= stpmic2_set_prop(dev, STPMIC2_PWRCTRL_RS, 0);
 
-	if (drv_data->st_pwrctrl)
+	if (drv_cfg->st_pwrctrl)
 		err |= stpmic2_set_prop(dev, STPMIC2_PWRCTRL_EN, 0);
 
-	if (drv_data->st_sink_source)
+	if (drv_cfg->st_sink_source)
 		err |= stpmic2_set_prop(dev, STPMIC2_SINK_SOURCE, 0);
 
-	if (drv_data->st_alternate_source)
+	if (drv_cfg->st_alternate_source)
 		err |= stpmic2_set_prop(dev, STPMIC2_ALTERNATE_SOURCE, 0);
 
 	return err ? -EINVAL : 0;
@@ -845,13 +840,6 @@ static const struct regulator_driver_api stpmic2_api = {
 
 #define REGULATOR_STPMIC2_DEFINE(node_id, id, macro_desc, reg_id, pd, ranges)		\
 	static struct regu_stpmic2_data data_##id = {					\
-		.st_mask_reset = DT_PROP(node_id, st_mask_reset),			\
-		.st_pwrctrl = DT_PROP(node_id, st_pwrctrl_enable),			\
-		.st_pwrctrl_reset = DT_PROP(node_id, st_pwrctrl_reset),			\
-		.st_pwrctrl_sel = DT_PROP_OR(node_id, st_pwrctrl_sel, 0),		\
-		.st_bypass_uv = DT_PROP_OR(node_id, st_regulator_bypass_microvolt, 0),	\
-		.st_sink_source = DT_PROP(node_id, st_regulator_sink_source),		\
-		.st_alternate_source = DT_PROP(node_id, st_alternate_input_source),	\
 	};										\
 											\
 	static const struct regu_stpmic2_config cfg_##id = {				\
@@ -862,6 +850,13 @@ static const struct regulator_driver_api stpmic2_api = {
 		.common.enable_ramp_delay_us = DT_PROP_OR(node_id,			\
 							  regulator_enable_ramp_delay,	\
 							  U(1000)),			\
+		.st_mask_reset = DT_PROP(node_id, st_mask_reset),			\
+		.st_pwrctrl = DT_PROP(node_id, st_pwrctrl_enable),			\
+		.st_pwrctrl_reset = DT_PROP(node_id, st_pwrctrl_reset),			\
+		.st_pwrctrl_sel = DT_PROP_OR(node_id, st_pwrctrl_sel, 0),		\
+		.st_bypass_uv = DT_PROP_OR(node_id, st_regulator_bypass_microvolt, 0),	\
+		.st_sink_source = DT_PROP(node_id, st_regulator_sink_source),		\
+		.st_alternate_source = DT_PROP(node_id, st_alternate_input_source),	\
 		.i2c = I2C_DT_SPEC_GET(DT_GPARENT(node_id)),				\
 		.desc = macro_desc(STRINGIFY(id), reg_id, pd, ranges),			\
 	};										\
