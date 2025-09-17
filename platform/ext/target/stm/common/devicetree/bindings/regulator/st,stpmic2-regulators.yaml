@@ -2,13 +2,32 @@
 # SPDX -License-Identifier: Apache-2.0
 
 description: |
-  STMicroelectronics STPMIC2 Power Management IC
+  STMicroelectronics regulators provided by STPMIC Power Management IC
 
-  The PMIC has seven buck converters and eight LDOs. All need to be defined as
-  children nodes, strictly following the BUCK1..7, LDO1..8 node names. For
-  example:
+  The STPMIC2 has several regulators as buck converters and LDOs and all need
+  to be defined as children nodes with the expected name.
 
-  pmic2: stpmic2@33 {
+  The STPMIC25 has seven buck converters and nine LDOs:
+  BUCK1..7, LDO1..8 and REFDDR.
+  The STPMIC1L provides BUCK1, BUCK2, LDO2..5, GPO1..2 regulators
+  The STPMIC2L provides BUCK1..4, LDO1..LDO7, GPO1..5 regulators
+
+  Each child regulator node can have sub-nodes as defined in the generic binding
+  which define the regulator configuration in low power modes:
+  the alternate setting (when the regulator is controlled by a pwrctrl line
+  st,pwrctrl-enable = true) or the forced setting (st,pwrctrl-enable = false).
+  The supported sub-node are:
+  - default: applied for Stop1, LP-Stop1, Stop2, LP-Stop2
+  - lplv: applied for LPLV-STOP1, LPLV-STOP2
+  - standby: applied for Standby with DDR in self-refresh
+             (Standby1 for STM32MP25/23)
+  - off: applied for Standby with DDR OFF
+        (Standby2 for STM32MP25/23)
+
+  For example:
+
+  stpmic25: pmic@33 {
+    compatible = "st,stpmic2";
     reg = <0x33>;
     ...
     regulators {
@@ -16,6 +35,14 @@ description: |
 
       buck1 {
         /* all properties for buck1 */
+        default {
+        };
+        lplv {
+        };
+        standby {
+        };
+        off {
+        };
       };
       ...
       buck7 {
@@ -27,6 +54,9 @@ description: |
       ...
       ldo8 {
         /* all properties for ldo8 */
+      };
+      refddr {
+        /* all properties for refddr ldo */
       };
     };
   };
@@ -47,6 +77,7 @@ child-binding:
         - regulator-allowed-modes
         - regulator-over-current-protection
         - regulator-enable-ramp-delay
+        - regulator-pull-down
 
   properties:
     st,mask-reset:
