@@ -628,7 +628,7 @@ static int stm32_pwr_regulator_pm_action(const struct device *dev,
 												\
 	DEVICE_DT_DEFINE(node_id, &stm32_pwr_regulator_init, PM_DEVICE_DT_GET(node_id),		\
 			 &stm32_data_##id, &stm32_cfg_##id,					\
-			 CORE, 7, &ops);
+			 CORE, 8, &ops);
 
 #define REGULATOR_PWR_DEFINE_COND(inst, child, macro_desc, name, reg)				\
 	COND_CODE_1(DT_NODE_HAS_STATUS_OKAY(DT_INST_CHILD(inst, child)),			\

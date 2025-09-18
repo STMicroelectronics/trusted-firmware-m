@@ -868,7 +868,7 @@ static const struct regulator_driver_api stpmic2_api = {
 											\
 	DEVICE_DT_DEFINE(node_id, &stpmic2_reg_init, NULL,				\
 			 &data_##id, &cfg_##id,						\
-			 CORE, 6, &stpmic2_api);
+			 CORE, 7, &stpmic2_api);
 
 #define REGULATOR_STPMIC2_DEFINE_COND(inst, child, macro_desc, reg_id, pd, ranges)	\
 	COND_CODE_1(DT_NODE_EXISTS(DT_INST_CHILD(inst, child)),				\
