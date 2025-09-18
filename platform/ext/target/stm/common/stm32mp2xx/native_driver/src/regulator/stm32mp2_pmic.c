@@ -737,22 +737,21 @@ static int stpmic2_reg_get_voltage(const struct device *dev, int32_t *volt_uv)
 					    regu_desc->nranges, val, volt_uv);
 }
 
-static int _show_reg(const struct i2c_dt_spec *i2c, uint8_t i2c_addr, char *name)
+static void _show_reg(const struct i2c_dt_spec *i2c, uint8_t i2c_addr, char *name)
 {
 	uint8_t val;
 	int err;
 
 	if (!i2c_addr)
-		return -ENODEV;
+		return;
 
 	err = i2c_reg_read_byte_dt(i2c, i2c_addr, &val);
 	if (err) {
-		DMSG("read %s error\n", name);
-		return err;
+		EMSG("read %s error %d\n", name, err);
+		return;
 	}
 
-	IMSG("\t %-16s \t[%#02x]=%#02x\n", name, i2c_addr, val);
-	return 0;
+	IMSG("\t[%02x]=%02x\t%s\n", i2c_addr, val, name);
 }
 
 static int stpmic2_reg_show(const struct device *dev)
