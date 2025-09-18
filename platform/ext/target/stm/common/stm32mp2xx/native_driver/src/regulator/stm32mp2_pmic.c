@@ -4,7 +4,10 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#define DT_DRV_COMPAT st_stpmic2_regulators
+
+#define DT_STPMIC25_COMPAT st_stpmic2
+#define DT_STPMIC2L_COMPAT st_stpmic2l
+#define DT_STPMIC1L_COMPAT st_stpmic1l
 
 #include <stdint.h>
 #include <string.h>
@@ -153,6 +156,20 @@
 #define INT_DBG_LATCH_R3	U(0x82)
 #define INT_DBG_LATCH_R4	U(0x83)
 
+/* PRODUCT_ID bits definition */
+#define PMIC_NVM_ID_MASK	GENMASK_32(3, 0)
+#define PMIC_REF_ID_MASK	GENMASK_32(7, 4)
+#define PMIC_REF_ID_SHIFT	4
+#define PMIC_REF_ID_STPMIC1L	U(1)
+#define PMIC_REF_ID_STPMIC25	U(2)
+#define PMIC_REF_ID_STPMIC2L	U(3)
+
+/* VERSION_SR bits definition */
+#define MINOR_VERSION_MASK	GENMASK_32(3, 0)
+#define MINOR_VERSION_SHIFT	0
+#define MAJOR_VERSION_MASK	GENMASK_32(7, 4)
+#define MAJOR_VERSION_SHIFT	4
+
 /* BUCKS_MRST_CR bits definition */
 #define BUCK1_MRST		BIT(0)
 #define BUCK2_MRST		BIT(1)
@@ -275,6 +292,11 @@
 #define IT_LDO6_OCP		U(29)
 #define IT_LDO7_OCP		U(30)
 #define IT_LDO8_OCP		U(31)
+
+struct stpmic_config {
+	struct i2c_dt_spec i2c;
+	uint8_t ref_id;
+};
 
 enum stpmic2_prop_id {
 	STPMIC2_MASK_RESET = 0,
@@ -495,7 +517,6 @@ static const struct linear_range __maybe_unused gpox_ranges[] = {
 
 struct regu_stpmic2_config {
 	struct regulator_common_config common;
-	struct i2c_dt_spec i2c;
 	const struct regu_stpmic2_desc desc;
 	bool st_mask_reset;
 	bool st_pwrctrl;
@@ -504,6 +525,7 @@ struct regu_stpmic2_config {
 	bool st_alternate_source;
 	int32_t st_pwrctrl_sel;
 	int32_t st_bypass_uv;
+	const struct device *pmic_dev;
 };
 
 struct regu_stpmic2_data {
@@ -515,14 +537,15 @@ static int stpmic2_update_en_crs(const struct device *dev,
 {
 	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
+	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
 	int err;
 
-	err = i2c_reg_update_byte_dt(&drv_cfg->i2c, regu_desc->en_cr,
+	err = i2c_reg_update_byte_dt(&pmic_cfg->i2c, regu_desc->en_cr,
 				     mask, value);
 	if (err)
 		return err;
 
-	return i2c_reg_update_byte_dt(&drv_cfg->i2c, regu_desc->alt_en_cr,
+	return i2c_reg_update_byte_dt(&pmic_cfg->i2c, regu_desc->alt_en_cr,
 				      mask, value);
 }
 
@@ -531,18 +554,19 @@ static int stpmic2_set_prop(const struct device *dev,
 {
 	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
+	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
 	int err = 0;
 
 	switch (prop) {
 	case STPMIC2_PULL_DOWN:
-		return i2c_reg_update_byte_dt(&drv_cfg->i2c, regu_desc->pd_reg,
+		return i2c_reg_update_byte_dt(&pmic_cfg->i2c, regu_desc->pd_reg,
 					      regu_desc->pd_val,
 					      regu_desc->pd_val);
 	case STPMIC2_MASK_RESET:
 		if (!regu_desc->msrt_mask)
 			return -ENOTSUP;
 
-		return i2c_reg_update_byte_dt(&drv_cfg->i2c,
+		return i2c_reg_update_byte_dt(&pmic_cfg->i2c,
 					      regu_desc->msrt_reg,
 					      regu_desc->msrt_mask,
 					      regu_desc->msrt_mask);
@@ -579,7 +603,7 @@ static int stpmic2_set_prop(const struct device *dev,
 		if (!regu_desc->ocp_reg)
 			return -ENOTSUP;
 
-		return i2c_reg_update_byte_dt(&drv_cfg->i2c,
+		return i2c_reg_update_byte_dt(&pmic_cfg->i2c,
 					      regu_desc->ocp_reg,
 					      regu_desc->ocp_mask,
 					      regu_desc->ocp_mask);
@@ -587,7 +611,7 @@ static int stpmic2_set_prop(const struct device *dev,
 		if (!regu_desc->pwrctrl_cr)
 			return -ENOTSUP;
 
-		return i2c_reg_update_byte_dt(&drv_cfg->i2c,
+		return i2c_reg_update_byte_dt(&pmic_cfg->i2c,
 					      regu_desc->pwrctrl_cr,
 					      PWRCTRL_EN | PWRCTRL_RS,
 					      PWRCTRL_EN);
@@ -595,7 +619,7 @@ static int stpmic2_set_prop(const struct device *dev,
 		if (!regu_desc->pwrctrl_cr)
 			return -ENOTSUP;
 
-		return i2c_reg_update_byte_dt(&drv_cfg->i2c,
+		return i2c_reg_update_byte_dt(&pmic_cfg->i2c,
 					      regu_desc->pwrctrl_cr,
 					      PWRCTRL_EN | PWRCTRL_RS,
 					      PWRCTRL_RS);
@@ -603,7 +627,7 @@ static int stpmic2_set_prop(const struct device *dev,
 		if (!regu_desc->pwrctrl_cr)
 			return -ENOTSUP;
 
-		return i2c_reg_update_byte_dt(&drv_cfg->i2c,
+		return i2c_reg_update_byte_dt(&pmic_cfg->i2c,
 					      regu_desc->pwrctrl_cr,
 					      PWRCTRL_SEL_MASK,
 					      _FLD_PREP(PWRCTRL_SEL, drv_cfg->st_pwrctrl_sel));
@@ -611,7 +635,7 @@ static int stpmic2_set_prop(const struct device *dev,
 		if ((!regu_desc->has_preg) || (arg > 2))
 			return -ENOTSUP;
 
-		return i2c_reg_update_byte_dt(&drv_cfg->i2c,
+		return i2c_reg_update_byte_dt(&pmic_cfg->i2c,
 					      regu_desc->en_cr,
 					      PREG_MODE_MASK,
 					      _FLD_PREP(PREG_MODE, arg));
@@ -619,7 +643,7 @@ static int stpmic2_set_prop(const struct device *dev,
 		if ((!regu_desc->has_preg) || (arg > 2))
 			return -ENOTSUP;
 
-		return i2c_reg_update_byte_dt(&drv_cfg->i2c,
+		return i2c_reg_update_byte_dt(&pmic_cfg->i2c,
 					      regu_desc->alt_en_cr,
 					      PREG_MODE_MASK,
 					      _FLD_PREP(PREG_MODE, arg));
@@ -634,16 +658,18 @@ static int stpmic2_reg_enable(const struct device *dev)
 {
 	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
+	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
 
-	return i2c_reg_update_byte_dt(&drv_cfg->i2c, regu_desc->en_cr, 1, 1);
+	return i2c_reg_update_byte_dt(&pmic_cfg->i2c, regu_desc->en_cr, 1, 1);
 }
 
 static int stpmic2_reg_disable(const struct device *dev)
 {
 	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
+	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
 
-	return i2c_reg_update_byte_dt(&drv_cfg->i2c, regu_desc->en_cr, 1, 0);
+	return i2c_reg_update_byte_dt(&pmic_cfg->i2c, regu_desc->en_cr, 1, 0);
 }
 
 static unsigned int stpmic2_reg_count_voltages(const struct device *dev)
@@ -670,6 +696,7 @@ static int stpmic2_reg_set_voltage(const struct device *dev, int32_t min_uv,
 {
 	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
+	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
 	uint8_t reg_idx;
 	int32_t val_uv;
 	uint16_t idx = 0;
@@ -691,7 +718,7 @@ static int stpmic2_reg_set_voltage(const struct device *dev, int32_t min_uv,
 
 	reg_idx = (idx << regu_desc->volt_shift) & regu_desc->volt_mask;
 
-	err = i2c_reg_update_byte_dt(&drv_cfg->i2c,
+	err = i2c_reg_update_byte_dt(&pmic_cfg->i2c,
 				     regu_desc->volt_cr,
 				     regu_desc->volt_mask, reg_idx);
 	if (err)
@@ -711,12 +738,13 @@ static int stpmic2_reg_get_voltage(const struct device *dev, int32_t *volt_uv)
 {
 	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
+	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
 	uint8_t val;
 	int err;
 
 	if (drv_cfg->st_bypass_uv != 0 && regu_desc->has_bypass) {
 
-		err = i2c_reg_read_byte_dt(&drv_cfg->i2c,
+		err = i2c_reg_read_byte_dt(&pmic_cfg->i2c,
 					   regu_desc->en_cr, &val);
 		if (err)
 			return err;
@@ -727,7 +755,7 @@ static int stpmic2_reg_get_voltage(const struct device *dev, int32_t *volt_uv)
 		}
 	}
 
-	err = i2c_reg_read_byte_dt(&drv_cfg->i2c, regu_desc->volt_cr, &val);
+	err = i2c_reg_read_byte_dt(&pmic_cfg->i2c, regu_desc->volt_cr, &val);
 	if (err)
 		return err;
 
@@ -758,17 +786,18 @@ static int stpmic2_reg_show(const struct device *dev)
 {
 	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
+	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
 
 	IMSG("dump regu:%s\n", dev->name);
 
-	_show_reg(&drv_cfg->i2c, regu_desc->volt_cr, "volt_cr");
-	_show_reg(&drv_cfg->i2c, regu_desc->en_cr, "en_cr");
-	_show_reg(&drv_cfg->i2c, regu_desc->alt_en_cr, "alt_en_cr");
-	_show_reg(&drv_cfg->i2c, regu_desc->alt_volt_cr, "alt_volt_cr");
-	_show_reg(&drv_cfg->i2c, regu_desc->pwrctrl_cr, "pwrctrl_cr");
-	_show_reg(&drv_cfg->i2c, regu_desc->msrt_reg, "msrt_reg");
-	_show_reg(&drv_cfg->i2c, regu_desc->pd_reg, "pd_reg");
-	_show_reg(&drv_cfg->i2c, regu_desc->ocp_reg, "ocp_reg");
+	_show_reg(&pmic_cfg->i2c, regu_desc->volt_cr, "volt_cr");
+	_show_reg(&pmic_cfg->i2c, regu_desc->en_cr, "en_cr");
+	_show_reg(&pmic_cfg->i2c, regu_desc->alt_en_cr, "alt_en_cr");
+	_show_reg(&pmic_cfg->i2c, regu_desc->alt_volt_cr, "alt_volt_cr");
+	_show_reg(&pmic_cfg->i2c, regu_desc->pwrctrl_cr, "pwrctrl_cr");
+	_show_reg(&pmic_cfg->i2c, regu_desc->msrt_reg, "msrt_reg");
+	_show_reg(&pmic_cfg->i2c, regu_desc->pd_reg, "pd_reg");
+	_show_reg(&pmic_cfg->i2c, regu_desc->ocp_reg, "ocp_reg");
 
 	return 0;
 }
@@ -801,30 +830,25 @@ static int stpmic2_parse_prop(const struct device *dev)
 
 static int __used stpmic2_reg_init(const struct device *dev)
 {
-	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
-	uint8_t prod_id, version;
 	int err;
 
 	regulator_common_data_init(dev);
-
-	if (!i2c_is_ready_dt(&drv_cfg->i2c))
-		return -ENODEV;
-
-	err = i2c_reg_read_byte_dt(&drv_cfg->i2c, PRODUCT_ID, &prod_id);
-	if (err)
-		return err;
-
-	err = i2c_reg_read_byte_dt(&drv_cfg->i2c, VERSION_SR, &version);
-	if (err)
-		return err;
 
 	err = stpmic2_parse_prop(dev);
 	if (err)
 		return err;
 
-	DMSG("init:%s pmic id:%#x version:%#x\n", dev->name, prod_id, version);
+	err = regulator_common_init(dev, false);
+	if (err)
+		return err;
 
-	return regulator_common_init(dev, false);
+#if LOG_LEVEL >= LOG_LEVEL_VERBOSE
+	/* For TF-M debug, dump the regulators after STPMIC initialization */
+	if (!IS_ENABLED(STM32_BL2))
+		regulator_show(dev);
+#endif
+
+	return 0;
 };
 
 static const struct regulator_driver_api stpmic2_api = {
@@ -837,7 +861,7 @@ static const struct regulator_driver_api stpmic2_api = {
 	.show = stpmic2_reg_show,
 };
 
-#define REGULATOR_STPMIC2_DEFINE(node_id, id, macro_desc, reg_id, pd, ranges)		\
+#define REGULATOR_DEFINE(dev, node_id, id, macro_desc, reg_id, pd, ranges)		\
 	static struct regu_stpmic2_data data_##id = {					\
 	};										\
 											\
@@ -856,62 +880,195 @@ static const struct regulator_driver_api stpmic2_api = {
 		.st_bypass_uv = DT_PROP_OR(node_id, st_regulator_bypass_microvolt, 0),	\
 		.st_sink_source = DT_PROP(node_id, st_regulator_sink_source),		\
 		.st_alternate_source = DT_PROP(node_id, st_alternate_input_source),	\
-		.i2c = I2C_DT_SPEC_GET(DT_GPARENT(node_id)),				\
 		.desc = macro_desc(STRINGIFY(id), reg_id, pd, ranges),			\
+		.pmic_dev = dev,							\
 	};										\
 											\
 	DEVICE_DT_DEFINE(node_id, &stpmic2_reg_init, NULL,				\
 			 &data_##id, &cfg_##id,						\
 			 CORE, 7, &stpmic2_api);
 
-#define REGULATOR_STPMIC2_DEFINE_COND(inst, child, macro_desc, reg_id, pd, ranges)	\
-	COND_CODE_1(DT_NODE_EXISTS(DT_INST_CHILD(inst, child)),				\
-		    (REGULATOR_STPMIC2_DEFINE(DT_INST_CHILD(inst, child),		\
-					      inst ## _ ## child,			\
-					      macro_desc, reg_id, pd, ranges)),		\
+#define REGULATOR_DEFINE_COND(dev, n, inst, child, macro_desc, reg_id, pd, ranges)	\
+	COND_CODE_1(									\
+		DT_NODE_EXISTS(DT_CHILD(n, child)),					\
+		(REGULATOR_DEFINE(dev, DT_CHILD(n, child),				\
+				  inst ## _ ## child,					\
+				  macro_desc, reg_id, pd, ranges)),			\
+		())
+
+static int __maybe_unused stpmic_probe(const struct device *dev)
+{
+	const struct stpmic_config *drv_cfg = dev_get_config(dev);
+	uint8_t prod_id, version;
+	uint8_t ref_id;
+	int err;
+
+	if (!i2c_is_ready_dt(&drv_cfg->i2c)) {
+		EMSG("init:%s not accessible\n", dev->name);
+		panic();
+		return -ENODEV;
+	}
+
+	err = i2c_reg_read_byte_dt(&drv_cfg->i2c, PRODUCT_ID, &prod_id);
+	if (err) {
+		EMSG("init:%s not accessible (%d)\n", dev->name, err);
+		return err;
+	}
+
+	err = i2c_reg_read_byte_dt(&drv_cfg->i2c, VERSION_SR, &version);
+	if (err) {
+		EMSG("init:%s not accessible (%d)\n", dev->name, err);
+		return err;
+	}
+	ref_id = _FLD_GET(PMIC_REF_ID, prod_id);
+	IMSG("init:%s STPMIC:%02x V%d.%d\n", dev->name,
+	     prod_id,
+	     _FLD_GET(MAJOR_VERSION, version),
+	     _FLD_GET(MINOR_VERSION, version));
+	if (ref_id != drv_cfg->ref_id) {
+		EMSG("init:%s unexpected ref id, %02x expected.\n",
+		     dev->name, drv_cfg->ref_id);
+		panic();
+		return -ENODEV;
+	}
+
+	return 0;
+}
+
+#define STPMIC_INIT(t, n, _ref_id)						\
+										\
+static const struct stpmic_config stpmic##t##_cfg_##n = {			\
+	.i2c = I2C_DT_SPEC_GET(DT_DRV_INST(n)),					\
+	.ref_id = _ref_id,							\
+};										\
+										\
+DEVICE_DT_INST_DEFINE(n,							\
+	&stpmic_probe,								\
+	NULL,									\
+	NULL,									\
+	&stpmic##t##_cfg_##n,							\
+	CORE, 6,								\
+	NULL);
+
+/* STPMIC25 */
+#define REGULATORS_STPMIC25_DEFINE(dev, n, inst)				\
+	REGULATOR_DEFINE_COND(dev, n, inst, buck1, DEFINE_BUCK,			\
+			      BUCK1, BUCKS_PD_CR1, buck1236_ranges)		\
+	REGULATOR_DEFINE_COND(dev, n, inst, buck2, DEFINE_BUCK,			\
+			      BUCK2, BUCKS_PD_CR1, buck1236_ranges)		\
+	REGULATOR_DEFINE_COND(dev, n, inst, buck3, DEFINE_BUCK,			\
+			      BUCK3, BUCKS_PD_CR1, buck1236_ranges)		\
+	REGULATOR_DEFINE_COND(dev, n, inst, buck4, DEFINE_BUCK,			\
+			      BUCK4, BUCKS_PD_CR1, buck457_ranges)		\
+	REGULATOR_DEFINE_COND(dev, n, inst, buck5, DEFINE_BUCK,			\
+			      BUCK5, BUCKS_PD_CR2, buck457_ranges)		\
+	REGULATOR_DEFINE_COND(dev, n, inst, buck6, DEFINE_BUCK,			\
+			      BUCK6, BUCKS_PD_CR2, buck1236_ranges)		\
+	REGULATOR_DEFINE_COND(dev, n, inst, buck7, DEFINE_BUCK,			\
+			      BUCK7, BUCKS_PD_CR2, buck457_ranges)		\
+	REGULATOR_DEFINE_COND(dev, n, inst, refddr, DEFINE_REFDDR,		\
+			      REFDDR, NULL, refddr_ranges)			\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo1, DEFINE_LDO1,			\
+			      LDO1, NULL, ldo1_ranges)				\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo2, DEFINE_LDO_BYPASS,		\
+			      LDO2, NULL, ldo235678_ranges)			\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo3, DEFINE_LDO_BYPASS_SINK,	\
+			      LDO3, NULL, ldo235678_ranges)			\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo4, DEFINE_LDO,			\
+			      LDO4, NULL, ldo4_ranges)				\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo5, DEFINE_LDO_BYPASS,		\
+			      LDO5, NULL, ldo235678_ranges)			\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo6, DEFINE_LDO_BYPASS,		\
+			      LDO6, NULL, ldo235678_ranges)			\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo7, DEFINE_LDO_BYPASS,		\
+			      LDO7, NULL, ldo235678_ranges)			\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo8, DEFINE_LDO_BYPASS,		\
+			      LDO8, NULL, ldo235678_ranges)			\
+
+#define STPMIC25_INIT(n)							\
+	STPMIC_INIT(25, n, PMIC_REF_ID_STPMIC25)				\
+	COND_CODE_1(DT_NODE_EXISTS(DT_INST_CHILD(n, regulators)),		\
+		    (REGULATORS_STPMIC25_DEFINE(DEVICE_DT_INST_GET(n),		\
+						DT_INST_CHILD(n, regulators),	\
+						stpmic25_ ## n)),		\
 		    ())
 
-#define REGULATOR_STPMIC2_DEFINE_ALL(inst)						\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, buck1, DEFINE_BUCK,				\
-				      BUCK1, BUCKS_PD_CR1, buck1236_ranges)		\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, buck2, DEFINE_BUCK,				\
-				      BUCK2, BUCKS_PD_CR1, buck1236_ranges)		\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, buck3, DEFINE_BUCK,				\
-				      BUCK3, BUCKS_PD_CR1, buck1236_ranges)		\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, buck4, DEFINE_BUCK,				\
-				      BUCK4, BUCKS_PD_CR1, buck457_ranges)		\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, buck5, DEFINE_BUCK,				\
-				      BUCK5, BUCKS_PD_CR2, buck457_ranges)		\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, buck6, DEFINE_BUCK,				\
-				      BUCK6, BUCKS_PD_CR2, buck1236_ranges)		\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, buck7, DEFINE_BUCK,				\
-				      BUCK7, BUCKS_PD_CR2, buck457_ranges)		\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, refddr, DEFINE_REFDDR,			\
-				      REFDDR, NULL, refddr_ranges)			\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, ldo1, DEFINE_LDO1,				\
-				      LDO1, NULL, ldo1_ranges)				\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, ldo2, DEFINE_LDO_BYPASS,			\
-				      LDO2, NULL, ldo235678_ranges)			\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, ldo3, DEFINE_LDO_BYPASS_SINK,		\
-				      LDO3, NULL, ldo235678_ranges)			\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, ldo4, DEFINE_LDO,				\
-				      LDO4, NULL, ldo4_ranges)				\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, ldo5, DEFINE_LDO_BYPASS,			\
-				      LDO5, NULL, ldo235678_ranges)			\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, ldo6, DEFINE_LDO_BYPASS,			\
-				      LDO6, NULL, ldo235678_ranges)			\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, ldo7, DEFINE_LDO_BYPASS,			\
-				      LDO7, NULL, ldo235678_ranges)			\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, ldo8, DEFINE_LDO_BYPASS,			\
-				      LDO8, NULL, ldo235678_ranges)			\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, gpo1, DEFINE_GPO,				\
-				      GPO1, NULL, gpox_ranges)				\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, gpo2, DEFINE_GPO,				\
-				      GPO2, NULL, gpox_ranges)				\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, gpo3, DEFINE_GPO,				\
-				      GPO3, NULL, gpox_ranges)				\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, gpo4, DEFINE_GPO,				\
-				      GPO4, NULL, gpox_ranges)				\
-	REGULATOR_STPMIC2_DEFINE_COND(inst, gpo5, DEFINE_GPO,				\
-				      GPO5, NULL, gpox_ranges)
-DT_INST_FOREACH_STATUS_OKAY(REGULATOR_STPMIC2_DEFINE_ALL)
+#undef DT_DRV_COMPAT
+#define DT_DRV_COMPAT DT_STPMIC25_COMPAT
+DT_INST_FOREACH_STATUS_OKAY(STPMIC25_INIT)
+
+/* STPMIC2L */
+#define REGULATORS_STPMIC2L_DEFINE(dev, n, inst)				\
+	REGULATOR_DEFINE_COND(dev, n, inst, buck1, DEFINE_BUCK,			\
+			      BUCK1, BUCKS_PD_CR1, buck1236_ranges)		\
+	REGULATOR_DEFINE_COND(dev, n, inst, buck2, DEFINE_BUCK,			\
+			      BUCK2, BUCKS_PD_CR1, buck1236_ranges)		\
+	REGULATOR_DEFINE_COND(dev, n, inst, buck3, DEFINE_BUCK,			\
+			      BUCK3, BUCKS_PD_CR1, buck1236_ranges)		\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo1, DEFINE_LDO1,			\
+			      LDO1, NULL, ldo1_ranges)				\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo2, DEFINE_LDO_BYPASS,		\
+			      LDO2, NULL, ldo235678_ranges)			\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo3, DEFINE_LDO_BYPASS_SINK,	\
+			      LDO3, NULL, ldo235678_ranges)			\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo4, DEFINE_LDO,			\
+			      LDO4, NULL, ldo4_ranges)				\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo5, DEFINE_LDO_BYPASS,		\
+			      LDO5, NULL, ldo235678_ranges)			\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo6, DEFINE_LDO_BYPASS,		\
+			      LDO6, NULL, ldo235678_ranges)			\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo7, DEFINE_LDO_BYPASS,		\
+			      LDO7, NULL, ldo235678_ranges)			\
+	REGULATOR_DEFINE_COND(dev, n, inst, gpo1, DEFINE_GPO,			\
+			      GPO1, NULL, gpox_ranges)				\
+	REGULATOR_DEFINE_COND(dev, n, inst, gpo2, DEFINE_GPO,			\
+			      GPO2, NULL, gpox_ranges)				\
+	REGULATOR_DEFINE_COND(dev, n, inst, gpo3, DEFINE_GPO,			\
+			      GPO3, NULL, gpox_ranges)				\
+	REGULATOR_DEFINE_COND(dev, n, inst, gpo4, DEFINE_GPO,			\
+			      GPO4, NULL, gpox_ranges)				\
+	REGULATOR_DEFINE_COND(dev, n, inst, gpo5, DEFINE_GPO,			\
+			      GPO5, NULL, gpox_ranges)				\
+
+#define STPMIC2L_INIT(n)							\
+	STPMIC_INIT(2l, n, PMIC_REF_ID_STPMIC2L)				\
+	COND_CODE_1(DT_NODE_EXISTS(DT_INST_CHILD(n, regulators)),		\
+		    (REGULATORS_STPMIC2L_DEFINE(DEVICE_DT_INST_GET(n),		\
+						DT_INST_CHILD(n, regulators),	\
+						stpmic2l_ ## n)),		\
+		    ())
+
+#undef DT_DRV_COMPAT
+#define DT_DRV_COMPAT DT_STPMIC2L_COMPAT
+DT_INST_FOREACH_STATUS_OKAY(STPMIC2L_INIT)
+
+/* STPMIC1L  */
+#define REGULATORS_STPMIC1L_DEFINE(dev, n, inst)				\
+	REGULATOR_DEFINE_COND(dev, n, inst, buck1, DEFINE_BUCK,			\
+			      BUCK1, BUCKS_PD_CR1, buck1236_ranges)		\
+	REGULATOR_DEFINE_COND(dev, n, inst, buck2, DEFINE_BUCK,			\
+			      BUCK2, BUCKS_PD_CR1, buck1236_ranges)		\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo2, DEFINE_LDO_BYPASS,		\
+			      LDO2, NULL, ldo235678_ranges)			\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo3, DEFINE_LDO_BYPASS_SINK,	\
+			      LDO3, NULL, ldo235678_ranges)			\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo4, DEFINE_LDO,			\
+			      LDO4, NULL, ldo4_ranges)				\
+	REGULATOR_DEFINE_COND(dev, n, inst, ldo5, DEFINE_LDO_BYPASS,		\
+			      LDO5, NULL, ldo235678_ranges)			\
+	REGULATOR_DEFINE_COND(dev, n, inst, gpo1, DEFINE_GPO,			\
+			      GPO1, NULL, gpox_ranges)				\
+	REGULATOR_DEFINE_COND(dev, n, inst, gpo2, DEFINE_GPO,			\
+			      GPO2, NULL, gpox_ranges)				\
+
+#define STPMIC1L_INIT(n)							\
+	STPMIC_INIT(1l, n, PMIC_REF_ID_STPMIC1L)				\
+	COND_CODE_1(DT_NODE_EXISTS(DT_INST_CHILD(n, regulators)),		\
+		    (REGULATORS_STPMIC1L_DEFINE(DEVICE_DT_INST_GET(n),		\
+						DT_INST_CHILD(n, regulators),	\
+						stpmic1l_ ## n)),		\
+		    ())
+
+#undef DT_DRV_COMPAT
+#define DT_DRV_COMPAT DT_STPMIC1L_COMPAT
+DT_INST_FOREACH_STATUS_OKAY(STPMIC1L_INIT)
