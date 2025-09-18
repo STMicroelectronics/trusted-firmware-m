@@ -105,6 +105,11 @@ struct regulator_driver_api {
 #define REGULATOR_ALWAYS_ON	BIT(0)
 /** Indicates regulator must be initialized ON */
 #define REGULATOR_BOOT_ON	BIT(1)
+/** Enables pull down mode. DT property: regulator-pull-down */
+#define REGULATOR_PULL_DOWN	BIT(2)
+/** Over current protection. DT property: regulator-over-current-protection */
+#define REGULATOR_OVER_CURRENT	BIT(3)
+
 /** Indicates if regulator must be enabled when initialized */
 #define REGULATOR_INIT_ENABLED  (REGULATOR_ALWAYS_ON | REGULATOR_BOOT_ON)
 
@@ -171,7 +176,12 @@ struct regulator_common_config {
 		.flags = ((DT_PROP_OR(node_id, regulator_always_on, 0U) *      \
 			   REGULATOR_ALWAYS_ON) |                              \
 			  (DT_PROP_OR(node_id, regulator_boot_on, 0U) *        \
-			   REGULATOR_BOOT_ON)),                                \
+			   REGULATOR_BOOT_ON) |                               \
+			  (DT_PROP_OR(node_id, regulator_pull_down, 0U) *      \
+			   REGULATOR_PULL_DOWN) |                              \
+			  (DT_PROP_OR(node_id,                                 \
+			   regulator_over_current_protection, 0U) *            \
+			   REGULATOR_OVER_CURRENT)),                           \
 	}
 
 /**
