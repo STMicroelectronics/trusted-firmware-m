@@ -830,6 +830,7 @@ static int stpmic2_parse_prop(const struct device *dev)
 
 static int __used stpmic2_reg_init(const struct device *dev)
 {
+	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	int err;
 
 	regulator_common_data_init(dev);
@@ -837,6 +838,18 @@ static int __used stpmic2_reg_init(const struct device *dev)
 	err = stpmic2_parse_prop(dev);
 	if (err)
 		return err;
+
+	if (drv_cfg->common.flags & REGULATOR_PULL_DOWN) {
+		err = stpmic2_set_prop(dev, STPMIC2_PULL_DOWN, 0);
+		if (err)
+			return err;
+	}
+
+	if (drv_cfg->common.flags & REGULATOR_OVER_CURRENT) {
+		err = stpmic2_set_prop(dev, STPMIC2_OCP, 0);
+		if (err)
+			return err;
+	}
 
 	err = regulator_common_init(dev, false);
 	if (err)
