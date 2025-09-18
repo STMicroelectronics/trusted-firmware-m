@@ -16,6 +16,9 @@
 #include <lib/mmiopoll.h>
 #include <lib/utils_def.h>
 #include <lib/timeout.h>
+#include <pm/device.h>
+#include <pm/pm.h>
+#include <uapi/tfm_pm_api.h>
 
 #include <device.h>
 #include <i2c.h>
@@ -298,6 +301,46 @@
 /* NVM_BUCK1_VOUT_SHR (only for STPMIC1L and STPMIC2L) */
 #define BUCK1_VRANGE_CFG	BIT(7)
 
+#define STPMIC2_LP_STATE_OFF	BIT(0)
+#define STPMIC2_LP_STATE_ON	BIT(1)
+
+/*
+ * Low power configurations for STPM32MP2 with STPMIC2:
+ *
+ * STM32_PM_DEFAULT
+ *   "default" sub nodes in device-tree
+ *   is applied at probe, and re-applied at PM resume.
+ *   should support STOP1, LP-STOP1, STOP2, LP-STOP2
+ *
+ * STM32_PM_LPLV
+ *   "lplv" sub nodes in device-tree
+ *   should support LPLV-STOP2
+ *
+ * STM32_PM_STANDBY
+ *   "standby" sub nodes in device-tree
+ *   should support STANDBY-DDR-SR
+ *   (Standby1 for STM32MP25/23, Standby for STM32MP21)
+ *   is applied in pm suspend call back
+ *
+ * STM32_PM_OFF
+ *   "off" sub nodes in device-tree
+ *   should support STANDBY-DDR-OFF mode
+ *   (Standby2 for STM32MP25/23, Standby for STM32MP21)
+ *   and should be applied before shutdown
+ *
+ */
+enum stpmic2_pm_mode {
+	STM32_PM_DEFAULT = 0,
+	STM32_PM_LPLV,
+	STM32_PM_STANDBY,
+	STM32_PM_OFF,
+	STM32_PM_NB_MODES,
+	STM32_PM_INVALID = -1,
+};
+
+/* Platform state value in pm_hint for platform OFF mode: Standby2 DDR off */
+#define PM_OFF	(PM_HINT_PLATFORM_STATE_MASK >> PM_HINT_PLATFORM_STATE_SHIFT)
+
 struct stpmic_config {
 	struct i2c_dt_spec i2c;
 	uint8_t ref_id;
@@ -520,9 +563,15 @@ static const struct linear_range __maybe_unused gpox_ranges[] = {
 	.msrt_mask		= _id ## _MRST,			\
 }
 
+struct regu_stpmic2_lp {
+	unsigned int state;
+	int32_t level_uv;
+};
+
 struct regu_stpmic2_config {
 	struct regulator_common_config common;
 	const struct regu_stpmic2_desc desc;
+	struct regu_stpmic2_lp lp[STM32_PM_NB_MODES];
 	bool st_mask_reset;
 	bool st_pwrctrl;
 	bool st_pwrctrl_reset;
@@ -536,6 +585,8 @@ struct regu_stpmic2_config {
 struct regu_stpmic2_data {
 	struct regulator_common_data data;
 	bool use_buck457_ranges;
+	bool forced_off;
+	enum stpmic2_pm_mode lp_mode;
 };
 
 static void stpmic2_reg_get_range(const struct device *dev,
@@ -795,6 +846,168 @@ static int stpmic2_reg_get_voltage(const struct device *dev, int32_t *volt_uv)
 	return linear_range_group_get_value(ranges, nranges, val, volt_uv);
 }
 
+static int stpmic2_set_alt_state(const struct device *dev, bool enable)
+{
+	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
+	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
+	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
+	uint8_t value = enable ? 1 : 0;
+
+	return i2c_reg_update_byte_dt(&pmic_cfg->i2c, regu_desc->alt_en_cr, value, 1);
+}
+
+static int stpmic2_set_alt_voltage(const struct device *dev,  int32_t volt_uv)
+{
+	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
+	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
+	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
+	const struct linear_range *ranges;
+	size_t nranges;
+	uint8_t reg_idx;
+	int32_t val_uv;
+	uint16_t idx = 0;
+	int err;
+
+	stpmic2_reg_get_range(dev, &ranges, &nranges);
+
+	err = linear_range_group_get_win_index(ranges, nranges, volt_uv, volt_uv, &idx);
+
+	err |= linear_range_group_get_value(ranges, nranges, idx, &val_uv);
+
+	if (err)
+		return -EINVAL;
+
+	reg_idx = (idx << regu_desc->volt_shift) & regu_desc->volt_mask;
+
+	return i2c_reg_update_byte_dt(&pmic_cfg->i2c,
+				      regu_desc->alt_volt_cr,
+				      regu_desc->volt_mask, reg_idx);
+}
+
+static int stpmic2_reg_alt_mode(const struct device *dev, uint8_t mode)
+{
+	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
+	struct regu_stpmic2_data *drv_data = dev_get_data(dev);
+	uint8_t state = drv_cfg->lp[mode].state;
+	int level_uv = drv_cfg->lp[mode].level_uv;
+	int err;
+
+	DMSG("%s: suspend(%d): %x %d uV\n", dev->name, mode, state, level_uv);
+
+	if (mode == drv_data->lp_mode)
+		return 0;
+
+	if (state & STPMIC2_LP_STATE_OFF) {
+		err = stpmic2_set_alt_state(dev, false);
+		if (err)
+			return err;
+	}
+
+	if (state & STPMIC2_LP_STATE_ON) {
+		err = stpmic2_set_alt_state(dev, true);
+		if (err)
+			return err;
+
+		if (level_uv > 0U)  {
+			err = stpmic2_set_alt_voltage(dev, level_uv);
+			if (err)
+				return err;
+		}
+	}
+
+	drv_data->lp_mode = mode;
+
+	return 0;
+}
+
+#ifdef CONFIG_PM_DEVICE
+static int stpmic2_reg_pm_suspend(const struct device *dev, uint8_t mode)
+{
+	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
+	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
+	struct regu_stpmic2_data *drv_data = dev_get_data(dev);
+	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
+	uint8_t state = drv_cfg->lp[mode].state;
+	uint8_t en_cr;
+	int err;
+
+	 drv_data->forced_off = false;
+	 /*
+	  * If controlled by the consumer (i.e. power control line disabled),
+	  * and requested OFF in suspend mode, force disable the regulator
+	  */
+	if (!drv_cfg->st_pwrctrl && (state & STPMIC2_LP_STATE_OFF)) {
+		err = i2c_reg_read_byte_dt(&pmic_cfg->i2c, regu_desc->en_cr, &en_cr);
+		if (err)
+			return err;
+		if (en_cr & BIT(0)) { /* enabled ? */
+			err = stpmic2_reg_disable(dev);
+			if (err)
+				return err;
+			IMSG("regulator %s forced OFF", dev->name);
+			drv_data->forced_off = true;
+		}
+	}
+}
+
+static int stpmic2_reg_pm_resume(const struct device *dev)
+{
+	struct regu_stpmic2_data *drv_data = dev_get_data(dev);
+	int err;
+
+	if (drv_data->forced_off) {
+		/* Re-enable a regulator that was forced off in suspend */
+		err = stpmic2_reg_enable(dev);
+		if (err)
+			return err;
+
+		drv_data->forced_off = false;
+	}
+
+	return 0;
+}
+
+static int stpmic2_reg_pm_action(const struct device *dev,
+				 enum pm_device_action action,
+				 uint32_t pm_hint)
+{
+	unsigned int pwrlvl = PM_HINT_PLATFORM_STATE(pm_hint);
+	uint8_t mode;
+	int err = 0;
+
+	if (action == PM_DEVICE_ACTION_SUSPEND) {
+		/* configure PMIC level according platform PM domain */
+		switch (pwrlvl) {
+		case PM_LPLV_STOP2:
+			mode = STM32_PM_LPLV;
+			break;
+		case PM_STANDBY1:
+			mode = STM32_PM_STANDBY;
+			break;
+		case PM_OFF:
+			mode = STM32_PM_OFF;
+			break;
+		default:
+			mode = STM32_PM_DEFAULT;
+			break;
+		}
+		err = stpmic2_reg_alt_mode(dev, mode);
+		if (err)
+			goto out;
+		err = stpmic2_reg_pm_suspend(dev, mode);
+	}
+	if (action == PM_DEVICE_ACTION_RESUME) {
+		err = stpmic2_reg_alt_mode(dev, STM32_PM_DEFAULT);
+		if (err)
+			goto out;
+		err = stpmic2_reg_pm_resume(dev);
+	}
+
+out:
+	return err;
+}
+#endif
+
 static void _show_reg(const struct i2c_dt_spec *i2c, uint8_t i2c_addr, char *name)
 {
 	uint8_t val;
@@ -898,6 +1111,12 @@ static int __used stpmic2_reg_init(const struct device *dev)
 	if (err)
 		return err;
 
+	err = stpmic2_reg_alt_mode(dev, STM32_PM_DEFAULT);
+	if (err) {
+		EMSG("Failed to prepare suspend for regulator %s (%d)\n",
+		     dev->name, err);
+		return err;
+	}
 #if LOG_LEVEL >= LOG_LEVEL_VERBOSE
 	/* For TF-M debug, dump the regulators after STPMIC initialization */
 	if (!IS_ENABLED(STM32_BL2))
@@ -917,9 +1136,24 @@ static const struct regulator_driver_api stpmic2_api = {
 	.show = stpmic2_reg_show,
 };
 
+#define LP_DEFINE(node_id, id)									\
+[id] = {											\
+	.state = ((DT_PROP_OR(node_id, regulator_off_in_suspend, 0U) * STPMIC2_LP_STATE_OFF) |	\
+		  (DT_PROP_OR(node_id, regulator_on_in_suspend, 0U) * STPMIC2_LP_STATE_ON)),\
+	.level_uv = DT_PROP_OR(node_id, regulator_suspend_microvolt, 0),			\
+},
+
+#define LP_DEFINE_COND(node_id, child, id)					\
+	COND_CODE_1(								\
+		DT_NODE_EXISTS(DT_CHILD(node_id, child)),			\
+		(LP_DEFINE(DT_CHILD(node_id, child), id)),			\
+		())
+
 #define REGULATOR_DEFINE(dev, node_id, id, macro_desc, reg_id, pd, ranges)		\
 	static struct regu_stpmic2_data data_##id = {					\
 		.use_buck457_ranges = false,						\
+		.forced_off = false,							\
+		.lp_mode = STM32_PM_INVALID,						\
 	};										\
 											\
 	static const struct regu_stpmic2_config cfg_##id = {				\
@@ -938,10 +1172,19 @@ static const struct regulator_driver_api stpmic2_api = {
 		.st_sink_source = DT_PROP(node_id, st_regulator_sink_source),		\
 		.st_alternate_source = DT_PROP(node_id, st_alternate_input_source),	\
 		.desc = macro_desc(STRINGIFY(id), reg_id, pd, ranges),			\
+		.lp =  {								\
+			LP_DEFINE_COND(node_id, default, STM32_PM_DEFAULT)		\
+			LP_DEFINE_COND(node_id, lplv, STM32_PM_LPLV)			\
+			LP_DEFINE_COND(node_id, standby, STM32_PM_STANDBY)		\
+			LP_DEFINE_COND(node_id, off, STM32_PM_OFF)			\
+		},									\
 		.pmic_dev = dev,							\
 	};										\
 											\
-	DEVICE_DT_DEFINE(node_id, &stpmic2_reg_init, NULL,				\
+	PM_DEVICE_DT_DEFINE(node_id, stpmic2_reg_pm_action);				\
+											\
+	DEVICE_DT_DEFINE(node_id, &stpmic2_reg_init,					\
+			 PM_DEVICE_DT_GET(node_id),					\
 			 &data_##id, &cfg_##id,						\
 			 CORE, 7, &stpmic2_api);
 
