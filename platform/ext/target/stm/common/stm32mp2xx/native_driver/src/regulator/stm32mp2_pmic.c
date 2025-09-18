@@ -155,6 +155,8 @@
 #define INT_DBG_LATCH_R2	U(0x81)
 #define INT_DBG_LATCH_R3	U(0x82)
 #define INT_DBG_LATCH_R4	U(0x83)
+/* NVMEM shadow registers */
+#define NVM_BUCK1_VOUT_SHR	U(0x9C)
 
 /* PRODUCT_ID bits definition */
 #define PMIC_NVM_ID_MASK	GENMASK_32(3, 0)
@@ -292,6 +294,9 @@
 #define IT_LDO6_OCP		U(29)
 #define IT_LDO7_OCP		U(30)
 #define IT_LDO8_OCP		U(31)
+
+/* NVM_BUCK1_VOUT_SHR (only for STPMIC1L and STPMIC2L) */
+#define BUCK1_VRANGE_CFG	BIT(7)
 
 struct stpmic_config {
 	struct i2c_dt_spec i2c;
@@ -530,7 +535,26 @@ struct regu_stpmic2_config {
 
 struct regu_stpmic2_data {
 	struct regulator_common_data data;
+	bool use_buck457_ranges;
 };
+
+static void stpmic2_reg_get_range(const struct device *dev,
+				  const struct linear_range **ranges,
+				  size_t *nranges)
+{
+	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
+	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
+	struct regu_stpmic2_data *drv_data = dev_get_data(dev);
+
+	/* BUCK1 with high voltage range for STPMIC1L and STPMIC2L */
+	if (drv_data->use_buck457_ranges) {
+		*ranges = buck457_ranges;
+		*nranges = ARRAY_SIZE(buck457_ranges);
+	} else {
+		*ranges = regu_desc->ranges;
+		*nranges = regu_desc->nranges;
+	}
+}
 
 static int stpmic2_update_en_crs(const struct device *dev,
 				 uint8_t mask, uint8_t value)
@@ -674,21 +698,23 @@ static int stpmic2_reg_disable(const struct device *dev)
 
 static unsigned int stpmic2_reg_count_voltages(const struct device *dev)
 {
-	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
-	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
+	const struct linear_range *ranges;
+	size_t nranges;
 
-	return linear_range_group_values_count(regu_desc->ranges,
-					       regu_desc->nranges);
+	stpmic2_reg_get_range(dev, &ranges, &nranges);
+
+	return linear_range_group_values_count(ranges, nranges);
 }
 
 static int stpmic2_reg_list_voltage(const struct device *dev, unsigned int idx,
 				     int32_t *volt_uv)
 {
-	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
-	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
+	const struct linear_range *ranges;
+	size_t nranges;
 
-	return linear_range_group_get_value(regu_desc->ranges,
-					    regu_desc->nranges, idx, volt_uv);
+	stpmic2_reg_get_range(dev, &ranges, &nranges);
+
+	return linear_range_group_get_value(ranges, nranges, idx, volt_uv);
 }
 
 static int stpmic2_reg_set_voltage(const struct device *dev, int32_t min_uv,
@@ -697,6 +723,8 @@ static int stpmic2_reg_set_voltage(const struct device *dev, int32_t min_uv,
 	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
 	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
+	const struct linear_range *ranges;
+	size_t nranges;
 	uint8_t reg_idx;
 	int32_t val_uv;
 	uint16_t idx = 0;
@@ -706,12 +734,11 @@ static int stpmic2_reg_set_voltage(const struct device *dev, int32_t min_uv,
 	if (drv_cfg->st_bypass_uv && min_uv == max_uv && max_uv == drv_cfg->st_bypass_uv)
 		return stpmic2_set_prop(dev, STPMIC2_BYPASS, 1);
 
-	err = linear_range_group_get_win_index(regu_desc->ranges,
-					       regu_desc->nranges,
-					       min_uv, max_uv, &idx);
+	stpmic2_reg_get_range(dev, &ranges, &nranges);
 
-	err |= linear_range_group_get_value(regu_desc->ranges,
-					    regu_desc->nranges, idx, &val_uv);
+	err = linear_range_group_get_win_index(ranges, nranges, min_uv, max_uv, &idx);
+
+	err |= linear_range_group_get_value(ranges, nranges, idx, &val_uv);
 
 	if (err)
 		return -EINVAL;
@@ -739,6 +766,8 @@ static int stpmic2_reg_get_voltage(const struct device *dev, int32_t *volt_uv)
 	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
 	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
+	const struct linear_range *ranges;
+	size_t nranges;
 	uint8_t val;
 	int err;
 
@@ -761,8 +790,9 @@ static int stpmic2_reg_get_voltage(const struct device *dev, int32_t *volt_uv)
 
 	val = (val & regu_desc->volt_mask) >> regu_desc->volt_shift;
 
-	return linear_range_group_get_value(regu_desc->ranges,
-					    regu_desc->nranges, val, volt_uv);
+	stpmic2_reg_get_range(dev, &ranges, &nranges);
+
+	return linear_range_group_get_value(ranges, nranges, val, volt_uv);
 }
 
 static void _show_reg(const struct i2c_dt_spec *i2c, uint8_t i2c_addr, char *name)
@@ -830,11 +860,24 @@ static int stpmic2_parse_prop(const struct device *dev)
 
 static int __used stpmic2_reg_init(const struct device *dev)
 {
+	struct regu_stpmic2_data *drv_data = dev_get_data(dev);
 	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
+	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
+	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
+	uint8_t nvm;
 	int err;
 
 	regulator_common_data_init(dev);
 
+	/* BUCK1 high voltage range selected in NVM for STPMIC1L and 2L */
+	if (regu_desc->volt_cr == BUCK1_MAIN_CR1 &&
+	    pmic_cfg->ref_id != PMIC_REF_ID_STPMIC25) {
+		err = i2c_reg_read_byte_dt(&pmic_cfg->i2c, NVM_BUCK1_VOUT_SHR, &nvm);
+		if (err)
+			return err;
+		if (nvm & BUCK1_VRANGE_CFG)
+			drv_data->use_buck457_ranges = true;
+	}
 	err = stpmic2_parse_prop(dev);
 	if (err)
 		return err;
@@ -876,6 +919,7 @@ static const struct regulator_driver_api stpmic2_api = {
 
 #define REGULATOR_DEFINE(dev, node_id, id, macro_desc, reg_id, pd, ranges)		\
 	static struct regu_stpmic2_data data_##id = {					\
+		.use_buck457_ranges = false,						\
 	};										\
 											\
 	static const struct regu_stpmic2_config cfg_##id = {				\
