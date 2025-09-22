@@ -400,7 +400,7 @@ static const struct stm32_ipcc_config cfg_##n = {				\
 	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),			\
 	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),		\
 	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),					\
-	.irq = DT_INST_IRQN(0),							\
+	.irq = DT_INST_IRQN(n),							\
 };										\
 										\
 										\
