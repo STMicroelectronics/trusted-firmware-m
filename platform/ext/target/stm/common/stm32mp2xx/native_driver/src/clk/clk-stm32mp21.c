@@ -3293,6 +3293,11 @@ static bool clk_stm32_clock_is_critical(__maybe_unused struct clk *clk)
 		&ck_icn_p_risaf4,
 		&ck_icn_p_rtc,
 #if defined(STM32_M33TDCID)
+		&ck_icn_hs_mcu,
+		&ck_icn_sdmmc,
+		&ck_icn_display,
+		&ck_icn_hsl,
+		&ck_icn_nic,
 		&ck_sys_dbg,
 		&ck_icn_p_syscpu1,
 		&ck_icn_s_ddr,
