@@ -8,6 +8,8 @@
 #include <device.h>
 #include <errno.h>
 #include <firewall.h>
+#include <pm/device.h>
+#include <pm/pm.h>
 #include <reset.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -906,22 +908,23 @@ int stm32_saes_reset(const struct device *dev)
 	stm32_saes_release_sem(drv_cfg);
 }
 
-static int __maybe_unused stm32_saes_probe(const struct device *dev)
+static int stm32_saes_set_clock(const struct stm32_saes_config *drv_cfg, bool enable)
 {
-	const struct stm32_saes_config *drv_cfg = dev_get_config(dev);
 	const struct clock_control *clock_ctl;
-	int err, i;
 	struct clk *clk;
-
-	/* TODO: do we take semaphore ? */
-	err = stm32_saes_acquire_sem(drv_cfg);
-	if (err)
-		return err;
+	int err, i;
 
 	for (i = 0, clock_ctl = drv_cfg->clk_ctl; i < drv_cfg->n_clk; i++, clock_ctl++) {
 		clk = clk_get(clock_ctl->dev, clock_ctl->subsys);
 		if (clk) {
-			err = clk_enable(clk);
+			if (enable) {
+				err = clk_enable(clk);
+
+			} else {
+				clk_disable(clk);
+				err = 0;
+			}
+
 			if (err) {
 				EMSG("%s: clock[%d] enable fail\n", __func__, i);
 				return err;
@@ -931,12 +934,62 @@ static int __maybe_unused stm32_saes_probe(const struct device *dev)
 		}
 	}
 
+	return 0;
+}
+
+static int __maybe_unused stm32_saes_probe(const struct device *dev)
+{
+	const struct stm32_saes_config *drv_cfg = dev_get_config(dev);
+	int err;
+
+	err = stm32_saes_acquire_sem(drv_cfg);
+	if (err)
+		return err;
+
+	err = stm32_saes_set_clock(drv_cfg, true);
+	if (err)
+		goto end;
+
 	err = reset_control_reset(&drv_cfg->rst_ctl);
+
+end:
+	stm32_saes_release_sem(drv_cfg);
+
+	return err;
+}
+
+#ifdef CONFIG_PM_DEVICE
+static int stm32_saes_pm_action(const struct device *dev,
+				enum pm_device_action action, uint32_t pm_hint)
+{
+	const struct stm32_saes_config *drv_cfg = dev_get_config(dev);
+	int err;
+
+	err = stm32_saes_acquire_sem(drv_cfg);
+	if (err)
+		return err;
+
+	switch (action) {
+	case PM_DEVICE_ACTION_SUSPEND:
+		err = stm32_saes_set_clock(drv_cfg, false);
+		break;
+
+	case PM_DEVICE_ACTION_RESUME:
+		err = stm32_saes_set_clock(drv_cfg, true);
+		if (!err && PM_HINT_IS_STATE(pm_hint, CONTEXT))
+			err = reset_control_reset(&drv_cfg->rst_ctl);
+		break;
+
+	default:
+		err = -EINVAL;
+		break;
+	}
 
 	stm32_saes_release_sem(drv_cfg);
 
 	return err;
 }
+#endif
 
 static const struct sk_cipher_driver_api __maybe_unused stm32_saes_api = {
 	.ctx_init = stm32_saes_ctx_init,
@@ -979,9 +1032,11 @@ static struct stm32_saes_data stm32_saes_data_##n = {				\
 	.variant = _variant,							\
 };										\
 										\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_saes_pm_action);				\
+										\
 DEVICE_DT_INST_DEFINE(n,							\
 		      &stm32_saes_probe,					\
-		      NULL,							\
+		      PM_DEVICE_DT_INST_GET(n),					\
 		      &stm32_saes_data_##n,					\
 		      &stm32_saes_cfg_##n,					\
 		      CORE, 50,							\
