@@ -14,8 +14,9 @@
 #include <lib/mmio.h>
 #include <lib/mmiopoll.h>
 #include <lib/delay.h>
-
 #include <lib/utils_def.h>
+#include <pm/device.h>
+#include <pm/pm.h>
 #include <syscon.h>
 
 #define STM32MP25_RIFSC_GPU_ID	79
@@ -95,6 +96,8 @@ struct stm32_pwr_regu_config {
 
 struct stm32_pwr_regu_data {
 	struct regulator_common_data data;
+	bool suspend_state;
+	int32_t suspend_uv;
 };
 
 /* IO compensation CCR registers bit definition */
@@ -119,14 +122,13 @@ static int stm32_pwr_enable_io_compensation(const struct stm32_pwr_regu_config *
 	const struct stm32_pwr_regu *pwr_regu = &drv_cfg->pwr_regu;
 	uint32_t cccr_addr;
 	uint32_t ccsr_addr;
-	uint32_t value;
+	uint32_t value = 0U;
 	int ret;
 
 	cccr_addr = drv_cfg->syscfg_base + pwr_regu->iod_offset;
 	ccsr_addr = cccr_addr + SYSCFG_CCSR_OFFSET;
 
-	syscon_read(drv_cfg->syscfg_dev, ccsr_addr,
-		    &value);
+	syscon_read(drv_cfg->syscfg_dev, ccsr_addr, &value);
 	if (value & SYSCFG_CCSR_READY)
 		return 0;
 
@@ -465,6 +467,92 @@ __unused void stm32_pwr_regulator_restore(void)
 	}
 }
 
+#ifdef CONFIG_PM_DEVICE
+static bool stm32_pwr_get_state(const struct device *dev)
+{
+	const struct stm32_pwr_regu_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_pwr_regu *pwr_regu = &drv_cfg->pwr_regu;
+	uintptr_t reg = drv_cfg->base + pwr_regu->enable_reg;
+
+	if (pwr_regu->enable_reg)
+		return !!(io_read32(reg) & pwr_regu->valid_mask);
+
+	return true;
+}
+
+/* Restore the PWR regulator state, includng IOCOMP but without vin_supply */
+static int stm32_pwr_set_state(const struct device *dev, bool state)
+{
+	const struct stm32_pwr_regu_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_pwr_regu *pwr_regu = &drv_cfg->pwr_regu;
+	int res;
+
+	if (state) {
+		res = stm32_pwr_enable_reg(drv_cfg);
+		if (res)
+			return res;
+
+		if (pwr_regu->is_an_iod && !pwr_regu->n_iocomp_code)  {
+			res = stm32_pwr_enable_io_compensation(drv_cfg);
+			if (res) {
+				stm32_pwr_disable_reg(drv_cfg);
+				return res;
+			}
+		}
+	} else {
+		if (pwr_regu->is_an_iod && !pwr_regu->n_iocomp_code)
+			stm32_pwr_disable_io_compensation(drv_cfg);
+
+		stm32_pwr_disable_reg(drv_cfg);
+	}
+
+	return 0;
+}
+
+static int stm32_pwr_regulator_pm_action(const struct device *dev,
+					 enum pm_device_action action,
+					 uint32_t pm_hint)
+{
+	const struct stm32_pwr_regu_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_pwr_regu *pwr_regu = &drv_cfg->pwr_regu;
+	struct stm32_pwr_regu_data *drv_data = dev_get_data(dev);
+	int err;
+
+	if (action == PM_DEVICE_ACTION_SUSPEND) {
+		drv_data->suspend_state = stm32_pwr_get_state(dev);
+		if (pwr_regu->is_an_iod) {
+			err = stm32_pwr_get_voltage(dev, &drv_data->suspend_uv);
+			if (err)
+				return err;
+
+			/* Disable low voltage mode to protect IOs */
+			err = stm32_pwr_set_low_volt(drv_cfg, false);
+			if (err)
+				return err;
+
+			if (!pwr_regu->n_iocomp_code)
+				stm32_pwr_disable_io_compensation(drv_cfg);
+		}
+	} else {
+		if (pwr_regu->is_an_iod) {
+			if (pwr_regu->n_iocomp_code) {
+				err = stm32_pwr_fixed_io_compensation(drv_cfg);
+				if (err)
+					return err;
+			}
+
+			err = stm32_pwr_set_voltage(dev, drv_data->suspend_uv,
+						    drv_data->suspend_uv);
+			if (err)
+				return err;
+		}
+		return stm32_pwr_set_state(dev, drv_data->suspend_state);
+	}
+
+	return 0;
+}
+#endif
+
 #define DEFINE_REGU_VDDIO(_node_id, _id, _reg) {						\
 	.enable_reg = _reg##_OFFSET,								\
 	.enable_mask = _reg ## _ ## _id ## VMEN,						\
@@ -520,7 +608,9 @@ __unused void stm32_pwr_regulator_restore(void)
 					     st_syscfg_vddio, 0, offset),			\
 	};											\
 												\
-	DEVICE_DT_DEFINE(node_id, &stm32_pwr_regulator_init, NULL,				\
+	PM_DEVICE_DT_DEFINE(node_id, stm32_pwr_regulator_pm_action);				\
+												\
+	DEVICE_DT_DEFINE(node_id, &stm32_pwr_regulator_init, PM_DEVICE_DT_GET(node_id),		\
 			 &stm32_data_##id, &stm32_cfg_##id,					\
 			 CORE, 7, &ops);
 

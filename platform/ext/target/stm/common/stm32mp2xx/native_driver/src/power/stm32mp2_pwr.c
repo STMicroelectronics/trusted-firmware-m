@@ -10,13 +10,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <device.h>
 #include <debug.h>
+#include <device.h>
+#include <firewall.h>
 #include <lib/mmio.h>
 #include <lib/mmiopoll.h>
 #include <lib/utils_def.h>
+#include <pm/device.h>
+#include <pm/pm.h>
 #include <reset.h>
-#include <firewall.h>
 
 #include <stm32mp2_pwr.h>
 #include <stm32_rif.h>
@@ -300,6 +302,24 @@ static const struct firewall_controller_api stm32mp2_pwr_firewall_api = {
 	.release_conf = stm32mp2_pwr_rif_firewall_release_conf,
 };
 
+#ifdef CONFIG_PM_DEVICE
+static int stm32mp2_pwr_pm_action(const struct device *dev,
+				  enum pm_device_action action,
+				  uint32_t pm_hint)
+{
+	const struct stm32mp2_pwr_config *dev_cfg = dev_get_config(dev);
+
+	if (!PM_HINT_IS_STATE(pm_hint, CONTEXT))
+		return 0;
+
+	if (action == PM_DEVICE_ACTION_RESUME)
+		if (dev_cfg->rif_ctl)
+			return stm32_rifprot_init(dev_cfg->rif_ctl);
+
+	return 0;
+}
+#endif
+
 /*
  * FIXME:
  * when we add supply domain managment, we need to create a power domain
@@ -334,7 +354,9 @@ static const struct stm32mp2_pwr_config stm32mp2_pwr_cfg_##n = {	\
 	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),				\
 };									\
 									\
-DEVICE_DT_INST_DEFINE(n, &stm32mp2_pwr_init, NULL,			\
+PM_DEVICE_DT_INST_DEFINE(n, stm32mp2_pwr_pm_action);			\
+									\
+DEVICE_DT_INST_DEFINE(n, &stm32mp2_pwr_init, PM_DEVICE_DT_INST_GET(n),	\
 		      NULL, &stm32mp2_pwr_cfg_##n,			\
 		      PRE_CORE, 1, &stm32mp2_pwr_firewall_api);
 
