@@ -17,6 +17,7 @@
 #include <device.h>
 #include <pm/pm.h>
 #include <pm/device.h>
+#include <pm/pm.h>
 
 #include <stm32mp2_clk.h>
 #if defined(STM32MP21xxxx)
