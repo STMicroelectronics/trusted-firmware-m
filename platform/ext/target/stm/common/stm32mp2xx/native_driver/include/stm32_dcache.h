@@ -19,11 +19,11 @@ struct stm32_dcache_mon {
 #define DCACHE_CMD_INV		0x2
 #define DCACHE_CMD_CLRINV	0x3
 
-#if defined(STM32_CACHE_ENABLED)
 #define stm32_dcache_clean(s, e)	stm32_dcache_maintenance(DCACHE_CMD_CLR, s, e)
 #define stm32_dcache_inv(s, e)		stm32_dcache_maintenance(DCACHE_CMD_INV, s, e)
 #define stm32_dcache_clean_inv(s, e)	stm32_dcache_maintenance(DCACHE_CMD_CLRINV, s, e)
 
+#if defined(STM32_CACHE_ENABLED)
 int stm32_dcache_enable_irq(void);
 int stm32_dcache_monitor_reset(void);
 int stm32_dcache_monitor_start(void);
@@ -34,10 +34,6 @@ int stm32_dcache_maintenance(int cmd, uintptr_t start, uintptr_t end);
 int stm32_dcache_disable(void);
 int stm32_dcache_enable(bool monitor, bool inv);
 #else
-#define stm32_dcache_clean(s, e)
-#define stm32_dcache_inv(s, e)
-#define stm32_dcache_clean_inv(s, e)
-
 static inline int stm32_dcache_enable_irq(void)
 {
 	return -ENOTSUP;
