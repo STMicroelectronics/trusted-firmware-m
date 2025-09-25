@@ -18,6 +18,8 @@
 #include <lib/mmiopoll.h>
 #include <lib/utils_def.h>
 #include <nvmem.h>
+#include <pm/device.h>
+#include <pm/pm.h>
 
 #include <stm32_bsec3.h>
 #include <tfm_plat_otp.h>
@@ -919,6 +921,20 @@ static int stm32_bsec_dt_init(const struct device *dev)
 	return stm32_bsec_shadow_init(dev);
 }
 
+#ifdef CONFIG_PM_DEVICE
+static int stm32_bsec_pm_action(const struct device *dev,
+				enum pm_device_action action, uint32_t pm_hint)
+{
+	if ((PM_HINT_IS_STATE(pm_hint, CONTEXT)) &&
+	    (action == PM_DEVICE_ACTION_RESUME)) {
+		stm32_bsec_mirror_init(dev, true);
+		return stm32_bsec_shadow_init(dev);
+	}
+
+	return 0;
+}
+#endif
+
 static const struct nvmem_driver_api __maybe_unused stm32_bsec_nvmem_api = {
 	.get_cell_size = stm32_bsec_nvmem_get_cell_size,
 	.read_cell = stm32_bsec_nvmem_read_cell,
@@ -975,7 +991,9 @@ static struct stm32_bsec_data stm32_bsec3_data_ ## node_id = {			\
 										\
 static const struct device *bsec_dev = DEVICE_DT_INST_GET(0);			\
 										\
-DEVICE_DT_DEFINE(node_id, &stm32_bsec_dt_init, NULL,				\
+PM_DEVICE_DT_DEFINE(node_id, stm32_bsec_pm_action);				\
+										\
+DEVICE_DT_DEFINE(node_id, &stm32_bsec_dt_init, PM_DEVICE_DT_GET(node_id),	\
 		 &stm32_bsec3_data_##node_id,					\
 		 &stm32_bsec3_cfg_##node_id,					\
 		 CORE, 5,							\
