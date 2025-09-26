@@ -23,7 +23,7 @@ set(DTS_EXT_DIR                 ""                      CACHE STRING	"Define ext
 set(MCUBOOT_LOG_LEVEL                   INFO            CACHE STRING    "Set mcuboot log level (OFF ERROR WARNING INFO DEBUG)" FORCE)
 set(LOG_LEVEL                           LOG_LEVEL_INFO  CACHE STRING    "Set tfm priv log level (see tfm_vprintf.h)" FORCE)
 set(LOG_LEVEL_UNPRIV                    LOG_LEVEL_INFO  CACHE STRING    "Set tfm unpriv log level (see tfm_vprintf.h)" FORCE)
-set(CONFIG_TFM_BACKTRACE_ON_CORE_PANIC  OFF             CACHE BOOL      "On fatal errors in secure firmware, log backtrace and then halt" FORCE)
+set(CONFIG_TFM_BACKTRACE_ON_CORE_PANIC  ON              CACHE BOOL      "On fatal errors in secure firmware, log backtrace and then halt" FORCE)
 
 ## platform
 set(PLATFORM_DEFAULT_ATTEST_HAL         OFF         CACHE BOOL  "Use default attest hal implementation.")
