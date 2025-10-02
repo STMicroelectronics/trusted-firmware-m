@@ -542,14 +542,6 @@
 			status = "disabled";
 		};
 
-		risaf5: risaf@520e0000 {
-			compatible = "st,stm32mp25-risaf";
-			reg = <0x520e0000 0x1000>;
-			clocks = <&rcc CK_BUS_PCIE>;
-			st,mem-map = <0x0 0x10000000 0x0 0x10000000>;
-			status = "disabled";
-		};
-
 		bsec: efuse@54000000 {
 			compatible = "st,stm32mp25-bsec";
 			reg = <0x54000000 0x1000>;
@@ -832,30 +824,6 @@
 				reg = <0x80000 0x400>;
 				clocks = <&rcc CK_BUS_GPIOI>;
 				st,bank-name = "GPIOI";
-				status = "disabled";
-			};
-
-			gpioj: gpio@542d0000 {
-				compatible = "st,stm32-gpio";
-				gpio-controller;
-				#gpio-cells = <2>;
-				interrupt-controller;
-				#interrupt-cells = <2>;
-				reg = <0x90000 0x400>;
-				clocks = <&rcc CK_BUS_GPIOJ>;
-				st,bank-name = "GPIOJ";
-				status = "disabled";
-			};
-
-			gpiok: gpio@542e0000 {
-				compatible = "st,stm32-gpio";
-				gpio-controller;
-				#gpio-cells = <2>;
-				interrupt-controller;
-				#interrupt-cells = <2>;
-				reg = <0xa0000 0x400>;
-				clocks = <&rcc CK_BUS_GPIOK>;
-				st,bank-name = "GPIOK";
 				status = "disabled";
 			};
 		};
