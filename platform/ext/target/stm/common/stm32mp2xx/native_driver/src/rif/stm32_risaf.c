@@ -13,6 +13,7 @@
 
 #include <debug.h>
 
+#include <boot/tfm_boot_status.h>
 #include <lib/delay.h>
 #include <lib/mmio.h>
 #include <lib/mmiopoll.h>
@@ -28,6 +29,11 @@
 #include <strings.h>
 
 #include <dt-bindings/rif/stm32mp2-risaf.h>
+
+extern int boot_add_data_to_shared_area(uint8_t major_type,
+					uint16_t minor_type,
+					size_t size,
+					const uint8_t *data);
 
 /* ID Registers */
 #define _RISAF_SR			0x04U
@@ -569,6 +575,12 @@ static __unused int stm32_risaf_encryption_init(const struct device *dev)
 
 	if (variant->mce_encryption_fn)
 		err = variant->mce_encryption_fn(dev, key);
+
+	if (!err)
+		boot_add_data_to_shared_area(TLV_MAJOR_PLATFORM,
+					     TLV_PLAT_DDRENCKEY,
+					     sizeof(key),
+					     key);
 
 out:
 	return err;

@@ -5,6 +5,7 @@
  *
  */
 #include <cmsis.h>
+#include <psa_manifest/pid.h>
 #include <tfm_hal_platform.h>
 #include <tfm_plat_defs.h>
 #include <target_cfg.h>
@@ -91,4 +92,14 @@ uint32_t tfm_hal_raise_notify_ns(void)
 uint32_t tfm_hal_notify_ns_init(void)
 {
 	return TFM_HAL_SUCCESS;
+}
+
+uint32_t tfm_hal_check_boot_data_access_policy(int32_t partition_id)
+{
+#ifdef TFM_PARTITION_PM
+	if (partition_id == TFM_SP_PM)
+		return TFM_HAL_SUCCESS;
+#endif
+
+	return TFM_HAL_ERROR_GENERIC;
 }

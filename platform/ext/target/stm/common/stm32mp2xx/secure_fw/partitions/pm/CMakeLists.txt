@@ -49,6 +49,7 @@ target_link_libraries(tfm_psa_rot_partition_pm
         platform_s
         tfm_config
         tfm_sprt
+        tfm_boot_status
         ${STM32MP2_LP_TARGET}::api
 )
 
