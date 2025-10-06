@@ -68,9 +68,9 @@
  */
 #define PENDSV_PRIO_FOR_SCHED ((1 << (__NVIC_PRIO_BITS - 1)) - 1)
 
-#if CONFIG_TFM_SECURE_THREAD_MASK_NS_INTERRUPT == 1
+#if (CONFIG_TFM_SECURE_THREAD_MASK_NS_INTERRUPT == 1) || (CONFIG_TFM_SECURE_SLIH_MASK_NS_INTERRUPT == 1)
 #if (!defined(__ARM_ARCH_8_1M_MAIN__)) && (!defined(__ARM_ARCH_8M_MAIN__))
-#error CONFIG_TFM_SECURE_THREAD_MASK_NS_INTERRUPT is not supported in Baseline implementations
+#error CONFIG_TFM_SECURE_THREAD_MASK_NS_INTERRUPT or CONFIG_TFM_SECURE_SLIH_MASK_NS_INTERRUPT)  is not supported in Baseline implementations
 #endif /* (!defined(__ARM_ARCH_8_1M_MAIN__)) && (!defined(__ARM_ARCH_8M_MAIN__)) */
 /* IMPORTANT NOTE:
  *
@@ -79,7 +79,18 @@
  * number up to the value 0x80. To mask NS interrupts in secure thread
  * execution, set the priority of Secure thread mode execution to this value.
  */
+#if (CONFIG_TFM_SECURE_THREAD_MASK_NS_INTERRUPT == 1)
 #define SECURE_THREAD_EXECUTION_PRIORITY 0x80
+#endif
+
+#if (CONFIG_TFM_SECURE_SLIH_MASK_NS_INTERRUPT == 1)
+#ifndef SECURE_MASK_NS_IRQ_PRIORITY
+#define SECURE_THREAD_EXECUTION_PRIORITY (0x80)
+#else
+#define SECURE_THREAD_EXECUTION_PRIORITY (SECURE_MASK_NS_IRQ_PRIORITY)
+#endif
+
+#endif
 #endif /* CONFIG_TFM_SECURE_THREAD_MASK_NS_INTERRUPT == 1 */
 #else /* CONFIG_TFM_USE_TRUSTZONE */
 /* If TZ is not in use, we have the full priority range available */

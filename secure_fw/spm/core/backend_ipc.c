@@ -59,7 +59,8 @@ ARCH_CLAIM_CTXCTRL_INSTANCE(spm_thread_context,
 struct context_ctrl_t *p_spm_thread_context = &spm_thread_context;
 #endif
 
-#if (CONFIG_TFM_SECURE_THREAD_MASK_NS_INTERRUPT == 1) && defined(CONFIG_TFM_USE_TRUSTZONE)
+#if ((CONFIG_TFM_SECURE_THREAD_MASK_NS_INTERRUPT == 1) ||\
+     (CONFIG_TFM_SECURE_SLIH_MASK_NS_INTERRUPT == 1)) && defined(CONFIG_TFM_USE_TRUSTZONE)
 static bool basepri_set_by_ipc_schedule;
 #endif
 
@@ -482,7 +483,8 @@ uint64_t ipc_schedule(uint32_t exc_return)
     /* Protect concurrent access to current thread/component and thread status */
     CRITICAL_SECTION_ENTER(cs);
 
-#if (CONFIG_TFM_SECURE_THREAD_MASK_NS_INTERRUPT == 1) && defined(CONFIG_TFM_USE_TRUSTZONE)
+#if ((CONFIG_TFM_SECURE_THREAD_MASK_NS_INTERRUPT == 1) ||\
+     (CONFIG_TFM_SECURE_SLIH_MASK_NS_INTERRUPT == 1)) && defined(CONFIG_TFM_USE_TRUSTZONE)
     if (__get_BASEPRI() == 0) {
         /*
          * If BASEPRI is not set, that means an interrupt was taken when
@@ -534,7 +536,8 @@ uint64_t ipc_schedule(uint32_t exc_return)
         }
         ARCH_FLUSH_FP_CONTEXT();
 
-#if (CONFIG_TFM_SECURE_THREAD_MASK_NS_INTERRUPT == 1) && defined(CONFIG_TFM_USE_TRUSTZONE)
+#if ((CONFIG_TFM_SECURE_THREAD_MASK_NS_INTERRUPT == 1) ||\
+     (CONFIG_TFM_SECURE_SLIH_MASK_NS_INTERRUPT == 1)) && defined(CONFIG_TFM_USE_TRUSTZONE)
         if (IS_NS_AGENT_TZ(p_part_next->p_ldinf)) {
             /*
              * The Non-Secure Agent for TrustZone is going to be scheduled.

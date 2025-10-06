@@ -285,6 +285,16 @@
 #define CONFIG_TFM_SECURE_THREAD_MASK_NS_INTERRUPT 0
 #endif
 
+/* Mask Non-Secure interrupts when SLIH interupt is executing in secure state */
+/* Wihtout this flag, if  secure is interrupted by non secure during its
+ * execution  and non secure call a secure service, the secure context execution
+ * is not non secure agent , an error is trigger, with this api
+ * SECURE_MASK_NS_IRQ_PRIORITY must be defined, this value lets the non secure
+ * interrupt handler of a given priority  */
+#ifndef CONFIG_TFM_SECURE_SLIH_MASK_NS_INTERRUPT
+#define CONFIG_TFM_SECURE_SLIH_MASK_NS_INTERRUPT 0
+#endif
+
 /* Enable OTP/NV_COUNTERS emulation in RAM */
 #ifndef OTP_NV_COUNTERS_RAM_EMULATION
 #define OTP_NV_COUNTERS_RAM_EMULATION           0
