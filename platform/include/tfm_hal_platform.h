@@ -103,4 +103,14 @@ uint32_t tfm_hal_notify_ns_init(void);
 
 #endif /*  PLATFORM_HAS_NS_NOTIF */
 
+#ifdef PLATFORM_HAS_BOOTDATA
+/**
+ * \brief  Platform api to check platform boot data access policy
+ *
+ * \retval TFM_HAL_SUCCESS        Platform boot data access granted
+ * \retval Other code             No access.
+ */
+uint32_t tfm_hal_check_boot_data_access_policy(int32_t partition_id);
+#endif /*  PLATFORM_HAS_BOOTDATA */
+
 #endif /* __TFM_HAL_PLATFORM_H__ */

@@ -23,6 +23,9 @@ extern "C" {
 #define TLV_MAJOR_IAS      0x1
 #define TLV_MAJOR_FWU      0x2
 #define TLV_MAJOR_MBS      0x3
+#ifdef PLATFORM_HAS_BOOTDATA
+#define TLV_MAJOR_PLATFORM 0x4
+#endif
 #define TLV_MAJOR_INVALID  0xF
 
 /**

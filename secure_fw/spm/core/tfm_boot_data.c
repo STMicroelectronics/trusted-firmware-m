@@ -18,6 +18,7 @@
 #include "spm.h"
 #include "load/partition_defs.h"
 #include "tfm_hal_isolation.h"
+#include "tfm_hal_platform.h"
 
 /*!
  * \def BOOT_DATA_VALID
@@ -97,6 +98,11 @@ static int32_t tfm_core_check_boot_data_access_policy(uint8_t major_type)
     const uint32_t array_size = ARRAY_SIZE(access_policy_table);
 
     partition_id = tfm_spm_partition_get_running_partition_id();
+
+#ifdef PLATFORM_HAS_BOOTDATA
+    if (major_type == TLV_MAJOR_PLATFORM)
+        return tfm_hal_check_boot_data_access_policy(partition_id);
+#endif
 
     /*
      * The first element of the access_policy_table is an invalid element,
