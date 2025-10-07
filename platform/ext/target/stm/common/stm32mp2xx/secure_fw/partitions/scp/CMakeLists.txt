@@ -32,7 +32,7 @@ target_sources(tfm_partitions
         ${CMAKE_BINARY_DIR}/generated/secure_fw/partitions/scp/auto_generated/load_info_tfm_scp.c
 )
 
-if (${TFM_SPM_LOG_LEVEL} STREQUAL STM32_LOG_LEVEL_OFF)
+if (${TFM_SPM_LOG_LEVEL} STREQUAL TFM_SPM_LOG_LEVEL_SILENCE)
     set(SCP_LOG_LEVEL DISABLED)
 else()
     set(SCP_LOG_LEVEL ERROR)
