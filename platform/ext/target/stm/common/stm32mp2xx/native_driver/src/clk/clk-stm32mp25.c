@@ -5,6 +5,7 @@
 #define DT_DRV_COMPAT st_stm32mp25_rcc
 
 #include <device.h>
+#include <pm/pm.h>
 
 /*
 * This driver is single-instance. If the devicetree contains multiple
@@ -3866,6 +3867,9 @@ static int stm32_rcc_pm_action(const struct device *dev,
 			       enum pm_device_action action, uint32_t pm_hint)
 {
 	int err = 0;
+
+	if (!PM_HINT_IS_STATE(pm_hint, CONTEXT))
+		return 0;
 
 	if (action == PM_DEVICE_ACTION_SUSPEND)
 		err = stm32_rcc_pm_suspend(dev);
