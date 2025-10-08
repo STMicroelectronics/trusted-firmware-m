@@ -548,11 +548,6 @@
 			clocks = <&rcc CK_BUS_SYSCPU1>;
 			scmi-id = <CK_SCMI_SYSCPU1>;
 		};
-		scmi_clk_cpu1:scmi_clk_cpu1 {
-			compatible = "st,stm32mp25-scmi-clk";
-			clocks = <&rcc CK_CPU1>;
-			scmi-id = <CK_SCMI_CPU1>;
-		};
 		scmi_clk_hse_div2:hse_div2_ck {
 			compatible = "st,stm32mp25-scmi-clk";
 			clocks = <&rcc HSE_DIV2_CK>;
