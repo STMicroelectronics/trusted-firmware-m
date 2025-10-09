@@ -39,6 +39,15 @@ REGION_DECLARE(Image$$, TFM_SP_META_PTR, $$ZI$$Base);
 REGION_DECLARE(Image$$, TFM_SP_META_PTR, $$ZI$$Limit);
 #endif
 
+#ifdef STM32_M33TDCID
+#define S_SCMI_CID1_S_ADDR		DT_REG_ADDR(DT_NODELABEL(scmi_cid1_s))
+#define S_SCMI_CID1_S_SIZE		DT_REG_SIZE(DT_NODELABEL(scmi_cid1_s))
+#define S_SCMI_CID1_NS_ADDR		DT_REG_ADDR(DT_NODELABEL(scmi_cid1_ns))
+#define S_SCMI_CID1_NS_SIZE		DT_REG_SIZE(DT_NODELABEL(scmi_cid1_ns))
+#define S_PSA_BUFFER_CID1_S_ADDR	DT_REG_ADDR(DT_NODELABEL(psa_buffer_cid1_s))
+#define S_PSA_BUFFER_CID1_S_SIZE	DT_REG_SIZE(DT_NODELABEL(psa_buffer_cid1_s))
+#endif
+
 static const struct mpu_armv8m_region_cfg_t __maybe_unused mpu_regions[] = {
 	/* Veneer region */
 	{
@@ -94,8 +103,26 @@ static const struct mpu_armv8m_region_cfg_t __maybe_unused mpu_regions[] = {
 #ifdef STM32_M33TDCID
 	{
 		0, /* will be updated before using */
-		S_SCMI_ADDR,
-		S_SCMI_ADDR + S_SCMI_SIZE - 1,
+		S_SCMI_CID1_NS_ADDR,
+		S_SCMI_CID1_NS_ADDR + S_SCMI_CID1_NS_SIZE - 1,
+		MPU_ARMV8M_MAIR_ATTR_DEVICE_IDX,
+		MPU_ARMV8M_XN_EXEC_NEVER,
+		MPU_ARMV8M_AP_RW_PRIV_ONLY,
+		MPU_ARMV8M_SH_NONE
+	},
+	{
+		0, /* will be updated before using */
+		S_SCMI_CID1_S_ADDR,
+		S_SCMI_CID1_S_ADDR + S_SCMI_CID1_S_SIZE - 1,
+		MPU_ARMV8M_MAIR_ATTR_DEVICE_IDX,
+		MPU_ARMV8M_XN_EXEC_NEVER,
+		MPU_ARMV8M_AP_RW_PRIV_ONLY,
+		MPU_ARMV8M_SH_NONE
+	},
+	{
+		0, /* will be updated before using */
+		S_PSA_BUFFER_CID1_S_ADDR,
+		S_PSA_BUFFER_CID1_S_ADDR + S_PSA_BUFFER_CID1_S_SIZE - 1,
 		MPU_ARMV8M_MAIR_ATTR_DEVICE_IDX,
 		MPU_ARMV8M_XN_EXEC_NEVER,
 		MPU_ARMV8M_AP_RW_PRIV_ONLY,
