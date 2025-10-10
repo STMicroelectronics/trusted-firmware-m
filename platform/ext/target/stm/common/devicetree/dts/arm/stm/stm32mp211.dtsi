@@ -170,6 +170,27 @@
 			status = "disabled";
 		};
 
+		ramcfg: memory-controller@52070000 {
+			#address-cells = <1>;
+			#size-cells = <1>;
+			compatible = "st,stm32mp21-ramcfg";
+			ranges = <0 0x52070000 0x1000>;
+			status = "disabled";
+
+			ramcfg_sysram: syram-sram@0 {
+				reg = <0x0 0x28>;
+			};
+			ramcfg_sram1: syram1-sram@80 {
+				reg = <0x80 0x28>;
+			};
+			ramcfg_retram: syram2-sram@180 {
+				reg = <0x180 0x28>;
+			};
+			ramcfg_bkpsram: bkpsram-sram@380 {
+				reg = <0x380 0x28>;
+			};
+		};
+
 		rifsc: access-controller@52080000 {
 			compatible = "st,stm32mp25-rifsc";
 			reg = <0x52080000 0x1000>;
