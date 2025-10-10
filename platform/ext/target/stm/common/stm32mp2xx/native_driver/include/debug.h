@@ -19,7 +19,9 @@
 #define IMSG(_fmt, ...)    LOG_MSG("[INF] "_fmt, ##__VA_ARGS__)
 #define DMSG(_fmt, ...)    LOG_MSG("[DBG] "_fmt, ##__VA_ARGS__)
 
+#define panic() while (1)
 #elif STM32_SEC
+#include <tfm_hal_platform.h>
 #include <tfm_log.h>
 
 /* map on tfm_log library */
@@ -28,6 +30,12 @@
 #define IMSG(...)       INFO(__VA_ARGS__)
 #define DMSG(...)       VERBOSE(__VA_ARGS__)
 
+/* map on tfm_utilities */
+#ifdef CONFIG_TFM_HALT_ON_CORE_PANIC
+#define panic() tfm_hal_system_halt()
+#else
+#define panic() tfm_hal_system_reset()
+#endif
 #elif STM32_BL2
 #include <bootutil/bootutil_log.h>
 
@@ -36,6 +44,7 @@
 #define IMSG(...)       BOOT_LOG_INF(__VA_ARGS__)
 #define DMSG(...)       BOOT_LOG_DBG(__VA_ARGS__)
 
+#define panic() while (1)
 #else
 #error "debug not supported in this component"
 #endif
@@ -56,12 +65,10 @@
 #define VERBOSE DMSG
 #endif
 
-#define panic() while(1)
-
 #define _ASSERT(_test)				\
 	do {					\
 		if (!(_test))			\
-			while(1);		\
-	} while(false)
+			panic();		\
+	} while (false)
 #endif /* DEBUG_H */
 
