@@ -113,12 +113,14 @@ static int stm32mp2_prepare_fw(void)
 	return 0;
 }
 SYS_INIT(stm32mp2_prepare_fw, CORE, 15);
+#endif /* defined(STM32_BOOT_DEV_SDMMC1) || defined(STM32_BOOT_DEV_SDMMC2) */
 
 #if (DT_NODE_EXISTS(DT_NODELABEL(ca35_cube_fw))) && (MCUBOOT_IMAGE_NUMBER == 3)
 static int stm32mp2_prep_a35_fw(void) {
 	const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(tamp));
-	const partition_entry_t *tfm_entry = NULL;
 	int err = 0;
+#if defined(STM32_BOOT_DEV_SDMMC1) || defined(STM32_BOOT_DEV_SDMMC2)
+	const partition_entry_t *tfm_entry = NULL;
 
 	tfm_entry = get_partition_entry("a35fw-a");
 	if (tfm_entry == NULL) {
@@ -132,6 +134,7 @@ static int stm32mp2_prep_a35_fw(void) {
 	/* TODO: remove*/
 	flash_map[5].fa_off = tfm_entry->start;
 	flash_map[5].fa_size = tfm_entry->length;
+#endif /* defined(STM32_BOOT_DEV_SDMMC1) || defined(STM32_BOOT_DEV_SDMMC2) */
 
 	/* Fill the backup register 72 with the load address of the firmware */
 	err = stm32_tamp_bkpreg_write(dev, 72, CA35_FW_DEST_ADDR + BL2_HEADER_SIZE);
@@ -142,7 +145,6 @@ static int stm32mp2_prep_a35_fw(void) {
 }
 SYS_INIT(stm32mp2_prep_a35_fw, CORE, 30);
 #endif /* (DT_NODE_EXISTS(DT_NODELABEL(ca35_cube_fw))) */
-#endif /* defined(STM32_BOOT_DEV_SDMMC1) || defined(STM32_BOOT_DEV_SDMMC2) */
 
 static int __unused stm32mp2_watchdog_init(void)
 {
