@@ -126,3 +126,17 @@ add_custom_command(OUTPUT ddr_phy_signed.bin
 		${CMAKE_CURRENT_BINARY_DIR}/ddr_phy_signed.bin
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/ddr_phy_signed.bin $<TARGET_FILE_DIR:bl2>
 )
+
+# add signing_layout.o in build bin folder.
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ddrfw_signing_layout.o
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_OBJECTS:signing_layout_for_ddr_phy>
+        ${CMAKE_CURRENT_BINARY_DIR}/ddrfw_signing_layout.o
+    DEPENDS $<TARGET_OBJECTS:signing_layout_for_ddr_phy>
+)
+
+add_custom_target(copy_signing_layout ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ddrfw_signing_layout.o)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ddrfw_signing_layout.o
+        DESTINATION $<TARGET_FILE_DIR:bl2>/layout_files)
