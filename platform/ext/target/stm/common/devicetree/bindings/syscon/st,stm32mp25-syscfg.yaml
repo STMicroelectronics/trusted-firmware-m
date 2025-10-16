@@ -9,6 +9,11 @@ compatible: "st,stm32mp25-syscfg"
 include: [syscon.yaml]
 
 properties:
+  st,reg-init:
+    type: array
+    description: |
+      This property can be used if the register cannot be set by framework
+      or driver through the syscon API. Each register is defined by <offset value>.
 
   "#syscfg-reg-cells":
     type: int
