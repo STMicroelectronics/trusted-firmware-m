@@ -35,6 +35,7 @@
 
 #define RNG_TIMEOUT_US		100000U
 #define RNG_TIMEOUT_STEP_US	10U
+#define RNG_TIMEOUT_TRIALS 	(RNG_TIMEOUT_US / RNG_TIMEOUT_STEP_US)
 
 #define TIMEOUT_US_1MS		1000U
 
@@ -107,7 +108,7 @@ static int check_data_integrity(const struct device *dev)
 	int nb_tries, err;
 
 	if ((status & (_SR_SECS | _SR_SEIS | _SR_DRDY)) != _SR_DRDY) {
-		for (nb_tries = 3; nb_tries > 0; nb_tries--) {
+		for (nb_tries = RNG_TIMEOUT_TRIALS; nb_tries > 0; nb_tries--) {
 
 			uint32_t status = mmio_read_32(drv_cfg->base + _RNG_SR);
 			if ((status & (_SR_SECS | _SR_SEIS)) != 0U) {
@@ -119,7 +120,7 @@ static int check_data_integrity(const struct device *dev)
 			err = mmio_read32_poll_timeout(drv_cfg->base + _RNG_SR,
 						       sr,
 						       (sr & _SR_DRDY),
-						       RNG_TIMEOUT_US);
+						       RNG_TIMEOUT_STEP_US);
 
 			if (!err)
 				break;
