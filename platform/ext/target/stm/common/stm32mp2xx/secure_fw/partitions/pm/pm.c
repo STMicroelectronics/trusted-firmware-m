@@ -85,8 +85,13 @@ void jump_low_power_fw(enum pm_suspend_mode_t lpmode)
 	stm32mp2_lp_fw_mark_data_valid();
 
 	/* Clean cache in order to prevent unsynchronized shared data */
-	if (stm32_dcache_clean(0x0, 0xFFFFFFFF))
-		return;
+	if (IS_ENABLED(STM32_CACHE_ENABLED)) {
+		if (stm32_dcache_clean(0x0, 0xFFFFFFFF))
+			return;
+
+		if (stm32_dcache_disable())
+			return;
+	}
 
 	stm32mp2_lp_fw_exec();
 
@@ -104,6 +109,8 @@ void jump_low_power_fw(enum pm_suspend_mode_t lpmode)
 static int _pm_suspend(enum pm_suspend_mode_t mode)
 {
 	struct critical_section_t cs_assert = CRITICAL_SECTION_STATIC_INIT;
+	int err = 0;
+
 	/* prepare suspend context*/
 
 	/* IT: mask, wakeup, fault ?*/
@@ -116,8 +123,8 @@ static int _pm_suspend(enum pm_suspend_mode_t mode)
 	if (IS_ENABLED(CONFIG_PM_DEVICE)) {
 		if (!pm_suspend_devices(STM32_PM_HINT)) {
 			pm_resume_devices(STM32_PM_HINT);
-			CRITICAL_SECTION_LEAVE(cs_assert);
-			return -EINVAL;
+			err = -EINVAL;
+			goto out;
 		}
 	}
 
@@ -125,9 +132,12 @@ static int _pm_suspend(enum pm_suspend_mode_t mode)
 
 	pm_resume_devices(STM32_PM_HINT);
 
-	CRITICAL_SECTION_LEAVE(cs_assert);
+	if (IS_ENABLED(STM32_CACHE_ENABLED))
+		err = stm32_dcache_enable(true, true);
 
-	return 0;
+out:
+	CRITICAL_SECTION_LEAVE(cs_assert);
+	return err;
 }
 
 psa_status_t tfm_pm_suspend(const psa_msg_t *msg)
@@ -160,8 +170,13 @@ psa_status_t tfm_pm_power_off(void)
 	stm32mp2_lp_fw_mark_data_valid();
 
 	/* Clean cache in order to prevent unsynchronized shared data */
-	if (!stm32_dcache_clean(0x0, 0xFFFFFFFF))
-		return PSA_ERROR_GENERIC_ERROR;
+	if (IS_ENABLED(STM32_CACHE_ENABLED)) {
+		if (stm32_dcache_clean(0x0, 0xFFFFFFFF))
+			return PSA_ERROR_GENERIC_ERROR;
+
+		if (stm32_dcache_disable())
+			return PSA_ERROR_GENERIC_ERROR;
+	}
 
 	stm32mp2_lp_fw_exec();
 
