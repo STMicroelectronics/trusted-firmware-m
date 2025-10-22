@@ -15,6 +15,7 @@
 #include <errno.h>
 
 #include <device.h>
+#include <pm/pm.h>
 #include <pm/device.h>
 
 #include <stm32mp2_clk.h>
@@ -92,6 +93,9 @@ static int stm32_rcc_rif_init(const struct device *dev)
 static int stm32_rcc_rif_pm_action(const struct device *dev,
 				  enum pm_device_action action, uint32_t pm_hint)
 {
+	if (!PM_HINT_IS_STATE(pm_hint, CONTEXT))
+		return 0;
+
 	if (action == PM_DEVICE_ACTION_RESUME)
 		return stm32_rcc_rif_init(dev);
 
