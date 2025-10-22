@@ -15,6 +15,8 @@
 #include <errno.h>
 
 #include <device.h>
+#include <pm/device.h>
+#include <pm/pm.h>
 #include <stm32_rif.h>
 #include <clk.h>
 #include <syscon.h>
@@ -200,6 +202,17 @@ out:
 	return err;
 }
 
+#ifdef CONFIG_PM_DEVICE
+static int stm32_hpdma_pm_action(const struct device *dev,
+				enum pm_device_action action, uint32_t pm_hint)
+{
+	if (action == PM_DEVICE_ACTION_RESUME && PM_HINT_IS_STATE(pm_hint, CONTEXT))
+		return stm32_hpdma_init(dev);
+
+	return 0;
+}
+#endif
+
 #define STM32_HPDMA_INIT(n)							\
 										\
 static __unused const struct rif_base rbase_##n = {				\
@@ -229,7 +242,10 @@ static const struct stm32_hpdma_config hpdma_cfg_##n = {			\
 	.errata_ahbrisab = DT_INST_PROP_OR(n, st_errata_ahbrisab, false)	\
 };										\
 										\
-DEVICE_DT_INST_DEFINE(n, &stm32_hpdma_init, NULL,				\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_hpdma_pm_action);				\
+										\
+DEVICE_DT_INST_DEFINE(n, &stm32_hpdma_init,					\
+		      PM_DEVICE_DT_INST_GET(n),					\
 		      NULL, &hpdma_cfg_##n,					\
 		      CORE, 10, NULL);
 
