@@ -9,6 +9,8 @@
 #include <lib/mmio.h>
 
 #include <device.h>
+#include <pm/device.h>
+#include <pm/pm.h>
 #include <pinctrl.h>
 #include <clk.h>
 #include <devicetree/gpio.h>
@@ -152,6 +154,17 @@ static int stm32_gpio_init(const struct device *dev)
 	return err;
 }
 
+#ifdef CONFIG_PM_DEVICE
+static int stm32_gpio_pm_action(const struct device *dev,
+				enum pm_device_action action, uint32_t pm_hint)
+{
+	if (action == PM_DEVICE_ACTION_RESUME && PM_HINT_IS_STATE(pm_hint, CONTEXT))
+		return stm32_gpio_init(dev);
+
+	return 0;
+}
+#endif
+
 #define STM32_GPIO_INIT(n)								\
 											\
 static __unused const struct rif_base rbase_##n = {					\
@@ -173,8 +186,11 @@ static const struct stm32_gpio_config stm32_gpio_cfg_##n = {				\
 	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),						\
 };											\
 											\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_gpio_pm_action);					\
+											\
 DEVICE_DT_INST_DEFINE(n,								\
-		      &stm32_gpio_init, NULL,						\
+		      &stm32_gpio_init,							\
+		      PM_DEVICE_DT_INST_GET(n),						\
 		      NULL, &stm32_gpio_cfg_##n,					\
 		      PRE_CORE, 10,							\
 		      NULL);
