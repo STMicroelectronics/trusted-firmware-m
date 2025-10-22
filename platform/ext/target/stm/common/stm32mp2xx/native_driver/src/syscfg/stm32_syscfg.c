@@ -134,7 +134,7 @@ static int stm32_syscfg_pm_action(const struct device *dev,
 				  enum pm_device_action action, uint32_t pm_hint)
 {
 	if (action == PM_DEVICE_ACTION_RESUME && PM_HINT_IS_STATE(pm_hint, CONTEXT))
-	    return stm32_syscfg_init_register(dev);
+		return stm32_syscfg_init_register(dev);
 
 	return 0;
 }
