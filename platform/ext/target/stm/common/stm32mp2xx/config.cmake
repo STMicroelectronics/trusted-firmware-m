@@ -25,6 +25,8 @@ set(LOG_LEVEL                           LOG_LEVEL_INFO  CACHE STRING    "Set tfm
 set(LOG_LEVEL_UNPRIV                    LOG_LEVEL_INFO  CACHE STRING    "Set tfm unpriv log level (see tfm_vprintf.h)" FORCE)
 set(CONFIG_TFM_BACKTRACE_ON_CORE_PANIC  ON              CACHE BOOL      "On fatal errors in secure firmware, log backtrace and then halt" FORCE)
 set(TFM_EXCEPTION_INFO_DUMP             ON              CACHE BOOL      "On fatal errors in the secure firmware, capture info about the exception. Print the info if the SPM log level is sufficient." FORCE)
+set(TFM_PARTITION_LOG_LEVEL             TFM_PARTITION_LOG_LEVEL_INFO CACHE STRING "Set debug SP log level as Debug level" FORCE)
+set(TFM_SPM_LOG_LEVEL                   TFM_SPM_LOG_LEVEL_INFO       CACHE STRING "Set default SPM log level as INFO level" FORCE)
 
 ## platform
 set(PLATFORM_DEFAULT_ATTEST_HAL         OFF         CACHE BOOL  "Use default attest hal implementation.")
