@@ -120,12 +120,10 @@ static int _pm_suspend(enum pm_suspend_mode_t mode)
 	CRITICAL_SECTION_ENTER(cs_assert);
 
 	/* call suspend of each device */
-	if (IS_ENABLED(CONFIG_PM_DEVICE)) {
-		if (!pm_suspend_devices(STM32_PM_HINT)) {
-			pm_resume_devices(STM32_PM_HINT);
-			err = -EINVAL;
-			goto out;
-		}
+	if (!pm_suspend_devices(STM32_PM_HINT)) {
+		pm_resume_devices(STM32_PM_HINT);
+		err = -EINVAL;
+		goto out;
 	}
 
 	jump_low_power_fw(mode);

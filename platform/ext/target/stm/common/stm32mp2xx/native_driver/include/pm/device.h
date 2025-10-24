@@ -104,17 +104,18 @@ struct pm_device {
 	pm_device_action_cb_t action_cb;
 };
 
+#ifdef CONFIG_PM_DEVICE
 bool pm_suspend_devices(uint32_t pm_hint);
 void pm_resume_devices(uint32_t pm_hint);
-
 static inline bool pm_device_is_active(const struct device *dev)
 {
-#ifdef CONFIG_PM_DEVICE
 	struct pm_device *pm = dev->pm;
 	return (pm == NULL) || (pm->state == PM_DEVICE_STATE_ACTIVE);
-#else
-	return true;
-#endif
 }
+#else
+static inline bool pm_suspend_devices(uint32_t pm_hint __unused) {return true;}
+static inline void pm_resume_devices(uint32_t pm_hint __unused) {}
+static inline bool pm_device_is_active(const struct device *dev __unused) {return true;}
+#endif
 
 #endif /* TFM_PM_DEVICE_H */
