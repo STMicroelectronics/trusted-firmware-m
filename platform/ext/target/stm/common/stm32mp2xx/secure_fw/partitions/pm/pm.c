@@ -17,8 +17,6 @@
 
 #include "critical_section.h"
 
-#define STM32_PM_HINT PM_HINT_POWER_STATE | PM_HINT_CLOCK_STATE | PM_HINT_IO_STATE
-
 typedef struct context {
 	uint32_t VTOR;
 	uint32_t MSPLIM;
@@ -109,7 +107,24 @@ void jump_low_power_fw(enum pm_suspend_mode_t lpmode)
 static int _pm_suspend(enum pm_suspend_mode_t mode)
 {
 	struct critical_section_t cs_assert = CRITICAL_SECTION_STATIC_INIT;
+	uint32_t pm_hint;
 	int err = 0;
+
+	switch(mode) {
+	case PM_STOP2:
+	case PM_LP_STOP2:
+	case PM_LPLV_STOP2:
+		pm_hint = PM_HINT_CLOCK_STATE;
+		break;
+	case PM_STANDBY1:
+		pm_hint = PM_HINT_CLOCK_STATE | PM_HINT_CONTEXT_STATE;
+		break;
+	default:
+		return -EINVAL;
+	};
+
+	/* platform state = mode, used by some driver as STPMIC2 */
+	pm_hint |= mode << PM_HINT_PLATFORM_STATE_SHIFT;
 
 	/* prepare suspend context*/
 
@@ -120,15 +135,15 @@ static int _pm_suspend(enum pm_suspend_mode_t mode)
 	CRITICAL_SECTION_ENTER(cs_assert);
 
 	/* call suspend of each device */
-	if (!pm_suspend_devices(STM32_PM_HINT)) {
-		pm_resume_devices(STM32_PM_HINT);
+	if (!pm_suspend_devices(pm_hint)) {
+		pm_resume_devices(pm_hint);
 		err = -EINVAL;
 		goto out;
 	}
 
 	jump_low_power_fw(mode);
 
-	pm_resume_devices(STM32_PM_HINT);
+	pm_resume_devices(pm_hint);
 
 	if (IS_ENABLED(STM32_CACHE_ENABLED))
 		err = stm32_dcache_enable(true, true);
@@ -164,6 +179,9 @@ psa_status_t tfm_pm_suspend(const psa_msg_t *msg)
 
 psa_status_t tfm_pm_power_off(void)
 {
+	/* call suspend of each device */
+	pm_suspend_devices(PM_HINT_CLOCK_STATE | PM_HINT_PLATFORM_STATE_MASK);
+
 	stm32mp2_lp_fw_set_lpmode(STM32MP2_LP_FW_LPMODE_OFF);
 	stm32mp2_lp_fw_mark_data_valid();
 
