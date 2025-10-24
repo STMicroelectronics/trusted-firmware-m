@@ -16,6 +16,8 @@
 #include <errno.h>
 
 #include <device.h>
+#include <pm/device.h>
+#include <pm/pm.h>
 #include <stm32_rif.h>
 #include <stm32_rifsc.h>
 #include <firewall.h>
@@ -572,6 +574,17 @@ static int __maybe_unused stm32_rifsc_init(const struct device *dev)
 	return stm32_rifsc_glock(dev);
 }
 
+#ifdef CONFIG_PM_DEVICE
+static int stm32_rifsc_pm_action(const struct device *dev,
+				 enum pm_device_action action, uint32_t pm_hint)
+{
+	if (action == PM_DEVICE_ACTION_RESUME && PM_HINT_IS_STATE(pm_hint, CONTEXT))
+		return stm32_rifsc_init(dev);
+
+	return 0;
+}
+#endif
+
 #define STM32_RIMU(_node_id, _prop, _idx)					\
 	{									\
 		.id = RIFPROT_FLD(RIFSC_RIMC_M_ID, _node_id, _prop, _idx),	\
@@ -611,7 +624,10 @@ static const struct stm32_rifsc_config stm32_rifsc_cfg_##n = {				\
 											\
 static struct rifsc_driver_data stm32_rifsc_data_##n = {};				\
 											\
-DEVICE_DT_INST_DEFINE(n, &stm32_rifsc_init, NULL,					\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_rifsc_pm_action);					\
+											\
+DEVICE_DT_INST_DEFINE(n, &stm32_rifsc_init,						\
+		      PM_DEVICE_DT_INST_GET(n),						\
 		      &stm32_rifsc_data_##n, &stm32_rifsc_cfg_##n,			\
 		      PRE_CORE, 0,							\
 		      &stm32_rifsc_firewall_api);
