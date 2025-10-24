@@ -25,6 +25,8 @@
 #include <crypto_hw.h>
 #include <entropy.h>
 #include <firewall.h>
+#include <pm/device.h>
+#include <pm/pm.h>
 #include <string.h>
 #include <strings.h>
 
@@ -683,6 +685,17 @@ out_access:
 	return err;
 }
 
+#ifdef CONFIG_PM_DEVICE
+static int stm32_risaf_pm_action(const struct device *dev,
+				 enum pm_device_action action, uint32_t pm_hint)
+{
+	if (action == PM_DEVICE_ACTION_RESUME && PM_HINT_IS_STATE(pm_hint, CONTEXT))
+		return stm32_risaf_init(dev);
+
+	return 0;
+}
+#endif
+
 static __unused const struct stm32_risaf_variant stm32mp25_variant = {
 	.has_enc = false,
 	.default_encryption_fn = NULL,
@@ -779,7 +792,10 @@ static struct stm32_risaf_data stm32_risaf_data_##name####n = {				\
 	.variant = &_variant,								\
 };											\
 											\
-DEVICE_DT_INST_DEFINE(n, &stm32_risaf_init, NULL,					\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_risaf_pm_action);					\
+											\
+DEVICE_DT_INST_DEFINE(n, &stm32_risaf_init,						\
+		      PM_DEVICE_DT_INST_GET(n),						\
 		      &stm32_risaf_data_##name####n,					\
 		      &stm32_risaf_cfg_##name####n,					\
 		      CORE, 30,								\
