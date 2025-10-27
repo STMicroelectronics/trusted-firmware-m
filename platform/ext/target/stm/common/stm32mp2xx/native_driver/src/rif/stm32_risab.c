@@ -15,6 +15,8 @@
 #include <lib/utils_def.h>
 #include <debug.h>
 #include <device.h>
+#include <pm/device.h>
+#include <pm/pm.h>
 #include <clk.h>
 
 #include <dt-bindings/rif/stm32mp25-rif.h>
@@ -358,6 +360,13 @@ static void stm32_risab_get_hwconfig(const struct device *dev)
 	drv_data->hw_block_sz = 1 << _FLD_GET(_RISAB_HWCFGR1_CFG5, regval);
 }
 
+static void stm32_risab_deinit_data(const struct device *dev)
+{
+	struct stm32_risab_data *drv_data = dev_get_data(dev);
+
+	memset(drv_data, 0, sizeof(struct stm32_risab_data));
+}
+
 static int __maybe_unused stm32_risab_init(const struct device *dev)
 {
 	const struct stm32_risab_config *drv_cfg = dev_get_config(dev);
@@ -410,6 +419,24 @@ static int __maybe_unused stm32_risab_init(const struct device *dev)
 	return err;
 }
 
+#ifdef CONFIG_PM_DEVICE
+static __unused int stm32_risab_pm_action(const struct device *dev,
+					  enum pm_device_action action, uint32_t pm_hint)
+{
+	int err = 0;
+
+	if (!PM_HINT_IS_STATE(pm_hint, CONTEXT))
+		return 0;
+
+	if (action == PM_DEVICE_ACTION_SUSPEND)
+		stm32_risab_deinit_data(dev);
+	else
+		err = stm32_risab_init(dev);
+
+	return err;
+}
+#endif
+
 #define RISAB_MR_DT_PROTREG(_node_id, _prop, _idx)			\
 	DT_PROP_BY_IDX(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx), st_protreg, 0)
 
@@ -439,9 +466,12 @@ static const struct stm32_risab_config stm32_risab_cfg_##n = {			\
 	.st_glock = DT_INST_PROP_OR(n, st_glock, false),			\
 };										\
 										\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_risab_pm_action);				\
+										\
 static struct stm32_risab_data stm32_risab_data_##n = {};			\
 										\
-DEVICE_DT_INST_DEFINE(n, &stm32_risab_init, NULL,				\
+DEVICE_DT_INST_DEFINE(n, &stm32_risab_init,					\
+		      PM_DEVICE_DT_INST_GET(n),					\
 		      &stm32_risab_data_##n,					\
 		      &stm32_risab_cfg_##n,					\
 		      CORE, 8,							\
