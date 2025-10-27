@@ -3425,13 +3425,7 @@ out:
 #ifdef CONFIG_PM_DEVICE
 static int stm32_rcc_pm_suspend(const struct device *dev)
 {
-	const struct stm32_rcc_config *drv_cfg = dev_get_config(dev);
-
 	clk_stm32_save_context(dev);
-
-	/* Set c1msrd for bootrom use. It's reset by HW during standby */
-	io_write32(drv_cfg->base + RCC_C1MSRDCR,
-		   drv_cfg->c1msrd & _RCC_C1MSRDCR_C1MSRD_MASK);
 
 	return 0;
 }
@@ -3439,10 +3433,18 @@ static int stm32_rcc_pm_suspend(const struct device *dev)
 static int stm32_rcc_pm_resume(const struct device *dev)
 {
 	struct clk_stm32_priv *priv = (struct clk_stm32_priv *)dev_get_data(dev);
+	const struct stm32_rcc_config *drv_cfg = dev_get_config(dev);
 
 	/* Restore clock tree */
 	if (stm32mp2_init_clock_tree(priv))
 		panic();
+
+	/*
+	 * Set c1msrd for bootrom use when it is allowed by RCC RIF.
+	 * It's reset by HW during standby
+	 */
+	io_write32(drv_cfg->base + RCC_C1MSRDCR,
+		   drv_cfg->c1msrd & _RCC_C1MSRDCR_C1MSRD_MASK);
 
 	clk_stm32_restore_context(dev);
 
