@@ -849,6 +849,7 @@ static int stm32_bsec_shadow_init(const struct device *dev)
 {
 	const struct stm32_bsec_config *drv_cfg = dev_get_config(dev);
 	const struct nvmem_cell *cell = NULL;
+	uint32_t otp_val;
 	bool sw_lock;
 	int i, j, ret;
 
@@ -884,13 +885,17 @@ static int stm32_bsec_shadow_init(const struct device *dev)
 			if (sw_lock)
 				return -EACCES;
 
-			stm32_bsec_write(cell->otp_id + j,
-					 cell->shadow_value[j]);
+			ret = stm32_bsec_read_otp(&otp_val, cell->otp_id + j);
+			if (ret)
+				return ret;
+
+			otp_val |= cell->shadow_value[j];
+			stm32_bsec_write(cell->otp_id + j, otp_val);
 
 			/* update bsec mirror */
 			ret = _otp_write(cell->otp_id, cell->n_otp * sizeof(uint32_t),
 					 cell->n_shadow_value * sizeof(uint32_t),
-					 (uint8_t *)cell->shadow_value);
+					 (uint8_t *)&otp_val);
 			if (ret)
 				return ret;
 		}
