@@ -25,9 +25,18 @@
 /* Necessary to detect cold boot case */
 #include <cmsis.h>
 
+/* Default value for STM32MP25 with STPMIC25, defined in AN5727 */
+#define DEFAULT_POPL_D1			3U
+#define DEFAULT_PODH_D2			1U
+#define DEFAULT_POPL_D2			2U
+#define DEFAULT_LPCFG_D2		1U	/* PWR_ON=0 for Standby1/2 = PMIC_PWRCTRL1 */
+#define DEFAULT_LPLVDLY_D2		0U	/* 6xLSI cycle = 187 us */
+
 /* PWR offset register */
 #define _PWR_CR11			U(0x028)
 #define _PWR_BDCR1			U(0x038)
+#define _PWR_D1CR			U(0x04C)
+#define _PWR_D2CR			U(0x050)
 #define _PWR_RSECCFGR			U(0x100)
 #define _PWR_RPRIVCFGR			U(0x104)
 #define _PWR_RCIDCFGR			U(0x108)
@@ -41,6 +50,20 @@
 
 /* PWR_BDCR1 register fields */
 #define _PWR_BDCR1_DBD3P		BIT(0)
+
+/* PWR_D1CR register fields */
+#define _PWR_D1CR_POPL_D1_MASK		GENMASK(12, 8)
+#define _PWR_D1CR_POPL_D1_SHIFT		8
+
+/* PWR_D2CR register fields */
+#define _PWR_D2CR_LPCFG_D2_MASK		BIT(0)
+#define _PWR_D2CR_LPCFG_D2_SHIFT	0
+#define _PWR_D2CR_POPL_D2_MASK		GENMASK(12, 8)
+#define _PWR_D2CR_POPL_D2_SHIFT		8
+#define _PWR_D2CR_LPLVDLY_D2_MASK	GENMASK(18, 16)
+#define _PWR_D2CR_LPLVDLY_D2_SHIFT	16
+#define _PWR_D2CR_PODH_D2_MASK		GENMASK(27, 24)
+#define _PWR_D2CR_PODH_D2_SHIFT		24
 
 // RCIDCFGR register bitfields
 #define _RCIDCFGR_CFEN_MASK		BIT(0)
@@ -85,6 +108,11 @@ struct stm32mp2_pwr_config {
 	uintptr_t base;
 	const struct reset_control rst_ctl_bck;
 	const struct rifprot_controller *rif_ctl;
+	uint32_t popl_d1_ms;
+	uint32_t podh_d2_ms;
+	uint32_t popl_d2_ms;
+	uint32_t lpcfg_d2;
+	uint32_t lplvdly_d2;
 };
 
 bool stm32_pwr_ddr_retention_get(const struct device *dev)
@@ -249,6 +277,16 @@ int stm32mp2_pwr_init(const struct device *dev)
 		if (err)
 			return err;
 	}
+#else
+	/* Initialize PWR register with low power configuration and delay */
+	mmio_write_32(dev_cfg->base + _PWR_D1CR,
+		      _FLD_PREP(_PWR_D1CR_POPL_D1, dev_cfg->popl_d1_ms));
+
+	mmio_write_32(dev_cfg->base + _PWR_D2CR,
+		      _FLD_PREP(_PWR_D2CR_LPCFG_D2, dev_cfg->lpcfg_d2) |
+		      _FLD_PREP(_PWR_D2CR_POPL_D2, dev_cfg->popl_d2_ms) |
+		      _FLD_PREP(_PWR_D2CR_LPLVDLY_D2, dev_cfg->lplvdly_d2) |
+		      _FLD_PREP(_PWR_D2CR_PODH_D2, dev_cfg->podh_d2_ms));
 #endif
 
 	if (dev_cfg->rif_ctl)
@@ -328,6 +366,11 @@ static const struct stm32mp2_pwr_config stm32mp2_pwr_cfg_##n = {	\
 	.base = DT_INST_REG_ADDR(n),					\
 	.rst_ctl_bck = DT_INST_RESET_CONTROL_GET(n),			\
 	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),				\
+	.popl_d1_ms = DT_PROP_OR(n, st_popl_d1_ms, DEFAULT_POPL_D1),	\
+	.podh_d2_ms = DT_PROP_OR(n, st_podh_d2_ms, DEFAULT_PODH_D2),	\
+	.popl_d2_ms = DT_PROP_OR(n, st_popl_d2_ms, DEFAULT_POPL_D2),	\
+	.lpcfg_d2 = DT_PROP_OR(n, st_lpcfg_d2, DEFAULT_LPCFG_D2),	\
+	.lplvdly_d2 = DT_PROP_OR(n, st_lplvdly_d2, DEFAULT_LPLVDLY_D2),\
 };									\
 									\
 PM_DEVICE_DT_INST_DEFINE(n, stm32mp2_pwr_pm_action);			\
