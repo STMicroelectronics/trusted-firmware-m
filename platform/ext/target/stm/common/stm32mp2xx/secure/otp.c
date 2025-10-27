@@ -278,12 +278,12 @@ static int otp_read_lcs(uint32_t out_len, uint8_t *out)
 
 	err = otp_read_by_nvmem(DT_INST_DEV_NVMEM(0, bootrom_config_9),
 				sizeof(uint32_t), (uint8_t *)&bootrom_cfg_9);
-	if (!err)
+	if (err)
 		return err;
 
 	err = otp_read_by_nvmem(DT_INST_DEV_NVMEM(0, hconf1_otp),
 				sizeof(uint32_t), (uint8_t *)&hconf1);
-	if (!err)
+	if (err)
 		return err;
 
 	/* true if all bit of field are set */
