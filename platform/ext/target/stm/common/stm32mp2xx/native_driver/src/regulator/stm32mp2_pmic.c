@@ -705,7 +705,7 @@ static int stpmic2_set_prop(const struct device *dev,
 		return i2c_reg_update_byte_dt(&pmic_cfg->i2c,
 					      regu_desc->pwrctrl_cr,
 					      PWRCTRL_SEL_MASK,
-					      _FLD_PREP(PWRCTRL_SEL, drv_cfg->st_pwrctrl_sel));
+					      _FLD_PREP(PWRCTRL_SEL, arg));
 	case STPMIC2_MAIN_PREG_MODE:
 		if ((!regu_desc->has_preg) || (arg > 2))
 			return -ENOTSUP;
@@ -1054,7 +1054,8 @@ static int stpmic2_parse_prop(const struct device *dev)
 		err |= stpmic2_set_prop(dev, STPMIC2_MASK_RESET, 0);
 
 	if (drv_cfg->st_pwrctrl_sel)
-		err |= stpmic2_set_prop(dev, STPMIC2_PWRCTRL_SEL, 0);
+		err |= stpmic2_set_prop(dev, STPMIC2_PWRCTRL_SEL,
+					drv_cfg->st_pwrctrl_sel);
 
 	if (drv_cfg->st_pwrctrl_reset)
 		err |= stpmic2_set_prop(dev, STPMIC2_PWRCTRL_RS, 0);
