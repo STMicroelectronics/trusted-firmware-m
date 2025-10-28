@@ -516,10 +516,10 @@ static int32_t scmi_scpfw_cfg_init_agent(const struct stm32_scmi_config *agent)
 			const struct device *dev = agent->dt_regus[j].regu_dev;
 			bool enabled = false;
 			assert(agent->dt_regus[j].scmi_id < agent->ndt_regus_max);
-			if (regulator_enable(dev))
-				LOG_INFFMT("\r\nFailed to enable SCMI regul %d\r\n",agent->dt_regus[j].scmi_id);
-			else
+
+			if (regulator_common_is_init_enabled(dev))
 				enabled = true;
+
 			if (!agent->dt_regus[j].regu_dev->name)
 				psa_panic();
 
