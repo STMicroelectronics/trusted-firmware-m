@@ -697,7 +697,7 @@ static int stpmic2_set_prop(const struct device *dev,
 		return i2c_reg_update_byte_dt(&pmic_cfg->i2c,
 					      regu_desc->pwrctrl_cr,
 					      PWRCTRL_EN | PWRCTRL_RS,
-					      PWRCTRL_RS);
+					      arg ? PWRCTRL_RS : 0);
 	case STPMIC2_PWRCTRL_SEL:
 		if (!regu_desc->pwrctrl_cr)
 			return -ENOTSUP;
@@ -948,10 +948,20 @@ static int stpmic2_reg_pm_suspend(const struct device *dev, uint8_t mode)
 			drv_data->forced_off = true;
 		}
 	}
+
+	/*
+	 * pwrctrl reset only for system low power modes and not for D1 DStandby
+	 * when regulator are reset to default values for ROM code execution
+	 */
+	if (drv_cfg->st_pwrctrl_reset)
+		return stpmic2_set_prop(dev, STPMIC2_PWRCTRL_RS, 1);
+
+	return 0;
 }
 
 static int stpmic2_reg_pm_resume(const struct device *dev)
 {
+	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	struct regu_stpmic2_data *drv_data = dev_get_data(dev);
 	int err;
 
@@ -963,6 +973,9 @@ static int stpmic2_reg_pm_resume(const struct device *dev)
 
 		drv_data->forced_off = false;
 	}
+
+	if (drv_cfg->st_pwrctrl_reset)
+		return stpmic2_set_prop(dev, STPMIC2_PWRCTRL_RS, 0);
 
 	return 0;
 }
@@ -1056,9 +1069,6 @@ static int stpmic2_parse_prop(const struct device *dev)
 	if (drv_cfg->st_pwrctrl_sel)
 		err |= stpmic2_set_prop(dev, STPMIC2_PWRCTRL_SEL,
 					drv_cfg->st_pwrctrl_sel);
-
-	if (drv_cfg->st_pwrctrl_reset)
-		err |= stpmic2_set_prop(dev, STPMIC2_PWRCTRL_RS, 0);
 
 	if (drv_cfg->st_pwrctrl)
 		err |= stpmic2_set_prop(dev, STPMIC2_PWRCTRL_EN, 0);
