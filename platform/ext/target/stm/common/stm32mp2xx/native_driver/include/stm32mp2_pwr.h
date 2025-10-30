@@ -438,30 +438,5 @@
 #define _PWR_VERR_MAJREV_MASK		GENMASK(7, 4)
 #define _PWR_VERR_MAJREV_SHIFT		4
 
-/* FIXME: wait power domain to remove this hook */
-struct stm32_pwr_platdata {
-	uintptr_t base;
-};
-
-enum c_state {
-	CERR = INT_MIN,
-	CRESET = 0,
-	CRUN = 1,
-	CSLEEP = 2,
-	CSTOP = 3
-};
-
-enum d_state {
-	DERR = INT_MIN,
-	DRUN = 0,
-	DSTOP1 = 1,
-	DSTOP2 = 2,
-	DSTOP3 = 3,
-	DSTANDBY = 4,
-};
-
-enum c_state stm32_pwr_cpu_get_cstate(uint32_t cpu);
-enum d_state stm32_pwr_cpu_get_dstate(uint32_t cpu);
-
 void stm32_pwr_regulator_restore(void);
 #endif /* STM32MP2_PWR_H */

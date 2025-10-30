@@ -80,55 +80,6 @@ struct stm32mp2_pwr_config {
 };
 
 /*
- * FIXME
- * must be reworked when we use copro service and power
- */
-/*static uint32_t _cpux_base(uint32_t cpu)*/
-/*{*/
-/*        uint32_t offset = _PWR_CPU1D1SR;*/
-
-/*        if (cpu < _PWR_CPU_MIN || cpu > _PWR_CPU_MAX)*/
-/*                return 0;*/
-
-/*        offset += sizeof(uint32_t) * (cpu - _PWR_CPU_MIN);*/
-/*        return pdata.base + offset;*/
-/*}*/
-
-/*static int _cpu_state(uint32_t cpu, uint32_t *state)*/
-/*{*/
-/*        uint32_t cpux_base;*/
-
-/*        cpux_base = _cpux_base(cpu);*/
-/*        if (!cpux_base) {*/
-/*                IMSG("cpu:%d not valid");*/
-/*                return -1;*/
-/*        }*/
-
-/*        *state = mmio_read_32(cpux_base);*/
-/*        return 0;*/
-/*}*/
-
-/*enum c_state stm32_pwr_cpu_get_cstate(uint32_t cpu)*/
-/*{*/
-/*        uint32_t state;*/
-
-/*        if (_cpu_state(cpu, &state))*/
-/*                return CERR;*/
-
-/*        return _FLD_GET(_PWR_CPUXDXSR_CSTATE, state);*/
-/*}*/
-
-/*enum d_state stm32_pwr_cpu_get_dstate(uint32_t cpu)*/
-/*{*/
-/*        uint32_t state;*/
-
-/*        if (_cpu_state(cpu, &state))*/
-/*                return DERR;*/
-
-/*        return _FLD_GET(_PWR_CPUXDXSR_DSTATE, state);*/
-/*}*/
-
-/*
  * There are two kinds of local resources in the PWR:
  *  - non-shareable resources (R0 to R6), that can be statically assigned
  *    to only one master.
