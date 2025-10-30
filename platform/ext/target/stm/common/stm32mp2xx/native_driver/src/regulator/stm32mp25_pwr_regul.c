@@ -234,6 +234,18 @@ static void stm32_pwr_disable_reg(const struct stm32_pwr_regu_config *drv_cfg)
 		io_clrbits32(reg, pwr_regu->enable_mask | pwr_regu->valid_mask);
 }
 
+static bool stm32_pwr_get_state_reg(const struct stm32_pwr_regu_config *drv_cfg)
+{
+	const struct stm32_pwr_regu *pwr_regu = &drv_cfg->pwr_regu;
+	uintptr_t reg = drv_cfg->base + pwr_regu->enable_reg;
+	bool enabled = true;
+
+	if (pwr_regu->enable_mask)
+		enabled = !!(io_read32(reg) & pwr_regu->valid_mask);
+
+	return enabled;
+}
+
 static int stm32_pwr_enable(const struct device *dev)
 {
 	const struct stm32_pwr_regu_config *drv_cfg = dev_get_config(dev);
@@ -486,11 +498,14 @@ static int stm32_pwr_set_state(const struct device *dev, bool state)
 	const struct stm32_pwr_regu_config *drv_cfg = dev_get_config(dev);
 	const struct stm32_pwr_regu *pwr_regu = &drv_cfg->pwr_regu;
 	int res;
+	bool is_enabled = stm32_pwr_get_state_reg(drv_cfg);
 
 	if (state) {
-		res = stm32_pwr_enable_reg(drv_cfg);
-		if (res)
-			return res;
+		if (!is_enabled) {
+			res = stm32_pwr_enable_reg(drv_cfg);
+			if (res)
+				return res;
+		}
 
 		if (pwr_regu->is_an_iod && !pwr_regu->n_iocomp_code)  {
 			res = stm32_pwr_enable_io_compensation(drv_cfg);
@@ -503,7 +518,8 @@ static int stm32_pwr_set_state(const struct device *dev, bool state)
 		if (pwr_regu->is_an_iod && !pwr_regu->n_iocomp_code)
 			stm32_pwr_disable_io_compensation(drv_cfg);
 
-		stm32_pwr_disable_reg(drv_cfg);
+		if (is_enabled)
+			stm32_pwr_disable_reg(drv_cfg);
 	}
 
 	return 0;
