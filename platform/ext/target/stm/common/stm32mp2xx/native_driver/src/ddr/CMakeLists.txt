@@ -133,7 +133,7 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_OBJECTS:signing_layout_for_ddr_phy>
         ${CMAKE_CURRENT_BINARY_DIR}/ddrfw_signing_layout.o
-    DEPENDS $<TARGET_OBJECTS:signing_layout_for_ddr_phy>
+    DEPENDS signing_layout_for_ddr_phy
 )
 
 add_custom_target(copy_signing_layout ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ddrfw_signing_layout.o)
