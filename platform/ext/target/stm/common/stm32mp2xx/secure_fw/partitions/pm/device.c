@@ -83,13 +83,17 @@ void pm_resume_devices(uint32_t pm_hint)
 	int ret, nb_err = 0;
 
 	for (int i = (num_susp - 1); i >= 0; i--) {
-		ret = pm_device_action_run(TYPE_SECTION_START(pm_device_slots)[i],
-					   PM_DEVICE_ACTION_RESUME, pm_hint);
+		const struct device *dev = TYPE_SECTION_START(pm_device_slots)[i];
+
+		ret = pm_device_action_run(dev, PM_DEVICE_ACTION_RESUME, pm_hint);
 
 		if ((ret == -ENOSYS) || (ret == -ENOTSUP) || (ret == -EALREADY))
 			continue;
-		else if (ret < 0)
+		else if (ret < 0) {
+			LOG_ERRFMT("Device %s resume (hint: 0x%x) error: %d\n",
+				   dev->name, pm_hint, ret);
 			nb_err++;
+		}
 	}
 
 	if (nb_err) {
