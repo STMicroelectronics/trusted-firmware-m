@@ -13,6 +13,8 @@
 #include <device.h>
 #include <entropy.h>
 #include <firewall.h>
+#include <pm/device.h>
+#include <pm/pm.h>
 #include <reset.h>
 #include <stdint.h>
 #include <string.h>
@@ -25,6 +27,7 @@
 
 #define _CR_RNGEN		0x4U
 #define _CR_CED			0x20U
+#define _CR_CR_POWER_OPTIM	0x2000U
 #define _CR_CLKDIV		0xF0000U
 #define _CR_CLKDIV_Pos		16U
 #define _CR_CONDRST		0x40000000U
@@ -62,6 +65,9 @@ struct stm32_rng_variant {
 struct stm32_rng_data {
 	const struct stm32_rng_variant *variant;
 	struct clk *clk;
+	uint32_t pm_cr;
+	uint32_t pm_health;
+	uint32_t pm_noise_ctrl;
 };
 
 static int seed_error_recovery(const struct device *dev)
@@ -133,6 +139,14 @@ static int check_data_integrity(const struct device *dev)
 	return 0;
 }
 
+static void stm32_rng_set_enable(uintptr_t rng_base, uint32_t health, uint32_t noise_ctl)
+{
+	mmio_write_32(rng_base + _RNG_HTCR, health);
+	mmio_write_32(rng_base + _RNG_NSCR, noise_ctl);
+
+	mmio_clrsetbits_32(rng_base + _RNG_CR, _CR_CONDRST, _CR_RNGEN);
+}
+
 static int stm32_rng_enable(const struct device *dev)
 {
 	const struct stm32_rng_config *drv_cfg = dev_get_config(dev);
@@ -149,11 +163,7 @@ static int stm32_rng_enable(const struct device *dev)
 	mmio_clrsetbits_32(drv_cfg->base + _RNG_CR, _CR_CLKDIV,
 			   (clock_div << _CR_CLKDIV_Pos));
 
-	mmio_write_32(drv_cfg->base + _RNG_HTCR, drv_data->variant->htcr);
-
-	mmio_write_32(drv_cfg->base + _RNG_NSCR, drv_data->variant->nscr);
-
-	mmio_clrsetbits_32(drv_cfg->base + _RNG_CR, _CR_CONDRST, _CR_RNGEN);
+	stm32_rng_set_enable(drv_cfg->base, drv_data->variant->htcr, drv_data->variant->nscr);
 
 	DMSG("[%s] Init RNG done\r\n", dev->name);
 
@@ -289,6 +299,85 @@ static int __maybe_unused stm32_rng_init(const struct device *dev)
 	return stm32_rng_release_sem(drv_cfg);
 }
 
+#ifdef CONFIG_PM_DEVICE
+int stm32_rng_pm_suspend(const struct device *dev)
+{
+	const struct stm32_rng_config *drv_cfg = dev_get_config(dev);
+	struct stm32_rng_data *drv_data = dev_get_data(dev);
+	uintptr_t rng_base = drv_cfg->base;
+	int err = 0;
+	uint32_t cr;
+
+	drv_data->pm_cr = mmio_read_32(rng_base + _RNG_CR);
+	drv_data->pm_health = mmio_read_32(rng_base + _RNG_HTCR);
+	drv_data->pm_noise_ctrl = mmio_read_32(rng_base + _RNG_NSCR);
+
+	/*
+	 * As per reference manual, it is recommended to set
+	 * RNG_CONFIG2[bit0] when RNG power consumption is critical.
+	 */
+	mmio_write_32(rng_base + _RNG_CR, _CR_CR_POWER_OPTIM | _CR_CONDRST);
+	mmio_clrbits_32(rng_base + _RNG_CR, _CR_CONDRST);
+
+	err = mmio_read32_poll_timeout(drv_cfg->base + _RNG_CR, cr,
+				       (cr & _CR_CONDRST), RNG_TIMEOUT_US);
+
+	return err;
+}
+
+int stm32_rng_pm_resume(const struct device *dev)
+{
+	const struct stm32_rng_config *drv_cfg = dev_get_config(dev);
+	struct stm32_rng_data *drv_data = dev_get_data(dev);
+	uintptr_t rng_base = drv_cfg->base;
+	uint32_t cr;
+
+	mmio_write_32(rng_base + _RNG_SR, 0U);
+
+	/*
+	 * Configuration must be set in the same access that sets
+	 * RNG_CR_CONDRST bit. Otherwise, the configuration setting is
+	 * not taken into account. CONFIGLOCK bit is always cleared in
+	 * this configuration.
+	 */
+	mmio_write_32(rng_base + _RNG_CR, drv_data->pm_cr | _CR_CONDRST);
+
+	stm32_rng_set_enable(rng_base, drv_data->pm_health, drv_data->pm_noise_ctrl);
+
+	return mmio_read32_poll_timeout(rng_base + _RNG_CR, cr,
+					(cr & _CR_CONDRST), RNG_TIMEOUT_US);
+}
+
+static int stm32_rng_pm_action(const struct device *dev,
+			       enum pm_device_action action, uint32_t pm_hint)
+{
+	const struct stm32_rng_config *drv_cfg = dev_get_config(dev);
+	int err;
+
+	err = stm32_rng_acquire_sem(drv_cfg);
+	if (err)
+		return err;
+
+	switch (action) {
+	case PM_DEVICE_ACTION_SUSPEND:
+		err = stm32_rng_pm_suspend(dev);
+		break;
+
+	case PM_DEVICE_ACTION_RESUME:
+		err = stm32_rng_pm_resume(dev);
+		break;
+
+	default:
+		err = -EINVAL;
+		break;
+	}
+
+	stm32_rng_release_sem(drv_cfg);
+
+	return err;
+}
+#endif
+
 #define STM32_RNG_INIT(n, _variant)							  \
 											  \
 DT_INST_ACCESS_CTRLS_DEFINE(n);								  \
@@ -305,9 +394,11 @@ static const struct stm32_rng_config stm32_rng_cfg_##n = {				  \
 static struct stm32_rng_data stm32_rng_data_##n = {					  \
 	.variant = _variant,								  \
 };											  \
+PM_DEVICE_DT_INST_DEFINE(n, stm32_rng_pm_action);					  \
 											  \
 DEVICE_DT_INST_DEFINE(n,								  \
-		 &stm32_rng_init, NULL,							  \
+		 &stm32_rng_init,							  \
+		 PM_DEVICE_DT_INST_GET(n),						  \
 		 &stm32_rng_data_##n,							  \
 		 &stm32_rng_cfg_##n,							  \
 		 CORE, 6,								  \
