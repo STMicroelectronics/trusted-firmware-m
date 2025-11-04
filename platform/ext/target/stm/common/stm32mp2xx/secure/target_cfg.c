@@ -21,9 +21,6 @@
 #include <tfm_plat_defs.h>
 #include <lib/utils_def.h>
 
-#include <stm32_iac.h>
-#include <stm32_serc.h>
-
 /* To write into AIRCR register, 0x5FA value must be write to the VECTKEY field,
  * otherwise the processor ignores the write.
  */
@@ -64,29 +61,15 @@ enum tfm_plat_err_t system_reset_cfg(void)
 enum tfm_plat_err_t nvic_interrupt_target_state_cfg(void)
 {
 	/* Target every interrupt to NS; unimplemented interrupts will be WI */
-	for (uint8_t i=0; i<sizeof(NVIC->ITNS)/sizeof(NVIC->ITNS[0]); i++) {
+	for (uint8_t i = 0; i < ARRAY_SIZE(NVIC->ITNS); i++) {
 		NVIC->ITNS[i] = 0xFFFFFFFF;
 	}
 
 	if (IS_ENABLED(STM32_M33TDCID)) {
 		/* Make sure that IAC/SERF are targeted to S state */
-		NVIC_ClearTargetState(IAC_IRQn);
-		NVIC_ClearTargetState(SERF_IRQn);
 		NVIC_ClearTargetState(CPU1_SEV_IRQn);
-		/* Make sure that interrupt reserved for NS notification is
-		 * nonsecure */
+		/* Make sure that interrupt reserved for NS notification is nonsecure */
 		NVIC_SetTargetState(RESERVED_9);
-	}
-
-	return TFM_PLAT_ERR_SUCCESS;
-}
-
-/*----------------- NVIC interrupt enabling for S peripherals ----------------*/
-enum tfm_plat_err_t nvic_interrupt_enable()
-{
-	if (IS_ENABLED(STM32_M33TDCID)) {
-		stm32_iac_enable_irq();
-		stm32_serc_enable_irq();
 	}
 
 	return TFM_PLAT_ERR_SUCCESS;
