@@ -255,6 +255,7 @@ target_sources(tfm_s
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/interrupt-controller/stm32_exti.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/tamper/stm32_tamp.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/mbox/stm32_ipcc.c>
+	$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32_serc.c>
 )
 
 #========================= tfm_spm ============================================#

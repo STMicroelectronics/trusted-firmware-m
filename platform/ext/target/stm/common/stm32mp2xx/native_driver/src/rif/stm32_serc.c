@@ -13,15 +13,14 @@
 #include <string.h>
 
 #include <lib/utils_def.h>
-#include <stm32_serc.h>
 #include <lib/mmio.h>
 #include <inttypes.h>
 #include <debug.h>
 #include <clk.h>
 #include <target_cfg.h>
 #include <uart_stdout.h>
-
-#if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
+#include <pm/device.h>
+#include <pm/pm.h>
 
 /* SERC offset register */
 #define _SERC_IER0		U(0x000)
@@ -55,27 +54,18 @@ struct stm32_serc_config {
 	const struct device *clk_dev;
 	const clk_subsys_t clk_subsys;
 	uint32_t irq;
-	uint32_t id_disable[DT_INST_PROP_LEN_OR(0, id_disable, 0)];
+	uint32_t *id_disable;
+	uint32_t n_id_disable;
 };
 
 struct stm32_serc_data {
 	uint8_t num_ilac;
 };
 
-static const struct stm32_serc_config serc_cfg = {
-	.base = DT_INST_REG_ADDR(0),
-	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(0)),
-	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(0, bits),
-	.irq = DT_INST_IRQN(0),
-	.id_disable = DT_INST_PROP_OR(0, id_disable, {}),
-};
-
-static struct stm32_serc_data serc_data = {};
-
-static void stm32_serc_get_hwconfig(void)
+static void stm32_serc_get_hwconfig(const struct device *dev)
 {
-	const struct stm32_serc_config *drv_cfg = &serc_cfg;
-	struct stm32_serc_data *drv_data = &serc_data;
+	const struct stm32_serc_config *drv_cfg = dev_get_config(dev);
+	struct stm32_serc_data *drv_data = dev_get_data(dev);
 	uint32_t regval;
 
 	regval = io_read32(drv_cfg->base + _SERC_HWCFGR);
@@ -105,10 +95,10 @@ __weak void access_violation_handler(void)
 	}
 }
 
-void SERF_IRQHandler(void)
+void stm32_serc_isr(const struct device *dev)
 {
-	const struct stm32_serc_config *drv_cfg = &serc_cfg;
-	struct stm32_serc_data *drv_data = &serc_data;
+	const struct stm32_serc_config *drv_cfg = dev_get_config(dev);
+	struct stm32_serc_data *drv_data = dev_get_data(dev);
 	int nreg = div_round_up(drv_data->num_ilac, _PERIPH_IDS_PER_REG);
 	uint32_t isr = 0;
 	char tmp[50];
@@ -135,14 +125,12 @@ void SERF_IRQHandler(void)
 	access_violation_handler();
 }
 
-static void stm32_serc_setup(void)
+static void stm32_serc_setup(const struct device *dev)
 {
-	const struct stm32_serc_config *drv_cfg = &serc_cfg;
-	struct stm32_serc_data *drv_data = &serc_data;
+	const struct stm32_serc_config *drv_cfg = dev_get_config(dev);
+	struct stm32_serc_data *drv_data = dev_get_data(dev);
 	int nreg = div_round_up(drv_data->num_ilac, _PERIPH_IDS_PER_REG);
 	int i = 0;
-
-	mmio_setbits_32(drv_cfg->base + _SERC_ENABLE, _SERC_ENABLE_SERFEN);
 
 	for (i = 0; i < nreg; i++) {
 		uint32_t reg_ofst = drv_cfg->base + sizeof(uint32_t) * i;
@@ -152,40 +140,27 @@ static void stm32_serc_setup(void)
 		//enable all peripherals of nreg
 		io_write32(reg_ofst + _SERC_IER0, ~0x0);
 	}
-}
 
-int stm32_serc_enable_irq(void)
-{
-	const struct stm32_serc_config *drv_cfg = &serc_cfg;
-
-	if (drv_cfg->base == 0)
-		return -ENODEV;
-
-	/* just less than exception fault */
-	NVIC_SetPriority(drv_cfg->irq, 1);
-	NVIC_EnableIRQ(drv_cfg->irq);
-
-	return 0;
-}
-
-/*FIXME just a workaround for poc */
-void stm32_serc_id_disable(void)
-{
-	const struct stm32_serc_config *drv_cfg = &serc_cfg;
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(drv_cfg->id_disable); i++) {
+	/* disable exceptions listed in dt property id_disable */
+	for (i = 0; i < drv_cfg->n_id_disable; i++) {
 		uint32_t reg_ofst = (drv_cfg->id_disable[i] / _PERIPH_IDS_PER_REG) * sizeof(uint32_t);
 		uint32_t bit_ofst = (drv_cfg->id_disable[i]) & 0x1F;
 
 		io_clrbits32(drv_cfg->base + _SERC_IER0 + reg_ofst,
 			     BIT(bit_ofst));
 	}
+
+	mmio_setbits_32(drv_cfg->base + _SERC_ENABLE, _SERC_ENABLE_SERFEN);
+
+	/* just less than exception fault */
+	NVIC_SetPriority(drv_cfg->irq, 1);
+	NVIC_ClearTargetState(drv_cfg->irq);
+	NVIC_EnableIRQ(drv_cfg->irq);
 }
 
-static int stm32_serc_init(void)
+static int stm32_serc_init(const struct device *dev)
 {
-	const struct stm32_serc_config *drv_cfg = &serc_cfg;
+	const struct stm32_serc_config *drv_cfg = dev_get_config(dev);
 	struct clk *clk;
 	int err;
 
@@ -197,13 +172,54 @@ static int stm32_serc_init(void)
 	if (err)
 		return err;
 
-	stm32_serc_get_hwconfig();
-	stm32_serc_setup();
-
-	stm32_serc_id_disable();
+	stm32_serc_get_hwconfig(dev);
+	stm32_serc_setup(dev);
 
 	return 0;
 }
 
-SYS_INIT(stm32_serc_init, PRE_CORE, 15);
+#ifdef CONFIG_PM_DEVICE
+static int stm32_serc_pm_action(const struct device *dev,
+				enum pm_device_action action, uint32_t pm_hint)
+{
+	if (action == PM_DEVICE_ACTION_RESUME && PM_HINT_IS_STATE(pm_hint, CONTEXT))
+		return stm32_serc_init(dev);
+
+	return 0;
+}
 #endif
+
+#define STM32_SERC_INIT(n)								\
+											\
+static uint32_t id_disable_##n[] =							\
+	DT_INST_PROP_OR(n, id_disable, {});						\
+											\
+static const struct stm32_serc_config stm32_serc_cfg_##n = {				\
+	.base = DT_INST_REG_ADDR(n),							\
+	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),				\
+	.clk_subsys = (clk_subsys_t)DT_INST_CLOCKS_CELL(n, bits),			\
+	.irq = DT_INST_IRQN(n),								\
+	.id_disable = id_disable_##n,							\
+	.n_id_disable = DT_INST_PROP_LEN_OR(n, id_disable, 0),				\
+};											\
+											\
+static struct stm32_serc_data stm32_serc_data_##n = {};					\
+											\
+void SERF_IRQHandler(void)								\
+{											\
+	stm32_serc_isr(DEVICE_DT_GET(DT_DRV_INST(n)));					\
+};											\
+											\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_serc_pm_action);					\
+											\
+DEVICE_DT_INST_DEFINE(n, &stm32_serc_init,						\
+		      PM_DEVICE_DT_INST_GET(n),						\
+		      &stm32_serc_data_##n,						\
+		      &stm32_serc_cfg_##n,						\
+		      PRE_CORE, 15,							\
+		      NULL);
+
+DT_INST_FOREACH_STATUS_OKAY(STM32_SERC_INIT)
+
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
+	     "only one serc compatible node is supported");
