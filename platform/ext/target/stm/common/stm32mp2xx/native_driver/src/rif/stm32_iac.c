@@ -14,14 +14,13 @@
 
 #include <device.h>
 #include <lib/utils_def.h>
-#include <stm32_iac.h>
 #include <lib/mmio.h>
 #include <inttypes.h>
 #include <debug.h>
 #include <tfm_platform_system.h>
 #include <uart_stdout.h>
-
-#if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
+#include <pm/device.h>
+#include <pm/pm.h>
 
 /* IAC offset register */
 #define _IAC_IER0		U(0x000)
@@ -75,7 +74,8 @@
 struct stm32_iac_config {
 	uintptr_t base;
 	uint32_t irq;
-	uint32_t id_disable[DT_INST_PROP_LEN_OR(0, id_disable, 0)];
+	uint32_t *id_disable;
+	uint32_t n_id_disable;
 };
 
 struct stm32_iac_data {
@@ -85,18 +85,10 @@ struct stm32_iac_data {
 	bool priv_en;
 };
 
-static const struct stm32_iac_config iac_cfg = {
-	.base = DT_INST_REG_ADDR(0),
-	.irq = DT_INST_IRQN(0),
-	.id_disable = DT_INST_PROP_OR(0, id_disable, {}),
-};
-
-static struct stm32_iac_data iac_data = {};
-
-static void stm32_iac_get_hwconfig(void)
+static void stm32_iac_get_hwconfig(const struct device *dev)
 {
-	const struct stm32_iac_config *drv_cfg = &iac_cfg;
-	struct stm32_iac_data *drv_data = &iac_data;
+	const struct stm32_iac_config *drv_cfg = dev_get_config(dev);
+	struct stm32_iac_data *drv_data = dev_get_data(dev);
 	uint32_t regval;
 
 	regval = io_read32(drv_cfg->base + _IAC_HWCFGR1);
@@ -155,10 +147,10 @@ static bool stm32_iac_discarded(uint32_t iac)
 #endif
 }
 
-void IAC_IRQHandler(void)
+void stm32_iac_isr(const struct device *dev)
 {
-	const struct stm32_iac_config *drv_cfg = &iac_cfg;
-	struct stm32_iac_data *drv_data = &iac_data;
+	const struct stm32_iac_config *drv_cfg = dev_get_config(dev);
+	struct stm32_iac_data *drv_data = dev_get_data(dev);
 	int nreg = div_round_up(drv_data->num_ilac, _PERIPH_IDS_PER_REG);
 	uint32_t isr = 0;
 	uint32_t iac = 0;
@@ -201,10 +193,10 @@ void IAC_IRQHandler(void)
 		access_violation_handler();
 }
 
-static void stm32_iac_setup(void)
+static void stm32_iac_setup(const struct device *dev)
 {
-	const struct stm32_iac_config *drv_cfg = &iac_cfg;
-	struct stm32_iac_data *drv_data = &iac_data;
+	const struct stm32_iac_config *drv_cfg = dev_get_config(dev);
+	struct stm32_iac_data *drv_data = dev_get_data(dev);
 	int nreg = div_round_up(drv_data->num_ilac, _PERIPH_IDS_PER_REG);
 	int i = 0;
 
@@ -216,46 +208,69 @@ static void stm32_iac_setup(void)
 		//enable all peripherals of nreg
 		io_write32(reg_ofst + _IAC_IER0, ~0x0);
 	}
-}
 
-int stm32_iac_enable_irq(void)
-{
-	const struct stm32_iac_config *drv_cfg = &iac_cfg;
+	for (i = 0; i < drv_cfg->n_id_disable; i++) {
+		uint32_t reg_ofst = (drv_cfg->id_disable[i] / _PERIPH_IDS_PER_REG);
+		uint32_t bit_ofst = (drv_cfg->id_disable[i]) & 0x1F;
 
-	if (drv_cfg->base == 0)
-		return -ENODEV;
+		reg_ofst *= sizeof(uint32_t);
+		io_clrbits32(drv_cfg->base + _IAC_IER0 + reg_ofst, BIT(bit_ofst));
+	}
 
 	/* just less than exception fault */
 	NVIC_SetPriority(drv_cfg->irq, 1);
+	NVIC_ClearTargetState(drv_cfg->irq);
 	NVIC_EnableIRQ(drv_cfg->irq);
+}
+
+static int stm32_iac_init(const struct device *dev)
+{
+	stm32_iac_get_hwconfig(dev);
+	stm32_iac_setup(dev);
 
 	return 0;
 }
 
-/*FIXME just a workaround for poc */
-void stm32_iac_id_disable(void)
+#ifdef CONFIG_PM_DEVICE
+static int stm32_iac_pm_action(const struct device *dev,
+			       enum pm_device_action action, uint32_t pm_hint)
 {
-	const struct stm32_iac_config *drv_cfg = &iac_cfg;
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(drv_cfg->id_disable); i++) {
-		uint32_t reg_ofst = (drv_cfg->id_disable[i] / _PERIPH_IDS_PER_REG) * sizeof(uint32_t);
-		uint32_t bit_ofst = (drv_cfg->id_disable[i]) & 0x1F;
-
-		io_clrbits32(drv_cfg->base + _IAC_IER0 + reg_ofst,
-			     BIT(bit_ofst));
-	}
-}
-
-static int stm32_iac_init(void)
-{
-	stm32_iac_get_hwconfig();
-	stm32_iac_setup();
-
-	stm32_iac_id_disable();
+	if (action == PM_DEVICE_ACTION_RESUME && PM_HINT_IS_STATE(pm_hint, CONTEXT))
+		return stm32_iac_init(dev);
 
 	return 0;
 }
-
-SYS_INIT(stm32_iac_init, PRE_CORE, 15);
 #endif
+
+#define STM32_IAC_INIT(n)								\
+											\
+static uint32_t id_disable_##n[] =							\
+	DT_INST_PROP_OR(n, id_disable, {});						\
+											\
+static const struct stm32_iac_config stm32_iac_cfg_##n = {				\
+	.base = DT_INST_REG_ADDR(n),							\
+	.irq = DT_INST_IRQN(n),								\
+	.id_disable = id_disable_##n,							\
+	.n_id_disable = DT_INST_PROP_LEN_OR(n, id_disable, 0),				\
+};											\
+											\
+static struct stm32_iac_data stm32_iac_data_##n = {};					\
+											\
+void IAC_IRQHandler(void)								\
+{											\
+	stm32_iac_isr(DEVICE_DT_GET(DT_DRV_INST(n)));					\
+};											\
+											\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_iac_pm_action);					\
+											\
+DEVICE_DT_INST_DEFINE(n, &stm32_iac_init,						\
+		      PM_DEVICE_DT_INST_GET(n),						\
+		      &stm32_iac_data_##n,						\
+		      &stm32_iac_cfg_##n,						\
+		      PRE_CORE, 15,							\
+		      NULL);
+
+DT_INST_FOREACH_STATUS_OKAY(STM32_IAC_INIT)
+
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
+	     "only one iac compatible node is supported");
