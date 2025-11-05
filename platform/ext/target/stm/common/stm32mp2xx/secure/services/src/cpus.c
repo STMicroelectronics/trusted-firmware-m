@@ -90,7 +90,7 @@ static struct cpu_info cpu_infos[] = {
 	DT_FOREACH_CHILD_SEP(DT_PATH(cpus), DEFINE_COPRO_STATE, (,))
 };
 
-bool cpu_is_valide(uint32_t id)
+bool cpu_is_valid(uint32_t id)
 {
 	return id >= ARRAY_SIZE(cpu_infos) ? false : true;
 }
@@ -99,7 +99,7 @@ bool cpu_is_enable_method(uint32_t id)
 {
 	struct cpu_info *info;
 
-	if (!cpu_is_valide(id))
+	if (!cpu_is_valid(id))
 		return false;
 
 	info = &cpu_infos[id];
@@ -149,7 +149,7 @@ enum tfm_platform_err_t cpu_get_info(uint32_t id, struct cpu_info_res *cpu_info_
 {
 	struct cpu_info *cpu;
 
-	if (!cpu_is_valide(id))
+	if (!cpu_is_valid(id))
 		return TFM_PLATFORM_ERR_INVALID_PARAM;
 
 	cpu = &cpu_infos[id];
@@ -171,7 +171,7 @@ enum tfm_platform_err_t cpu_send_cmd(uint32_t id, enum tfm_cpu_service_type_t ty
 	struct cpu_info *cpu;
 	int err = -EINVAL;
 
-	if (!cpu_is_valide(id))
+	if (!cpu_is_valid(id))
 		return TFM_PLATFORM_ERR_INVALID_PARAM;
 
 	cpu = &cpu_infos[id];
