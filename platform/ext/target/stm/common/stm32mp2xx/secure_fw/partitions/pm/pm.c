@@ -25,14 +25,14 @@ typedef struct context {
 	uint32_t FPSCR;
 	uint32_t MSP;
 	uint32_t PSP;
-	uint32_t primask_s;
+	uint32_t PRIMASK;
 } cm33_context_t;
 
 cm33_context_t tfm_context;
 
 void save_it_status(void)
 {
-	tfm_context.primask_s = __get_PRIMASK();
+	tfm_context.PRIMASK = __get_PRIMASK();
 	tfm_context.VTOR = SCB->VTOR;
 	__set_PRIMASK(1);
 }
@@ -43,7 +43,7 @@ void restore_it_status(void)
 	__DSB();
 	__ISB();
 
-	__set_PRIMASK(tfm_context.primask_s);
+	__set_PRIMASK(tfm_context.PRIMASK);
 }
 
 void jump_low_power_fw(enum pm_suspend_mode_t lpmode)
