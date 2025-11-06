@@ -483,11 +483,22 @@ uint64_t ipc_schedule(uint32_t exc_return)
     /* Protect concurrent access to current thread/component and thread status */
     CRITICAL_SECTION_ENTER(cs);
 
-#if ((CONFIG_TFM_SECURE_THREAD_MASK_NS_INTERRUPT == 1) ||\
-     (CONFIG_TFM_SECURE_SLIH_MASK_NS_INTERRUPT == 1)) && defined(CONFIG_TFM_USE_TRUSTZONE)
+#if (CONFIG_TFM_SECURE_THREAD_MASK_NS_INTERRUPT == 1) && defined(CONFIG_TFM_USE_TRUSTZONE)
     if (__get_BASEPRI() == 0) {
         /*
          * If BASEPRI is not set, that means an interrupt was taken when
+         * Non-Secure code was executing, and a scheduling is necessary because
+         * a secure partition become runnable.
+         */
+        SPM_ASSERT(!basepri_set_by_ipc_schedule);
+        basepri_set_by_ipc_schedule = true;
+        __set_BASEPRI(SECURE_THREAD_EXECUTION_PRIORITY);
+    }
+#endif
+#if (CONFIG_TFM_SECURE_SLIH_MASK_NS_INTERRUPT == 1) && defined(CONFIG_TFM_USE_TRUSTZONE)
+    if (ns_called == 0) {
+        /*
+         * If ns_called is not set, that means an interrupt was taken when
          * Non-Secure code was executing, and a scheduling is necessary because
          * a secure partition become runnable.
          */

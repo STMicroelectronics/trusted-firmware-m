@@ -84,6 +84,7 @@
 #endif
 
 #if (CONFIG_TFM_SECURE_SLIH_MASK_NS_INTERRUPT == 1)
+extern uint32_t ns_called;
 #ifndef SECURE_MASK_NS_IRQ_PRIORITY
 #define SECURE_THREAD_EXECUTION_PRIORITY (0x80)
 #else
