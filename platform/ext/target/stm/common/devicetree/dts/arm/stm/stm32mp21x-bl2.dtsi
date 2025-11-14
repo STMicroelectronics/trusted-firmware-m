@@ -12,13 +12,13 @@
 
 		bl2_code: bl2-code@e040000 {
 			compatible = "reserved-memory";
-			reg = <0x0 0xe040000 0x0 0x16800>;
+			reg = <0x0 0xe040000 0x0 0x17000>;
 			#memory-region-cells = <0>;
 		};
 
-		bl2_data: bl2-data@e056800 {
+		bl2_data: bl2-data@e057000 {
 			compatible = "reserved-memory";
-			reg = <0x0 0xe056800 0x0 0xd000>;
+			reg = <0x0 0xe057000 0x0 0xc800>;
 			#memory-region-cells = <0>;
 		};
 
