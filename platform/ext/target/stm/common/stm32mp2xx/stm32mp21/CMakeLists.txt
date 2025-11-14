@@ -61,11 +61,13 @@ if(BL2)
         PRIVATE
             ${STM_SOC_DIR}/src/system_stm32mp2xx_m33.c
             ${STM_FAMILY_DIR}/native_driver/src/clk/clk-stm32mp21.c
+            ${STM_FAMILY_DIR}/native_driver/src/mbox/stm32_dbgmcu_mbx.c
     )
 
     target_sources(bl2
         PRIVATE
             ${STM_SOC_DIR}/src/startup_stm32mp2_bl2.c
+            ${STM_FAMILY_DIR}/native_driver/src/mbox/stm32_dbgmcu_mbx.c
     )
 
 endif()
