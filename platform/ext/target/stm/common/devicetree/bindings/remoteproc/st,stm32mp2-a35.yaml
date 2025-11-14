@@ -11,6 +11,7 @@ include:
   - base.yaml
   - reset-device.yaml
   - access-device.yaml
+  - nvmem-consumer.yaml
 
 properties:
   resets:
