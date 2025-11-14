@@ -27,7 +27,7 @@ enum tfm_platform_err_t tfm_platform_wdt_set(struct wdt_timeout_cfg *cfg)
 
 static enum tfm_platform_err_t _wdt_cmd(enum tfm_wdt_service_type_t type)
 {
-	struct tfm_cpu_service_args_t args;
+	struct tfm_wdt_service_args_t args;
 	enum tfm_platform_err_t ret;
 	psa_invec in_vec;
 
