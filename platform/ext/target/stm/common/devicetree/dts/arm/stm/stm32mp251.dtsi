@@ -1053,6 +1053,14 @@
 			#size-cells = <1>;
 			ranges;
 			status = "disabled";
+			nvram: nvram@56010100 {
+				compatible = "st,stm32mp25-tamp-nvram";
+				#address-cells = <1>;
+				#size-cells = <1>;
+				reg = <0x56010100 0x200>;
+				status = "disabled";
+
+			};
 		};
 
 		a35_rproc: a35@0 {
