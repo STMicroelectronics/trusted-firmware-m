@@ -50,6 +50,7 @@ enum tfm_cpu_service_type_t {
 	TFM_CPU_SERVICE_TYPE_INFO,
 	TFM_CPU_SERVICE_TYPE_START,
 	TFM_CPU_SERVICE_TYPE_STOP,
+	TFM_CPU_SERVICE_TYPE_SET_RSC_TAB,
 };
 
 struct tfm_cpu_service_args_t {
@@ -63,6 +64,13 @@ struct tfm_cpu_service_args_t {
 		struct cpu_id_args {
 			uint32_t id;
 		} cpu;
+		/* TFM_CPU_SERVICE_TYPE_SET_RSC_TAB */
+		struct rsc_tab_args {
+			uint32_t id;
+			uint32_t addr;
+			uint32_t size;
+		} rsc_tab;
+
 	};
 };
 
@@ -123,4 +131,16 @@ enum tfm_platform_err_t tfm_platform_cpu_start(uint32_t cpu_id, int32_t *status)
  * @return Returns values as specified by the tfm_platform_err_t
  */
 enum tfm_platform_err_t tfm_platform_cpu_stop(uint32_t cpu_id, int32_t *status);
+
+/**
+ * @brief set the resource table information on cpu id X.
+ *
+ * @param[in]  cpu_id	   cpu id
+ * @param[in]  addr	   address of the resource table
+ * @param[in]  size	   size of the resource table in byte
+ *
+ * @return Returns values as specified by the tfm_platform_err_t
+ */
+enum tfm_platform_err_t tfm_platform_cpu_set_rsc_tab(uint32_t cpu_id, int32_t addr,
+						     int32_t size);
 #endif /* TFM_IOCTL_CPU_API_H */

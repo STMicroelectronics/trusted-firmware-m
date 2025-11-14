@@ -124,3 +124,21 @@ int rproc_status(const struct device *dev)
 
 	return rproc->state;
 }
+
+int rproc_set_rsc_tab(const struct device *dev, uint32_t addr, uint32_t size)
+{
+	struct rproc_spec *rproc = _is_valid_rproc(dev);
+	const struct remoteproc_driver_api *api;
+
+	if (!rproc)
+		return -EINVAL;
+
+	api = rproc->dev->api;
+
+	if (api->is_running && rproc->state == CPU_STARTED) {
+		EMSG("Set resource table failed\n");
+		return -EINVAL;
+	}
+
+	return api->set_rsc_tab(rproc, addr, size);
+}

@@ -21,6 +21,10 @@
 #include <clk.h>
 #include <cmsis.h>
 #include <stm32_bsec3.h>
+#include <tfm_platform_system.h>
+#include <devicetree.h>
+#include <devicetree/nvmem.h>
+#include <nvmem.h>
 
 #define IRQ_INVALID	UINT32_MAX
 
@@ -50,6 +54,8 @@ struct stm32_rproc_data {
 	struct rproc_spec rproc;
 	bool running;
 	const struct stm32_rproc_variant *variant;
+	const struct device *rsc_tab_addr_dev;
+	const struct device *rsc_tab_size_dev;
 };
 
 static void stm32_rproc_running_set(const struct device *dev, bool running)
@@ -300,6 +306,33 @@ int stm32_rproc_stop(struct rproc_spec *rproc)
 	return data->variant->stop_fn(rproc->dev);
 }
 
+static int _stm32_rproc_set_rsc_tab(const struct device *dev,
+				    uint32_t addr, uint32_t size)
+{
+	struct stm32_rproc_data *data = dev_get_data(dev);
+	int err;
+
+	err = nvmem_write_cell(data->rsc_tab_addr_dev, sizeof(uint32_t),
+			       (uint8_t *)&addr);
+	if (err < 0) {
+		return err;
+	}
+
+	err = nvmem_write_cell(data->rsc_tab_size_dev, sizeof(uint32_t),
+			       (uint8_t *)&size);
+	if (err < 0) {
+		return err;
+	}
+
+	return 0;
+}
+
+static int stm32_rproc_set_rsc_tab(struct rproc_spec *rproc,
+				   uint32_t addr, uint32_t size)
+{
+	return _stm32_rproc_set_rsc_tab(rproc->dev, addr, size);
+}
+
 static __unused int stm32_rproc_init(const struct device *dev)
 {
 	struct stm32_rproc_data *data = dev_get_data(dev);
@@ -307,6 +340,9 @@ static __unused int stm32_rproc_init(const struct device *dev)
 
 	if (data->variant->init_fn)
 		err = data->variant->init_fn(dev);
+
+	/* reset resource table tamp back-up registers */
+	_stm32_rproc_set_rsc_tab(dev, 0, 0);
 
 	rproc_init(dev, &data->rproc);
 
@@ -326,6 +362,7 @@ static struct remoteproc_driver_api stm32_rproc_api = {
 	.start = stm32_rproc_start,
 	.is_running = stm32_rproc_is_running,
 	.stop = stm32_rproc_stop,
+	.set_rsc_tab = stm32_rproc_set_rsc_tab,
 };
 
 #define DT_CLOCK_CONTROL_GET_BY_IDX(node_id, idx)					\
@@ -365,6 +402,8 @@ static const struct stm32_rproc_config _##name##_cfg##n = {			\
 										\
 static struct stm32_rproc_data _##name##_data##n = {				\
 	.variant = &_variant,							\
+	.rsc_tab_addr_dev = DT_INST_DEV_NVMEM(n, rsc_tab_addr),		\
+	.rsc_tab_size_dev = DT_INST_DEV_NVMEM(n, rsc_tab_size),		\
 };										\
 										\
 void _irqhandler(void)								\

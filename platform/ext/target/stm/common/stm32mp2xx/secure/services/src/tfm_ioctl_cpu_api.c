@@ -86,3 +86,23 @@ enum tfm_platform_err_t tfm_platform_cpu_stop(uint32_t cpu_id, int32_t *status)
 {
 	return tfm_platform_cpu_cmd(TFM_CPU_SERVICE_TYPE_STOP, cpu_id, status);
 }
+
+enum tfm_platform_err_t tfm_platform_cpu_set_rsc_tab(uint32_t cpu_id, int32_t addr,
+						     int32_t size)
+{
+	struct tfm_cpu_service_args_t args;
+	enum tfm_platform_err_t ret;
+	psa_invec in_vec;
+
+	in_vec.base = (const void *)&args;
+	in_vec.len = sizeof(args);
+
+	args.type = TFM_CPU_SERVICE_TYPE_SET_RSC_TAB;
+	args.rsc_tab.id = cpu_id;
+	args.rsc_tab.addr = addr;
+	args.rsc_tab.size = size;
+
+	ret = tfm_platform_ioctl(TFM_PLATFORM_IOCTL_CPU_SERVICE, &in_vec, NULL);
+
+	return ret;
+}

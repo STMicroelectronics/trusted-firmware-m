@@ -38,6 +38,7 @@ struct remoteproc_driver_api {
 	int (*start)(struct rproc_spec *rproc);
 	bool (*is_running)(struct rproc_spec *rproc);
 	int (*stop)(struct rproc_spec *rproc);
+	int (*set_rsc_tab)(struct rproc_spec *rproc, uint32_t addr, uint32_t size);
 };
 
 void rproc_init(const struct device *dev, struct rproc_spec *rproc);
@@ -122,4 +123,5 @@ void rproc_init(const struct device *dev, struct rproc_spec *rproc);
 int rproc_boot(const struct device *dev);
 int rproc_shutdown(const struct device *dev);
 int rproc_status(const struct device *dev);
+int rproc_set_rsc_tab(const struct device *dev, uint32_t addr, uint32_t size);
 #endif   /* ----- #ifndef INCLUDE_REMOTEPROC_H_  ----- */
