@@ -166,7 +166,7 @@ static const struct stm32_dbgmcu_mbx_config stm32_dbgmcu_mbx_cfg = {
 
 DEVICE_DT_INST_DEFINE(0, &stm32_dbgmcu_mbx_init, NULL,
 		      NULL, &stm32_dbgmcu_mbx_cfg,
-		      POST_CORE, 1, NULL);
+		      CORE, 10, NULL);
 
 static const struct device *dbgmcu_dev = DEVICE_DT_INST_GET(0);
 
