@@ -149,6 +149,7 @@ target_sources(platform_s
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/dma/stm32_hpdma.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/interrupt-controller/stm32_exti.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/tamper/stm32_tamp.c>
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/tamper/stm32_tamp_nvram.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/remoteproc/rproc_core.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/remoteproc/stm32_rproc.c>
 		$<$<BOOL:${STM32_CACHE_ENABLED}>:${STM_FAMILY_DIR}/native_driver/src/core/stm32_dcache.c>
@@ -254,6 +255,7 @@ target_sources(tfm_s
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/dma/stm32_hpdma.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/interrupt-controller/stm32_exti.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/tamper/stm32_tamp.c>
+        $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/tamper/stm32_tamp_nvram.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/mbox/stm32_ipcc.c>
 	$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32_iac.c>
 	$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32_serc.c>
@@ -339,6 +341,7 @@ if(BL2)
 			${STM_FAMILY_DIR}/native_driver/src/rif/stm32_rifsc.c
 			${STM_FAMILY_DIR}/native_driver/src/rif/stm32_rcc_rif.c
 			${STM_FAMILY_DIR}/native_driver/src/tamper/stm32_tamp.c
+			${STM_FAMILY_DIR}/native_driver/src/tamper/stm32_tamp_nvram.c
 			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_FAMILY_DIR}/native_driver/src/mmc/mmc.c>
 			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_FAMILY_DIR}/native_driver/src/mmc/stm32_sdmmc2.c>
 			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_FAMILY_DIR}/native_driver/src/mmc/soft_crc.c>
@@ -391,6 +394,7 @@ if(BL2)
             ${STM_FAMILY_DIR}/native_driver/src/rif/stm32_risaf.c
             ${STM_FAMILY_DIR}/native_driver/src/rif/stm32_risab.c
             ${STM_FAMILY_DIR}/native_driver/src/tamper/stm32_tamp.c
+            ${STM_FAMILY_DIR}/native_driver/src/tamper/stm32_tamp_nvram.c
             ${STM_FAMILY_DIR}/native_driver/src/rif/stm32_rcc_rif.c
             $<$<STREQUAL:${STM32_BOOT_DEV},ospi>:${STM_FAMILY_DIR}/native_driver/src/spi/stm32_omm.c>
             $<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_FAMILY_DIR}/native_driver/src/mmc/stm32_sdmmc2.c>
