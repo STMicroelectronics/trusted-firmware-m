@@ -10,6 +10,7 @@ compatible: "st,stm32-tamp"
 
 include:
   - base.yaml
+  - gpio-controller.yaml
 
 properties:
   reg:
@@ -17,3 +18,10 @@ properties:
 
   clocks:
     required: true
+
+  "#gpio-cells":
+    const: 2
+
+gpio-cells:
+  - pin
+  - flags
