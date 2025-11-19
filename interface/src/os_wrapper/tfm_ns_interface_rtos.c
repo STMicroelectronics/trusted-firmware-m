@@ -15,9 +15,12 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "os_wrapper/mutex.h"
-#include "os_wrapper/semaphore.h"
 #include "tfm_ns_interface.h"
+
+#if PLATFORM_HAS_NS_NOTIF
+#include "os_wrapper/semaphore.h"
 #include "tfm_plat_ns.h"
+#endif
 
 /**
  * \brief the ns_lock ID
