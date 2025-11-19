@@ -8,15 +8,15 @@
 #include <lib/utils_def.h>
 #include <lib/mmio.h>
 
+#include <clk.h>
+#include <debug.h>
 #include <device.h>
+#include <devicetree/gpio.h>
+#include <pinctrl.h>
 #include <pm/device.h>
 #include <pm/pm.h>
-#include <pinctrl.h>
-#include <clk.h>
-#include <devicetree/gpio.h>
-#include <stm32_rif.h>
 #include <stm32_gpio.h>
-#include <debug.h>
+#include <stm32_rif.h>
 
 #define GPIO_MODE_OFFSET	U(0x00)
 #define GPIO_TYPE_OFFSET	U(0x04)
@@ -31,8 +31,8 @@
 #define GPIO_CIDCFGR_OFFSET	U(0x50)
 #define GPIO_SEMCR_OFFSET	U(0x54)
 
-#define GPIO_ALTERNATE_MASK	U(0x0F)
-#define GPIO_ALT_LOWER_LIMIT	U(0x08)
+#define STM32_GPIO_ALTERNATE_MASK	U(0x0F)
+#define STM32_GPIO_ALT_LOWER_LIMIT	U(0x08)
 
 #define GPIO_RIF_RES		16
 
@@ -46,55 +46,55 @@ struct stm32_gpio_config {
 	const struct rifprot_controller *rif_ctl;
 };
 
-static void _stm32_gpio_set_mode(uintptr_t base, struct gpio_cfg *gpio)
+static void _stm32_gpio_set_mode(uintptr_t base, struct stm32_gpio_cfg *gpio)
 {
 	mmio_clrbits_32(base + GPIO_MODE_OFFSET,
-			((uint32_t)GPIO_MODE_MASK << (gpio->pin << 1)));
+			((uint32_t)STM32_GPIO_MODE_MASK << (gpio->pin << 1)));
 	mmio_setbits_32(base + GPIO_MODE_OFFSET,
-			(gpio->mode & ~GPIO_OPEN_DRAIN) << (gpio->pin << 1));
+			(gpio->mode & ~STM32_GPIO_OPEN_DRAIN) << (gpio->pin << 1));
 }
 
-static void _stm32_gpio_set_type(uintptr_t base, struct gpio_cfg *gpio)
+static void _stm32_gpio_set_type(uintptr_t base, struct stm32_gpio_cfg *gpio)
 {
-	if (gpio->type & GPIO_OPEN_DRAIN) {
+	if (gpio->type & STM32_GPIO_OPEN_DRAIN) {
 		mmio_setbits_32(base + GPIO_TYPE_OFFSET, BIT(gpio->pin));
 	} else {
 		mmio_clrbits_32(base + GPIO_TYPE_OFFSET, BIT(gpio->pin));
 	}
 }
 
-static void _stm32_gpio_set_speed(uintptr_t base, struct gpio_cfg *gpio)
+static void _stm32_gpio_set_speed(uintptr_t base, struct stm32_gpio_cfg *gpio)
 {
 	mmio_clrbits_32(base + GPIO_SPEED_OFFSET,
-			((uint32_t)GPIO_SPEED_MASK << (gpio->pin << 1)));
+			((uint32_t)STM32_GPIO_SPEED_MASK << (gpio->pin << 1)));
 	mmio_setbits_32(base + GPIO_SPEED_OFFSET, gpio->speed << (gpio->pin << 1));
 }
 
-static void _stm32_gpio_set_pupd(uintptr_t base, struct gpio_cfg *gpio)
+static void _stm32_gpio_set_pupd(uintptr_t base, struct stm32_gpio_cfg *gpio)
 {
 	mmio_clrbits_32(base + GPIO_PUPD_OFFSET,
-			((uint32_t)GPIO_PULL_MASK << (gpio->pin << 1)));
+			((uint32_t)STM32_GPIO_PULL_MASK << (gpio->pin << 1)));
 	mmio_setbits_32(base + GPIO_PUPD_OFFSET, gpio->pull << (gpio->pin << 1));
 }
 
-static void _stm32_gpio_set_altx(uintptr_t base, struct gpio_cfg *gpio)
+static void _stm32_gpio_set_altx(uintptr_t base, struct stm32_gpio_cfg *gpio)
 {
-	if (gpio->pin < GPIO_ALT_LOWER_LIMIT) {
+	if (gpio->pin < STM32_GPIO_ALT_LOWER_LIMIT) {
 		mmio_clrbits_32(base + GPIO_AFRL_OFFSET,
-				((uint32_t)GPIO_ALTERNATE_MASK << (gpio->pin << 2)));
+				((uint32_t)STM32_GPIO_ALTERNATE_MASK << (gpio->pin << 2)));
 		mmio_setbits_32(base + GPIO_AFRL_OFFSET,
 				gpio->alternate << (gpio->pin << 2));
 	} else {
 		mmio_clrbits_32(base + GPIO_AFRH_OFFSET,
-				((uint32_t)GPIO_ALTERNATE_MASK <<
-				 ((gpio->pin - GPIO_ALT_LOWER_LIMIT) << 2)));
+				((uint32_t)STM32_GPIO_ALTERNATE_MASK <<
+				 ((gpio->pin - STM32_GPIO_ALT_LOWER_LIMIT) << 2)));
 		mmio_setbits_32(base + GPIO_AFRH_OFFSET,
-				gpio->alternate << ((gpio->pin - GPIO_ALT_LOWER_LIMIT) <<
+				gpio->alternate << ((gpio->pin - STM32_GPIO_ALT_LOWER_LIMIT) <<
 					      2));
 	}
 }
 
-static int stm32_gpio_set(const struct device *dev, struct gpio_cfg *gpio)
+static int stm32_gpio_set(const struct device *dev, struct stm32_gpio_cfg *gpio)
 {
 	const struct stm32_gpio_config *cfg = dev_get_config(dev);
 	uintptr_t base = cfg->base;
@@ -204,7 +204,7 @@ static const struct device *port_devices[] = {
 	DT_INST_FOREACH_STATUS_OKAY(DEFINE_STM32PORT_DEVICE)
 };
 
-int stm32_pinctrl_to_gpio(const pinctrl_soc_pin_t *pin, struct gpio_cfg *gpio)
+int stm32_pinctrl_to_gpio(const pinctrl_soc_pin_t *pin, struct stm32_gpio_cfg *gpio)
 {
 	uint32_t func;
 
@@ -223,10 +223,10 @@ int stm32_pinctrl_to_gpio(const pinctrl_soc_pin_t *pin, struct gpio_cfg *gpio)
 		break;
 	case 1 ... 16:
 		gpio->alternate = func - 1U;
-		gpio->mode = GPIO_MODE_ALTERNATE;
+		gpio->mode = STM32_GPIO_MODE_ALTERNATE;
 		break;
 	case 17:
-		gpio->mode = GPIO_MODE_ANALOG;
+		gpio->mode = STM32_GPIO_MODE_ANALOG;
 		break;
 	default:
 		return -ENOTSUP;
@@ -249,7 +249,7 @@ const struct device *stm32_pinctrl_get_port(int pin_no)
 
 int pinctrl_configure_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt)
 {
-	struct gpio_cfg gpio;
+	struct stm32_gpio_cfg gpio;
 	int i, err;
 
 	for (i = 0; i < pin_cnt; i++) {
