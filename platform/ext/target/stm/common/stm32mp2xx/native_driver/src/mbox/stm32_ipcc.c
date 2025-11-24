@@ -13,6 +13,8 @@
 #include <debug.h>
 #include <mbox.h>
 #include <clk.h>
+#include <pm/device.h>
+#include <pm/pm.h>
 #include <stm32_rif.h>
 
 #define _IPCC_C1CR			U(0x00)
@@ -317,7 +319,7 @@ static void stm32_ipcc_get_hwconfig(const struct device *dev)
 				     io_read32(dev_cfg->base + _IPCC_HWCFGR));
 }
 
-static int stm32_ipcc_init(const struct device *dev)
+static int stm32_ipcc_init_cfg(const struct device *dev)
 {
 	const struct stm32_ipcc_config *drv_cfg = dev_get_config(dev);
 	struct stm32_ipcc_data *drv_data = dev_get_data(dev);
@@ -347,7 +349,6 @@ static int stm32_ipcc_init(const struct device *dev)
 
 	/* Set channel_sec_mask according to rif protection */
 	drv_data->channel_sec_mask = io_read32(drv_cfg->lbase + IPCC_SECCFGR);
-	drv_data->channel_enable_mask = 0;
 
 	/* Fix Me : Possibly Add Check on cid filtering and privileged */
 
@@ -359,8 +360,12 @@ static int stm32_ipcc_init(const struct device *dev)
 		ipcc_channel_transmit(drv_cfg->lbase, i, false);
 	}
 
+	/* Set Interrupt Secure */
+	NVIC_ClearTargetState(drv_cfg->irq);
+
 	/* Enable RXO interrupt */
 	NVIC_SetPriority(drv_cfg->irq, 1);
+
 	NVIC_EnableIRQ(drv_cfg->irq);
 
 	return 0;
@@ -370,6 +375,54 @@ err:
 
 	return err;
 }
+
+static int stm32_ipcc_init(const struct device *dev)
+{
+	struct stm32_ipcc_data *drv_data = dev_get_data(dev);
+
+	drv_data->channel_enable_mask = 0;
+
+	return stm32_ipcc_init_cfg(dev);
+}
+
+#ifdef CONFIG_PM_DEVICE
+static int stm32_ipcc_pm_action(const struct device *dev, enum pm_device_action action,
+				uint32_t pm_hint)
+{
+	struct stm32_ipcc_data *drv_data = dev_get_data(dev);
+	const struct stm32_ipcc_config *drv_cfg = dev_get_config(dev);
+	int err = 0;
+
+	if (action == PM_DEVICE_ACTION_SUSPEND) {
+		clk_disable(drv_data->clk);
+		NVIC_DisableIRQ(drv_cfg->irq);
+	} else if (action == PM_DEVICE_ACTION_RESUME && PM_HINT_IS_STATE(pm_hint, CONTEXT)) {
+		/* Initialize register   */
+		err = stm32_ipcc_init_cfg(dev);
+		if (err)
+			goto out;
+
+		/* if some channel enabled */
+		if (drv_data->channel_enable_mask) {
+			/* Enable rx channel */
+			io_clrbits32(drv_cfg->lbase + IPCC_MR, drv_data->channel_enable_mask);
+
+			/* Enable secure txf and rxo interrupt */
+			io_setbits32(drv_cfg->lbase + IPCC_CR,
+				     IPCC_CR_SECTXFIE | IPCC_CR_SECRXOIE);
+		}
+	} else {
+		/* no register modification, enable clock */
+		err = clk_enable(drv_data->clk);
+		if (err)
+			goto out;
+		NVIC_EnableIRQ(drv_cfg->irq);
+	}
+
+out:
+	return err;
+}
+#endif
 
 static const struct mbox_driver_api stm32_ipcc_api = {
 	.send = stm32_ipcc_send,
@@ -410,8 +463,11 @@ stm32_ipcc_mbox_rxo_isr(DEVICE_DT_GET(DT_DRV_INST(n)));				\
 										\
 static struct stm32_ipcc_data data_##n = {};					\
 										\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_ipcc_pm_action);				\
+										\
 DEVICE_DT_INST_DEFINE(n,							\
-		      &stm32_ipcc_init, NULL,					\
+		      &stm32_ipcc_init,						\
+		      PM_DEVICE_DT_INST_GET(n),					\
 		      &data_##n, &cfg_##n,					\
 		      CORE, 5,							\
 		      &stm32_ipcc_api);

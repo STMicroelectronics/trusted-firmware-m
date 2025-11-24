@@ -59,9 +59,6 @@ extern enum tfm_hal_status_t ipcc_irq_init(void *p_pt,
 {
 	ipcc_irq.p_ildi = p_ildi;
 	ipcc_irq.p_pt = p_pt;
-	NVIC_SetPriority(p_ildi->source, 1);
-	NVIC_ClearTargetState(p_ildi->source);
-	NVIC_DisableIRQ(p_ildi->source);
 
 	return TFM_HAL_SUCCESS;
 }
