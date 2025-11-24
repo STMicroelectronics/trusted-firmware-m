@@ -106,3 +106,13 @@ enum tfm_platform_err_t tfm_platform_cpu_set_rsc_tab(uint32_t cpu_id, int32_t ad
 
 	return ret;
 }
+
+enum tfm_platform_err_t tfm_platform_cpu_suspend(uint32_t cpu_id, int32_t *status)
+{
+	return tfm_platform_cpu_cmd(TFM_CPU_SERVICE_TYPE_SUSPEND, cpu_id, status);
+}
+
+enum tfm_platform_err_t tfm_platform_cpu_resume(uint32_t cpu_id, int32_t *status)
+{
+	return tfm_platform_cpu_cmd(TFM_CPU_SERVICE_TYPE_RESUME, cpu_id, status);
+}

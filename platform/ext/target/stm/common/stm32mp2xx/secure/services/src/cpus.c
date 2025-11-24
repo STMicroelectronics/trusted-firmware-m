@@ -25,6 +25,8 @@ struct cpu_ctrl_api {
 	int (*cpu_stop)(struct cpu_info *info);
 	int (*cpu_status)(struct cpu_info *info);
 	int (*cpu_set_rsc_tab)(struct cpu_info *info, uint32_t addr, uint32_t size);
+	int (*cpu_suspend)(struct cpu_info *info);
+	int (*cpu_resume)(struct cpu_info *info);
 };
 
 static __unused int _remoteproc_cpu_start(struct cpu_info *info)
@@ -60,11 +62,29 @@ static __unused int _remoteproc_cpu_set_rsc_tab(struct cpu_info *info,
 	return rproc_set_rsc_tab(info->dev_ctrl, addr, size);
 }
 
+static __unused int _remoteproc_cpu_suspend(struct cpu_info *info)
+{
+	if (info->method != ENABLE_METHOD_REMOTEPROC)
+		return -EINVAL;
+
+	return rproc_suspend(info->dev_ctrl);
+}
+
+static __unused int _remoteproc_cpu_resume(struct cpu_info *info)
+{
+	if (info->method != ENABLE_METHOD_REMOTEPROC)
+		return -EINVAL;
+
+	return rproc_resume(info->dev_ctrl);
+}
+
 static __unused const struct cpu_ctrl_api ctrl_remoteproc = {
 	.cpu_start = _remoteproc_cpu_start,
 	.cpu_stop = _remoteproc_cpu_stop,
 	.cpu_status = _remoteproc_cpu_status,
 	.cpu_set_rsc_tab = _remoteproc_cpu_set_rsc_tab,
+	.cpu_suspend = _remoteproc_cpu_suspend,
+	.cpu_resume = _remoteproc_cpu_resume,
 };
 
 #define EN_METHODE_NONE(node_id)							\
@@ -194,6 +214,12 @@ enum tfm_platform_err_t cpu_send_cmd(uint32_t id, enum tfm_cpu_service_type_t ty
 	case TFM_CPU_SERVICE_TYPE_STOP:
 		err = cpu->ctrl_api->cpu_stop(cpu);
 		break;
+	case TFM_CPU_SERVICE_TYPE_SUSPEND:
+		err = cpu->ctrl_api->cpu_suspend(cpu);
+		break;
+	case TFM_CPU_SERVICE_TYPE_RESUME:
+		err = cpu->ctrl_api->cpu_resume(cpu);
+		break;
 	default:
 		return TFM_PLATFORM_ERR_NOT_SUPPORTED;
 	}
@@ -247,6 +273,8 @@ enum tfm_platform_err_t cpus_service(const psa_invec *in_vec, const psa_outvec *
 		return cpu_get_info(args->cpu.id, &out->cpu_info);
 	case TFM_CPU_SERVICE_TYPE_START:
 	case TFM_CPU_SERVICE_TYPE_STOP:
+	case TFM_CPU_SERVICE_TYPE_SUSPEND:
+	case TFM_CPU_SERVICE_TYPE_RESUME:
 		return cpu_send_cmd(args->cpu.id, args->type, &out->cpu_cmd);
 	case TFM_CPU_SERVICE_TYPE_SET_RSC_TAB:
 		return cpu_set_rsc_table(args->rsc_tab.id, args->rsc_tab.addr,

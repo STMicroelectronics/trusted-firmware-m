@@ -51,6 +51,8 @@ enum tfm_cpu_service_type_t {
 	TFM_CPU_SERVICE_TYPE_START,
 	TFM_CPU_SERVICE_TYPE_STOP,
 	TFM_CPU_SERVICE_TYPE_SET_RSC_TAB,
+	TFM_CPU_SERVICE_TYPE_SUSPEND,
+	TFM_CPU_SERVICE_TYPE_RESUME,
 };
 
 struct tfm_cpu_service_args_t {
@@ -143,4 +145,24 @@ enum tfm_platform_err_t tfm_platform_cpu_stop(uint32_t cpu_id, int32_t *status);
  */
 enum tfm_platform_err_t tfm_platform_cpu_set_rsc_tab(uint32_t cpu_id, int32_t addr,
 						     int32_t size);
+
+/**
+ * @brief send start command on cpu id X.
+ *
+ * @param[in]  cpu_id	   cpu id
+ * @param[out] status      Pointer, return status after command.
+ *
+ * @return Returns values as specified by the tfm_platform_err_t
+ */
+enum tfm_platform_err_t tfm_platform_cpu_suspend(uint32_t cpu_id, int32_t *status);
+
+/**
+ * @brief send stop command on cpu id X.
+ *
+ * @param[in]  cpu_id	   cpu id
+ * @param[out] status      Pointer, return status after command.
+ *
+ * @return Returns values as specified by the tfm_platform_err_t
+ */
+enum tfm_platform_err_t tfm_platform_cpu_resume(uint32_t cpu_id, int32_t *status);
 #endif /* TFM_IOCTL_CPU_API_H */
