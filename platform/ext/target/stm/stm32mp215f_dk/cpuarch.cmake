@@ -19,8 +19,10 @@ else()
 set(STM_DIR ${STM_BOARD_DIR}/..)
 endif()
 
+set(STM32_SOC_NAME  STM32MP215Fxx           CACHE STRING    "Define SoC model name" FORCE)
+
 include(${STM_DIR}/common/stm32mp2xx/stm32mp21/cpuarch.cmake)
 
 add_compile_definitions(
-    STM32MP215Fxx
+    ${STM32_SOC_NAME}
 )
