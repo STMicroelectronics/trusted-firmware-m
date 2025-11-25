@@ -11,6 +11,7 @@
 #include <device.h>
 #include <clk.h>
 #include <systick.h>
+#include <pm/device.h>
 
 #define SYST_CTRL	0x0
 #define SYST_LOAD	0x4
@@ -34,6 +35,10 @@ struct systick_config {
 	const struct device *clk_dev;
 	clk_subsys_t clk_subsys;
 	uintptr_t tick_hz;
+};
+
+struct systick_data {
+	uint32_t systick_val;
 };
 
 /*
@@ -115,7 +120,7 @@ void _systick_disable(const struct systick_config *cfg)
 	mmio_clrbits_32(cfg->base + SYST_CTRL, SYST_CTRL_EN);
 }
 
-static int systick_init(const struct device *dev)
+static int systick_init_with_val(const struct device *dev, uint32_t val)
 {
 	const struct systick_config *cfg = dev_get_config(dev);
 	struct clk *clk;
@@ -133,13 +138,50 @@ static int systick_init(const struct device *dev)
 
 	mmio_write_32(cfg->base + SYST_LOAD, COUNTER_MAX);
 	/* Load the SysTick Counter Value */
-	mmio_write_32(cfg->base + SYST_VAL, 0UL);
+	mmio_write_32(cfg->base + SYST_VAL, val);
 	mmio_write_32(cfg->base + SYST_CTRL, SYST_CTRL_CLKSOURCE);
 
 	_systick_enable(cfg);
 
 	return 0;
 }
+
+static int systick_init(const struct device *dev)
+{
+	systick_init_with_val(dev, 0);
+}
+
+#ifdef CONFIG_PM_DEVICE
+static int systick_pm_suspend(const struct device *dev)
+{
+	const struct systick_config *cfg = dev_get_config(dev);
+	struct systick_data *drv_data = dev_get_data(dev);
+
+	_systick_disable(cfg);
+	drv_data->systick_val = mmio_read_32(cfg->base + SYST_VAL);
+
+	return 0;
+}
+
+static int systick_pm_resume(const struct device *dev)
+{
+	const struct systick_data *drv_data = dev_get_data(dev);
+
+	return systick_init_with_val(dev, drv_data->systick_val);
+}
+
+static int systick_pm_action(const struct device *dev,
+			       enum pm_device_action action, uint32_t pm_hint)
+{
+	if (action == PM_DEVICE_ACTION_SUSPEND) {
+		return systick_pm_suspend(dev);
+	} else {
+		return systick_pm_resume(dev);
+	}
+}
+#endif
+
+struct systick_data data = { .systick_val = 0 };
 
 const struct systick_config systick_cfg = {
 	.base = DT_REG_ADDR(DT_DRV_INST(0)),
@@ -148,9 +190,11 @@ const struct systick_config systick_cfg = {
 	.tick_hz = DT_INST_PROP(0, clock_frequency),
 };
 
+PM_DEVICE_DT_INST_DEFINE(0, systick_pm_action);
+
 DEVICE_DT_INST_DEFINE(0,
-		      &systick_init, NULL,
-		      NULL,
+		      &systick_init, PM_DEVICE_DT_INST_GET(0),
+		      &data,
 		      &systick_cfg,
 		      PRE_CORE, 10,
 		      NULL);
