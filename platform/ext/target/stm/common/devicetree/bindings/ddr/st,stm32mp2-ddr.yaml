@@ -32,9 +32,9 @@ properties:
     description: DDR expected speed in kHz
 
   st,mem-size:
-    type: int
+    type: array
     required: true
-    description: DDR mem size in bytes
+    description: DDR mem size in bytes, split in 2 32bit values to have size on 64bit
 
   st,ctl-reg:
     type: array
