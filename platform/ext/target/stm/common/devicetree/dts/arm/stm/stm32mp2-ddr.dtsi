@@ -6,7 +6,7 @@
 &ddr{
 	st,mem-name = DDR_MEM_NAME;
 	st,mem-speed = <DDR_MEM_SPEED>;
-	st,mem-size = <(DDR_MEM_SIZE & 0xFFFFFFFF)>;
+	st,mem-size = <(DDR_MEM_SIZE >> 32) (DDR_MEM_SIZE & 0xFFFFFFFF)>;
 
 	st,ctl-reg = <
 		DDR_MSTR
