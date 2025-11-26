@@ -474,7 +474,7 @@ DEVICE_DT_INST_DEFINE(n, &stm32_risab_init,					\
 		      PM_DEVICE_DT_INST_GET(n),					\
 		      &stm32_risab_data_##n,					\
 		      &stm32_risab_cfg_##n,					\
-		      CORE, 8,							\
+		      CORE, 4,				\
 		      NULL);
 
 DT_INST_FOREACH_STATUS_OKAY(STM32_RISAB_INIT)
