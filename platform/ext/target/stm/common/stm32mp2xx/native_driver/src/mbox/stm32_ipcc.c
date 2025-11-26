@@ -76,7 +76,7 @@ struct stm32_ipcc_config {
 	/* remote processor base address */
 	uintptr_t rbase;
 	/* local processor base address */
-        uintptr_t lbase;
+	uintptr_t lbase;
 	const struct device *clk_dev;
 	const clk_subsys_t clk_subsys;
 	const struct rifprot_controller *rif_ctl;
@@ -86,7 +86,7 @@ struct stm32_ipcc_config {
 struct stm32_ipcc_data {
 	struct clk *clk;
 	uint32_t channel_sec_mask;
-        uint32_t channel_enable_mask;
+	uint32_t channel_enable_mask;
 	uint32_t hw_n_ch;
 	mbox_callback_t cb[MAX_CHANNELS];
 	void *user_data[MAX_CHANNELS];
