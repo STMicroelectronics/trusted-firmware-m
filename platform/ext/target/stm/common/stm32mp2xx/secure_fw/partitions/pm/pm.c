@@ -48,10 +48,11 @@ static void restore_it_status(void)
 	__set_BASEPRI(tfm_context.BASEPRI);
 }
 
-static void jump_low_power_fw(enum pm_suspend_mode_t lpmode)
+static int jump_low_power_fw(enum pm_suspend_mode_t lpmode)
 {
 	stm32mp2_lp_fw_suspend_mode_t lpfwmode;
 	const struct device *ramcfg_retram = DT_RAMCFG_DEVICE(retram);
+	int res;
 
 	switch(lpmode)
 	{
@@ -69,7 +70,7 @@ static void jump_low_power_fw(enum pm_suspend_mode_t lpmode)
 		break;
 	default:
 		/* Unexpected value */
-		return;
+		return -EINVAL;
 	}
 
 	save_it_status();
@@ -87,11 +88,13 @@ static void jump_low_power_fw(enum pm_suspend_mode_t lpmode)
 
 	/* Clean cache in order to prevent unsynchronized shared data */
 	if (IS_ENABLED(STM32_CACHE_ENABLED)) {
-		if (stm32_dcache_clean(0x0, 0xFFFFFFFF))
-			return;
+		res = stm32_dcache_clean(0x0, 0xFFFFFFFF);
+		if (res)
+			goto cache_error;
 
-		if (stm32_dcache_disable())
-			return;
+		res = stm32_dcache_disable();
+		if (res)
+			goto cache_error;
 	}
 
 	/*
@@ -101,11 +104,11 @@ static void jump_low_power_fw(enum pm_suspend_mode_t lpmode)
 	if (lpfwmode == STM32MP2_LP_FW_LPMODE_STANDBY1)
 		stm32_ramcfg_crc_enable(ramcfg_retram);
 
-	stm32mp2_lp_fw_exec();
+	res = stm32mp2_lp_fw_exec();
 
 	stm32_ramcfg_crc_disable(ramcfg_retram);
 
-	/* restore tfm execution context */
+	/* restore tfm execution context after stm32mp2_lp_fw_exec() */
 	__set_MSPLIM(tfm_context.MSPLIM);
 	__set_PSPLIM(tfm_context.PSPLIM);
 	__set_PSP(tfm_context.PSP);
@@ -113,7 +116,11 @@ static void jump_low_power_fw(enum pm_suspend_mode_t lpmode)
 	__set_CONTROL(tfm_context.CONTROL);
 	__set_FPSCR(tfm_context.FPSCR);
 
+cache_error:
+
 	restore_it_status();
+
+	return res;
 }
 
 static int _pm_suspend(enum pm_suspend_mode_t mode)
@@ -121,6 +128,7 @@ static int _pm_suspend(enum pm_suspend_mode_t mode)
 	struct critical_section_t cs_assert = CRITICAL_SECTION_STATIC_INIT;
 	uint32_t pm_hint;
 	int err = 0;
+	int res;
 
 	switch(mode) {
 	case PM_STOP2:
@@ -138,12 +146,6 @@ static int _pm_suspend(enum pm_suspend_mode_t mode)
 	/* platform state = mode, used by some driver as STPMIC2 */
 	pm_hint |= mode << PM_HINT_PLATFORM_STATE_SHIFT;
 
-	/* prepare suspend context*/
-
-	/* IT: mask, wakeup, fault ?*/
-	/* cache ? */
-	/* mpu ? */
-
 	CRITICAL_SECTION_ENTER(cs_assert);
 	/*
 	 * printf are forbidden in the partition in this critical section.
@@ -153,21 +155,22 @@ static int _pm_suspend(enum pm_suspend_mode_t mode)
 	 */
 
 	/* call suspend of each device */
-	if (!pm_suspend_devices(pm_hint)) {
-		pm_resume_devices(pm_hint);
+	if (pm_suspend_devices(pm_hint)) {
+		err = jump_low_power_fw(mode);
+	} else {
 		err = -EINVAL;
-		goto out;
 	}
-
-	jump_low_power_fw(mode);
 
 	pm_resume_devices(pm_hint);
 
-	if (IS_ENABLED(STM32_CACHE_ENABLED))
-		err = stm32_dcache_enable(true, true);
+	if (IS_ENABLED(STM32_CACHE_ENABLED)) {
+		res = stm32_dcache_enable(true, true);
+		if (res && !err)
+			err = res;
+	}
 
-out:
 	CRITICAL_SECTION_LEAVE(cs_assert);
+
 	return err;
 }
 
@@ -212,7 +215,8 @@ psa_status_t tfm_pm_power_off(void)
 			return PSA_ERROR_GENERIC_ERROR;
 	}
 
-	stm32mp2_lp_fw_exec();
+	if (stm32mp2_lp_fw_exec())
+		return PSA_ERROR_GENERIC_ERROR;
 
 	return PSA_SUCCESS;
 }
