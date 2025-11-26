@@ -153,5 +153,18 @@ psa_status_t tfm_pm_service_sfn(const psa_msg_t *msg)
 
 psa_status_t tfm_pm_init(void)
 {
-	return tfm_pm_load_fw();
+	psa_status_t ret;
+
+	ret = tfm_pm_load_fw();
+	if (ret) {
+		LOG_ERRFMT("[ERR][PM] load failed\r\n");
+		return ret;
+	}
+
+	ret = tfm_pm_fw_init();
+	if (ret) {
+		LOG_ERRFMT("[ERR][PM] init failed\r\n");
+	}
+
+	return ret;
 }

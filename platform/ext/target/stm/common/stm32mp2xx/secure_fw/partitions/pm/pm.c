@@ -205,3 +205,12 @@ psa_status_t tfm_pm_power_off(void)
 
 	return PSA_SUCCESS;
 }
+
+psa_status_t tfm_pm_fw_init(void)
+{
+	if (jump_low_power_fw(STM32MP2_LP_FW_LPMODE_INIT)) {
+		return PSA_ERROR_GENERIC_ERROR;
+	}
+
+	return PSA_SUCCESS;
+}
