@@ -208,9 +208,26 @@ psa_status_t tfm_pm_power_off(void)
 
 psa_status_t tfm_pm_fw_init(void)
 {
+	const uintptr_t uart_addr = DT_REG_ADDR(DT_CHOSEN(stdout_device));
+
+#if (TFM_PARTITION_LOG_LEVEL < TFM_PARTITION_LOG_LEVEL_INFO)
+	/* Deactivate LP firmware trace */
+	uart_addr = 0x0;
+#endif
+
+	/* Initialize the shared memory */
+	stm32mp2_lp_fw_clear_data();
+
+	/* Display LP version in INIT phase when uart is defined */
+	stm32mp2_lp_fw_set_uart_addr(uart_addr);
+
 	if (jump_low_power_fw(STM32MP2_LP_FW_LPMODE_INIT)) {
 		return PSA_ERROR_GENERIC_ERROR;
 	}
+
+	/* Debug trace in LP firmware only if UART device is not suspended */
+	if (!IS_ENABLED(STM32_CONSOLE_NO_SUSPEND))
+		stm32mp2_lp_fw_set_uart_addr(0x0);
 
 	return PSA_SUCCESS;
 }
