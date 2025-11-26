@@ -234,7 +234,7 @@ static uint32_t _stm32_uart_set_config(const struct device *dev)
 	 * Configure UART Clock Prescaler : set PRESCALER according to
 	 * drv_data->init.prescaler value.
 	 */
-        _ASSERT(drv_data->init.prescaler <= UART_PRESCALER_MAX);
+	_ASSERT(drv_data->init.prescaler <= UART_PRESCALER_MAX);
 	mmio_clrsetbits_32(drv_cfg->base + _USART_PRESC, USART_PRESC_PRESCALER,
 			   drv_data->init.prescaler);
 
@@ -527,7 +527,7 @@ static int stm32_uart_pm_action(const struct device *dev,
 	struct stm32_uart_data *drv_data = dev_get_data(dev);
 	int err = 0;
 
-       if (action == PM_DEVICE_ACTION_SUSPEND) {
+	if (action == PM_DEVICE_ACTION_SUSPEND) {
 		err = pinctrl_apply_state_optional(drv_cfg->pcfg, PINCTRL_STATE_SLEEP);
 		if (err)
 			goto out;
@@ -546,7 +546,7 @@ static int stm32_uart_pm_action(const struct device *dev,
 	}
 
 out:
-       return err;
+	return err;
 }
 #endif
 
