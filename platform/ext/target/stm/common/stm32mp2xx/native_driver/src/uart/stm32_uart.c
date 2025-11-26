@@ -528,6 +528,8 @@ static int stm32_uart_pm_action(const struct device *dev,
 	int err = 0;
 
 	if (action == PM_DEVICE_ACTION_SUSPEND) {
+		if (IS_ENABLED(STM32_CONSOLE_NO_SUSPEND))
+			goto out;
 		err = pinctrl_apply_state_optional(drv_cfg->pcfg, PINCTRL_STATE_SLEEP);
 		if (err)
 			goto out;
@@ -538,9 +540,15 @@ static int stm32_uart_pm_action(const struct device *dev,
 		if (err)
 			goto out;
 
-		err = clk_enable(drv_data->clk);
-		if (err)
-			goto out;
+		if (!IS_ENABLED(STM32_CONSOLE_NO_SUSPEND)) {
+			/*
+			 * Skip only for balancing usage counter in clock framework
+			 * but always reapply the pinctrl lost in Standby
+			 */
+			err = clk_enable(drv_data->clk);
+			if (err)
+				goto out;
+		}
 
 		err = stm32_uart_configure(dev, &drv_data->uart_config);
 	}

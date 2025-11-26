@@ -42,6 +42,7 @@ target_compile_definitions(tfm_config
         $<$<STREQUAL:${STM32_BOOT_DEV},ddr>:STM32_BOOT_DEV_DDR>
         $<$<BOOL:${STM32_M33TDCID}>:STM32_M33TDCID>
         $<$<BOOL:${IPCC_LEGACY}>:IPCC_LEGACY>
+        $<$<BOOL:${STM32_CONSOLE_NO_SUSPEND}>:STM32_CONSOLE_NO_SUSPEND>
         # this flag is not defined in tfm_s and needed by stm32_bsec3
         $<$<BOOL:${TFM_DUMMY_PROVISIONING}>:TFM_DUMMY_PROVISIONING>
 	$<$<BOOL:${STM32_OVERRIDE_OTP}>:STM32_OVERRIDE_OTP>
