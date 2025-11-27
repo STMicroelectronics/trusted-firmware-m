@@ -427,6 +427,9 @@ SECTIONS
         *(SORT_BY_ALIGNMENT(.data*))
 
         KEEP(*(.jcr*))
+#ifdef DEVSTATE_SECTION
+        DEVSTATE_SECTION
+#endif
         . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
 
     } > RAM AT> FLASH

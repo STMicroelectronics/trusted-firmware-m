@@ -74,3 +74,5 @@
 		_pm_device_slots_list_end = .; \
 		. = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT); \
 	} > RAM AT> RAM
+
+#define DEVSTATE_SECTION KEEP(*(.devstate));

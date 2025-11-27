@@ -140,6 +140,9 @@ SECTIONS
         *(.data*)
 
         KEEP(*(.jcr*))
+#ifdef DEVSTATE_SECTION
+        DEVSTATE_SECTION
+#endif
         . = ALIGN(4);
         /* All data end */
         __data_end__ = .;
