@@ -99,6 +99,35 @@ static bool can_suspend(uint32_t cr)
 	return !IS_CHAINING_MODE(GCM, cr);
 }
 
+static int stm32_saes_set_clock(const struct stm32_saes_config *drv_cfg, bool enable)
+{
+	const struct clock_control *clock_ctl;
+	struct clk *clk;
+	int err, i;
+
+	for (i = 0, clock_ctl = drv_cfg->clk_ctl; i < drv_cfg->n_clk; i++, clock_ctl++) {
+		clk = clk_get(clock_ctl->dev, clock_ctl->subsys);
+		if (clk) {
+			if (enable) {
+				err = clk_enable(clk);
+
+			} else {
+				clk_disable(clk);
+				err = 0;
+			}
+
+			if (err) {
+				EMSG("%s: clock[%d] enable fail\n", __func__, i);
+				return err;
+			}
+		} else {
+			WMSG("%s: get clock[%d] fail\n", __func__, i);
+		}
+	}
+
+	return 0;
+}
+
 static void write_aligned_block(uintptr_t base, uint32_t *data)
 {
 	unsigned int i = 0;
@@ -216,11 +245,17 @@ static int saes_start(const struct device *dev)
 	const struct stm32_saes_config *drv_cfg = dev_get_config(dev);
 	struct stm32_saes_data *drv_dat = dev_get_data(dev);
 	struct stm32_saes_context *ctx = &drv_dat->ctx;
+	struct clk *clk;
 	int err;
 
 	err = stm32_saes_acquire_sem(drv_cfg);
 	if (err)
 		return err;
+
+	/* Enable driver clock if needed before usage */
+	clk = clk_get(drv_cfg->clk_ctl->dev, drv_cfg->clk_ctl->subsys);
+	if (!clk_is_enabled(clk))
+		stm32_saes_set_clock(drv_cfg, true);
 
 	/* Reset SAES */
 	if (!(io_read32(ctx->base + _SAES_SR) & _SAES_SR_BUSY)) {
@@ -894,45 +929,26 @@ int stm32_saes_reset(const struct device *dev)
 	const struct stm32_saes_config *drv_cfg = dev_get_config(dev);
 	struct stm32_saes_data *drv_dat = dev_get_data(dev);
 	struct stm32_saes_context *ctx = &drv_dat->ctx;
+	struct clk *clk;
 	int err;
 
 	err = stm32_saes_acquire_sem(drv_cfg);
 	if (err)
 		return err;
 
+	clk = clk_get(drv_cfg->clk_ctl->dev, drv_cfg->clk_ctl->subsys);
+	if (!clk_is_enabled(clk))
+		goto release;
+
 	/* Reset SAES */
 	io_setbits32(ctx->base + _SAES_CR, _SAES_CR_IPRST);
 	udelay(SAES_RESET_DELAY_US);
 	io_clrbits32(ctx->base + _SAES_CR, _SAES_CR_IPRST);
 
+	(void)stm32_saes_set_clock(drv_cfg, false);
+
+release:
 	stm32_saes_release_sem(drv_cfg);
-}
-
-static int stm32_saes_set_clock(const struct stm32_saes_config *drv_cfg, bool enable)
-{
-	const struct clock_control *clock_ctl;
-	struct clk *clk;
-	int err, i;
-
-	for (i = 0, clock_ctl = drv_cfg->clk_ctl; i < drv_cfg->n_clk; i++, clock_ctl++) {
-		clk = clk_get(clock_ctl->dev, clock_ctl->subsys);
-		if (clk) {
-			if (enable) {
-				err = clk_enable(clk);
-
-			} else {
-				clk_disable(clk);
-				err = 0;
-			}
-
-			if (err) {
-				EMSG("%s: clock[%d] enable fail\n", __func__, i);
-				return err;
-			}
-		} else {
-			WMSG("%s: get clock[%d] fail\n", __func__, i);
-		}
-	}
 
 	return 0;
 }
@@ -952,6 +968,7 @@ static int __maybe_unused stm32_saes_probe(const struct device *dev)
 
 	err = reset_control_reset(&drv_cfg->rst_ctl);
 
+	(void)stm32_saes_set_clock(drv_cfg, false);
 end:
 	stm32_saes_release_sem(drv_cfg);
 
@@ -971,13 +988,13 @@ static int stm32_saes_pm_action(const struct device *dev,
 
 	switch (action) {
 	case PM_DEVICE_ACTION_SUSPEND:
-		err = stm32_saes_set_clock(drv_cfg, false);
 		break;
 
 	case PM_DEVICE_ACTION_RESUME:
 		err = stm32_saes_set_clock(drv_cfg, true);
 		if (!err && PM_HINT_IS_STATE(pm_hint, CONTEXT))
 			err = reset_control_reset(&drv_cfg->rst_ctl);
+		(void)stm32_saes_set_clock(drv_cfg, false);
 		break;
 
 	default:

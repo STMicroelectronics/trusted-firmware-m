@@ -73,11 +73,11 @@ static int crypto_keys_cmac_prf_128(const struct device *dev,
 	/* Get K1 and K2 */
 	res = sk_cipher_ctx_init(dev, &config);
 	if (res)
-		return res;
+		goto end;
 
 	res = sk_cipher_update(dev, true, l, l, sizeof(l));
 	if (res)
-		return res;
+		goto end;
 
 	/* MSB(L) == 0 => K1 = L << 1 */
 	bit = 0;
@@ -116,7 +116,7 @@ static int crypto_keys_cmac_prf_128(const struct device *dev,
 		/* All block but last in CBC mode */
 		res = sk_cipher_ctx_init(dev, &config);
 		if (res)
-			return res;
+			goto end;
 
 		processed = round_down(data_size - 1, AES_BLOCK_SIZE);
 
@@ -128,7 +128,7 @@ static int crypto_keys_cmac_prf_128(const struct device *dev,
 		}
 
 		if (res)
-			return res;
+			goto end;
 	}
 
 	/* Manage last block */
@@ -160,9 +160,14 @@ static int crypto_keys_cmac_prf_128(const struct device *dev,
 
 	res = sk_cipher_ctx_init(dev, &config);
 	if (res)
-		return res;
+		goto end;
 
-	return sk_cipher_update(dev, true, block, out, AES_BLOCK_SIZE);
+	res = sk_cipher_update(dev, true, block, out, AES_BLOCK_SIZE);
+
+end:
+	(void)sk_cipher_reset(dev);
+
+	return res;
 }
 
 static int crypto_keys_kdf(const struct device *dev,

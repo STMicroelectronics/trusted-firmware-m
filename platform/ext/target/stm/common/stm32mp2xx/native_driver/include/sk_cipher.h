@@ -112,8 +112,9 @@ static const struct device *const skcipher_dev = DEVICE_DT_GET_OR_NULL(DT_CHOSEN
  * @param dev: SAES device
  * @param config: SAES configuration, see sk_cipher_config_t
  * @note this function doesn't access to hardware registers but stores in driver
- * 	 data the ctx values. Nonetheless it reset the peripheral and acquire
- *	 firewall rights.
+ *	 data the ctx values. Nonetheless it resets the peripheral, acquires
+ *	 firewall rights and enable clocks. sk_cipher_reset must be called in
+ *	 order to stop clocks.
  *
  * @retval 0 if OK a standard errno in case of error.
  */
@@ -208,6 +209,7 @@ static inline int sk_cipher_wrap(const struct device *dev, bool wrap, int share_
  * @brief reset the hardware peripheral.
  *
  * @param dev: Pointer to the sk cipher device instance.
+ *	       It also disable clocks.
  *
  */
 static inline int sk_cipher_reset(const struct device *dev)
