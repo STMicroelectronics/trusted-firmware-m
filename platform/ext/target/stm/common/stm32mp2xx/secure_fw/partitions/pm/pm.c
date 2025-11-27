@@ -31,7 +31,7 @@ typedef struct context {
 
 cm33_context_t tfm_context;
 
-void save_it_status(void)
+static void save_it_status(void)
 {
 	tfm_context.BASEPRI = __get_BASEPRI();
 	tfm_context.VTOR = SCB->VTOR;
@@ -39,7 +39,7 @@ void save_it_status(void)
 	__set_BASEPRI(0);
 }
 
-void restore_it_status(void)
+static void restore_it_status(void)
 {
 	SCB->VTOR = tfm_context.VTOR;
 	__DSB();
@@ -48,7 +48,7 @@ void restore_it_status(void)
 	__set_BASEPRI(tfm_context.BASEPRI);
 }
 
-void jump_low_power_fw(enum pm_suspend_mode_t lpmode)
+static void jump_low_power_fw(enum pm_suspend_mode_t lpmode)
 {
 	stm32mp2_lp_fw_suspend_mode_t lpfwmode;
 	const struct device *ramcfg_retram = DT_RAMCFG_DEVICE(retram);
