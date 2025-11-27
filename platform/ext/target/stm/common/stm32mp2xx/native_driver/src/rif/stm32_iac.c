@@ -17,6 +17,7 @@
 #include <lib/mmio.h>
 #include <inttypes.h>
 #include <debug.h>
+#include <tfm_hal_platform.h>
 #include <tfm_platform_system.h>
 #include <uart_stdout.h>
 #include <pm/device.h>
