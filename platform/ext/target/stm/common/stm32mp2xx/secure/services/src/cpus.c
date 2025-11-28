@@ -226,13 +226,19 @@ enum tfm_platform_err_t cpus_service(const psa_invec *in_vec, const psa_outvec *
 	struct tfm_cpu_service_args_t *args;
 	struct tfm_cpu_service_out_t *out = NULL;
 
-	if (in_vec->len != sizeof(struct tfm_cpu_service_args_t) ||
+	if (!in_vec || in_vec->len != sizeof(struct tfm_cpu_service_args_t) ||
 	    (out_vec != NULL && out_vec->len != sizeof(struct tfm_cpu_service_out_t)))
 		return TFM_PLATFORM_ERR_INVALID_PARAM;
 
 	args = (struct tfm_cpu_service_args_t *)in_vec->base;
-	if (out_vec != NULL)
+	if (!args)
+		return TFM_PLATFORM_ERR_INVALID_PARAM;
+
+	if (out_vec != NULL) {
 		out = (struct tfm_cpu_service_out_t *)out_vec->base;
+		if (!out)
+			return TFM_PLATFORM_ERR_INVALID_PARAM;
+	}
 
 	switch (args->type) {
 	case TFM_CPU_SERVICE_TYPE_SERV_INFO:
