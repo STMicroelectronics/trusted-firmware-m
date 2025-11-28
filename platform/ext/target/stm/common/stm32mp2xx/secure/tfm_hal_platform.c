@@ -5,12 +5,14 @@
  *
  */
 #include <cmsis.h>
+#include <device.h>
 #include <psa_manifest/pid.h>
 #include <tfm_hal_platform.h>
 #include <tfm_plat_defs.h>
 #include <target_cfg.h>
 #include <region.h>
 #include <init.h>
+#include <lib/mmio.h>
 
 #include <uart_stdout.h>
 #include <stm32_dcache.h>
@@ -97,4 +99,39 @@ uint32_t tfm_hal_check_boot_data_access_policy(int32_t partition_id)
 #endif
 
 	return TFM_HAL_ERROR_GENERIC;
+}
+
+/* Resets the system with RCC when TDCID or reset only cortex M33. */
+#define RCC_GRSTCSETR		0x400
+#define _RCC_GRSTCSETR_SYSRST	BIT(0)
+void tfm_hal_system_reset(void)
+{
+	__disable_irq();
+
+	if (IS_ENABLED(STM32_M33TDCID)) {
+		uintptr_t base = DT_REG_ADDR(DT_NODELABEL(rcc));
+
+		IMSG("System reset\n");
+		io_write32(base + RCC_GRSTCSETR, _RCC_GRSTCSETR_SYSRST);
+	} else {
+		IMSG("Cortex-M33 reset\n");
+		NVIC_SystemReset();
+	}
+}
+
+void tfm_hal_system_halt(void)
+{
+	/*
+	 * Disable IRQs to stop all threads, not just the thread that
+	 * halted the system.
+	 */
+	__disable_irq();
+
+	/*
+	 * Enter sleep to reduce power consumption and do it in a loop in
+	 * case a signal wakes up the CPU.
+	 */
+	while (1) {
+		__WFE();
+	}
 }

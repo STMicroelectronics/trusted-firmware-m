@@ -5,8 +5,7 @@
  *
  */
 #include <cmsis.h>
-#include <debug.h>
-#include <reset.h>
+#include <tfm_hal_platform.h>
 #include <tfm_platform_system.h>
 #include <uapi/tfm_ioctl_api.h>
 #include <tfm_sp_log.h>
@@ -15,28 +14,11 @@
 #include <wdt.h>
 #include <stm32_keyshare.h>
 
-#if defined(STM32MP21xxxx)
-#include <dt-bindings/reset/st,stm32mp21-rcc.h>
-#else
-#include <dt-bindings/reset/st,stm32mp25-rcc.h>
-#endif
-
-/* Resets the system with RCC when TDCID or locally. */
 void tfm_platform_hal_system_reset(void)
 {
-	struct reset_control rstc;
-
-	if (IS_ENABLED(STM32_M33TDCID)) {
-		rstc.dev = DEVICE_DT_GET(DT_NODELABEL(rcc_reset));
-		rstc.id = SYS_R;
-
-		IMSG("System reset");
-		reset_control_assert(&rstc);
-	} else {
-		IMSG("Cortex-M33 reset");
-		NVIC_SystemReset();
-	}
+	tfm_hal_system_reset();
 }
+
 enum tfm_platform_err_t tfm_platform_hal_ioctl(tfm_platform_ioctl_req_t request,
 					       psa_invec  *in_vec,
 					       psa_outvec *out_vec)

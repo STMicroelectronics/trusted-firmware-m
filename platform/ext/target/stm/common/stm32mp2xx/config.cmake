@@ -42,6 +42,7 @@ set(TFM_PARTITION_PLATFORM              ON          CACHE BOOL  "Enable the TF-M
 set(PLATFORM_DEFAULT_CRYPTO_KEYS        OFF         CACHE BOOL  "Use default crypto keys implementation.")
 set(CRYPTO_HW_ACCELERATOR               ON          CACHE BOOL  "Whether to enable the crypto hardware accelerator on supported platforms")
 set(STM32_PROFILE_DEFINITION		"STM32_PROFILE_MEDIUM"	CACHE STRING	"The default profile definition of platform")
+set(PLATFORM_DEFAULT_SYSTEM_RESET_HALT  OFF         CACHE BOOL  "Use default system reset/halt implementation")
 
 if (STM32_M33TDCID)
 	set(BL2                               ON                   CACHE BOOL   "Whether to build BL2" FORCE)
