@@ -26,7 +26,6 @@ typedef struct context {
 	uint32_t FPSCR;
 	uint32_t MSP;
 	uint32_t PSP;
-	uint32_t PRIMASK;
 	uint32_t BASEPRI;
 } cm33_context_t;
 
@@ -35,9 +34,8 @@ cm33_context_t tfm_context;
 void save_it_status(void)
 {
 	tfm_context.BASEPRI = __get_BASEPRI();
-	tfm_context.PRIMASK = __get_PRIMASK();
 	tfm_context.VTOR = SCB->VTOR;
-	__set_PRIMASK(1);
+
 	__set_BASEPRI(0);
 }
 
@@ -47,7 +45,6 @@ void restore_it_status(void)
 	__DSB();
 	__ISB();
 
-	__set_PRIMASK(tfm_context.PRIMASK);
 	__set_BASEPRI(tfm_context.BASEPRI);
 }
 
@@ -148,6 +145,12 @@ static int _pm_suspend(enum pm_suspend_mode_t mode)
 	/* mpu ? */
 
 	CRITICAL_SECTION_ENTER(cs_assert);
+	/*
+	 * printf are forbidden in the partition in this critical section.
+	 * calling printf will create an hardfault due to the masking of SVC
+	 * instruction.
+	 * note : printf still works in pm_ops for the drivers.
+	 */
 
 	/* call suspend of each device */
 	if (!pm_suspend_devices(pm_hint)) {
