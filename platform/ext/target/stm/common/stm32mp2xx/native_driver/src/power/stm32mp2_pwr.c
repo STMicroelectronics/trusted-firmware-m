@@ -35,6 +35,7 @@
 /* PWR offset register */
 #define _PWR_CR11			U(0x028)
 #define _PWR_BDCR1			U(0x038)
+#define _PWR_CPU2CR			U(0x044)
 #define _PWR_D1CR			U(0x04C)
 #define _PWR_D2CR			U(0x050)
 #define _PWR_RSECCFGR			U(0x100)
@@ -50,6 +51,9 @@
 
 /* PWR_BDCR1 register fields */
 #define _PWR_BDCR1_DBD3P		BIT(0)
+
+/* PWR_CPU2CR register bitfields */
+#define _PWR_CPU2CR_CSSF		BIT(9)
 
 /* PWR_D1CR register fields */
 #define _PWR_D1CR_POPL_D1_MASK		GENMASK(12, 8)
@@ -287,6 +291,9 @@ int stm32mp2_pwr_init(const struct device *dev)
 		      _FLD_PREP(_PWR_D2CR_POPL_D2, dev_cfg->popl_d2_ms) |
 		      _FLD_PREP(_PWR_D2CR_LPLVDLY_D2, dev_cfg->lplvdly_d2) |
 		      _FLD_PREP(_PWR_D2CR_PODH_D2, dev_cfg->podh_d2_ms));
+
+	/* Clear the CPU2 status flags on boot */
+	io_setbits32(dev_cfg->base + _PWR_CPU2CR, _PWR_CPU2CR_CSSF);
 #endif
 
 	if (dev_cfg->rif_ctl)
