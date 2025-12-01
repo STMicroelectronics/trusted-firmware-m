@@ -360,7 +360,7 @@ void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv,
 		       struct stm32mp_ddr_config *config)
 {
 	int ret = -EINVAL;
-	uint32_t ddr_retdis;
+	bool ddr_ret;
 	enum ddr_type ddr_type;
 	bool cid_filtering = is_ddr_cid_filtering_enabled();
 
@@ -386,13 +386,13 @@ void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv,
 	if (cid_filtering) {
 		ddr_disable_cid_filtering();
 	}
-	ddr_retdis = mmio_read_32(priv->pwr + _PWR_CR11) & _PWR_CR11_DDRRETDIS;
+	ddr_ret = stm32_pwr_ddr_retention_get(priv->pwr);
 	if (cid_filtering) {
 		ddr_enable_cid_filtering();
 	}
 
 	if (config->self_refresh) {
-		if (ddr_retdis == _PWR_CR11_DDRRETDIS) {
+		if (!ddr_ret) {
 			DDR_VERBOSE("self-refresh aborted: no retention\n");
 			config->self_refresh = false;
 		}
@@ -405,7 +405,7 @@ void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv,
 		if (cid_filtering) {
 			ddr_disable_cid_filtering();
 		}
-		mmio_setbits_32(priv->pwr + _PWR_CR11, _PWR_CR11_DDRRETDIS);
+		stm32_pwr_ddr_retention_set(priv->pwr, false);
 		if (cid_filtering) {
 			ddr_enable_cid_filtering();
 		}
@@ -445,7 +445,7 @@ void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv,
 		if (cid_filtering) {
 			ddr_disable_cid_filtering();
 		}
-		mmio_setbits_32(priv->pwr + _PWR_CR11, _PWR_CR11_DDRRETDIS);
+		stm32_pwr_ddr_retention_set(priv->pwr, false);
 		if (cid_filtering) {
 			ddr_enable_cid_filtering();
 		}

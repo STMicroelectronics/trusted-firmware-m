@@ -56,7 +56,7 @@ struct stm32mp_ddr_priv {
 	struct stm32mp_ddr_size info;
 	struct stm32mp_ddrctl *ctl;
 	struct stm32mp_ddrphy *phy;
-	uintptr_t pwr;
+	const struct device *pwr;
 	uintptr_t rcc;
 };
 

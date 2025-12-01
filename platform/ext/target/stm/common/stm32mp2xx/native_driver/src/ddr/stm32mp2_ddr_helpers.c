@@ -304,7 +304,7 @@ static int sr_ssr_entry(bool standby)
 		if (cid_filtering) {
 			ddr_disable_cid_filtering();
 		}
-		mmio_clrbits_32(stm32mp_pwr_base() + _PWR_CR11, _PWR_CR11_DDRRETDIS);
+		stm32_pwr_ddr_retention_set(stm32_pwr_dev(), true);
 		if (cid_filtering) {
 			ddr_enable_cid_filtering();
 		}
@@ -535,7 +535,7 @@ void ddr_sub_system_clk_off(void)
 	if (cid_filtering) {
 		ddr_disable_cid_filtering();
 	}
-	mmio_clrbits_32(stm32mp_pwr_base() + _PWR_CR11, _PWR_CR11_DDRRETDIS);
+	stm32_pwr_ddr_retention_set(stm32_pwr_dev(), true);
 	if (cid_filtering) {
 		ddr_enable_cid_filtering();
 	}

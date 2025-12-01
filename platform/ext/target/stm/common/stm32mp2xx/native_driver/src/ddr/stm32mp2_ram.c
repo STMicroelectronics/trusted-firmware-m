@@ -13,6 +13,7 @@
 #include <stm32mp_ddr_test.h>
 #include <stm32mp2_ddr.h>
 #include <stm32mp2_ddr_helpers.h>
+#include <stm32mp2_pwr.h>
 #include <lib/mmio.h>
 #include <lib/delay.h>
 
@@ -40,11 +41,6 @@ uintptr_t stm32mp_ddrctrl_base(void)
 uintptr_t stm32_ddrdbg_get_base(void)
 {
 	return DT_INST_REG_ADDR_BY_NAME(0, dbg);
-}
-
-uintptr_t stm32mp_pwr_base(void)
-{
-	return DT_REG_ADDR(DT_NODELABEL(pwr));
 }
 
 uintptr_t stm32mp_rcc_base(void)
@@ -192,7 +188,7 @@ int stm32mp2_ddr_dt_init(void)
 		},
 		.ctl = (struct stm32mp_ddrctl *)DT_INST_REG_ADDR_BY_NAME(0, ctrl),
 		.phy = (struct stm32mp_ddrphy *)DT_INST_REG_ADDR_BY_NAME(0, phy),
-		.pwr = DT_REG_ADDR(DT_NODELABEL(pwr)),
+		.pwr = stm32_pwr_dev(),
 		.rcc = DT_REG_ADDR(DT_NODELABEL(rcc)),
 	};
 

@@ -79,6 +79,23 @@ struct stm32mp2_pwr_config {
 	const struct rifprot_controller *rif_ctl;
 };
 
+bool stm32_pwr_ddr_retention_get(const struct device *dev)
+{
+	const struct stm32mp2_pwr_config *dev_cfg = dev_get_config(dev);
+	uintptr_t base = dev_cfg->base;
+
+	return !(mmio_read_32(base + _PWR_CR11) & _PWR_CR11_DDRRETDIS);
+}
+
+void stm32_pwr_ddr_retention_set(const struct device *dev, bool enable)
+{
+	const struct stm32mp2_pwr_config *dev_cfg = dev_get_config(dev);
+	uintptr_t base = dev_cfg->base;
+
+	mmio_clrsetbits_32(base + _PWR_CR11, _PWR_CR11_DDRRETDIS,
+			   enable ? 0 : _PWR_CR11_DDRRETDIS);
+}
+
 /*
  * There are two kinds of local resources in the PWR:
  *  - non-shareable resources (R0 to R6), that can be statically assigned

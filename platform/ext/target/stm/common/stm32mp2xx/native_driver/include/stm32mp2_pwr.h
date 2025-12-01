@@ -9,7 +9,8 @@
 
 #include <stddef.h>
 #include <stdbool.h>
-#include <limits.h>
+#include <device.h>
+#include <devicetree.h>
 
 #define _PWR_CR1					U(0x00)
 #define _PWR_CR2					U(0x04)
@@ -438,5 +439,14 @@
 #define _PWR_VERR_MAJREV_MASK		GENMASK(7, 4)
 #define _PWR_VERR_MAJREV_SHIFT		4
 
+inline const struct device *stm32_pwr_dev(void)
+{
+	return DEVICE_GET(DEVICE_DT_DEV_ID(DT_NODELABEL(pwr)));
+}
+
+bool stm32_pwr_ddr_retention_get(const struct device *dev);
+void stm32_pwr_ddr_retention_set(const struct device *dev, bool enable);
+
 void stm32_pwr_regulator_restore(void);
+
 #endif /* STM32MP2_PWR_H */
