@@ -12,6 +12,7 @@
 #include <psa/service.h>
 #include <stm32_dcache.h>
 #include <stm32mp2_lp_fw_api.h>
+#include <stm32mp2_ramcfg.h>
 #include <tfm_sp_log.h>
 #include <uapi/tfm_pm_api.h>
 
@@ -53,6 +54,7 @@ void restore_it_status(void)
 void jump_low_power_fw(enum pm_suspend_mode_t lpmode)
 {
 	stm32mp2_lp_fw_suspend_mode_t lpfwmode;
+	const struct device *ramcfg_retram = DT_RAMCFG_DEVICE(retram);
 
 	switch(lpmode)
 	{
@@ -95,7 +97,16 @@ void jump_low_power_fw(enum pm_suspend_mode_t lpmode)
 			return;
 	}
 
+	/*
+	 * CRC and signature check is enabled only during Standby
+	 * to avoid LP FW execution on cortex-M33 reset
+	 */
+	if (lpfwmode == STM32MP2_LP_FW_LPMODE_STANDBY1)
+		stm32_ramcfg_crc_enable(ramcfg_retram);
+
 	stm32mp2_lp_fw_exec();
+
+	stm32_ramcfg_crc_disable(ramcfg_retram);
 
 	/* restore tfm execution context */
 	__set_MSPLIM(tfm_context.MSPLIM);
