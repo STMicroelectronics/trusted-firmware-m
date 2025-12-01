@@ -26,6 +26,8 @@
 #include <cmsis.h>
 
 /* PWR offset register */
+#define _PWR_CR11			U(0x028)
+#define _PWR_BDCR1			U(0x038)
 #define _PWR_RSECCFGR			U(0x100)
 #define _PWR_RPRIVCFGR			U(0x104)
 #define _PWR_RCIDCFGR			U(0x108)
@@ -33,6 +35,12 @@
 #define _PWR_WIOPRIVCFGR		U(0x184)
 #define _PWR_WIOCIDCFGR			U(0x188)
 #define _PWR_WIOSEMCR			U(0x18C)
+
+/* PWR_CR11 register fields */
+#define _PWR_CR11_DDRRETDIS		BIT(0)
+
+/* PWR_BDCR1 register fields */
+#define _PWR_BDCR1_DBD3P		BIT(0)
 
 // RCIDCFGR register bitfields
 #define _RCIDCFGR_CFEN_MASK		BIT(0)
