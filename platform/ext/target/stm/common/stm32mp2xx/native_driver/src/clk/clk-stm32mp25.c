@@ -2629,6 +2629,25 @@ const struct clk_ops ck_timer_ops = {
 	.get_rate	= ck_timer_get_rate_ops,
 };
 
+static int clk_stm32_gate_check_before_write_enable(struct clk *clk)
+{
+	if (!clk_stm32_gate_ops.is_enabled(clk))
+		return clk_stm32_gate_ops.enable(clk);
+	return 0;
+}
+
+static void clk_stm32_gate_check_before_write_disable(struct clk *clk)
+{
+	if (clk_stm32_gate_ops.is_enabled(clk))
+		clk_stm32_gate_ops.disable(clk);
+}
+
+static const struct clk_ops clk_stm32_gate_check_before_write_ops = {
+	.enable		= clk_stm32_gate_check_before_write_enable,
+	.disable	= clk_stm32_gate_check_before_write_disable,
+	.is_enabled	= clk_stm32_gate_is_enabled,
+};
+
 #define STM32_OSC(_name, _parent, _flags, _gate_id)\
 	struct clk _name = {\
 		.ops = &clk_stm32_osc_ops,\
@@ -2819,6 +2838,19 @@ struct clk _name = {\
 		CLOCK_NAME(#_name)\
 		.flags = 0,\
 		.num_parents = 0,\
+		.dev = DT_RCC_DEVICE,\
+	}
+
+#define STM32_GATE_WITH_CHECK(_name, _parent, _flags, _gate_id)\
+	struct clk _name = {\
+		.ops = &clk_stm32_gate_check_before_write_ops,\
+		.priv = &(struct clk_stm32_gate_cfg) {\
+			.gate_id = _gate_id,\
+		},\
+		CLOCK_NAME(#_name)\
+		.flags = (_flags),\
+		.num_parents = 1,\
+		.parents = PARENT(_parent),\
 		.dev = DT_RCC_DEVICE,\
 	}
 
@@ -3065,7 +3097,7 @@ static STM32_GATE(ck_icn_p_wwdg2, &ck_icn_ls_mcu, 0, GATE_WWDG2);
 static STM32_GATE(ck_icn_p_eth1, &ck_icn_ls_mcu, 0, GATE_ETH1);
 static STM32_GATE(ck_icn_p_ethsw, &ck_icn_ls_mcu, 0, GATE_ETHSWMAC);
 static STM32_GATE(ck_icn_p_eth2, &ck_icn_ls_mcu, 0, GATE_ETH2);
-static STM32_GATE(ck_icn_p_pcie, &ck_icn_ls_mcu, 0, GATE_PCIE);
+static STM32_GATE_WITH_CHECK(ck_icn_p_pcie, &ck_icn_ls_mcu, 0, GATE_PCIE);
 static STM32_GATE(ck_icn_p_adc12, &ck_icn_ls_mcu, 0, GATE_ADC12);
 static STM32_GATE(ck_icn_p_adc3, &ck_icn_ls_mcu, 0, GATE_ADC3);
 static STM32_GATE(ck_icn_p_mdf1, &ck_icn_ls_mcu, 0, GATE_MDF1);
