@@ -83,10 +83,13 @@ int stm32_ramcfg_crc_compute(const struct device *dev, size_t buf_size)
 	/* Deactivate the CRC */
 	mmio_write_32(base + _RAMCFG_CCR1, 0);
 
-	/* Select the buffer size for the CRC computation & enable CRC */
+	/* Select the buffer size for the CRC computation */
 	mmio_write_32(base + _RAMCFG_CCR1,
-		      (crcbs << _RAMCFG_CCR1_CRCBS_SHIFT) |
-		      _RAMCFG_CCR1_CRCC_ENA);
+		      _FLD_PREP(_RAMCFG_CCR1_CRCBS, crcbs));
+
+	/* Enable the CRC */
+	mmio_clrsetbits_32(base + _RAMCFG_CCR1, _RAMCFG_CCR1_CRCC_MASK,
+			   _RAMCFG_CCR1_CRCC_ENA);
 
 	/* Start the CRC computation */
 	mmio_setbits_32(base + _RAMCFG_CCR2, _RAMCFG_CCR2_CRCCS);
