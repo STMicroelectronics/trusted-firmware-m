@@ -72,7 +72,7 @@ int stm32_ramcfg_crc_compute(const struct device *dev, size_t buf_size)
 	const struct stm32_ramcfg_config *drv_cfg = dev_get_config(dev);
 	const uint32_t base = drv_cfg->base;
 	uint32_t crcbs;
-	uint32_t ccsr;
+	uint32_t csr;
 	int ret;
 
 	if (!drv_cfg->has_crc || !drv_cfg->crc_blk_sz)
@@ -93,7 +93,7 @@ int stm32_ramcfg_crc_compute(const struct device *dev, size_t buf_size)
 
 	/* Wait CRC computation is OK */
 	ret = mmio_read32_poll_timeout(base + _RAMCFG_CSR,
-				       ccsr, !(ccsr & RAMCFG_CSR_CRCEOC),
+				       csr, csr & RAMCFG_CSR_CRCEOC,
 				       _RAMCFG_CRC_TIMEOUT_US);
 
 	if (ret) {
