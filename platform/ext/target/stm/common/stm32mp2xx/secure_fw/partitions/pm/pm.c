@@ -5,6 +5,7 @@
  *
  */
 #include <cmsis.h>
+#include <critical_section.h>
 #include <errno.h>
 #include <pm/device.h>
 #include <pm/pm.h>
@@ -15,8 +16,6 @@
 #include <stm32mp2_ramcfg.h>
 #include <tfm_sp_log.h>
 #include <uapi/tfm_pm_api.h>
-
-#include "critical_section.h"
 
 typedef struct context {
 	uint32_t VTOR;
@@ -48,30 +47,11 @@ static void restore_it_status(void)
 	__set_BASEPRI(tfm_context.BASEPRI);
 }
 
-static int jump_low_power_fw(enum pm_suspend_mode_t lpmode)
+static int jump_low_power_fw(stm32mp2_lp_fw_suspend_mode_t lpfwmode)
 {
-	stm32mp2_lp_fw_suspend_mode_t lpfwmode;
 	const struct device *ramcfg_retram = DT_RAMCFG_DEVICE(retram);
 	int res;
-
-	switch(lpmode)
-	{
-	case PM_STOP2:
-		lpfwmode = STM32MP2_LP_FW_LPMODE_STOP2;
-		break;
-	case PM_LP_STOP2:
-		lpfwmode = STM32MP2_LP_FW_LPMODE_LP_STOP2;
-		break;
-	case PM_LPLV_STOP2:
-		lpfwmode = STM32MP2_LP_FW_LPMODE_LPLV_STOP2;
-		break;
-	case PM_STANDBY1:
-		lpfwmode = STM32MP2_LP_FW_LPMODE_STANDBY1;
-		break;
-	default:
-		/* Unexpected value */
-		return -EINVAL;
-	}
+	int err;
 
 	save_it_status();
 
@@ -90,7 +70,7 @@ static int jump_low_power_fw(enum pm_suspend_mode_t lpmode)
 	if (IS_ENABLED(STM32_CACHE_ENABLED)) {
 		res = stm32_dcache_clean(0x0, 0xFFFFFFFF);
 		if (res)
-			goto cache_error;
+			goto cache_clean_error;
 
 		res = stm32_dcache_disable();
 		if (res)
@@ -117,7 +97,13 @@ static int jump_low_power_fw(enum pm_suspend_mode_t lpmode)
 	__set_FPSCR(tfm_context.FPSCR);
 
 cache_error:
+	if (IS_ENABLED(STM32_CACHE_ENABLED)) {
+		err = stm32_dcache_enable(true, true);
+		if (err && !res)
+			res = err;
+	}
 
+cache_clean_error:
 	restore_it_status();
 
 	return res;
@@ -126,17 +112,22 @@ cache_error:
 static int _pm_suspend(enum pm_suspend_mode_t mode)
 {
 	struct critical_section_t cs_assert = CRITICAL_SECTION_STATIC_INIT;
-	uint32_t pm_hint;
+	stm32mp2_lp_fw_suspend_mode_t lpfwmode;
+	uint32_t pm_hint = PM_HINT_CLOCK_STATE; /* default for Stop2 modes */
 	int err = 0;
-	int res;
 
 	switch(mode) {
 	case PM_STOP2:
+		lpfwmode = STM32MP2_LP_FW_LPMODE_STOP2;
+		break;
 	case PM_LP_STOP2:
+		lpfwmode = STM32MP2_LP_FW_LPMODE_LP_STOP2;
+		break;
 	case PM_LPLV_STOP2:
-		pm_hint = PM_HINT_CLOCK_STATE;
+		lpfwmode = STM32MP2_LP_FW_LPMODE_LPLV_STOP2;
 		break;
 	case PM_STANDBY1:
+		lpfwmode = STM32MP2_LP_FW_LPMODE_STANDBY1;
 		pm_hint = PM_HINT_CLOCK_STATE | PM_HINT_CONTEXT_STATE;
 		break;
 	default:
@@ -156,18 +147,12 @@ static int _pm_suspend(enum pm_suspend_mode_t mode)
 
 	/* call suspend of each device */
 	if (pm_suspend_devices(pm_hint)) {
-		err = jump_low_power_fw(mode);
+		err = jump_low_power_fw(lpfwmode);
 	} else {
 		err = -EINVAL;
 	}
 
 	pm_resume_devices(pm_hint);
-
-	if (IS_ENABLED(STM32_CACHE_ENABLED)) {
-		res = stm32_dcache_enable(true, true);
-		if (res && !err)
-			err = res;
-	}
 
 	CRITICAL_SECTION_LEAVE(cs_assert);
 
