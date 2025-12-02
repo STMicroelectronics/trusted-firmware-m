@@ -157,7 +157,7 @@ static void stm32_ramcfg_ecc_enable(const struct device *dev)
 
 	/* Clear pending ECC error in ISR register */
 	if (mmio_read_32(isr) & (_RAMCFG_ISR_DED | _RAMCFG_ISR_SEC)) {
-		IMSG("[%s] Clear ECC error in ISR=%x [0x%x]\n",
+		IMSG("[%s] Clear ECC flag in ISR=%x [0x%x]\n",
 		     dev->name, mmio_read_32(isr), isr);
 		mmio_write_32(icr, _RAMCFG_ICR_DED | _RAMCFG_ICR_SEC);
 	}
