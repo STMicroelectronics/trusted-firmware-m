@@ -53,7 +53,6 @@ __aligned(4)
 static struct platform_boot_data boot_data;
 
 /*
-/*
  * Iterates over the TLV section in boot data and returns the address and
  * size of TLV with requested tlv_type
  */
