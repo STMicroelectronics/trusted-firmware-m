@@ -60,12 +60,12 @@ struct stm32_ramcfg_config {
 	uint32_t base;
 	bool has_ecc;
 	bool has_crc;
-	bool crc_crc_blk_sz;
+	size_t crc_blk_sz;
 };
 
 /*
  * The CRC computation is calculation follow:
- * nb <crc_crc_blk_sz> starting from internal SRAM start address
+ * nb <crc_blk_sz> starting from internal SRAM start address
  */
 int stm32_ramcfg_crc_compute(const struct device *dev, size_t buf_size)
 {
@@ -75,10 +75,10 @@ int stm32_ramcfg_crc_compute(const struct device *dev, size_t buf_size)
 	uint32_t ccsr;
 	int ret;
 
-	if (!drv_cfg->has_crc || !drv_cfg->crc_crc_blk_sz)
+	if (!drv_cfg->has_crc || !drv_cfg->crc_blk_sz)
 		return -ENOTSUP;
 
-	crcbs = div_round_up(buf_size, drv_cfg->crc_crc_blk_sz) - 1;
+	crcbs = div_round_up(buf_size, drv_cfg->crc_blk_sz) - 1;
 
 	/* Deactivate the CRC */
 	mmio_write_32(base + _RAMCFG_CCR1, 0);
@@ -186,7 +186,7 @@ static const struct stm32_ramcfg_config stm32_cfg_ ## _id = {			\
 	.base = DT_REG_ADDR(_node_id),						\
 	.has_ecc = _ecc,							\
 	.has_crc = _crc,							\
-	.crc_crc_blk_sz = _crc_blk_sz,						\
+	.crc_blk_sz = _crc_blk_sz,						\
 };										\
 										\
 DEVICE_DT_DEFINE(_node_id, &stm32_ramcfg_init, NULL,				\
