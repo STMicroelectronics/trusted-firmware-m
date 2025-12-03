@@ -14,6 +14,7 @@
 #include <stm32_dcache.h>
 #include <stm32mp2_lp_fw_api.h>
 #include <stm32mp2_ramcfg.h>
+#include <tfm_arch.h>
 #include <tfm_sp_log.h>
 #include <uapi/tfm_pm_api.h>
 
@@ -137,24 +138,21 @@ static int _pm_suspend(enum pm_suspend_mode_t mode)
 	/* platform state = mode, used by some driver as STPMIC2 */
 	pm_hint |= mode << PM_HINT_PLATFORM_STATE_SHIFT;
 
-	CRITICAL_SECTION_ENTER(cs_assert);
-	/*
-	 * printf are forbidden in the partition in this critical section.
-	 * calling printf will create an hardfault due to the masking of SVC
-	 * instruction.
-	 * note : printf still works in pm_ops for the drivers.
-	 */
+	/* Mask interruptions but allow TF-M scheduling during driver suspend */
+	__set_BASEPRI(PENDSV_PRIO_FOR_SCHED);
 
 	/* call suspend of each device */
 	if (pm_suspend_devices(pm_hint)) {
+		CRITICAL_SECTION_ENTER(cs_assert);
 		err = jump_low_power_fw(lpfwmode);
+		CRITICAL_SECTION_LEAVE(cs_assert);
 	} else {
 		err = -EINVAL;
 	}
 
 	pm_resume_devices(pm_hint);
 
-	CRITICAL_SECTION_LEAVE(cs_assert);
+	__set_BASEPRI(0);
 
 	return err;
 }
