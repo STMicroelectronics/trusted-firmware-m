@@ -320,7 +320,7 @@ int stm32_rng_pm_suspend(const struct device *dev)
 	mmio_clrbits_32(rng_base + _RNG_CR, _CR_CONDRST);
 
 	err = mmio_read32_poll_timeout(drv_cfg->base + _RNG_CR, cr,
-				       (cr & _CR_CONDRST), RNG_TIMEOUT_US);
+				       !(cr & _CR_CONDRST), RNG_TIMEOUT_US);
 
 	return err;
 }
@@ -345,7 +345,7 @@ int stm32_rng_pm_resume(const struct device *dev)
 	stm32_rng_set_enable(rng_base, drv_data->pm_health, drv_data->pm_noise_ctrl);
 
 	return mmio_read32_poll_timeout(rng_base + _RNG_CR, cr,
-					(cr & _CR_CONDRST), RNG_TIMEOUT_US);
+					!(cr & _CR_CONDRST), RNG_TIMEOUT_US);
 }
 
 static int stm32_rng_pm_action(const struct device *dev,
