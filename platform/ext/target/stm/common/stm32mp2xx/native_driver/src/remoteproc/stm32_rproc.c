@@ -6,6 +6,7 @@
  */
 #include <stdint.h>
 #include <stdbool.h>
+#include <lib/delay.h>
 #include <lib/utils_def.h>
 #include <lib/mmio.h>
 #include <lib/mmiopoll.h>
@@ -16,6 +17,7 @@
 #include <device.h>
 #include <firewall.h>
 #include <stm32mp2_pwr.h>
+#include <regulator.h>
 #include <remoteproc.h>
 #include <reset.h>
 #include <clk.h>
@@ -48,6 +50,8 @@ struct stm32_rproc_config {
 	const uint32_t irq_ack;
 	const struct clock_control *clk_ctl;
 	int n_clk;
+	const struct device **regu;
+	int nb_regu;
 };
 
 struct stm32_rproc_data {
@@ -70,6 +74,31 @@ static bool stm32_rproc_running_get(const struct device *dev)
 	struct stm32_rproc_data *data = dev_get_data(dev);
 
 	return data->running;
+}
+
+static int stm32mp2_a35_regu(const struct device *dev)
+{
+	int i;
+	const struct stm32_rproc_config *cfg = dev_get_config(dev);
+	int nb_regu = cfg->nb_regu;
+	int32_t volt_uv;
+
+	for (i = 0; i < nb_regu; i++) {
+		regulator_force_disable(cfg->regu[i]);
+	}
+	/* force default voltage */
+	for (i = 0; i < nb_regu; i++) {
+		if (!regulator_get_default_voltage(cfg->regu[i], &volt_uv))
+			regulator_set_voltage(cfg->regu[i], volt_uv, volt_uv);
+	}
+
+	udelay(10000);
+
+	/* enable ALL regu */
+	for (i = 0; i < nb_regu; i++)
+		regulator_force_enable(cfg->regu[i]);
+
+	return 0;
 }
 
 /*
@@ -187,6 +216,9 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 		if (err)
 			return err;
 	}
+
+	if (cfg->nb_regu)
+		err = stm32mp2_a35_regu(dev);
 
 	if (cfg->irq_ack != IRQ_INVALID) {
 		/* clear rising pending register */
@@ -385,11 +417,25 @@ static struct remoteproc_driver_api stm32_rproc_api = {
 		    (DT_INST_IRQ_BY_NAME(n, name, cell)),			\
 		    (IRQ_INVALID))
 
+
+#define DT_NUM_REGU(_inst)							\
+	DT_INST_PROP_LEN_OR(_inst, regus, 0)
+
+#define _DT_REGU(_idx, _inst)							\
+	DEVICE_DT_GET(DT_INST_PHANDLE_BY_IDX(_inst, regus, _idx))
+
+#define DT_REGU(inst)								\
+	{									\
+		LISTIFY(DT_NUM_REGU(inst), _DT_REGU, (,), inst)			\
+	}
+
 #define STM32_RPROC_INIT(n, name, _variant, _irqhandler)			\
 										\
 DT_INST_ACCESS_CTRLS_DEFINE(n);							\
 										\
 static const struct clock_control clk_ctrl_##n[] = DT_INST_CLOCK_CONTROL(n);	\
+										\
+static const struct device *regu_##n[] = DT_REGU(n);				\
 										\
 static const struct stm32_rproc_config _##name##_cfg##n = {			\
 	.rst_ctl = DT_INST_RESET_CONTROL_GET(n),				\
@@ -398,6 +444,8 @@ static const struct stm32_rproc_config _##name##_cfg##n = {			\
 	.irq_ack = DT_INST_IRQ_BY_NAME_OR(n, ack, irq),				\
 	.clk_ctl = clk_ctrl_##n,						\
 	.n_clk = DT_INST_NUM_CLOCKS(n),						\
+	.regu =  regu_##n,							\
+	.nb_regu = DT_NUM_REGU(n),						\
 };										\
 										\
 static struct stm32_rproc_data _##name##_data##n = {				\
