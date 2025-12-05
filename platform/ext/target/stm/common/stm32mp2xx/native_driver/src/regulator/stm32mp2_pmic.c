@@ -158,8 +158,20 @@
 #define INT_DBG_LATCH_R2	U(0x81)
 #define INT_DBG_LATCH_R3	U(0x82)
 #define INT_DBG_LATCH_R4	U(0x83)
-/* NVMEM shadow registers */
+/* NVM shadow registers */
 #define NVM_BUCK1_VOUT_SHR	U(0x9C)
+#define NVM_BUCK2_VOUT_SHR	U(0x9D)
+#define NVM_BUCK3_VOUT_SHR	U(0x9E)
+#define NVM_BUCK4_VOUT_SHR	U(0x9F)
+#define NVM_BUCK5_VOUT_SHR	U(0xA0)
+#define NVM_BUCK6_VOUT_SHR	U(0xA1)
+#define NVM_BUCK7_VOUT_SHR	U(0xA2)
+#define NVM_LDO2_VOUT_SHR	U(0xA3)
+#define NVM_LDO3_VOUT_SHR	U(0xA4)
+#define NVM_LDO5_VOUT_SHR	U(0xA5)
+#define NVM_LDO6_VOUT_SHR	U(0xA6)
+#define NVM_LDO7_VOUT_SHR	U(0xA7)
+#define NVM_LDO8_VOUT_SHR	U(0xA8)
 
 /* PRODUCT_ID bits definition */
 #define PMIC_NVM_ID_MASK	GENMASK_32(3, 0)
@@ -365,6 +377,7 @@ struct regu_stpmic2_desc {
 	const struct linear_range *ranges;
 	uint8_t nranges;
 	uint8_t volt_cr;
+	uint8_t nvm_volt_cr;
 	uint8_t volt_shift;
 	uint8_t volt_mask;
 	uint8_t en_cr;
@@ -421,6 +434,7 @@ static const struct linear_range __maybe_unused gpox_ranges[] = {
 	.nranges		= ARRAY_SIZE(_ranges),		\
 	.en_cr			= _id ## _MAIN_CR2,		\
 	.volt_cr		= _id ## _MAIN_CR1,		\
+	.nvm_volt_cr		= NVM_ ## _id ## _VOUT_SHR,	\
 	.volt_shift		= BUCKX_VOUT_SHIFT,		\
 	.volt_mask		= BUCKX_VOUT_MASK,		\
 	.alt_en_cr		= _id ## _ALT_CR2,		\
@@ -445,6 +459,7 @@ static const struct linear_range __maybe_unused gpox_ranges[] = {
 	.nranges		= ARRAY_SIZE(_ranges),		\
 	.volt_shift		= LDO_VOUT_SHIFT,		\
 	.volt_mask		= LDO_VOUT_MASK,		\
+	.nvm_volt_cr		= NVM_ ## _id ## _VOUT_SHR,	\
 	.en_cr			= _id ## _MAIN_CR,		\
 	.volt_cr		= _id ## _MAIN_CR,		\
 	.alt_en_cr		= _id ## _ALT_CR,		\
@@ -470,6 +485,7 @@ static const struct linear_range __maybe_unused gpox_ranges[] = {
 	.volt_mask		= LDO_VOUT_MASK,		\
 	.en_cr			= _id ## _MAIN_CR,		\
 	.volt_cr		= _id ## _MAIN_CR,		\
+	.nvm_volt_cr		= NVM_ ## _id ## _VOUT_SHR,	\
 	.alt_en_cr		= _id ## _ALT_CR,		\
 	.alt_volt_cr		= _id ## _ALT_CR,		\
 	.pwrctrl_cr		= _id ## _PWRCTRL_CR,		\
@@ -812,7 +828,9 @@ static int stpmic2_reg_set_voltage(const struct device *dev, int32_t min_uv,
 	return 0;
 }
 
-static int stpmic2_reg_get_voltage(const struct device *dev, int32_t *volt_uv)
+static int stpmic2_reg_get_volt_cr(const struct device *dev,
+				   uint8_t volt_cr,
+				   int32_t *volt_uv)
 {
 	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
@@ -824,7 +842,7 @@ static int stpmic2_reg_get_voltage(const struct device *dev, int32_t *volt_uv)
 
 	/* read volt_cr register only when needed */
 	if (regu_desc->volt_mask || regu_desc->has_bypass) {
-		err = i2c_reg_read_byte_dt(&pmic_cfg->i2c, regu_desc->volt_cr, &val);
+		err = i2c_reg_read_byte_dt(&pmic_cfg->i2c, volt_cr, &val);
 		if (err)
 			return err;
 	}
@@ -841,6 +859,22 @@ static int stpmic2_reg_get_voltage(const struct device *dev, int32_t *volt_uv)
 	stpmic2_reg_get_range(dev, &ranges, &nranges);
 
 	return linear_range_group_get_value(ranges, nranges, val, volt_uv);
+}
+
+static int stpmic2_reg_get_voltage(const struct device *dev, int32_t *volt_uv)
+{
+	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
+	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
+
+	return stpmic2_reg_get_volt_cr(dev, regu_desc->volt_cr, volt_uv);
+}
+
+static int stpmic2_reg_get_default_voltage(const struct device *dev, int32_t *volt_uv)
+{
+	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
+	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
+
+	return stpmic2_reg_get_volt_cr(dev, regu_desc->nvm_volt_cr, volt_uv);
 }
 
 static int stpmic2_set_alt_state(const struct device *dev, bool enable)
@@ -1051,6 +1085,7 @@ static int stpmic2_reg_show(const struct device *dev)
 	_show_reg(&pmic_cfg->i2c, regu_desc->msrt_reg, "msrt_reg");
 	_show_reg(&pmic_cfg->i2c, regu_desc->pd_reg, "pd_reg");
 	_show_reg(&pmic_cfg->i2c, regu_desc->ocp_reg, "ocp_reg");
+	_show_reg(&pmic_cfg->i2c, regu_desc->nvm_volt_cr, "nvm_volt_cr");
 
 	return 0;
 }
@@ -1141,6 +1176,7 @@ static const struct regulator_driver_api stpmic2_api = {
 	.list_voltage = stpmic2_reg_list_voltage,
 	.set_voltage = stpmic2_reg_set_voltage,
 	.get_voltage = stpmic2_reg_get_voltage,
+	.get_default_voltage = stpmic2_reg_get_default_voltage,
 	.show = stpmic2_reg_show,
 };
 
