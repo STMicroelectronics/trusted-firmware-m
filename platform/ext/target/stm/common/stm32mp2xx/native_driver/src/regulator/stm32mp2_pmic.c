@@ -822,22 +822,16 @@ static int stpmic2_reg_get_voltage(const struct device *dev, int32_t *volt_uv)
 	uint8_t val;
 	int err;
 
+	err = i2c_reg_read_byte_dt(&pmic_cfg->i2c, regu_desc->volt_cr, &val);
+	if (err)
+		return err;
+
 	if (drv_cfg->st_bypass_uv != 0 && regu_desc->has_bypass) {
-
-		err = i2c_reg_read_byte_dt(&pmic_cfg->i2c,
-					   regu_desc->en_cr, &val);
-		if (err)
-			return err;
-
 		if (val & LDO_BYPASS) {
 			*volt_uv = drv_cfg->st_bypass_uv;
 			return 0;
 		}
 	}
-
-	err = i2c_reg_read_byte_dt(&pmic_cfg->i2c, regu_desc->volt_cr, &val);
-	if (err)
-		return err;
 
 	val = (val & regu_desc->volt_mask) >> regu_desc->volt_shift;
 
