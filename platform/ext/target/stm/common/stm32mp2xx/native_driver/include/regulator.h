@@ -88,6 +88,7 @@ struct regulator_driver_api {
 	regulator_list_voltage_t list_voltage;
 	regulator_set_voltage_t set_voltage;
 	regulator_get_voltage_t get_voltage;
+	regulator_get_voltage_t get_default_voltage;
 	regulator_set_current_limit_t set_current_limit;
 	regulator_get_current_limit_t get_current_limit;
 	regulator_set_mode_t set_mode;
@@ -553,6 +554,18 @@ int regulator_set_voltage(const struct device *dev, int32_t min_uv,
  */
  int regulator_get_voltage(const struct device *dev,
 			   int32_t *volt_uv);
+
+/**
+ * @brief Obtain default output voltage.
+ *
+ * @param dev Regulator device instance.
+ * @param[out] volt_uv Where configured output voltage will be stored.
+ *
+ * @retval 0 If successful
+ * @retval -ENOSYS If function is not implemented.
+ * @retval -errno In case of any other error.
+ */
+int regulator_get_default_voltage(const struct device *dev, int32_t *volt_uv);
 
 /**
  * @brief Set output current limit.

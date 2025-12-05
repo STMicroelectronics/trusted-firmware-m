@@ -244,6 +244,31 @@ int regulator_get_voltage(const struct device *dev,
 	return api->get_voltage(dev, volt_uv);
 }
 
+int regulator_get_default_voltage(const struct device *dev,
+				  int32_t *volt_uv)
+{
+	const struct regulator_common_config *config = dev->config;
+	const struct regulator_driver_api *api =
+		(const struct regulator_driver_api *)dev->api;
+	int err;
+
+	if (api->get_default_voltage == NULL) {
+		return -ENOSYS;
+	}
+
+	err = api->get_default_voltage(dev, volt_uv);
+
+	if (!err) {
+		/* Snap to closest interval value if out of range */
+		if (*volt_uv < config->min_uv)
+			*volt_uv = config->min_uv;
+		else if (*volt_uv > config->max_uv)
+			*volt_uv = config->max_uv;
+	}
+
+	return err;
+}
+
 int regulator_set_current_limit(const struct device *dev, int32_t min_ua,
 				int32_t max_ua)
 {
