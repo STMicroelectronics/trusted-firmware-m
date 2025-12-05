@@ -819,12 +819,15 @@ static int stpmic2_reg_get_voltage(const struct device *dev, int32_t *volt_uv)
 	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
 	const struct linear_range *ranges;
 	size_t nranges;
-	uint8_t val;
+	uint8_t val = 0;
 	int err;
 
-	err = i2c_reg_read_byte_dt(&pmic_cfg->i2c, regu_desc->volt_cr, &val);
-	if (err)
-		return err;
+	/* read volt_cr register only when needed */
+	if (regu_desc->volt_mask || regu_desc->has_bypass) {
+		err = i2c_reg_read_byte_dt(&pmic_cfg->i2c, regu_desc->volt_cr, &val);
+		if (err)
+			return err;
+	}
 
 	if (drv_cfg->st_bypass_uv != 0 && regu_desc->has_bypass) {
 		if (val & LDO_BYPASS) {
