@@ -206,7 +206,7 @@ int regulator_set_voltage(const struct device *dev, int32_t min_uv,
 		return err;
 	}
 
-	if ( (current_uv >= min_uv && current_uv <= max_uv))
+	if (current_uv >= min_uv && current_uv <= max_uv)
 		return 0;
 
 	err = api->set_voltage(dev, min_uv, max_uv);
