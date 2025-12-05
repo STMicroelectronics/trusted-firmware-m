@@ -395,6 +395,15 @@ static int stm32_pwr_get_voltage(const struct device *dev, int32_t *volt_uv)
 	return regulator_get_voltage(pwr_regu->vin_supply, volt_uv);
 }
 
+static int stm32_pwr_get_default_voltage(const struct device *dev,
+					 int32_t *volt_uv)
+{
+	const struct stm32_pwr_regu_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_pwr_regu *pwr_regu = &drv_cfg->pwr_regu;
+
+	return regulator_get_default_voltage(pwr_regu->vin_supply, volt_uv);
+}
+
 static const struct regulator_driver_api stm32_pwr_regu_ops = {
 	.enable = stm32_pwr_enable,
 	.disable = stm32_pwr_disable,
@@ -402,6 +411,7 @@ static const struct regulator_driver_api stm32_pwr_regu_ops = {
 	.list_voltage = stm32_pwr_list_voltage,
 	.set_voltage = stm32_pwr_set_voltage,
 	.get_voltage = stm32_pwr_get_voltage,
+	.get_default_voltage = stm32_pwr_get_default_voltage,
 };
 
 static const struct regulator_driver_api stm32_pwr_regu_fixed_ops = {
