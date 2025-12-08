@@ -791,6 +791,23 @@
 	DT_CAT5(node_id, _P_, prop, _IDX_, idx)
 
 /**
+ * @brief Like DT_PROP_BY_IDX(), but with a fallback to a default value
+ *
+ * If the value exists, this expands to DT_PROP_BY_IDX(node_id, prop, idx).
+ * The default_value parameter is not expanded in this case.
+ *
+ * @param node_id node identifier
+ * @param prop lowercase-and-underscores property name
+ * @param idx the index to get
+ * @param default_value a fallback value to expand to
+ * @return a representation of the idx-th element of the property
+ */
+#define DT_PROP_BY_IDX_OR(node_id, prop, idx, default_value) \
+	COND_CODE_1(DT_PROP_HAS_IDX(node_id, prop, idx), \
+		    (DT_PROP_BY_IDX(node_id, prop, idx)), \
+		    (default_value))
+
+/**
  * @brief Like DT_PROP(), but with a fallback to @p default_value
  *
  * If the value exists, this expands to DT_PROP(node_id, prop).
