@@ -889,14 +889,18 @@
 		};
 
 		tamp: tamp@56010000 {
-			compatible = "st,stm32mp25-tamp";
+			compatible = "st,stm32mp21-tamp";
 			reg = <0x56010000 0x400>;
-			clocks = <&rcc CK_BUS_RTC>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			clocks = <&rcc CK_BUS_RTC>, <&rcc RTC_CK>;
+			clock-names = "pclk", "rtc_ck";
 			interrupts = <12 0>;
 			#address-cells = <1>;
 			#size-cells = <1>;
 			ranges;
 			status = "disabled";
+
 			nvram: nvram@56010100 {
 				compatible = "st,stm32mp25-tamp-nvram";
 				#address-cells = <1>;
