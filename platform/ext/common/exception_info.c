@@ -10,6 +10,20 @@
 /* "exception_info.h" must be the last include because of the IAR pragma */
 #include "exception_info.h"
 
+#if TFM_EXCEPTION_DUMP_LVL == SPM_LOG_LEVEL_ERROR
+#define EXCEPTION_MSG    SPMLOG_ERRMSG
+#define EXCEPTION_MSGVAL SPMLOG_ERRMSGVAL
+#elif TFM_EXCEPTION_DUMP_LVL == SPM_LOG_LEVEL_INFO
+#define EXCEPTION_MSG    SPMLOG_INFMSG
+#define EXCEPTION_MSGVAL SPMLOG_INFMSGVAL
+#elif TFM_EXCEPTION_DUMP_LVL == SPM_LOG_LEVEL_DEBUG
+#define EXCEPTION_MSG    SPMLOG_DBGMSG
+#define EXCEPTION_MSGVAL SPMLOG_DBGMSGVAL
+#else /* invalid value */
+#define EXCEPTION_MSG
+#define EXCEPTION_MSGVAL
+#endif
+
 static struct exception_info_t exception_info;
 
 /**
@@ -85,79 +99,79 @@ uint32_t *get_exception_frame(uint32_t lr, uint32_t msp, uint32_t psp)
 static void dump_exception_info(bool stack_error,
                                 const struct exception_info_t *ctx)
 {
-    SPMLOG_DBGMSG("Here is some context for the exception:\r\n");
-    SPMLOG_DBGMSGVAL("    EXC_RETURN (LR): ", ctx->EXC_RETURN);
-    SPMLOG_DBGMSG("    Exception came from");
+    EXCEPTION_MSG("Here is some context for the exception:\r\n");
+    EXCEPTION_MSGVAL("    EXC_RETURN (LR): ", ctx->EXC_RETURN);
+    EXCEPTION_MSG("    Exception came from");
 #ifdef TRUSTZONE_PRESENT
     if (is_return_secure_stack(ctx->EXC_RETURN)) {
-        SPMLOG_DBGMSG(" secure FW in");
+        EXCEPTION_MSG(" secure FW in");
     } else {
-        SPMLOG_DBGMSG(" non-secure FW in");
+        EXCEPTION_MSG(" non-secure FW in");
     }
 #endif
 
     if (is_return_thread_mode(ctx->EXC_RETURN)) {
-        SPMLOG_DBGMSG(" thread mode.\r\n");
+        EXCEPTION_MSG(" thread mode.\r\n");
     } else {
-        SPMLOG_DBGMSG(" handler mode.\r\n");
+        EXCEPTION_MSG(" handler mode.\r\n");
     }
-    SPMLOG_DBGMSGVAL("    xPSR:    ", ctx->xPSR);
-    SPMLOG_DBGMSGVAL("    MSP:     ", ctx->MSP);
-    SPMLOG_DBGMSGVAL("    PSP:     ", ctx->PSP);
+    EXCEPTION_MSGVAL("    xPSR:    ", ctx->xPSR);
+    EXCEPTION_MSGVAL("    MSP:     ", ctx->MSP);
+    EXCEPTION_MSGVAL("    PSP:     ", ctx->PSP);
 #ifdef TRUSTZONE_PRESENT
-    SPMLOG_DBGMSGVAL("    MSP_NS:  ", __TZ_get_MSP_NS());
-    SPMLOG_DBGMSGVAL("    PSP_NS:  ", __TZ_get_PSP_NS());
+    EXCEPTION_MSGVAL("    MSP_NS:  ", __TZ_get_MSP_NS());
+    EXCEPTION_MSGVAL("    PSP_NS:  ", __TZ_get_PSP_NS());
 #endif
 
-    SPMLOG_DBGMSGVAL("    Exception frame at: ", (uint32_t)ctx->EXC_FRAME);
+    EXCEPTION_MSGVAL("    Exception frame at: ", (uint32_t)ctx->EXC_FRAME);
     if (stack_error) {
-        SPMLOG_DBGMSG(
+        EXCEPTION_MSG(
             "       (Note that the exception frame may be corrupted for this type of error.)\r\n");
     }
-    SPMLOG_DBGMSGVAL("        R0:   ", ctx->EXC_FRAME_COPY[0]);
-    SPMLOG_DBGMSGVAL("        R1:   ", ctx->EXC_FRAME_COPY[1]);
-    SPMLOG_DBGMSGVAL("        R2:   ", ctx->EXC_FRAME_COPY[2]);
-    SPMLOG_DBGMSGVAL("        R3:   ", ctx->EXC_FRAME_COPY[3]);
-    SPMLOG_DBGMSGVAL("        R12:  ", ctx->EXC_FRAME_COPY[4]);
-    SPMLOG_DBGMSGVAL("        LR:   ", ctx->EXC_FRAME_COPY[5]);
-    SPMLOG_DBGMSGVAL("        PC:   ", ctx->EXC_FRAME_COPY[6]);
-    SPMLOG_DBGMSGVAL("        xPSR: ", ctx->EXC_FRAME_COPY[7]);
+    EXCEPTION_MSGVAL("        R0:   ", ctx->EXC_FRAME_COPY[0]);
+    EXCEPTION_MSGVAL("        R1:   ", ctx->EXC_FRAME_COPY[1]);
+    EXCEPTION_MSGVAL("        R2:   ", ctx->EXC_FRAME_COPY[2]);
+    EXCEPTION_MSGVAL("        R3:   ", ctx->EXC_FRAME_COPY[3]);
+    EXCEPTION_MSGVAL("        R12:  ", ctx->EXC_FRAME_COPY[4]);
+    EXCEPTION_MSGVAL("        LR:   ", ctx->EXC_FRAME_COPY[5]);
+    EXCEPTION_MSGVAL("        PC:   ", ctx->EXC_FRAME_COPY[6]);
+    EXCEPTION_MSGVAL("        xPSR: ", ctx->EXC_FRAME_COPY[7]);
 
-    SPMLOG_DBGMSG("    Callee saved register state:");
-    SPMLOG_DBGMSGVAL("        R4:   ", ctx->CALLEE_SAVED_COPY[0]);
-    SPMLOG_DBGMSGVAL("        R5:   ", ctx->CALLEE_SAVED_COPY[1]);
-    SPMLOG_DBGMSGVAL("        R6:   ", ctx->CALLEE_SAVED_COPY[2]);
-    SPMLOG_DBGMSGVAL("        R7:   ", ctx->CALLEE_SAVED_COPY[3]);
-    SPMLOG_DBGMSGVAL("        R8:   ", ctx->CALLEE_SAVED_COPY[4]);
-    SPMLOG_DBGMSGVAL("        R9:   ", ctx->CALLEE_SAVED_COPY[5]);
-    SPMLOG_DBGMSGVAL("        R10:  ", ctx->CALLEE_SAVED_COPY[6]);
-    SPMLOG_DBGMSGVAL("        R11:  ", ctx->CALLEE_SAVED_COPY[7]);
+    EXCEPTION_MSG("    Callee saved register state:");
+    EXCEPTION_MSGVAL("        R4:   ", ctx->CALLEE_SAVED_COPY[0]);
+    EXCEPTION_MSGVAL("        R5:   ", ctx->CALLEE_SAVED_COPY[1]);
+    EXCEPTION_MSGVAL("        R6:   ", ctx->CALLEE_SAVED_COPY[2]);
+    EXCEPTION_MSGVAL("        R7:   ", ctx->CALLEE_SAVED_COPY[3]);
+    EXCEPTION_MSGVAL("        R8:   ", ctx->CALLEE_SAVED_COPY[4]);
+    EXCEPTION_MSGVAL("        R9:   ", ctx->CALLEE_SAVED_COPY[5]);
+    EXCEPTION_MSGVAL("        R10:  ", ctx->CALLEE_SAVED_COPY[6]);
+    EXCEPTION_MSGVAL("        R11:  ", ctx->CALLEE_SAVED_COPY[7]);
 
 #ifdef FAULT_STATUS_PRESENT
-    SPMLOG_DBGMSGVAL("    CFSR:  ", ctx->CFSR);
-    SPMLOG_DBGMSGVAL("    BFSR:  ",
+    EXCEPTION_MSGVAL("    CFSR:  ", ctx->CFSR);
+    EXCEPTION_MSGVAL("    BFSR:  ",
                     (ctx->CFSR & SCB_CFSR_BUSFAULTSR_Msk) >> SCB_CFSR_BUSFAULTSR_Pos);
     if (ctx->BFARVALID) {
-        SPMLOG_DBGMSGVAL("    BFAR: ", ctx->BFAR);
+        EXCEPTION_MSGVAL("    BFAR: ", ctx->BFAR);
     } else {
-        SPMLOG_DBGMSG("    BFAR:  Not Valid\r\n");
+        EXCEPTION_MSG("    BFAR:  Not Valid\r\n");
     }
-    SPMLOG_DBGMSGVAL("    MMFSR: ",
+    EXCEPTION_MSGVAL("    MMFSR: ",
                     (ctx->CFSR & SCB_CFSR_MEMFAULTSR_Msk) >> SCB_CFSR_MEMFAULTSR_Pos);
     if (ctx->MMARVALID) {
-        SPMLOG_DBGMSGVAL("    MMFAR: ", ctx->MMFAR);
+        EXCEPTION_MSGVAL("    MMFAR: ", ctx->MMFAR);
     } else {
-        SPMLOG_DBGMSG("    MMFAR: Not Valid\r\n");
+        EXCEPTION_MSG("    MMFAR: Not Valid\r\n");
     }
-    SPMLOG_DBGMSGVAL("    UFSR:  ",
+    EXCEPTION_MSGVAL("    UFSR:  ",
                     (ctx->CFSR & SCB_CFSR_USGFAULTSR_Msk) >> SCB_CFSR_USGFAULTSR_Pos);
-    SPMLOG_DBGMSGVAL("    HFSR:  ", ctx->HFSR);
+    EXCEPTION_MSGVAL("    HFSR:  ", ctx->HFSR);
 #ifdef TRUSTZONE_PRESENT
-    SPMLOG_DBGMSGVAL("    SFSR:  ", ctx->SFSR);
+    EXCEPTION_MSGVAL("    SFSR:  ", ctx->SFSR);
     if (ctx->SFARVALID) {
-        SPMLOG_DBGMSGVAL("    SFAR: ", ctx->SFAR);
+        EXCEPTION_MSGVAL("    SFAR: ", ctx->SFAR);
     } else {
-        SPMLOG_DBGMSG("    SFAR: Not Valid\r\n");
+        EXCEPTION_MSG("    SFAR: Not Valid\r\n");
     }
 #endif
 
