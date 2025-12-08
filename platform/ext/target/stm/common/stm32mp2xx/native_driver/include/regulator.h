@@ -456,6 +456,36 @@ bool regulator_is_enabled(const struct device *dev);
 int regulator_disable(const struct device *dev);
 
 /**
+ * @brief Force Enable a regulator.
+ *
+ * Forcibly enable the regulator output voltage or current.
+ * NOTE: this will disable the regulator output even if no other consumer
+ * devices have it enabled.
+ *
+ * @param dev Regulator device instance
+ *
+ * @retval 0 If regulator has been successfully enabled.
+ * @retval -errno Negative errno in case of failure.
+ * @retval -ENOTSUP If regulator enablement can not be controlled.
+ */
+int regulator_force_enable(const struct device *dev);
+
+/**
+ * @brief Force Disable a regulator.
+ *
+ * Forcibly disable the regulator output voltage or current.
+ * NOTE: this will disable the regulator output even if other consumer
+ * devices have it enabled.
+ *
+ * @param dev Regulator device instance.
+ *
+ * @retval 0 If regulator has been successfully disabled.
+ * @retval -errno Negative errno in case of failure.
+ * @retval -ENOTSUP If regulator disablement can not be controlled.
+ */
+int regulator_force_disable(const struct device *dev);
+
+/**
  * @brief Obtain the number of supported voltage levels.
  *
  * Each voltage level supported by a regulator gets an index, starting from

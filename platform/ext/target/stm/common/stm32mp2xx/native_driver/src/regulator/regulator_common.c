@@ -158,6 +158,34 @@ int regulator_disable(const struct device *dev)
 	return ret;
 }
 
+int regulator_force_enable(const struct device *dev)
+{
+	const struct regulator_driver_api *api = dev->api;
+	const struct regulator_common_config *config = dev->config;
+	int ret = 0;
+
+	/* enable not supported (always on) */
+	if (api->enable == NULL) {
+		return 0;
+	}
+	ret = api->enable(dev);
+	if (ret == 0)
+		regulator_delay(config->enable_ramp_delay_us);
+
+	return ret;
+}
+
+int regulator_force_disable(const struct device *dev)
+{
+	const struct regulator_driver_api *api = dev->api;
+
+	/* disable not supported (always on) or not previously enabled */
+	if (api->disable == NULL)
+		return 0;
+
+	return api->disable(dev);
+}
+
 bool regulator_is_supported_voltage(const struct device *dev, int32_t min_uv,
 				    int32_t max_uv)
 {
