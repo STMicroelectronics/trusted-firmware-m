@@ -82,21 +82,36 @@ static int stm32mp2_a35_regu(const struct device *dev)
 	const struct stm32_rproc_config *cfg = dev_get_config(dev);
 	int nb_regu = cfg->nb_regu;
 	int32_t volt_uv;
+	int err;
 
 	for (i = 0; i < nb_regu; i++) {
-		regulator_force_disable(cfg->regu[i]);
+		err = regulator_force_disable(cfg->regu[i]);
+		if (err ) {
+			EMSG("[%s] regu force disable err: %d", cfg->regu[i]->name, err);
+			return err;
+		}
 	}
+
 	/* force default voltage */
 	for (i = 0; i < nb_regu; i++) {
-		if (!regulator_get_default_voltage(cfg->regu[i], &volt_uv))
-			regulator_set_voltage(cfg->regu[i], volt_uv, volt_uv);
+		if (!regulator_get_default_voltage(cfg->regu[i], &volt_uv)) {
+			err = regulator_set_voltage(cfg->regu[i], volt_uv, volt_uv);
+			if (err) {
+				EMSG("[%s] regu set voltage err: %d", cfg->regu[i]->name, err);
+				return err;
+			}
+		}
 	}
-
 	udelay(10000);
 
 	/* enable ALL regu */
-	for (i = 0; i < nb_regu; i++)
-		regulator_force_enable(cfg->regu[i]);
+	for (i = 0; i < nb_regu; i++) {
+		err = regulator_force_enable(cfg->regu[i]);
+		if (err) {
+			EMSG("[%s] regu force enable err: %d", cfg->regu[i]->name, err);
+			return err;
+		}
+	}
 
 	return 0;
 }
@@ -217,8 +232,11 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 			return err;
 	}
 
-	if (cfg->nb_regu)
+	if (cfg->nb_regu) {
 		err = stm32mp2_a35_regu(dev);
+		if (err)
+			return err;
+	}
 
 	if (cfg->irq_ack != IRQ_INVALID) {
 		/* clear rising pending register */
