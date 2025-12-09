@@ -100,9 +100,6 @@ static psa_status_t tfm_pm_load_fw()
 
 	crc_buffer_sz = div_round_up(fw_size, RETRAM_BUF_SZ) * RETRAM_BUF_SZ;
 
-	/* TODO: force CRC on TEXT section as FW size also include DATA */
-	crc_buffer_sz = 32 * 1024;
-
 	if (crc_buffer_sz > dst_sz)
 		return PSA_ERROR_GENERIC_ERROR;
 
