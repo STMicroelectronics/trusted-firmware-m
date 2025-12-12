@@ -974,7 +974,7 @@
 		a35_rproc: a35@0 {
 			compatible = "st,stm32mp2-a35";
 			#remoteproc-cells = <0>;
-			resets = <&rcc_reset C1_R>;
+			resets = <&rcc_reset C1_R>, <&rcc_reset C1_HOLDBOOT_R>;
 			interrupts = <220 0>;
 			interrupt-names = "ack";
 			clocks = <&rcc CK_FLEXGEN_51>, <&rcc CK_FLEXGEN_52>, <&rcc PLL1_CK>;
