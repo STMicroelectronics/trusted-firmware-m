@@ -252,3 +252,15 @@ properties:
     description: |
       Maximum difference between current and target voltages that can be changed
       safely in a single step.
+
+  regulator-on-in-suspend:
+    type: boolean
+    description: regulator should be on in suspend state.
+
+  regulator-off-in-suspend:
+    type: boolean
+    description: regulator should be off in suspend state.
+
+  regulator-suspend-microvolt:
+    type: int
+    description: the default voltage which regulator would be set in suspend.

@@ -117,3 +117,11 @@ child-binding:
       type: boolean
       description: |
         enable secondary input source on LDO1.
+
+  child-binding:
+    include:
+      - name: regulator.yaml
+        property-allowlist:
+          - regulator-on-in-suspend
+          - regulator-off-in-suspend
+          - regulator-suspend-microvolt
