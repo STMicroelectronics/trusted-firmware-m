@@ -130,7 +130,7 @@ __weak void access_violation_handler(void)
 
 static bool stm32_iac_discarded(uint32_t iac)
 {
-#if defined(CONFIG_STM32MP25X_REVY) || defined(CONFIG_STM32MP21X_REVA)
+#if defined(CONFIG_STM32MP25X_REVY)
 	/*
 	 * Discard some IAC as workaround for ROM code issues
 	 * on STM32MP25X/STM32MP23X RevY and STM32MP21X RevA

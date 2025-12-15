@@ -25,7 +25,6 @@ endif()
 #========================= tfm config ===============================#
 target_compile_definitions(tfm_config
     INTERFACE
-        $<$<STREQUAL:${STM32_STM32MP21_SOC_REV},revA>:CONFIG_STM32MP21X_REVA=1>
         $<$<STREQUAL:${STM32_STM32MP21_SOC_REV},revZ>:CONFIG_STM32MP21X_REVZ=1>
 )
 

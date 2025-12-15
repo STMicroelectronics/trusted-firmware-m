@@ -126,7 +126,7 @@ static __unused int stm32mp2_a35_restore(const struct device *dev)
 		}
 	}
 
-#if defined(CONFIG_STM32MP25X_REVY) || defined(CONFIG_STM32MP21X_REVA)
+#if defined(CONFIG_STM32MP25X_REVY)
 	/*
 	 * IAC workaround
 	 * clear and unmask:
@@ -241,7 +241,7 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 		}
 	}
 
-#if defined(CONFIG_STM32MP25X_REVY) || defined(CONFIG_STM32MP21X_REVA)
+#if defined(CONFIG_STM32MP25X_REVY)
 	/*
 	 * IAC workaround
 	 * mask:
