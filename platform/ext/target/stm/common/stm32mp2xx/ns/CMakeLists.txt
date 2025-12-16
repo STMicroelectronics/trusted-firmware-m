@@ -12,8 +12,14 @@
 
 add_library(platform_ns)
 
-include(stm32cube_config)
-add_subdirectory(${STM32CUBE_MP2_PATH} stm32cube)
+include(cmsis_core_config)
+add_subdirectory(${CMSIS_CORE_PATH} cmsis-core)
+
+include(cmsis_device_mp2_config)
+add_subdirectory(${CMSIS_DEVICE_MP2_PATH} cmsis-device-mp2)
+
+include(stm32mp2xx_hal_driver_config)
+add_subdirectory(${STM32MP2XX_HAL_DRIVER_PATH} stm32mp2xx-hal-driver)
 
 #========================= Device tree ========================================#
 include(${STM_DEVICETREE_DIR}/gen_dt.cmake)
@@ -49,7 +55,9 @@ target_include_directories(tfm_config
 
 target_link_libraries(tfm_config
     INTERFACE
-        $<BUILD_INTERFACE:stm32cube_header>
+        $<BUILD_INTERFACE:cmsis_core_header>
+        $<BUILD_INTERFACE:cmsis_device_mp2_header>
+        $<BUILD_INTERFACE:stm32mp2xx_hal_driver_header>
 )
 
 target_link_libraries(platform_region_defs

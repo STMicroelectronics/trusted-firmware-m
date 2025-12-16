@@ -6,8 +6,14 @@
 #-------------------------------------------------------------------------------
 cmake_policy(SET CMP0076 NEW)
 
-#fetch stm32cube for soc header files
-include(${STM_FAMILY_DIR}/lib/stm32cubemp2/stm32cube.cmake)
+# fetch cmsis-core for soc header files
+include(${STM_FAMILY_DIR}/lib/cmsis-core/cmsis_core.cmake)
+
+# fetch cmsis-device-mp2 for STM32MP2 device header files
+include(${STM_FAMILY_DIR}/lib/cmsis-device-mp2/cmsis_device_mp2.cmake)
+
+# fetch stm32mp2xx-hal-driver for HAL drivers header files
+include(${STM_FAMILY_DIR}/lib/stm32mp2xx-hal-driver/stm32mp2xx_hal_driver.cmake)
 
 #========================= Device tree ========================================#
 include(${STM_DEVICETREE_DIR}/gen_dt.cmake)
@@ -54,7 +60,9 @@ target_include_directories(tfm_config
 
 target_link_libraries(tfm_config
     INTERFACE
-	$<BUILD_INTERFACE:stm32cube::header>
+	$<BUILD_INTERFACE:cmsis_core::header>
+	$<BUILD_INTERFACE:cmsis_device_mp2::header>
+	$<BUILD_INTERFACE:stm32mp2xx_hal_driver::header>
 )
 
 target_include_directories(platform_region_defs

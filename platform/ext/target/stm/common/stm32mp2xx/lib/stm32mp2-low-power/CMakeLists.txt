@@ -9,7 +9,6 @@ set(STM32MP2_LP_VERSION     "v1.0.0"                  CACHE STRING "The version 
 set(STM32MP2_LP_PATH        "DOWNLOAD"                CACHE PATH   "Path to stm32mp2 low power firmware (or DOWNLOAD to fetch automatically)")
 
 #set stm32mp2 low power config
-set(STM32MP2_LP_CUBE_PATH   ${STM32CUBE_MP2_PATH}     CACHE PATH   "Path to stm32cubemp2 (or DOWNLOAD to fetch automatically)" FORCE)
 set(STM32MP2_LP_TARGET      stm32mp2_lp_fw            CACHE STRING "target name of stm32mp2 low power" FORCE)
 set(STM32MP2_LP_OUT_DIR     ${CMAKE_BINARY_DIR}/bin   CACHE PATH   "stm32mp2 low power output dir" FORCE)
 set(STM32MP2_LP_OUT_BIN     ${STM32MP2_LP_TARGET}.bin CACHE PATH   "stm32mp2 low power output binary" FORCE)
