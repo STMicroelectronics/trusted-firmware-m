@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2021-2025, STMicroelectronics - All Rights Reserved
  *
- * SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+ * SPDX-License-Identifier: GPL-2.0-only OR BSD-3-Clause
  */
 #define DT_DRV_COMPAT st_stm32mp2_ddr
 
