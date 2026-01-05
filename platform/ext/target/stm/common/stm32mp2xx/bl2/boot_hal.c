@@ -45,6 +45,18 @@ extern ARM_DRIVER_FLASH FLASH_DEV_NAME_4;
 extern ARM_DRIVER_FLASH FLASH_DEV_NAME_5;
 #endif /* (MCUBOOT_IMAGE_NUMBER == 3) */
 
+int flash_device_base(uint8_t fd_id, uintptr_t *ret)
+{
+	/* Only primary and secondary TFM_S_NS slots are allowed */
+	if ((fd_id != FLASH_DEVICE_ID_0) && (fd_id != FLASH_DEVICE_ID_2)) {
+		BOOT_LOG_ERR("invalid flash ID %d; expected %d or %d",
+			     fd_id, FLASH_DEVICE_ID_0, FLASH_DEVICE_ID_2);
+		return -1;
+	}
+	*ret = FLASH_DEVICE_BASE;
+	return 0;
+}
+
 int stm32mp2_init_debug(void)
 {
 #if defined(DAUTH_NONE)
