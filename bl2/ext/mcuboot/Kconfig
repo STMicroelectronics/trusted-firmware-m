@@ -138,6 +138,10 @@ config MCUBOOT_DIRECT_XIP_REVERT
     bool "Enable the revert mechanism in direct-xip mode"
     default y
 
+config MCUBOOT_RAM_LOAD_REVERT
+    bool "Enable the revert mechanism in ram-load mode"
+    default n
+
 config MCUBOOT_HW_ROLLBACK_PROT
     bool "Enable security counter validation against non-volatile HW counters"
     default y
