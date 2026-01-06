@@ -7,6 +7,8 @@
 cmake_minimum_required(VERSION 3.15)
 
 set(STM_DDR_DIR ${CMAKE_CURRENT_LIST_DIR})
+set(DDR_PHY_BIN_SRC_PATH "DOWNLOAD"     CACHE PATH   "Path to ddr phy binary (or DOWNLOAD to fetch automatically)")
+set(DDR_PHY_BIN_VERSION  "v1.0-stm32mp" CACHE STRING "The version of ddr phy binary to use")
 
 fetch_remote_library(
     LIB_NAME                ddr_phy_bin
