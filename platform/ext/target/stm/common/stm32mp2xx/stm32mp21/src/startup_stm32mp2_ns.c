@@ -315,9 +315,9 @@ const VECTOR_TABLE_Type __VECTOR_TABLE[] __VECTOR_TABLE_ATTRIBUTE = {
 	SysTick_Handler,       /* SysTick Handler, */
 	/*******************************************************************************/
 	/* External interrupts according to                                            */
-	/* Based on TinyPanther_interrupts.xlsm V 0.8 at below location              */
-	/* https://epm-st.st.com/ProjectServerST/Tiny%20Panther%20(503)/             */
-	/*     Working%20documents/Product%20description/                              */
+	/* "Table 187. interrupt mapping for Cortex®-M33"                              */
+	/* in chapter 26 "interrupt list" of reference document                        */
+	/* RM0506 - Reference Manual - STM32MP21xx - advanced ARM-based 32/64-bit MPUs */
 	/*******************************************************************************/
 	PVD_IRQHandler,              /* PVD detector through EXTI */
 	PVM_IRQHandler,              /* PVM detector through EXTI */
