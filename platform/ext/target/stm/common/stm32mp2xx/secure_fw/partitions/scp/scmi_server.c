@@ -56,6 +56,18 @@ int32_t scmi_server_smt_process_thread(unsigned int channel_id)
 	return res;
 }
 
+int32_t scmi_server_smt_reset_thread(unsigned int channel_id)
+{
+	int32_t res = TFM_SCMI_INVAL_PARAM;
+	int fwk_id = 0;
+
+	res = scmi_server_get_channel(channel_id, &fwk_id);
+	if (!res)
+		scmi_process_reset_smt(fwk_id);
+
+	return res;
+}
+
 int32_t scmi_server_msg_process_thread(unsigned int channel_id,
 					  void *in_buf, size_t in_sz,
 					  void *out_buf, size_t *out_sz)

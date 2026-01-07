@@ -40,4 +40,11 @@ int32_t scmi_server_get_channel(unsigned int channel_id, int *handle);
 
 int32_t scmi_server_smt_provide_async_msg(unsigned int channel_id, void *out_buf, size_t *out_sz);
 
+/*
+ *  Reset smt SCP-Firmware channel device id
+ *
+ * @channel_id: SCMI channel handler
+ */
+int32_t scmi_server_smt_reset_thread(unsigned int channel_id);
+
 #endif /* SCMI_SERVER_H */

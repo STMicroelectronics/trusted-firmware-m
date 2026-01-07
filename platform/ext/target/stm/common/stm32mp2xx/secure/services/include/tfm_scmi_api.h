@@ -4,7 +4,10 @@
  */
 #ifndef TFM_SCMI_API_H
 #define TFM_SCMI_API_H
+#include <stdbool.h>
 #include "psa/client.h"
+#include "psa_manifest/sid.h"
+
 /*  psa ret */
 enum psa_scmi_err_t {
 	/* a scmi notif received */
@@ -26,6 +29,7 @@ psa_status_t tfm_scmi_req(void *req, size_t req_len, void *rsp, size_t rsp_len);
 psa_status_t tfm_secure_scmi_req(uint32_t agent_id);
 psa_status_t tfm_secure_scmi_get_notif(void *rsp, size_t rsp_len);
 void tfm_sys_power_state_notifier(uint32_t agent_id, bool graceful, enum scmi_sys_power event);
+psa_status_t tfm_secure_scmi_reset(void);
 
 #endif
 

@@ -32,6 +32,15 @@
           "version_policy": "STRICT",
           "mm_iovec": "enable",
       },
+      {
+          "name": "TFM_SCP_RESET_SERVICE",
+          "sid": "0x000000F4",
+          "non_secure_clients": true,
+          "connection_based": false,
+          "version": 1,
+          "version_policy": "STRICT",
+          "mm_iovec": "disable",
+      },
 
   ],
   }

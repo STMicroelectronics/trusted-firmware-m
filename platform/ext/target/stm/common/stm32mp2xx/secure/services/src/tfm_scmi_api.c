@@ -103,3 +103,8 @@ psa_status_t tfm_secure_scmi_get_notif(void *rsp, size_t rsp_len)
 
 	return PSA_SCMI_ERR_SUCCESS;
 }
+
+psa_status_t tfm_secure_scmi_reset(void)
+{
+	return psa_call(TFM_SCP_RESET_SERVICE_HANDLE, 0, NULL, 0, NULL, 0);
+}

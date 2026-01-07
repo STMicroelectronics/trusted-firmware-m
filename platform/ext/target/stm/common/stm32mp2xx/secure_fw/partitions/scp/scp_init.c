@@ -74,6 +74,22 @@ psa_status_t tfm_scp_service_sfn(const psa_msg_t *msg)
 	return PSA_SUCCESS;
 }
 
+psa_status_t tfm_scp_reset_service_sfn(const psa_msg_t *msg)
+{
+	int ret = 0;
+
+	/* Reset the scmi channels used by cortex a35 */
+	ret = scmi_server_smt_reset_thread(STM32MP25_AGENT_ID_CA35 - 1);
+	if (ret)
+		return PSA_ERROR_GENERIC_ERROR;
+
+	ret = scmi_server_smt_reset_thread(STM32MP25_AGENT_ID_CA35_BL31 - 1);
+	if (ret)
+		return PSA_ERROR_GENERIC_ERROR;
+
+	return PSA_SUCCESS;
+}
+
 psa_status_t tfm_scp_service_ns_sfn(const psa_msg_t *msg)
 {
 	size_t in_sz = msg->in_size[0];
