@@ -124,6 +124,13 @@
 
 #define STM32MP_CA35_FW_MAX_SIZE	0x20000U
 
+#define STM32MP_M33_FW_SLOT_SIZE	0x900000U
+#if defined(STM32_BOOT_DEV_SDMMC1)
+#define STM32MP_DDR_FW_SLOT_SIZE	0x40000U
+#else
+#define STM32MP_DDR_FW_SLOT_SIZE	0x80000U
+#endif
+
 /* Shared data area between bootloader and runtime firmware. */
 #if STM32_M33TDCID
 #define BOOT_TFM_SHARED_DATA_BASE	DT_REG_ADDR(DT_NODELABEL(tfm_shared_data))
