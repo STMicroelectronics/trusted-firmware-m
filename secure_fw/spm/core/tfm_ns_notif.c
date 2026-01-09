@@ -22,6 +22,7 @@
 static uint32_t ns_evt_mask = 0;
 uint32_t ns_evt_owned = 0;
 struct  ns_event_fifo *p_ns_fifo;
+static uint32_t fifo_len;
 
 __tz_c_veneer
 int32_t tfm_ns_notif_init_s(void *area, size_t area_size)
@@ -37,7 +38,7 @@ int32_t tfm_ns_notif_init_s(void *area, size_t area_size)
 		return TFM_HAL_ERROR_INVALID_INPUT;
 
 	ret = tfm_hal_memory_check(boundary, (uintptr_t)area,
-				  area_size, attr);
+				   area_size, attr);
 
 	if (ret != TFM_HAL_SUCCESS)
 		return ret;
@@ -48,7 +49,8 @@ int32_t tfm_ns_notif_init_s(void *area, size_t area_size)
 	CRITICAL_SECTION_ENTER(cs_signal);
 	/*  initialized  */
 	p_ns_fifo = area;
-	p_ns_fifo->len = (area_size - sizeof(*p_ns_fifo)) / sizeof(uint32_t);
+	fifo_len = (area_size - sizeof(*p_ns_fifo)) / sizeof(uint32_t);
+	p_ns_fifo->len = fifo_len;
 	p_ns_fifo->write = 0;
 	p_ns_fifo->read = 0;
 
@@ -87,6 +89,7 @@ static psa_status_t ns_notif_do(uint32_t event, uint32_t owned_evt)
 {
 	struct critical_section_t cs_signal = CRITICAL_SECTION_STATIC_INIT;
 	uint32_t next_write;
+	uint32_t write;
 
 	if (!p_ns_fifo)
 		return PSA_ERROR_NOT_SUPPORTED;
@@ -96,18 +99,24 @@ static psa_status_t ns_notif_do(uint32_t event, uint32_t owned_evt)
 
 	if ((event & owned_evt) != event)
 		return PSA_ERROR_NOT_PERMITTED;
+	/*  Use secure copy of ns area */
+	write = p_ns_fifo->write;
+
+	/* Check write pointer */
+	if (write >= fifo_len)
+		return PSA_ERROR_SERVICE_FAILURE;
+	/* compute next write value if possible */
+	next_write = (write + 1) >= fifo_len ? 0 : write + 1;
 
 	CRITICAL_SECTION_ENTER(cs_signal);
-	/*  compute next write value if possible */
-	next_write = (p_ns_fifo->write + 1) >= p_ns_fifo->len ? 0 : p_ns_fifo->write + 1;
 
 	if (next_write == p_ns_fifo->read) {
 		CRITICAL_SECTION_LEAVE(cs_signal);
-		/*  fifo full */
+		/* fifo full */
 		return PSA_ERROR_BUFFER_TOO_SMALL;
 	}
 
-	p_ns_fifo->event[p_ns_fifo->write] = event;
+	p_ns_fifo->event[write] = event;
 	p_ns_fifo->write = next_write;
 	tfm_hal_raise_notify_ns();
 	CRITICAL_SECTION_LEAVE(cs_signal);
