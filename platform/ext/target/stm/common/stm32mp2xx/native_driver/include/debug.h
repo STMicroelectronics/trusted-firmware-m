@@ -32,10 +32,17 @@
 
 /* map on tfm_utilities */
 #ifdef CONFIG_TFM_HALT_ON_CORE_PANIC
-#define panic() tfm_hal_system_halt()
+#define PANIC_FUNC tfm_hal_system_halt()
 #else
-#define panic() tfm_hal_system_reset()
+#define PANIC_FUNC tfm_hal_system_reset()
 #endif
+
+#define panic() \
+	do { \
+		EMSG("Panic in %s, line %d\n", __func__, __LINE__); \
+		PANIC_FUNC; \
+	} while (0)
+
 #elif STM32_BL2
 #include <bootutil/bootutil_log.h>
 
