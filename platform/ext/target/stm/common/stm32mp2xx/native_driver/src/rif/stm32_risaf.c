@@ -180,6 +180,10 @@ extern int boot_add_data_to_shared_area(uint8_t major_type,
 
 #define BITS_PER_BYTES	8
 
+#define _RISAF_ACCESS_CTRL_ARGS		U(2)
+#define _RISAF_ACCESS_CTRL_ARG_REGION	U(0)
+#define _RISAF_ACCESS_CTRL_ARG_PROTREG	U(1)
+
 enum risaf_key_size {
 	RISAF_NO_KEY = 0,
 	RISAF_KEY_128BITS = 128,
@@ -193,6 +197,7 @@ struct risaf_region {
 	uint32_t cid_cfg;
 	uint32_t start_addr;
 	uint32_t end_addr;
+	uint32_t enc_mode;
 };
 
 struct risaf_subregion {
@@ -238,191 +243,231 @@ struct stm32_risaf_data {
 	uint8_t hw_naddr_bits;
 };
 
-static void stm32_risaf_write_cfg(uintptr_t base,
-				  const struct risaf_region *region)
+#define for_each_dt_region(_dt_region_tbl, _dt_region, _n_dt_region, _i)		\
+	for (i = 0, _dt_region = (_dt_region_tbl);					\
+	     i < (_n_dt_region);							\
+	     i++, _dt_region++)
+
+#define find_dt_region(_dt_region_tbl, _dt_region, _n_dt_region, _i, _cond)		\
+({											\
+	const struct risaf_dt_region *__ret = NULL;					\
+											\
+	if ((_n_dt_region) && (_dt_region_tbl)) {					\
+		for_each_dt_region(_dt_region_tbl, _dt_region, _n_dt_region, _i) {	\
+			if (_cond) {							\
+				__ret = _dt_region;					\
+				break;							\
+			}								\
+		}									\
+	}										\
+	__ret;										\
+})
+
+static void stm32_risaf_enable_region(const struct device *dev, uint8_t region_id)
 {
+	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
+	uintptr_t base;
+
+	base = drv_cfg->base + _RISAF_REGX_OFFSET(region_id);
+	mmio_setbits_32(base + _RISAF_REG_CFGR, _RISAF_REG_CFGR_BREN);
+
+	(void)mmio_read_32(base + _RISAF_REG_CFGR);
+}
+
+static void stm32_risaf_disable_region(const struct device *dev, uint8_t region_id)
+{
+	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
+	uintptr_t base;
+
+	/* Associated subregions are automatically disabled */
+	base = drv_cfg->base + _RISAF_REGX_OFFSET(region_id);
 	mmio_write_32(base + _RISAF_REG_CFGR, 0);
-	__DSB();
-	__ISB();
+
+	(void)mmio_read_32(base + _RISAF_REG_CFGR);
+}
+
+static void stm32_risaf_write_cfg(const struct device *dev, uint8_t region_id,
+				      const struct risaf_region *region)
+{
+	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
+	uintptr_t base = drv_cfg->base + _RISAF_REGX_OFFSET(region_id);
+
+	mmio_write_32(base + _RISAF_REG_CFGR, 0);
+	(void)mmio_read_32(base + _RISAF_REG_CFGR);
+
 	mmio_write_32(base + _RISAF_REG_STARTR, region->start_addr);
 	mmio_write_32(base + _RISAF_REG_ENDR, region->end_addr);
 	mmio_write_32(base + _RISAF_REG_CIDCFGR, region->cid_cfg);
-	mmio_write_32(base + _RISAF_REG_CFGR, region->cfg);
-	__DSB();
-	__ISB();
+	mmio_write_32(base + _RISAF_REG_CFGR, region->cfg & ~_RISAF_REG_CFGR_BREN);
+
+	(void)mmio_read_32(base + _RISAF_REG_CFGR);
 }
 
-static void stm32_risaf_write_subcfg(uintptr_t base,
-				     const struct risaf_subregion *subregion)
+static void stm32_risaf_write_subcfg(const struct device *dev, uint8_t region_id,
+					 uint8_t sub_id, const struct risaf_subregion *subregion)
 {
+	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
+	uintptr_t base = drv_cfg->base + _RISAF_SUBREGX_OFFSET(region_id, sub_id);
+
+	mmio_write_32(base + _RISAF_SUBREG_NESTR, 0);
+	(void)mmio_read_32(base + _RISAF_SUBREG_NESTR);
 	mmio_write_32(base + _RISAF_SUBREG_CFGR, 0);
-	__DSB();
-	__ISB();
+	(void)mmio_read_32(base + _RISAF_SUBREG_CFGR);
+
 	mmio_write_32(base + _RISAF_SUBREG_STARTR, subregion->start_addr);
 	mmio_write_32(base + _RISAF_SUBREG_ENDR, subregion->end_addr);
 	mmio_write_32(base + _RISAF_SUBREG_CFGR, subregion->cfg);
 	mmio_write_32(base + _RISAF_SUBREG_NESTR, subregion->nest_cfg);
-	__DSB();
-	__ISB();
+
+	(void)mmio_read_32(base + _RISAF_SUBREG_CFGR);
 }
 
-static void stm32_risaf_read_cfg(uintptr_t base, struct risaf_region *region)
+static void stm32_risaf_read_cfg(const struct device *dev, uint8_t region_id,
+				 struct risaf_region *region, uint32_t ecc_mode)
 {
+	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
+	uintptr_t base = drv_cfg->base + _RISAF_REGX_OFFSET(region_id);
+
+	region->id = region_id;
 	region->start_addr = mmio_read_32(base + _RISAF_REG_STARTR);
 	region->end_addr = mmio_read_32(base + _RISAF_REG_ENDR);
 	region->cid_cfg = mmio_read_32(base + _RISAF_REG_CIDCFGR);
 	region->cfg = mmio_read_32(base + _RISAF_REG_CFGR);
+	region->enc_mode = ecc_mode;
 }
 
-static void stm32_risaf_read_subcfg(uintptr_t base, struct risaf_subregion *subregion)
+static void stm32_risaf_read_subcfg(const struct device *dev, uint8_t region_id, uint8_t sub_id,
+				    struct risaf_subregion *subregion)
 {
+	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
+	uintptr_t base = drv_cfg->base + _RISAF_SUBREGX_OFFSET(region_id, sub_id);
+
+	subregion->id = sub_id;
 	subregion->start_addr = mmio_read_32(base + _RISAF_SUBREG_STARTR);
 	subregion->end_addr = mmio_read_32(base + _RISAF_SUBREG_ENDR);
 	subregion->nest_cfg = mmio_read_32(base + _RISAF_SUBREG_NESTR);
 	subregion->cfg = mmio_read_32(base + _RISAF_SUBREG_CFGR);
 }
 
-/* The copy is done in max_region */
-static void stm32_risaf_tmp_copy(const struct device *dev, uint8_t id)
+static bool stm32_risaf_region_is_enabled(const struct device *dev, uint8_t region_id)
 {
 	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
-	struct stm32_risaf_data *drv_data = dev_get_data(dev);
-	struct risaf_region tmp_region;
-	struct risaf_subregion tmp_subregion[_RISAF_MAX_SUBREGIONS];
-	int i;
-	uintptr_t base;
+	uintptr_t base = drv_cfg->base + _RISAF_REGX_OFFSET(region_id);
 
-	base = drv_cfg->base + _RISAF_REGX_OFFSET(id);
-	stm32_risaf_read_cfg(base, &tmp_region);
-	base = drv_cfg->base + _RISAF_REGX_OFFSET(drv_data->hw_nregions);
-	stm32_risaf_write_cfg(base, &tmp_region);
+	return (mmio_read_32(base + _RISAF_REG_CFGR) & _RISAF_REG_CFGR_BREN) != 0;
+}
+
+/* The copy is done in max_region */
+static void stm32_risaf_tmp_copy(const struct device *dev, uint8_t region_id)
+{
+	struct stm32_risaf_data *drv_data = dev_get_data(dev);
+	struct risaf_subregion tmp_subregion[_RISAF_MAX_SUBREGIONS];
+	struct risaf_region tmp_region;
+	int i;
+
+	stm32_risaf_read_cfg(dev, region_id, &tmp_region, 0);
+	stm32_risaf_write_cfg(dev, drv_data->hw_nregions, &tmp_region);
 
 	for (i = 0; i < _RISAF_MAX_SUBREGIONS; i++) {
-		base = drv_cfg->base + _RISAF_SUBREGX_OFFSET(id, i);
-		stm32_risaf_read_subcfg(base, &tmp_subregion[i]);
-		base = drv_cfg->base +
-		       _RISAF_SUBREGX_OFFSET(drv_data->hw_nregions, i);
-		stm32_risaf_write_subcfg(base, &tmp_subregion[i]);
+		stm32_risaf_read_subcfg(dev, region_id, i, &tmp_subregion[i]);
+		stm32_risaf_write_subcfg(dev, drv_data->hw_nregions, i, &tmp_subregion[i]);
 	}
+
+	stm32_risaf_enable_region(dev, drv_data->hw_nregions);
 }
 
-static void stm32_risaf_tmp_disable(const struct device *dev)
+static void stm32_risaf_dt_to_region(const struct risaf_dt_region *dt_region,
+				     struct risaf_region *region)
 {
-	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
-	struct stm32_risaf_data *drv_data = dev_get_data(dev);
-	uintptr_t base;
-
-	base = drv_cfg->base + _RISAF_REGX_OFFSET(drv_data->hw_nregions);
-	mmio_write_32(base + _RISAF_REG_CFGR, 0);
-	__DSB();
-	__ISB();
-	/* Associated subregions are automatically disabled */
-}
-
-static void stm32_risaf_dt_to_region(const struct device *dev,
-				     uint8_t idx, struct risaf_region *region,
-				     uint32_t *enc_mode)
-{
-	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
-	const struct risaf_dt_region *dt_region = &(drv_cfg->dt_regions[idx]);
-
 	region->id = _FLD_GET(DT_RISAF_ID, dt_region->st_protreg);
 	region->cfg = _RISAF_GET_REGION_CFG(dt_region->st_protreg);
 	region->cid_cfg = _RISAF_GET_REGION_CID_CFG(dt_region->st_protreg);
 	region->start_addr = dt_region->start_addr;
 	region->end_addr = dt_region->end_addr;
-
-	*enc_mode = _FLD_GET(DT_RISAF_ENC, dt_region->st_protreg);
+	region->enc_mode = _FLD_GET(DT_RISAF_ENC, dt_region->st_protreg);
 }
 
-static int stm32_risaf_get_nbsubregions(const struct device *dev,
-					uint8_t idx, struct risaf_region *region)
+static void stm32_risaf_dt_to_subregion(const struct risaf_dt_region *dt_region,
+					struct risaf_subregion *subregion)
 {
-	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
-	const struct risaf_dt_region *dt_region = &(drv_cfg->dt_regions[idx]);
-
-	return dt_region->ndt_regions;
-}
-
-static void stm32_risaf_dt_to_subregion(const struct device *dev, uint8_t idx,
-					uint8_t subidx, struct risaf_subregion *subregion)
-{
-	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
 	const struct risaf_dt_region *dt_subregion;
+	int i;
 
-	dt_subregion = &(drv_cfg->dt_regions[idx].dt_regions[subidx]);
-
-	subregion->id = _FLD_GET(DT_RISAF_SUB_ID, dt_subregion->st_protreg);
-	subregion->cfg = _RISAF_GET_SUBREGION_CFG(dt_subregion->st_protreg);
-	subregion->nest_cfg = _RISAF_GET_SUBREGION_NEST_CFG(dt_subregion->st_protreg);
-	subregion->start_addr = dt_subregion->start_addr;
-	subregion->end_addr = dt_subregion->end_addr;
+	for_each_dt_region(dt_region->dt_regions, dt_subregion, dt_region->ndt_regions, i) {
+		subregion[i].id = _FLD_GET(DT_RISAF_SUB_ID, dt_subregion->st_protreg);
+		subregion[i].cfg = _RISAF_GET_SUBREGION_CFG(dt_subregion->st_protreg);
+		subregion[i].nest_cfg = _RISAF_GET_SUBREGION_NEST_CFG(dt_subregion->st_protreg);
+		subregion[i].start_addr = dt_subregion->start_addr;
+		subregion[i].end_addr = dt_subregion->end_addr;
+	}
 }
 
-static int stm32_risaf_region_cfg(const struct device *dev,
-				  uint8_t idx, bool update)
+static int stm32_risaf_ecc_check(const struct device *dev, struct risaf_region *region)
 {
 	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
 	struct stm32_risaf_data *drv_data = dev_get_data(dev);
-	struct risaf_region region;
-	struct risaf_subregion subregion[_RISAF_MAX_SUBREGIONS];
-	int nbsubregions, i;
-	uintptr_t base;
-	uint32_t enabled;
-	uint32_t enc_mode;
 
-	stm32_risaf_dt_to_region(dev, idx, &region, &enc_mode);
-	/* MCE encryption is not available on these SoCs */
 	if ((IS_ENABLED(STM32MP23xxxx) || IS_ENABLED(STM32MP25xxxx)) &&
-	    enc_mode == RIF_ENC_MCE_EN) {
+	    region->enc_mode == RIF_ENC_MCE_EN) {
 		EMSG("RISAF region cannot be configured with MCE encryption\n");
 		return -EINVAL;
 	}
 
-	nbsubregions = stm32_risaf_get_nbsubregions(dev, idx, &region);
-
-	for (i = 0; i < nbsubregions; i++) {
-		stm32_risaf_dt_to_subregion(dev, idx, i, &subregion[i]);
-	}
-
-	/*
-	 * The last region is reserved like temporary region, to
-	 * allow On-the-fly update. you can setup this region in last
-	 */
-	if (idx != (drv_cfg->ndt_regions - 1) && region.id >= drv_data->hw_nregions)
-		return -EINVAL;
-
-	if (enc_mode) {
-		if ((!drv_data->variant->has_enc) || !(region.cfg & _RISAF_REG_CFGR_SEC))
+	if (region->enc_mode) {
+		if ((!drv_data->variant->has_enc) || !(region->cfg & _RISAF_REG_CFGR_SEC))
 			return -EINVAL;
 
-		if ((enc_mode == RIF_ENC_EN) &&
+		if ((region->enc_mode == RIF_ENC_EN) &&
 		    (!(mmio_read_32(drv_cfg->base + _RISAF_SR) & _RISAF_SR_KEYVALID) ||
 		     !(mmio_read_32(drv_cfg->base + _RISAF_SR) & _RISAF_SR_KEYRDY)))
 			return -EINVAL;
 
-		if ((enc_mode == RIF_ENC_MCE_EN) &&
+		if ((region->enc_mode == RIF_ENC_MCE_EN) &&
 		    (!(mmio_read_32(drv_cfg->base + _RISAF_XSR) & _RISAF_XSR_MKVALID)))
 			return -EINVAL;
 	}
 
-	base = drv_cfg->base + _RISAF_REGX_OFFSET(region.id);
-	enabled = mmio_read_32(base + _RISAF_REG_CFGR) &
-		_RISAF_REG_CFGR_BREN ? true : false;
+	return 0;
+}
 
-	/* create a temporary region before disabling and updating region */
-	if (enabled)
-		stm32_risaf_tmp_copy(dev, region.id);
+static int stm32_risaf_setup_region_cfg(const struct device *dev,
+					struct risaf_region *region,
+					struct risaf_subregion *subregion, uint8_t nb_sub)
+{
+	struct stm32_risaf_data *drv_data = dev_get_data(dev);
+	bool tmp_copy;
+	int i;
 
-	stm32_risaf_write_cfg(base, &region);
+	/*
+	 * The last region is reserved like temporary region, to
+	 * allow On-the-fly update:
+	 * - copy the region to temporary.
+	 * - update the region without activate the region
+	 * - update the subregion if needed
+	 * - activate the region if set
+	 * - disable the temporary region
+	 */
+	if (region->id >= drv_data->hw_nregions)
+		return -EINVAL;
 
-	for (i = 0; i < nbsubregions; i++) {
-		base = drv_cfg->base + _RISAF_SUBREGX_OFFSET(region.id, i);
-		stm32_risaf_write_subcfg(base, &subregion[i]);
-	}
+	if (stm32_risaf_ecc_check(dev, region))
+		return -EINVAL;
 
-	if (enabled)
-		stm32_risaf_tmp_disable(dev);
+	tmp_copy = stm32_risaf_region_is_enabled(dev, region->id);
+	if (tmp_copy)
+		stm32_risaf_tmp_copy(dev, region->id);
+
+	stm32_risaf_write_cfg(dev, region->id, region);
+
+	for (i = 0; i < nb_sub; i++)
+		stm32_risaf_write_subcfg(dev, region->id, subregion[i].id, &subregion[i]);
+
+	/* enable the region at the end of procedure */
+	if (region->cfg & _RISAF_REG_CFGR_BREN)
+		stm32_risaf_enable_region(dev, region->id);
+
+	if (tmp_copy)
+		stm32_risaf_disable_region(dev, drv_data->hw_nregions);
 
 	return 0;
 }
@@ -605,10 +650,102 @@ static __unused int stm32_risaf_encryption_check(const struct device *dev)
 	return 0;
 }
 
+/*
+ *  @brief get a dt_region which has been defined in initial device tree
+ *
+ *  @param dev
+ *  @param reg_id region id
+ *  @param sub_id check if subregion id exist if id is different of UINT32_MAX
+ *
+ * @return the dt_region ptr or NULL if no entry found.
+ */
+static const struct risaf_dt_region *stm32_risaf_get_dt_region(const struct device *dev,
+							       uint32_t reg_id, uint32_t sub_id)
+{
+	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
+	const struct risaf_dt_region *dt_region_reg = NULL;
+	const struct risaf_dt_region *dt_region_sub = NULL;
+	uint32_t i;
+
+	if (!find_dt_region(drv_cfg->dt_regions, dt_region_reg,
+			    drv_cfg->ndt_regions, i,
+			    (_FLD_GET(DT_RISAF_ID, dt_region_reg->st_protreg) == reg_id)))
+		return NULL;
+
+	if (sub_id == UINT32_MAX)
+		return dt_region_reg;
+
+	return find_dt_region(dt_region_reg->dt_regions, dt_region_sub,
+			      dt_region_reg->ndt_regions, i,
+			      (_FLD_GET(DT_RISAF_SUB_ID, dt_region_sub->st_protreg) == sub_id));
+}
+
+static int stm32_risaf_firewall_setup(const struct firewall_spec *spec, bool set_conf)
+{
+	struct risaf_subregion subregion_cfg[_RISAF_MAX_SUBREGIONS];
+	uint32_t region, protreg, region_id, sub_id, ecc_mode;
+	const struct risaf_dt_region *dt_region;
+	struct risaf_region region_cfg;
+	bool is_subregion;
+	int i;
+
+	if (spec->nargs != _RISAF_ACCESS_CTRL_ARGS)
+		return -EINVAL;
+
+	region = spec->args[_RISAF_ACCESS_CTRL_ARG_REGION];
+	region_id = _FLD_GET(DT_RISAFREGION_BASE, region);
+	is_subregion = !!_FLD_GET(DT_RISAFREGION_SUB, region);
+	protreg = spec->args[_RISAF_ACCESS_CTRL_ARG_PROTREG];
+
+	/* check if firewall region has been defined in initial dt */
+	sub_id = is_subregion ? _FLD_GET(DT_RISAF_SUB_ID, protreg) : UINT32_MAX;
+
+	dt_region = stm32_risaf_get_dt_region(spec->dev, region_id, sub_id);
+	if (!dt_region)
+		return -EINVAL;
+
+	/* read all current configuration of regions and subregion */
+	ecc_mode = _FLD_GET(DT_RISAF_ENC, dt_region->st_protreg);
+	stm32_risaf_read_cfg(spec->dev, region_id, &region_cfg, ecc_mode);
+
+	for (i = 0; i < _RISAF_MAX_SUBREGIONS; i++)
+		stm32_risaf_read_subcfg(spec->dev, region_id, i, &subregion_cfg[i]);
+
+	/* release the access rights to dt value or set to firewall request value */
+	protreg = set_conf ? protreg : dt_region->st_protreg;
+	if (is_subregion) {
+		subregion_cfg[sub_id].cfg = _RISAF_GET_SUBREGION_CFG(protreg);
+		subregion_cfg[sub_id].nest_cfg = _RISAF_GET_SUBREGION_NEST_CFG(protreg);
+	} else {
+		region_cfg.cfg = _RISAF_GET_REGION_CFG(protreg);
+		region_cfg.cid_cfg = _RISAF_GET_REGION_CID_CFG(protreg);
+	}
+
+	/* write the new configuration */
+	return stm32_risaf_setup_region_cfg(spec->dev, &region_cfg,
+					    subregion_cfg, _RISAF_MAX_SUBREGIONS);
+}
+
+static int stm32_risaf_firewall_set_conf(const struct firewall_spec *spec)
+{
+	return stm32_risaf_firewall_setup(spec, true);
+}
+
+static int stm32_risaf_firewall_release_conf(const struct firewall_spec *spec)
+{
+	return stm32_risaf_firewall_setup(spec, false);
+}
+
+static const struct firewall_controller_api __maybe_unused stm32_risaf_firewall_api = {
+	.set_conf = stm32_risaf_firewall_set_conf,
+	.release_conf = stm32_risaf_firewall_release_conf,
+};
+
 static int stm32_risaf_init(const struct device *dev)
 {
 	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
 	struct stm32_risaf_data *drv_data = dev_get_data(dev);
+	const struct risaf_dt_region *dt_region;
 	struct firewall_spec *firewall;
 	struct clk *clk;
 	int i, err;
@@ -637,8 +774,8 @@ static int stm32_risaf_init(const struct device *dev)
 		goto out;
 	}
 
-	for (i = 0; i < drv_cfg->ndt_regions; i++) {
-		if (drv_cfg->dt_regions[i].ndt_regions > drv_data->hw_nsubregions) {
+	for_each_dt_region(drv_cfg->dt_regions, dt_region, drv_cfg->ndt_regions, i) {
+		if (dt_region->ndt_regions > drv_data->hw_nsubregions) {
 			err = -EINVAL;
 			goto out;
 		}
@@ -663,8 +800,13 @@ static int stm32_risaf_init(const struct device *dev)
 		}
 	}
 
-	for (i = 0; i < drv_cfg->ndt_regions; i++) {
-		err = stm32_risaf_region_cfg(dev, i, true);
+	for_each_dt_region(drv_cfg->dt_regions, dt_region, drv_cfg->ndt_regions, i) {
+		struct risaf_subregion subregion[_RISAF_MAX_SUBREGIONS];
+		struct risaf_region region;
+
+		stm32_risaf_dt_to_region(dt_region, &region);
+		stm32_risaf_dt_to_subregion(dt_region, subregion);
+		err = stm32_risaf_setup_region_cfg(dev, &region, subregion, dt_region->ndt_regions);
 		if (err)
 			break;
 	}
@@ -799,7 +941,7 @@ DEVICE_DT_INST_DEFINE(n, &stm32_risaf_init,						\
 		      &stm32_risaf_data_##name####n,					\
 		      &stm32_risaf_cfg_##name####n,					\
 		      CORE, 30,								\
-		      NULL);
+		      &stm32_risaf_firewall_api);
 
 DT_INST_FOREACH_STATUS_OKAY_VARGS(STM32_RISAF_INIT, DT_DRV_COMPAT, stm32mp25_variant)
 
