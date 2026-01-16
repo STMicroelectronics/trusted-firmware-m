@@ -126,4 +126,22 @@
 	 ((enabled) << DT_RISAF_SUB_EN_SHIFT) |		\
 	 (risaf_subregion))
 
+/* for RISAF access-controllers on
+ * region:
+ *   access-controllers = <&risaf_phandle RISAFREGION(region_id, IS_BASEREGION) RISAFPROT()>
+ * sub-region:
+ *   access-controllers = <&risaf_phandle RISAFREGION(region_id, IS_SUBREGION) RISAFSUBPROT()>
+ */
+#define DT_RISAFREGION_SUB_SHIFT		0
+#define DT_RISAFREGION_SUB_MASK			BIT(0)
+#define DT_RISAFREGION_BASE_SHIFT		8
+#define DT_RISAFREGION_BASE_MASK		GENMASK_32(15, 8)
+
+#define IS_SUBREGION				1
+#define IS_BASEREGION				0
+
+#define RISAFREGION(base_region, is_subregion)		\
+	(((base_region) << DT_RISAFREGION_BASE_SHIFT) |	\
+	 ((is_subregion) << DT_RISAFREGION_SUB_SHIFT))
+
 #endif /* _DT_BINDINGS_STM32MP2_RISAF_H */
