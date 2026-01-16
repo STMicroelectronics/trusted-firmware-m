@@ -203,6 +203,7 @@ if(BL2)
             $<$<BOOL:${PLATFORM_DEFAULT_ROTPK}>:ext/common/template/tfm_rotpk.c>
             $<$<OR:$<BOOL:${PLATFORM_DEFAULT_NV_COUNTERS}>,$<BOOL:${PLATFORM_DEFAULT_OTP}>>:ext/common/template/flash_otp_nv_counters_backend.c>
             $<$<BOOL:${PLATFORM_DEFAULT_OTP}>:ext/common/template/otp_flash.c>
+            $<$<BOOL:${PLATFORM_DEFAULT_BL2_FWU}>:ext/common/template/tfm_bl2_fwu.c>
             $<$<BOOL:${BL2_SANITIZE}>:ext/common/tfm_sanitize_handlers.c>
             ./ext/common/tfm_fatal_error.c
     )
