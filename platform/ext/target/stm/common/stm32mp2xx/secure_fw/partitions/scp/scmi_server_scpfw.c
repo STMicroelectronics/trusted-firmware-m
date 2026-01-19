@@ -287,8 +287,10 @@ static const struct stm32_scmi_clkd scmi_dt_clocks_##n[] = {			\
 	(DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, clk_list, CLK_ELE, (), n)),	\
 	())									\
 };										\
-static const struct stm32_scmi_regud scmi_dt_regus_##n[] = {			\
-	DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, regu_list, REGU_ELE, (), n)	\
+static const struct stm32_scmi_regud scmi_dt_regus_##n[] = {                    \
+	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, regu_list),			\
+	(DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, regu_list, REGU_ELE, (), n)),	\
+	())									\
 };										\
 static struct clk plat_clk_##n[] = {						\
 	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, clk_list),				\
@@ -331,7 +333,7 @@ static const struct stm32_scmi_config stm32_scmi_cfg_##n = {			\
 	.ndt_clocks_max =  DT_PROP_OR(DT_DRV_INST(n), clk_id_max, 0),		\
 	.dt_regus  = scmi_dt_regus_##n,						\
 	.ndt_regus = ARRAY_SIZE(scmi_dt_regus_##n),				\
-	.ndt_regus_max = DT_INST_PROP(n, regu_id_max),				\
+	.ndt_regus_max = DT_PROP_OR(DT_DRV_INST(n), regu_id_max, 0),		\
 	.dt_pd = scmi_dt_pd_##n,						\
 	.ndt_pd = _DT_INST_PD_LIST_NUM(n),					\
 	.ndt_pd_max =  DT_PROP_OR(DT_DRV_INST(n), pd_id_max, 0),		\
