@@ -407,23 +407,19 @@ static int stm32_risaf_ecc_check(const struct device *dev, struct risaf_region *
 	const struct stm32_risaf_config *drv_cfg = dev_get_config(dev);
 	struct stm32_risaf_data *drv_data = dev_get_data(dev);
 
-	if ((IS_ENABLED(STM32MP23xxxx) || IS_ENABLED(STM32MP25xxxx)) &&
-	    region->enc_mode == RIF_ENC_MCE_EN) {
-		EMSG("RISAF region cannot be configured with MCE encryption\n");
-		return -EINVAL;
-	}
-
 	if (region->enc_mode) {
 		if ((!drv_data->variant->has_enc) || !(region->cfg & _RISAF_REG_CFGR_SEC))
 			return -EINVAL;
 
 		if ((region->enc_mode == RIF_ENC_EN) &&
-		    (!(mmio_read_32(drv_cfg->base + _RISAF_SR) & _RISAF_SR_KEYVALID) ||
+		    ((drv_data->variant->default_encryption_fn == NULL) ||
+		     !(mmio_read_32(drv_cfg->base + _RISAF_SR) & _RISAF_SR_KEYVALID) ||
 		     !(mmio_read_32(drv_cfg->base + _RISAF_SR) & _RISAF_SR_KEYRDY)))
 			return -EINVAL;
 
 		if ((region->enc_mode == RIF_ENC_MCE_EN) &&
-		    (!(mmio_read_32(drv_cfg->base + _RISAF_XSR) & _RISAF_XSR_MKVALID)))
+		    ((drv_data->variant->mce_encryption_fn == NULL) ||
+		     !(mmio_read_32(drv_cfg->base + _RISAF_XSR) & _RISAF_XSR_MKVALID)))
 			return -EINVAL;
 	}
 
