@@ -12,6 +12,7 @@
 #include "bootutil_priv.h"
 #include "bootutil/bootutil_log.h"
 #include "Driver_Flash.h"
+#include "tfm_plat_bl2_fwu.h"
 #ifdef PLATFORM_HAS_BOOT_DMA
 #include "boot_dma.h"
 #endif /* PLATFORM_HAS_BOOT_DMA */
@@ -384,6 +385,8 @@ int flash_area_erase(const struct flash_area *area, uint32_t off, uint32_t len)
     int32_t rc = 0;
 
     BOOT_LOG_DBG("erase area=%d, off=%#x, len=%#x", area->fa_id, off, len);
+
+    tfm_plat_bl2_notify_erase();
 
     if (!is_range_valid(area, off, len)) {
         return -1;
