@@ -327,16 +327,16 @@ static const struct stm32_scmi_config stm32_scmi_cfg_##n = {			\
 	.dt_chan = &scmi_dt_chan_##n,						\
 	.dt_resets = scmi_dt_resets_##n,					\
 	.ndt_resets = _DT_INST_RST_LIST_NUM(n),				        \
-	.ndt_resets_max = DT_PROP_OR(DT_DRV_INST(n), rst_id_max, 0),		\
+	.ndt_resets_max = DT_INST_PROP_OR(n, rst_id_max, 0),			\
 	.dt_clocks = scmi_dt_clocks_##n,					\
 	.ndt_clocks = _DT_INST_CLK_LIST_NUM(n), 				\
-	.ndt_clocks_max =  DT_PROP_OR(DT_DRV_INST(n), clk_id_max, 0),		\
+	.ndt_clocks_max =  DT_INST_PROP_OR(n, clk_id_max, 0),			\
 	.dt_regus  = scmi_dt_regus_##n,						\
 	.ndt_regus = ARRAY_SIZE(scmi_dt_regus_##n),				\
-	.ndt_regus_max = DT_PROP_OR(DT_DRV_INST(n), regu_id_max, 0),		\
+	.ndt_regus_max = DT_INST_PROP_OR(n, regu_id_max, 0),			\
 	.dt_pd = scmi_dt_pd_##n,						\
 	.ndt_pd = _DT_INST_PD_LIST_NUM(n),					\
-	.ndt_pd_max =  DT_PROP_OR(DT_DRV_INST(n), pd_id_max, 0),		\
+	.ndt_pd_max =  DT_INST_PROP_OR(n, pd_id_max, 0),			\
 };										\
 DEVICE_DT_INST_DEFINE(n ,&stm32_scmi_init, NULL,				\
 		      &plat_clk_##n[0],						\
