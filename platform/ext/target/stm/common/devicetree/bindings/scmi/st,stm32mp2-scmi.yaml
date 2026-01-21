@@ -42,10 +42,10 @@ properties:
     required: false
 
   regu-list:
-    required: true
+    required: false
 
   regu-id-max:
-    required: true
+    required: false
 
   pd-list:
     required: false
