@@ -244,9 +244,9 @@ struct stm32_risaf_data {
 };
 
 #define for_each_dt_region(_dt_region_tbl, _dt_region, _n_dt_region, _i)		\
-	for (i = 0, _dt_region = (_dt_region_tbl);					\
-	     i < (_n_dt_region);							\
-	     i++, _dt_region++)
+	for (_i = 0, _dt_region = (_dt_region_tbl);					\
+	     _i < (_n_dt_region);							\
+	     _i++, _dt_region++)
 
 #define find_dt_region(_dt_region_tbl, _dt_region, _n_dt_region, _i, _cond)		\
 ({											\
