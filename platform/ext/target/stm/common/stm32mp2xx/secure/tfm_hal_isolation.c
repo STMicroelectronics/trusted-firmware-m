@@ -215,18 +215,39 @@ FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_set_up_static_boundaries(uintptr_t *
  * 1. The maximum number of allowed MMIO regions is 5.
  * 2. Highest 8 bits are for index. It supports 256 unique handles at most.
  */
-/*
- * TODO: boundary service in partitions is not yet implemented
- * */
 FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_bind_boundary(const struct partition_load_info_t *p_ldinf,
                                                           uintptr_t *p_boundary)
 {
+	bool privileged;
+	bool ns_agent;
+	uint32_t partition_attrs = 0;
+
+#if TFM_ISOLATION_LEVEL == 1
+	privileged = true;
+#else
+	privileged = IS_PSA_ROT(p_ldinf);
+#endif
+	ns_agent = (!!((p_ldinf)->flags & PARTITION_NS_AGENT_TZ));
+
+	partition_attrs = ((uint32_t)privileged << HANDLE_ATTR_PRIV_POS) & HANDLE_ATTR_PRIV_MASK;
+	partition_attrs |= ((uint32_t)ns_agent << HANDLE_ATTR_NS_POS) & HANDLE_ATTR_NS_MASK;
+	*p_boundary = (uintptr_t)partition_attrs;
+
 	FIH_RET(fih_int_encode(TFM_HAL_SUCCESS));
 }
 
 FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_activate_boundary(const struct partition_load_info_t *p_ldinf,
                                                               uintptr_t boundary)
 {
+	CONTROL_Type ctrl;
+	uint32_t local_handle = (uint32_t)boundary;
+	bool privileged = !!(local_handle & HANDLE_ATTR_PRIV_MASK);
+
+	/* Privileged level is required to be set always */
+	ctrl.w = __get_CONTROL();
+	ctrl.b.nPRIV = privileged ? 0 : 1;
+	__set_CONTROL(ctrl.w);
+
 	FIH_RET(fih_int_encode(TFM_HAL_SUCCESS));
 }
 
@@ -250,31 +271,27 @@ FIH_RET_TYPE(enum tfm_hal_status_t) tfm_hal_memory_check(uintptr_t boundary, uin
 		FIH_RET(fih_int_encode(TFM_HAL_ERROR_INVALID_INPUT));
 
 	if (access_type & TFM_HAL_ACCESS_NS)
-	        flags |= CMSE_NONSECURE;
+		flags |= CMSE_NONSECURE;
 
 	if (!((uint32_t)boundary & HANDLE_ATTR_PRIV_MASK))
-	        flags |= CMSE_MPU_UNPRIV;
+		flags |= CMSE_MPU_UNPRIV;
 
 	/* This check is only done for ns_agent_tz */
 	if ((uint32_t)boundary & HANDLE_ATTR_NS_MASK) {
-	        CONTROL_Type ctrl;
-	        ctrl.w = __TZ_get_CONTROL_NS();
-	        if (ctrl.b.nPRIV == 1)
-	                flags |= CMSE_MPU_UNPRIV;
-	        else
-	                flags &= ~CMSE_MPU_UNPRIV;
+		CONTROL_Type ctrl;
 
-	        flags |= CMSE_NONSECURE;
+		ctrl.w = __TZ_get_CONTROL_NS();
+		if (ctrl.b.nPRIV == 1)
+			flags |= CMSE_MPU_UNPRIV;
+		else
+			flags &= ~CMSE_MPU_UNPRIV;
+
+		flags |= CMSE_NONSECURE;
 	}
 
-        /*
-         * uncomment after tfm_hal_bind_boundary & tfm_hal_activate_boundary implementation
-         */
-        /*
-	if (cmse_check_address_range((void *)base, size, flags) == 0)
+	if (cmse_check_address_range((void *)base, size, flags) == 0) {
 		FIH_RET(fih_int_encode(TFM_HAL_ERROR_MEM_FAULT));
-	*/
-
+	}
 	/* must be completed by rif check */
 
 	FIH_RET(fih_int_encode(TFM_HAL_SUCCESS));
@@ -287,7 +304,7 @@ FIH_RET_TYPE(bool) tfm_hal_boundary_need_switch(uintptr_t boundary_from,
 		FIH_RET(fih_int_encode(false));
 
 	if (((uint32_t)boundary_from & HANDLE_ATTR_PRIV_MASK) &&
-            ((uint32_t)boundary_to & HANDLE_ATTR_PRIV_MASK))
+		((uint32_t)boundary_to & HANDLE_ATTR_PRIV_MASK))
 		FIH_RET(fih_int_encode(false));
 
 	FIH_RET(fih_int_encode(true));
