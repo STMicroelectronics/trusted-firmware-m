@@ -124,6 +124,46 @@ static int stm32mp2_a35_regu(const struct device *dev)
 #define PWR_CPU1D1SR_DSTATE_STANDBY ( 0x4 << PWR_CPU1D1SR_DSTATE_Pos)
 #define IAC_BIT(_id) BIT(_id % 32)
 
+static __unused int stm32mp2_a35_set_boot_config(const struct device *dev)
+{
+	const struct stm32_rproc_config *cfg = dev_get_config(dev);
+	int i, ret = 0, err;
+	struct firewall_spec *firewall;
+
+	if (cfg->irq_ack != IRQ_INVALID) {
+		/* clear rising pending register */
+		EXTI1->RPR3 = BIT(1);
+		/* unmask C2 int & event C1SEV (65) */
+		EXTI1->C2IMR3 |= BIT(1);
+		EXTI1->C2EMR3 |= BIT(1);
+		NVIC_EnableIRQ(cfg->irq_ack);
+	} else {
+		stm32_rproc_running_set(dev, true);
+	}
+
+	/* set bootrom access controller configuration */
+	for_each_firewall(cfg->firewall_ctrls, firewall,
+			  cfg->n_firewall_ctrls, i) {
+		err = firewall_set_configuration(firewall);
+		if (err != 0) {
+			DMSG("[%s] fail to set firewall conf %d\n", __func__, i);
+			return err;
+		}
+	}
+
+#if defined(CONFIG_STM32MP25X_REVY)
+	/*
+	 * IAC workaround
+	 * mask:
+	 * RAMCFG(108), TAMP(152), PWR(155), RCC(156)
+	 */
+	IAC->IER[3] &= ~(IAC_BIT(108));
+	IAC->IER[4] &= ~(IAC_BIT(152) | IAC_BIT(155) | IAC_BIT(156));
+#endif
+
+	return ret;
+}
+
 static __unused int stm32mp2_a35_restore(const struct device *dev)
 {
 	const struct stm32_rproc_config *cfg = dev_get_config(dev);
@@ -221,9 +261,8 @@ static __unused int stm32mp2_a35_init(const struct device *dev)
 static __unused int stm32mp2_a35_start(const struct device *dev)
 {
 	const struct stm32_rproc_config *cfg = dev_get_config(dev);
-	struct firewall_spec *firewall;
 	uint32_t cfgr;
-	int i, err;
+	int err;
 
 	if (((PWR_S->CPU1D1SR & PWR_CPU1D1SR_DSTATE) == PWR_CPU1D1SR_DSTATE_STANDBY)
 	    ||!(PWR_S->CPU1D1SR & PWR_CPU1D1SR_HOLD_BOOT_Msk)) {
@@ -238,36 +277,10 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 			return err;
 	}
 
-	if (cfg->irq_ack != IRQ_INVALID) {
-		/* clear rising pending register */
-		EXTI1->RPR3 = BIT(1);
-		/* unmask C2 int & event C1SEV (65) */
-		EXTI1->C2IMR3 |= BIT(1);
-		EXTI1->C2EMR3 |= BIT(1);
-		NVIC_EnableIRQ(cfg->irq_ack);
-	} else {
-		stm32_rproc_running_set(dev, true);
-	}
-
-	/* set bootrom access controller configuration */
-	for_each_firewall(cfg->firewall_ctrls, firewall,
-			  cfg->n_firewall_ctrls, i) {
-		err = firewall_set_configuration(firewall);
-		if (err != 0) {
-			DMSG("[%s] fail to set firewall conf %d\n", __func__, i);
-			return err;
-		}
-	}
-
-#if defined(CONFIG_STM32MP25X_REVY)
-	/*
-	 * IAC workaround
-	 * mask:
-	 * RAMCFG(108), TAMP(152), PWR(155), RCC(156)
-	 */
-	IAC->IER[3] &= ~(IAC_BIT(108));
-	IAC->IER[4] &= ~(IAC_BIT(152) | IAC_BIT(155) | IAC_BIT(156));
-#endif
+	/* Prepare ROM code execution */
+	err = stm32mp2_a35_set_boot_config(dev);
+	if (err)
+		return err;
 
 	/*  power up cpu, in case it is in standby */
 	err = reset_control_deassert(&cfg->rst_ctl);
