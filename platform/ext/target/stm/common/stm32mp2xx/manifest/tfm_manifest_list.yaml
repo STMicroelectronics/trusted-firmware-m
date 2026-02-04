@@ -42,7 +42,7 @@
       "conditional": "TFM_PARTITION_SCP",
       "version_major": 0,
       "version_minor": 1,
-      "pid": 271,
+      "pid": 272,
       "linker_pattern": {
         "library_list": [
           "*tfm_*partition_scp*"
@@ -56,7 +56,7 @@
       "conditional": "TFM_PARTITION_IPCC",
       "version_major": 0,
       "version_minor": 1,
-      "pid": 272,
+      "pid": 273,
       "linker_pattern": {
         "library_list": [
           "*tfm_*partition_ipcc*"
@@ -70,7 +70,7 @@
       "conditional": "TFM_PARTITION_PM",
       "version_major": 0,
       "version_minor": 1,
-      "pid": 273,
+      "pid": 274,
       "linker_pattern": {
         "library_list": [
           "*tfm_*partition_pm*"
@@ -112,7 +112,7 @@
       "conditional": "TFM_PARTITION_STL",
       "version_major": 0,
       "version_minor": 1,
-      "pid": 274,
+      "pid": 275,
       "linker_pattern": {
         "library_list": [
           "*tfm_*partition_stl*"
