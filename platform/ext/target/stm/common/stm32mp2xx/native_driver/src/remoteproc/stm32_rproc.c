@@ -57,6 +57,7 @@ struct stm32_rproc_config {
 struct stm32_rproc_data {
 	struct rproc_spec rproc;
 	bool running;
+	bool restore_on_ack;
 	const struct stm32_rproc_variant *variant;
 	const struct device *rsc_tab_addr_dev;
 	const struct device *rsc_tab_size_dev;
@@ -145,22 +146,49 @@ static int stm32mp2_a35_regu(const struct device *dev)
 #define EXTI1_C2SEV	BIT(0)
 #define EXTI1_C1SEV	BIT(1)
 
+void stm32mp2_irq_ack_enable(uint32_t irq_ack)
+{
+	/* clear rising pending register C1SEV */
+	EXTI1->RPR3 = EXTI1_C1SEV;
+	/* unmask C2 int & event C1SEV (65) */
+	EXTI1->C2IMR3 |= EXTI1_C1SEV;
+	EXTI1->C2EMR3 |= EXTI1_C1SEV;
+
+	if (irq_ack != IRQ_INVALID) {
+		NVIC_ClearPendingIRQ(irq_ack);
+		NVIC_EnableIRQ(irq_ack);
+	}
+}
+
+void stm32mp2_irq_ack_disable(uint32_t irq_ack)
+{
+	/* mask c2 int & event C1SEV */
+	EXTI1->C2IMR3 &= ~EXTI1_C1SEV;
+	EXTI1->C2EMR3 &= ~EXTI1_C1SEV;
+
+	/* clear rising pending register C1SEV */
+	EXTI1->RPR3 = EXTI1_C1SEV;
+
+	if (irq_ack != IRQ_INVALID) {
+		NVIC_DisableIRQ(irq_ack);
+		NVIC_ClearPendingIRQ(irq_ack);
+	}
+}
+
+void stm32mp2_irq_ack_clear(uint32_t irq_ack)
+{
+	/* clear rising pending register C1SEV */
+	EXTI1->RPR3 = EXTI1_C1SEV;
+	if (irq_ack != IRQ_INVALID) {
+		NVIC_ClearPendingIRQ(irq_ack);
+	}
+}
+
 static __unused int stm32mp2_a35_set_boot_config(const struct device *dev)
 {
 	const struct stm32_rproc_config *cfg = dev_get_config(dev);
 	int i, ret = 0, err;
 	struct firewall_spec *firewall;
-
-	if (cfg->irq_ack != IRQ_INVALID) {
-		/* clear rising pending register C1SEV */
-		EXTI1->RPR3 = EXTI1_C1SEV;
-		/* unmask C2 int & event C1SEV (65) */
-		EXTI1->C2IMR3 |= EXTI1_C1SEV;
-		EXTI1->C2EMR3 |= EXTI1_C1SEV;
-		NVIC_EnableIRQ(cfg->irq_ack);
-	} else {
-		stm32_rproc_running_set(dev, true);
-	}
 
 	/* set bootrom access controller configuration */
 	for_each_firewall(cfg->firewall_ctrls, firewall,
@@ -282,6 +310,7 @@ static __unused int stm32mp2_a35_init(const struct device *dev)
 static __unused int stm32mp2_a35_start(const struct device *dev)
 {
 	const struct stm32_rproc_config *cfg = dev_get_config(dev);
+	struct stm32_rproc_data *data = dev_get_data(dev);
 	uint32_t cfgr;
 	int err;
 
@@ -303,6 +332,13 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 	if (err)
 		return err;
 
+	if (cfg->irq_ack != IRQ_INVALID) {
+		data->restore_on_ack = true;
+		stm32mp2_irq_ack_enable(cfg->irq_ack);
+	} else {
+		stm32_rproc_running_set(dev, true);
+	}
+
 	/*  power up cpu, in case it is in standby */
 	err = reset_control_deassert(&cfg->rst_ctl);
 	if (err)
@@ -318,22 +354,14 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 
 static __unused int stm32mp2_a35_release(const struct device *dev)
 {
-	const struct stm32_rproc_config *cfg = dev_get_config(dev);
 	int ret;
 
 	ret = stm32mp2_a35_restore(dev);
 
-	if (cfg->irq_ack != IRQ_INVALID) {
-		NVIC_DisableIRQ(cfg->irq_ack);
-		NVIC_ClearPendingIRQ(cfg->irq_ack);
-		/* mask c2 int & event C1SEV */
-		EXTI1->C2IMR3 &= ~BIT(1);
-		EXTI1->C2EMR3 &= ~BIT(1);
-		/* clear rising pending register C1SEV */
-		EXTI1->RPR3 = BIT(1);
-	}
-
 	stm32_pwr_regulator_restore();
+
+	/* Restore a35 debug configuration */
+	stm32_bsec_restore_cortexa_debug_conf();
 
 	stm32_rproc_running_set(dev, true);
 
@@ -347,10 +375,17 @@ static __unused bool stm32mp2_a35_is_running(const struct device *dev)
 
 static __unused void stm32mp2_a35_irq_ack(const struct device *dev)
 {
-	stm32mp2_a35_release(dev);
+	const struct stm32_rproc_config *cfg = dev_get_config(dev);
+	struct stm32_rproc_data *data = dev_get_data(dev);
 
-	/* Restore a35 debug configuration */
-	stm32_bsec_restore_cortexa_debug_conf();
+	if (data->restore_on_ack) {
+		stm32mp2_a35_release(dev);
+
+		stm32mp2_irq_ack_disable(cfg->irq_ack);
+		data->restore_on_ack = false;
+	} else {
+		stm32mp2_irq_ack_clear(cfg->irq_ack);
+	}
 }
 
 static struct rproc_spec *stm32_rproc_get(const struct device *dev)
