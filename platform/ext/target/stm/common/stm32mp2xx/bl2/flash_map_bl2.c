@@ -140,6 +140,7 @@ const struct flash_area flash_map[] = {
 
 const int flash_map_entry_num = ARRAY_SIZE(flash_map);
 
+#if STM32_BL2
 int boot_get_image_exec_ram_info(uint32_t image_id,
                                  uint32_t *exec_ram_start,
                                  uint32_t *exec_ram_size)
@@ -168,3 +169,4 @@ int boot_get_image_exec_ram_info(uint32_t image_id,
 
     return rc;
 }
+#endif /* STM32_BL2 */
