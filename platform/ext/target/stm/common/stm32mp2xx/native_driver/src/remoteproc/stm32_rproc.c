@@ -121,8 +121,29 @@ static int stm32mp2_a35_regu(const struct device *dev)
  * All direct access to exti, pwr or IAC hadware block must be rework.
  * Wait the interrupt framework to enable or mask a specific interrupt
  */
-#define PWR_CPU1D1SR_DSTATE_STANDBY ( 0x4 << PWR_CPU1D1SR_DSTATE_Pos)
 #define IAC_BIT(_id) BIT(_id % 32)
+
+#define LL_PWR_CPU_RESET   0x0U
+#define LL_PWR_CPU_CRUN    0x1U
+#define LL_PWR_CPU_CSLEEP  0x2U
+#define LL_PWR_CPU_CSTOP   0x3U
+
+#define LL_PWR_DRUN       0x0U
+#define LL_PWR_DSTOP1     0x1U
+#define LL_PWR_DSTOP2     0x2U
+#define LL_PWR_DSTOP3     0x3U
+#define LL_PWR_DSTANDBY   0x4U
+
+#define PWR_CPU1D1SR_DSTATE_DSTANDBY	(LL_PWR_DSTANDBY << PWR_CPU1D1SR_DSTATE_Pos)
+#define PWR_CPU1D1SR_CSTATE_CSTOP	(LL_PWR_CPU_CSTOP << PWR_CPU1D1SR_CSTATE_Pos)
+#define PWR_CPU1D1SR_CSTATE_RESET	(LL_PWR_CPU_RESET << PWR_CPU1D1SR_CSTATE_Pos)
+
+#define PWR_CPU1D1SR_D1_DSTANDBY	(PWR_CPU1D1SR_DSTATE_DSTANDBY | \
+					 PWR_CPU1D1SR_CSTATE_RESET)
+
+/* Waiting EXTI support with interrupt framework */
+#define EXTI1_C2SEV	BIT(0)
+#define EXTI1_C1SEV	BIT(1)
 
 static __unused int stm32mp2_a35_set_boot_config(const struct device *dev)
 {
@@ -131,11 +152,11 @@ static __unused int stm32mp2_a35_set_boot_config(const struct device *dev)
 	struct firewall_spec *firewall;
 
 	if (cfg->irq_ack != IRQ_INVALID) {
-		/* clear rising pending register */
-		EXTI1->RPR3 = BIT(1);
+		/* clear rising pending register C1SEV */
+		EXTI1->RPR3 = EXTI1_C1SEV;
 		/* unmask C2 int & event C1SEV (65) */
-		EXTI1->C2IMR3 |= BIT(1);
-		EXTI1->C2EMR3 |= BIT(1);
+		EXTI1->C2IMR3 |= EXTI1_C1SEV;
+		EXTI1->C2EMR3 |= EXTI1_C1SEV;
 		NVIC_EnableIRQ(cfg->irq_ack);
 	} else {
 		stm32_rproc_running_set(dev, true);
@@ -227,17 +248,17 @@ static __unused int stm32mp2_a35_stop(const struct device *dev)
 	else
 		stm32mp2_a35_restore(dev);
 
-	/* clear event if pending */
-	EXTI1->RPR3 = BIT(0);
+	/* clear event if pending C2SEV */
+	EXTI1->RPR3 = EXTI1_C2SEV;
 	/* reset cpu */
 	reset_control_assert(&cfg->rst_ctl);
 	/* send CPU2 SEV event to cpu1 (exti 64)*/
-	EXTI1->SWIER3 = BIT(0);
+	EXTI1->SWIER3 = EXTI1_C2SEV;
 	/* check cpu in hold boot */
 	return  mmio_read32_poll_timeout(((uint32_t)&PWR_S->CPU1D1SR), cfgr,
 					 (cfgr & PWR_CPU1D1SR_HOLD_BOOT_Msk) &&
 					 ((cfgr & PWR_CPU1D1SR_DSTATE)
-					  != PWR_CPU1D1SR_DSTATE_STANDBY), 10);
+					  != PWR_CPU1D1SR_DSTATE_DSTANDBY), 10);
 }
 
 static __unused int stm32mp2_a35_init(const struct device *dev)
@@ -247,11 +268,11 @@ static __unused int stm32mp2_a35_init(const struct device *dev)
 	stm32_rproc_running_set(dev, false);
 
 	/* unmask event before rif has initialized CID1 filtering on EXTI1_C1CIDCFGR*/
-	EXTI1->C1IMR3 |= BIT(0);
+	EXTI1->C1IMR3 |= EXTI1_C2SEV;
 
 	if (cfg->irq_ack != IRQ_INVALID){
-		/* enable rising trigger */
-		EXTI1->RTSR3 |= BIT(1);
+		/* enable rising trigger C1SEV */
+		EXTI1->RTSR3 |= EXTI1_C1SEV;
 		NVIC_SetPriority(cfg->irq_ack, 1);
 	}
 
@@ -264,7 +285,7 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 	uint32_t cfgr;
 	int err;
 
-	if (((PWR_S->CPU1D1SR & PWR_CPU1D1SR_DSTATE) == PWR_CPU1D1SR_DSTATE_STANDBY)
+	if (((PWR_S->CPU1D1SR & PWR_CPU1D1SR_DSTATE) == PWR_CPU1D1SR_DSTATE_DSTANDBY)
 	    ||!(PWR_S->CPU1D1SR & PWR_CPU1D1SR_HOLD_BOOT_Msk)) {
 		err = stm32mp2_a35_stop(dev);
 		if (err)
@@ -291,7 +312,7 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 	return mmio_read32_poll_timeout(((uint32_t)&PWR_S->CPU1D1SR), cfgr,
 					!(cfgr & PWR_CPU1D1SR_HOLD_BOOT_Msk) ||
 					((cfgr & PWR_CPU1D1SR_DSTATE)
-					 == PWR_CPU1D1SR_DSTATE_STANDBY), 10);
+					 == PWR_CPU1D1SR_DSTATE_DSTANDBY), 10);
 
 }
 
