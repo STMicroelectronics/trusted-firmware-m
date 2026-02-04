@@ -136,7 +136,7 @@ struct reset_driver_api {
  * @retval >0 if the reset line is asserted
  * @retval  0 if the reset line is not asserted
  */
-int reset_control_status(struct reset_control *rstc);
+int reset_control_status(const struct reset_control *rstc);
 
 /**
  * @brief Put the device in reset state

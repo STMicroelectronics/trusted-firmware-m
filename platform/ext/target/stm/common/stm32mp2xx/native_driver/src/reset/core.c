@@ -27,7 +27,7 @@ static inline int _status(const struct device *dev, uint32_t id)
 	return api->status(dev, id);
 }
 
-int reset_control_status(struct reset_control *rstc)
+int reset_control_status(const struct reset_control *rstc)
 {
 	int dev_err = _is_valid_dev(rstc);
 
