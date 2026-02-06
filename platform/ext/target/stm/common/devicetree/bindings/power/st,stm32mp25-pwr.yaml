@@ -11,8 +11,6 @@ compatible: "st,stm32mp25-pwr"
 include:
   - base.yaml
   - reset-device.yaml
-  - st,stm32mp25-rif.yaml
-  - access-controller.yaml
   - name: st,stm32mp25-syscfg-properties.yaml
     property-allowlist:
       - st,syscfg-vddio
@@ -26,62 +24,30 @@ properties:
     description: |
       backup domain reset
 
-  "#access-controller-cells":
-    const: 1
+  st,syscfg-vddio:
+    required: true
 
-access-controller-cells:
-  - protreg
+  st,popl-d1-ms:
+    type: int
+    description: |
+      PWR_CPU_ON pulse low configuration (PWR_D1CR)
 
-child-binding:
-  compatible: "st,stm32mp25-pwr-regu"
+  st,podh-d2-ms:
+    type: int
+    description: |
+      PWR_ON delay high configuration (PWR_D2CR)
 
-  include:
-    - base.yaml
-    - power.yaml
-    - name: regulator.yaml
-      property-allowlist:
-        - regulator-name
-        - regulator-boot-on
-        - regulator-always-on
-        - regulator-min-microvolt
-        - regulator-max-microvolt
-        - regulator-allowed-modes
-        - regulator-over-current-protection
-        - regulator-ramp-delay
-        - regulator-enable-ramp-delay
+  st,popl-d2-ms:
+    type: int
+    description: |
+      PWR_ON pulse low configuration (PWR_D2CR)
 
-  properties:
-    vin-supply:
-      type: phandle
-      description: Reference to the regulator supply
+  st,lpcfg-d2:
+    type: int
+    description: |
+      PWR_ON pin configuration (PWR_D2CR)
 
-    st,iocomp:
-      type: array
-      description: |
-        Defines the pmos and nmos value for an IO domain.
-        For STM32MP2x platforms, it corresponds to <pmos nmos>
-
-    st,popl-d1-ms:
-      type: int
-      description: |
-        PWR_CPU_ON pulse low configuration (PWR_D1CR)
-
-    st,podh-d2-ms:
-      type: int
-      description: |
-        PWR_ON delay high configuration (PWR_D2CR)
-
-    st,popl-d2-ms:
-      type: int
-      description: |
-        PWR_ON pulse low configuration (PWR_D2CR)
-
-    st,lpcfg-d2:
-      type: int
-      description: |
-        PWR_ON pin configuration (PWR_D2CR)
-
-    st,lplvdly-d2:
+  st,lplvdly-d2:
       type: int
       description: |
         LPLV delay value (PWR_D2CR), 3bits and with 6xLSI cycles unit
