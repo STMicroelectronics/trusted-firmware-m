@@ -9,7 +9,6 @@ set(CMSIS_CORE_GIT_REMOTE "https://github.com/STMicroelectronics/cmsis-core.git"
 set(CMSIS_CORE_VERSION    "v5.9.0"                                               CACHE STRING "version of cmsis-core package")
 
 if (NOT EXISTS ${CMSIS_CORE_PATH})
-
     fetch_remote_library(
         LIB_NAME                cmsis-core
         LIB_SOURCE_PATH_VAR     CMSIS_CORE_PATH
@@ -18,12 +17,13 @@ if (NOT EXISTS ${CMSIS_CORE_PATH})
             GIT_TAG             ${CMSIS_CORE_VERSION}
             GIT_PROGRESS        TRUE
     )
+endif()
 
+if (NOT EXISTS ${CMSIS_CORE_PATH}/CMakeLists.txt)
     file(INSTALL
         ${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt
         DESTINATION ${CMSIS_CORE_PATH}
     )
-
 endif()
 
 # to share the set of cmsis-core options settled on secure side build

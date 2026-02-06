@@ -9,7 +9,6 @@ set(STM32MP2XX_HAL_DRIVER_GIT_REMOTE "https://github.com/STMicroelectronics/stm3
 set(STM32MP2XX_HAL_DRIVER_VERSION    "v1.3.0"                                                          CACHE STRING "version of stm32mp2xx-hal-driver package")
 
 if (NOT EXISTS ${STM32MP2XX_HAL_DRIVER_PATH})
-
     fetch_remote_library(
         LIB_NAME                stm32mp2xx-hal-driver
         LIB_SOURCE_PATH_VAR     STM32MP2XX_HAL_DRIVER_PATH
@@ -18,12 +17,13 @@ if (NOT EXISTS ${STM32MP2XX_HAL_DRIVER_PATH})
             GIT_TAG             ${STM32MP2XX_HAL_DRIVER_VERSION}
             GIT_PROGRESS        TRUE
     )
+endif()
 
+if (NOT EXISTS ${STM32MP2XX_HAL_DRIVER_PATH}/CMakeLists.txt)
     file(INSTALL
         ${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt
         DESTINATION ${STM32MP2XX_HAL_DRIVER_PATH}
     )
-
 endif()
 
 # to share the set of stm32mp2xx_hal_driver options settled on secure side build
