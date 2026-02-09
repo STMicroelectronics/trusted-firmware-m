@@ -19,3 +19,19 @@ target_include_directories(stm32mp2xx_hal_driver_header
 )
 
 add_library(stm32mp2xx_hal_driver::header ALIAS stm32mp2xx_hal_driver_header)
+
+find_package(Git)
+if(Git_FOUND)
+    execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --always --match "v[0-9]*\.[0-9]*\.[0-9]*"
+        WORKING_DIRECTORY ${STM32MP2XX_HAL_DRIVER_PATH}
+        OUTPUT_VARIABLE HAL_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    set(STM32MP2_HAL_DRIVERS_VERSION ${HAL_VERSION} PARENT_SCOPE)
+endif()
+
+include(utils)
+    dump_options("HAL drivers version"
+    "
+        HAL_VERSION;
+    "
+    )

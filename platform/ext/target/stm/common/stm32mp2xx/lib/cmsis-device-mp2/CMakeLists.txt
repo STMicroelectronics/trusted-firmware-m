@@ -19,3 +19,19 @@ target_include_directories(cmsis_device_mp2_header
 )
 
 add_library(cmsis_device_mp2::header ALIAS cmsis_device_mp2_header)
+
+find_package(Git)
+if(Git_FOUND)
+    execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --always --match "v[0-9]*\.[0-9]*\.[0-9]*"
+        WORKING_DIRECTORY ${CMSIS_DEVICE_MP2_PATH}
+        OUTPUT_VARIABLE CMSIS_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    set(STM32MP2_CMSIS_VERSION ${CMSIS_VERSION} PARENT_SCOPE)
+endif()
+
+include(utils)
+    dump_options("CMSIS version"
+    "
+        CMSIS_VERSION;
+    "
+    )
