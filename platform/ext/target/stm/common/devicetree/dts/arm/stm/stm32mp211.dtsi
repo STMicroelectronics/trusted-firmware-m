@@ -654,6 +654,15 @@
 			st,syscfg-vddio = <&syscfg STM32MP21_SYSCFG_VDDIO3CCCR>;
 			status = "disabled";
 
+			pwr_intc: interrupt-controller {
+				compatible = "st,stm32mp25-pwr-intc";
+				interrupts-extended = <&nvic 190 3>;
+				interrupt-names = "cpu2_wakeup";
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				status = "disabled";
+			};
+
 			pwr_rif: access-controller {
 				compatible = "st,stm32mp25-pwr-rif";
 				#access-controller-cells = <1>;
