@@ -148,6 +148,7 @@ target_sources(platform_s
 		$<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILY_DIR}/secure/services/src/cpus.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/power/stm32mp2_pwr.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32mp2_pwr_rif.c>
+	        $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/interrupt-controller/stm32mp2_pwr_intc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32_rifsc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32_risaf.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32_risab.c>
@@ -260,6 +261,7 @@ target_sources(tfm_s
         $<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILY_DIR}/secure/services/src/cpus.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/power/stm32mp2_pwr.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32mp2_pwr_rif.c>
+        $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/interrupt-controller/stm32mp2_pwr_intc.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32_rifsc.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32_risaf.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32_risab.c>
