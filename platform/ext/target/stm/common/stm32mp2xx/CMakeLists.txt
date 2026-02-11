@@ -145,6 +145,7 @@ target_sources(platform_s
 		$<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
 		$<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILY_DIR}/secure/services/src/cpus.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/power/stm32mp2_pwr.c>
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32mp2_pwr_rif.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32_rifsc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32_risaf.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32_risab.c>
@@ -152,7 +153,7 @@ target_sources(platform_s
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32_serc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/crypto/stm32_saes.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/regulator/regulator_common.c>
-		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/regulator/stm32mp25_pwr_regul.c>
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/regulator/stm32mp25_pwr_regu.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rtc/stm32_rtc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/memc/stm32_fmc.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/memc/stm32mp2_ramcfg.c>
@@ -254,12 +255,13 @@ target_sources(tfm_s
         $<$<BOOL:${TFM_PLATFORM_WDT_API}>:${STM_FAMILY_DIR}/secure/services/src/wdt.c>
         $<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILY_DIR}/secure/services/src/cpus.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/power/stm32mp2_pwr.c>
+        $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32mp2_pwr_rif.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32_rifsc.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32_risaf.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rif/stm32_risab.c>
 	$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/crypto/stm32_saes.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/regulator/stm32mp2_pmic.c>
-        $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/regulator/stm32mp25_pwr_regul.c>
+        $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/regulator/stm32mp25_pwr_regu.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/rtc/stm32_rtc.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/memc/stm32_fmc.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/memc/stm32mp2_ramcfg.c>
@@ -329,6 +331,7 @@ if(BL2)
 			${STM_FAMILY_DIR}/native_driver/src/watchdog/watchdog.c
 			${STM_FAMILY_DIR}/native_driver/src/watchdog/stm32_iwdg.c
 			${STM_FAMILY_DIR}/native_driver/src/power/stm32mp2_pwr.c
+			${STM_FAMILY_DIR}/native_driver/src/rif/stm32mp2_pwr_rif.c
 			${STM_FAMILY_DIR}/native_driver/src/bsec/stm32_bsec3.c
 			${STM_FAMILY_DIR}/native_driver/src/nvmem/nvmem.c
 			${STM_FAMILY_DIR}/native_driver/src/syscfg/stm32_syscfg.c
@@ -359,7 +362,7 @@ if(BL2)
 			$<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_FAMILY_DIR}/native_driver/src/mmc/partition.c>
 			${STM_FAMILY_DIR}/native_driver/src/i2c/stm32_i2c.c
 			${STM_FAMILY_DIR}/native_driver/src/regulator/regulator_common.c
-			${STM_FAMILY_DIR}/native_driver/src/regulator/stm32mp25_pwr_regul.c
+			${STM_FAMILY_DIR}/native_driver/src/regulator/stm32mp25_pwr_regu.c
 			$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${STM_FAMILY_DIR}/secure/nv_counters.c>
 			$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_OTP}>>:${STM_FAMILY_DIR}/secure/otp.c>
 			${STM_FAMILY_DIR}/secure/provisioning.c
@@ -397,9 +400,10 @@ if(BL2)
 	    ${STM_FAMILY_DIR}/native_driver/src/watchdog/stm32_iwdg.c
             ${STM_FAMILY_DIR}/native_driver/src/i2c/stm32_i2c.c
             ${STM_FAMILY_DIR}/native_driver/src/regulator/stm32mp2_pmic.c
-            ${STM_FAMILY_DIR}/native_driver/src/regulator/stm32mp25_pwr_regul.c
+            ${STM_FAMILY_DIR}/native_driver/src/regulator/stm32mp25_pwr_regu.c
             ${STM_FAMILY_DIR}/native_driver/src/ddr/stm32mp2_ram.c
             ${STM_FAMILY_DIR}/native_driver/src/power/stm32mp2_pwr.c
+            ${STM_FAMILY_DIR}/native_driver/src/rif/stm32mp2_pwr_rif.c
             ${STM_FAMILY_DIR}/native_driver/src/rif/stm32_rif.c
             ${STM_FAMILY_DIR}/native_driver/src/rif/stm32_rifsc.c
             ${STM_FAMILY_DIR}/native_driver/src/rif/stm32_risaf.c

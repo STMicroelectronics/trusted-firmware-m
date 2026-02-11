@@ -4,7 +4,7 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#define DT_DRV_COMPAT st_stm32mp25_pwr
+#define DT_DRV_COMPAT st_stm32mp25_pwr_regulators
 
 // include generic device api and devicetree
 #include <device.h>
@@ -19,14 +19,9 @@
 #include <pm/pm.h>
 #include <syscon.h>
 
-#define STM32MP25_RIFSC_GPU_ID	79
+#include <stm32mp2_pwr_regs.h>
 
-#define PWR_CR1_OFFSET		U(0x00)
-#define PWR_CR7_OFFSET		U(0x18)
-#define PWR_CR8_OFFSET		U(0x1c)
-#define PWR_CR9_OFFSET		U(0x20)
-#define PWR_CR12_OFFSET		U(0x2c)
-#define PWR_UCPDR_OFFSET	U(0x30)
+#define STM32MP25_RIFSC_GPU_ID	79
 
 #define TIMEOUT_US_10MS		U(10000)
 #define DELAY_100US		U(100)
@@ -460,9 +455,19 @@ static int stm32_pwr_regulator_init(const struct device *dev)
 	return 0;
 }
 
+/*
+ * Errata
+ *
+ * On A35 co-processor boot, the boot rom modifies regulator value without
+ * taking care of pwr VDD I/O voltage range selection.
+ * This function is called after A35 has started to update vddio range selection bit
+ * based on the current voltage range.
+ *
+ * WARNING: this function is not multi-instance
+ */
 #define STM32_REGU_RESTORE_VREL_DEV(node_id) DEVICE_DT_GET(node_id),
 
-#define STM32_REGU_RESTORE_VREL_INST(inst)							\
+#define STM32_REGU_RESTORE_VREL_INST(inst) \
 	DT_INST_FOREACH_CHILD_STATUS_OKAY(inst, STM32_REGU_RESTORE_VREL_DEV)
 
 __unused void stm32_pwr_regulator_restore(void)
@@ -580,7 +585,7 @@ static int stm32_pwr_regulator_pm_action(const struct device *dev,
 #endif
 
 #define DEFINE_REGU_VDDIO(_node_id, _id, _reg) {						\
-	.enable_reg = _reg##_OFFSET,								\
+	.enable_reg = _PWR ## _reg ## _OFFSET,							\
 	.enable_mask = _reg ## _ ## _id ## VMEN,						\
 	.ready_mask = _reg ## _ ## _id ## RDY,							\
 	.valid_mask = _reg ## _ ## _id ## SV,							\
@@ -593,7 +598,7 @@ static int stm32_pwr_regulator_pm_action(const struct device *dev,
 }
 
 #define DEFINE_REGU_VDD_IO(_node_id, _id, _reg) {						\
-	.enable_reg = _reg##_OFFSET,								\
+	.enable_reg = _PWR ## _reg ## _OFFSET,							\
 	.vrsel_mask = _reg ## _ ## _id ## VRSEL,						\
 	.vin_supply = DT_DEV_REGULATOR_SUPPLY(_node_id, vin),					\
 	.is_an_iod = true,									\
@@ -603,7 +608,7 @@ static int stm32_pwr_regulator_pm_action(const struct device *dev,
 }
 
 #define DEFINE_REGU_FIXED(_node_id, _id, _reg) {						\
-	.enable_reg = _reg ## _OFFSET,								\
+	.enable_reg = _PWR ## _reg ## _OFFSET,							\
 	.enable_mask = _reg ## _ ## _id ## VMEN,						\
 	.ready_mask = _reg ## _ ## _id ## RDY,							\
 	.valid_mask = _reg ## _ ## _id ## SV,							\
@@ -611,10 +616,10 @@ static int stm32_pwr_regulator_pm_action(const struct device *dev,
 }
 
 #define DEFINE_REGU_GPU(_node_id, _id, _reg) {							\
-	.enable_reg = _reg ## _OFFSET,								\
-	.enable_mask = PWR_CR12_GPUVMEN,							\
-	.ready_mask = PWR_CR12_VDDGPURDY,							\
-	.valid_mask = PWR_CR12_GPUSV,								\
+	.enable_reg = _PWR ## _reg ## _OFFSET,							\
+	.enable_mask = _reg ## _GPUVMEN,							\
+	.ready_mask = _reg ## _VDDGPURDY,							\
+	.valid_mask = _reg ## _GPUSV,								\
 	.keep_monitor_on = true,								\
 	.rifsc_filtering_id = STM32MP25_RIFSC_GPU_ID,						\
 	.vin_supply = DT_DEV_REGULATOR_SUPPLY(_node_id, vin),					\
@@ -627,10 +632,10 @@ static int stm32_pwr_regulator_pm_action(const struct device *dev,
 	static const struct stm32_pwr_regu_config stm32_cfg_##id = {				\
 		.common = REGULATOR_DT_COMMON_CONFIG_INIT(node_id),				\
 		.pwr_regu = macro_desc(node_id, name, reg),					\
-		.base = DT_REG_ADDR(DT_PARENT(node_id)),					\
-		.syscfg_dev = DEVICE_DT_GET(DT_PHANDLE(DT_PARENT(node_id),			\
+		.base = DT_REG_ADDR(DT_GPARENT(node_id)),					\
+		.syscfg_dev = DEVICE_DT_GET(DT_PHANDLE(DT_GPARENT(node_id),			\
 						       st_syscfg_vddio)),			\
-		.syscfg_base = DT_PHA_BY_IDX(DT_PARENT(node_id),				\
+		.syscfg_base = DT_PHA_BY_IDX(DT_GPARENT(node_id),				\
 					     st_syscfg_vddio, 0, offset),			\
 	};											\
 												\
@@ -638,7 +643,8 @@ static int stm32_pwr_regulator_pm_action(const struct device *dev,
 												\
 	DEVICE_DT_DEFINE(node_id, &stm32_pwr_regulator_init, PM_DEVICE_DT_GET(node_id),		\
 			 &stm32_data_##id, &stm32_cfg_##id,					\
-			 CORE, 8, &ops);
+			 STM32MP2_PWR_REGU_LVL, STM32MP2_PWR_REGU_PRIO,				\
+			 &ops);
 
 #define REGULATOR_PWR_DEFINE_COND(inst, child, macro_desc, name, reg)				\
 	COND_CODE_1(DT_NODE_HAS_STATUS_OKAY(DT_INST_CHILD(inst, child)),			\
@@ -656,13 +662,13 @@ static int stm32_pwr_regulator_pm_action(const struct device *dev,
 		    ())
 
 #define REGULATOR_POWER_DEFINE_ALL(inst)							\
-	REGULATOR_PWR_DEFINE_COND(inst, vddio1, DEFINE_REGU_VDDIO, VDDIO1, PWR_CR8)		\
-	REGULATOR_PWR_DEFINE_COND(inst, vddio2, DEFINE_REGU_VDDIO, VDDIO2, PWR_CR7)		\
-	REGULATOR_PWR_DEFINE_COND(inst, vddio3, DEFINE_REGU_VDDIO, VDDIO3, PWR_CR1)		\
-	REGULATOR_PWR_DEFINE_COND(inst, vddio4, DEFINE_REGU_VDDIO, VDDIO4, PWR_CR1)		\
-	REGULATOR_PWR_DEFINE_COND(inst, vddio, DEFINE_REGU_VDD_IO, VDDIO, PWR_CR1)		\
-	FIXED_PWR_DEFINE_COND(inst, vdd33ucpd, DEFINE_REGU_FIXED, UCPD, PWR_CR1)		\
-	FIXED_PWR_DEFINE_COND(inst, vdda18adc, DEFINE_REGU_FIXED, A, PWR_CR1)			\
-	REGULATOR_PWR_DEFINE_COND(inst, vddgpu, DEFINE_REGU_GPU, GPU, PWR_CR12)
+	REGULATOR_PWR_DEFINE_COND(inst, vddio1, DEFINE_REGU_VDDIO, VDDIO1, _CR8)		\
+	REGULATOR_PWR_DEFINE_COND(inst, vddio2, DEFINE_REGU_VDDIO, VDDIO2, _CR7)		\
+	REGULATOR_PWR_DEFINE_COND(inst, vddio3, DEFINE_REGU_VDDIO, VDDIO3, _CR1)		\
+	REGULATOR_PWR_DEFINE_COND(inst, vddio4, DEFINE_REGU_VDDIO, VDDIO4, _CR1)		\
+	REGULATOR_PWR_DEFINE_COND(inst, vddio, DEFINE_REGU_VDD_IO, VDDIO, _CR1)			\
+	FIXED_PWR_DEFINE_COND(inst, vdd33ucpd, DEFINE_REGU_FIXED, UCPD, _CR1)			\
+	FIXED_PWR_DEFINE_COND(inst, vdda18adc, DEFINE_REGU_FIXED, A, _CR1)			\
+	REGULATOR_PWR_DEFINE_COND(inst, vddgpu, DEFINE_REGU_GPU, GPU, _CR12)
 
 DT_INST_FOREACH_STATUS_OKAY(REGULATOR_POWER_DEFINE_ALL)
