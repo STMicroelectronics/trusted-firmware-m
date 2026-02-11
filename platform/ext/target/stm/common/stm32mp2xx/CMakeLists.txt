@@ -443,6 +443,9 @@ configure_file(${STM_FAMILY_DIR}/stm_profile.h.in
                ${CMAKE_BINARY_DIR}/generated/stm_profile.h)
 
 #========================= Files for building NS side platform ================#
+configure_file(${STM_FAMILY_DIR}/spe_export-stm32.cmake.in
+               ${INSTALL_CMAKE_DIR}/spe_export-stm32.cmake @ONLY)
+
 install(DIRECTORY
     ${STM_FAMILY_DIR}/tests
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}
