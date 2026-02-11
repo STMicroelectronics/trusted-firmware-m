@@ -691,63 +691,64 @@
 		pwr: pwr@54210000 {
 			compatible = "st,stm32mp25-pwr";
 			reg = <0x54210000 0x400>;
-			#access-controller-cells = <1>;
 			resets = <&rcc_reset VSW_R>;
 			st,syscfg-vddio = <&syscfg STM32MP25_SYSCFG_VDDIO3CCCR>;
 			status = "disabled";
 
-			vdd33ucpd: vdd33ucpd {
-				compatible = "st,stm32mp25-pwr-regu";
-				regulator-name = "vdd33ucpd";
+			pwr_rif: access-controller {
+				compatible = "st,stm32mp25-pwr-rif";
+				#access-controller-cells = <1>;
 				status = "disabled";
 			};
 
-			vdda18adc: vdda18adc {
-				compatible = "st,stm32mp25-pwr-regu";
-				regulator-name = "vdda18adc";
-				status = "disabled";
-			};
+			regulators {
+				compatible = "st,stm32mp25-pwr-regulators";
 
-			vddgpu: vddgpu {
-				compatible = "st,stm32mp25-pwr-regu";
-				regulator-name = "vddgpu";
-				status = "disabled";
-			};
+				vdd33ucpd: vdd33ucpd {
+					regulator-name = "vdd33ucpd";
+					status = "disabled";
+				};
 
-			vddio1: vddio1 {
-				compatible = "st,stm32mp25-pwr-regu";
-				regulator-name = "vddio1";
-				st,iocomp = <8 7>;
-				status = "disabled";
-			};
+				vdda18adc: vdda18adc {
+					regulator-name = "vdda18adc";
+					status = "disabled";
+				};
 
-			vddio2: vddio2 {
-				compatible = "st,stm32mp25-pwr-regu";
-				regulator-name = "vddio2";
-				st,iocomp = <8 7>;
-				status = "disabled";
-			};
+				vddgpu: vddgpu {
+					regulator-name = "vddgpu";
+					status = "disabled";
+				};
 
-			vddio3: vddio3 {
-				compatible = "st,stm32mp25-pwr-regu";
-				regulator-name = "vddio3";
-				st,iocomp = <8 7>;
-				status = "disabled";
-			};
+				vddio1: vddio1 {
+					regulator-name = "vddio1";
+					st,iocomp = <8 7>;
+					status = "disabled";
+				};
 
-			vddio4: vddio4 {
-				compatible = "st,stm32mp25-pwr-regu";
-				regulator-name = "vddio4";
-				st,iocomp = <8 7>;
-				status = "disabled";
-			};
+				vddio2: vddio2 {
+					regulator-name = "vddio2";
+					st,iocomp = <8 7>;
+					status = "disabled";
+				};
 
-			vddio: vddio {
-				compatible = "st,stm32mp25-pwr-regu";
-				regulator-name = "vddio";
-				st,iocomp = <8 7>;
-				regulator-always-on;
-				status = "disabled";
+				vddio3: vddio3 {
+					regulator-name = "vddio3";
+					st,iocomp = <8 7>;
+					status = "disabled";
+				};
+
+				vddio4: vddio4 {
+					regulator-name = "vddio4";
+					st,iocomp = <8 7>;
+					status = "disabled";
+				};
+
+				vddio: vddio {
+					regulator-name = "vddio";
+					st,iocomp = <8 7>;
+					regulator-always-on;
+					status = "disabled";
+				};
 			};
 		};
 
