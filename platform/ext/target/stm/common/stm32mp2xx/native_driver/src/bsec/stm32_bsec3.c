@@ -735,7 +735,7 @@ static uint32_t init_state(const struct device *dev, uint32_t status)
 		/* Only 1 supported state = CLOSED */
 		if (nvstates != _BSEC_SR_NVSTATES_CLOSED) {
 			state = BSEC_STATE_INVALID;
-			EMSG("BSEC invalid nvstates %#x\n", nvstates);
+			EMSG("BSEC invalid nvstates 0x%x\n", nvstates);
 		} else {
 			state = BSEC_STATE_SEC_OPEN;
 			if (mirror->otp[_OTP_SECURE_BOOT].value & _OTP_CLOSED_SECURE)
