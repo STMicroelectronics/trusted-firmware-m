@@ -170,6 +170,7 @@ target_sources(platform_s
 		$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${STM_FAMILY_DIR}/secure/nv_counters.c>
 		$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_ATTEST_HAL}>>:${STM_FAMILY_DIR}/secure/attest_hal.c>
 		$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_OTP}>>:${STM_FAMILY_DIR}/secure/otp.c>
+		$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_BL2_FWU}>>:${STM_FAMILY_DIR}/bl2/stm32_bl2_fwu.c>
 		${CMAKE_SOURCE_DIR}/platform/ext/common/tfm_hal_nvic.c
 )
 
@@ -365,6 +366,7 @@ if(BL2)
 			${STM_FAMILY_DIR}/native_driver/src/regulator/stm32mp25_pwr_regu.c
 			$<$<NOT:$<BOOL:${OTP_NV_COUNTERS_RAM_EMULATION}>>:${STM_FAMILY_DIR}/secure/nv_counters.c>
 			$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_OTP}>>:${STM_FAMILY_DIR}/secure/otp.c>
+			$<$<NOT:$<BOOL:${PLATFORM_DEFAULT_BL2_FWU}>>:${STM_FAMILY_DIR}/bl2/stm32_bl2_fwu.c>
 			${STM_FAMILY_DIR}/secure/provisioning.c
 			$<$<BOOL:${STM32_CACHE_ENABLED}>:${STM_FAMILY_DIR}/native_driver/src/core/stm32_dcache.c>
 	)

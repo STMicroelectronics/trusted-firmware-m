@@ -32,6 +32,8 @@
 #include <stm_version.h>
 #include <watchdog.h>
 
+#include <tfm_plat_bl2_fwu.h>
+
 #ifdef CRYPTO_HW_ACCELERATOR
 #include "crypto_hw.h"
 #endif /* CRYPTO_HW_ACCELERATOR */
@@ -194,6 +196,9 @@ int32_t boot_platform_init(void)
 	}
 
 	sys_init_run_level(INIT_LEVEL_CORE);
+
+	tfm_plat_bl2_notify_init();
+
 	return 0;
 }
 
