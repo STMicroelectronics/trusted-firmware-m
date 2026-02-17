@@ -6,3 +6,11 @@
 
 / {
 };
+
+&a35_rproc_srm {
+	a35_gpu: a35_gpu@0 {
+		resets = <&rcc_reset GPU_R>;
+		clocks = <&rcc CK_SCMI_PLL3>;
+		status = "disabled";
+	};
+};

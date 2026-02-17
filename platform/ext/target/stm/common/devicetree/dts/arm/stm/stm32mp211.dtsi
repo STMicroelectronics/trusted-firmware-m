@@ -940,6 +940,54 @@
 			interrupt-names = "ack";
 			clocks = <&rcc CK_FLEXGEN_51>, <&rcc CK_FLEXGEN_52>, <&rcc PLL1_CK>;
 			status = "disabled";
+
+			a35_rproc_srm: srm {
+				compatible = "rproc-srm-core";
+				status = "disabled";
+
+				a35_eth1: a35_eth1@0 {
+					resets = <&rcc_reset ETH1_R>;
+					clocks = <&rcc CK_BUS_ETH1>;
+					status = "disabled";
+				};
+				a35_eth2: a35_eth2@0 {
+					resets = <&rcc_reset ETH2_R>;
+					clocks = <&rcc CK_BUS_ETH2>;
+					status = "disabled";
+				};
+				a35_sdmmc1: a35_sdmmc@0 {
+					resets = <&rcc_reset SDMMC1_R>;
+					clocks = <&rcc CK_KER_SDMMC1>;
+					status = "disabled";
+				};
+				a35_sdmmc2: a35_sdmmc@1 {
+					resets = <&rcc_reset SDMMC2_R>;
+					clocks = <&rcc CK_KER_SDMMC2>;
+					status = "disabled";
+				};
+				a35_sdmmc3: a35_sdmmc@2 {
+					resets = <&rcc_reset SDMMC3_R>;
+					clocks = <&rcc CK_KER_SDMMC3>;
+					status = "disabled";
+				};
+				a35_dcmipp: a35_dcmipp@0 {
+					resets = <&rcc_reset DCMIPP_R>;
+					clocks = <&rcc CK_BUS_DCMIPP>;
+					status = "disabled";
+				};
+				a35_usb: a35_ubs@0 {
+					resets = <&rcc_reset USBH_R>, <&rcc_reset OTG_R>;
+					clocks = <&rcc  CK_BUS_USBHEHCI>, <&rcc CK_BUS_USBHOHCI>;
+					status = "disabled";
+				};
+				a35_hpdma: a35_hpdma@0 {
+					resets = <&hpdma3_reset 14>, <&hpdma3_reset 15>, <&rcc_reset HPDMA1_R>,
+						<&rcc_reset HPDMA2_R>;
+					clocks = <&rcc CK_BUS_HPDMA1>,  <&rcc CK_BUS_HPDMA2>;
+					status = "disabled";
+				};
+			};
+
 		};
 	};
 };
