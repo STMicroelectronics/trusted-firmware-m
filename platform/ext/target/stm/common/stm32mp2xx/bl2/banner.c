@@ -13,6 +13,9 @@
 #include <stm_version.h>
 #include <tfm_plat_otp.h>
 
+/* Necessary to detect cold boot case */
+#include <cmsis.h>
+
 #define STM32_SOC_NAME_SIZE		24
 
 #define STM32MP211A_PART_NB		U(0x40073E7D)
@@ -357,6 +360,11 @@ enum tfm_plat_err_t get_board_info(char name[STM32_SOC_NAME_SIZE])
 	return TFM_PLAT_ERR_SUCCESS;
 }
 
+static bool get_boot_status(void)
+{
+	return (RCC->BDCR & RCC_BDCR_RTCCKEN) == 0U;
+}
+
 static int __unused stm32mp2_banner(void)
 {
 	char name[STM32_SOC_NAME_SIZE];
@@ -374,6 +382,12 @@ static int __unused stm32mp2_banner(void)
 	BOOT_LOG_INF("dts: "MODEL_BL2_DTS);
 	BOOT_LOG_INF("boot device: "MODEL_BOOT_DEV);
 	BOOT_LOG_INF("mcu sysclk: %d", SystemCoreClock);
+
+	if (get_boot_status()) {
+		BOOT_LOG_INF("Boot status: Cold boot detected.");
+	} else {
+		BOOT_LOG_INF("Boot status: Warm boot detected.");
+	}
 
 	return 0;
 }
