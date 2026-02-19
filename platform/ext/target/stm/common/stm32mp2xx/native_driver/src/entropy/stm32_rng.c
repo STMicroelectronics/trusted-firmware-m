@@ -174,10 +174,23 @@ static int stm32_rng_acquire_sem(const struct stm32_rng_config *drv_cfg)
 {
 	struct firewall_spec *firewall;
 	int err, i;
+	uint64_t timeout = timeout_init_us(TIMEOUT_US_1MS);
 
-	err = acquire_sem_for_each_firewall(drv_cfg->firewall, firewall, drv_cfg->n_firewall, i);
+	/* Fix: In some SoC revision, ROM code may not release the semaphore.
+	 * Then Cortex-A must release it as a workaround. We try to acquire the
+	 * semaphore for a limited time before returning an error, to give
+	 * Cortex‑A a chance to release it.
+	 */
+	do {
+		err = acquire_sem_for_each_firewall(drv_cfg->firewall,
+						    firewall,
+						    drv_cfg->n_firewall, i);
+		if (timeout_elapsed(timeout))
+			break;
+	} while (err);
+
 	if (err)
-		ERROR("Could not acquire firewall access.\n");
+		ERROR("%s: Could not acquire firewall access.\n", __func__);
 
 	return err;
 }
@@ -189,7 +202,7 @@ static int stm32_rng_release_sem(const struct stm32_rng_config *drv_cfg)
 
 	err = release_sem_for_each_firewall(drv_cfg->firewall, firewall, drv_cfg->n_firewall, i);
 	if (err)
-		ERROR("Could not release firewall access.\n");
+		ERROR("%s: Could not release firewall access.\n", __func__);
 
 	return err;
 }
