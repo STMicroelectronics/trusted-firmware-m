@@ -427,7 +427,6 @@ enum enum_gate_cfg {
 	GATE_SDMMC1,
 	GATE_SDMMC2,
 	GATE_SDMMC3,
-	GATE_GPU,
 	GATE_LTDC,
 	GATE_DSI,
 	GATE_LVDS,
@@ -660,7 +659,6 @@ static const struct gate_cfg gates_mp25[GATE_NB] = {
 	GATE_CFG(GATE_SDMMC1,		RCC_SDMMC1CFGR,		1,	0),
 	GATE_CFG(GATE_SDMMC2,		RCC_SDMMC2CFGR,		1,	0),
 	GATE_CFG(GATE_SDMMC3,		RCC_SDMMC3CFGR,		1,	0),
-	GATE_CFG(GATE_GPU,		RCC_GPUCFGR,		1,	0),
 	GATE_CFG(GATE_LTDC,		RCC_LTDCCFGR,		1,	0),
 	GATE_CFG(GATE_DSI,		RCC_DSICFGR,		1,	0),
 	GATE_CFG(GATE_LVDS,		RCC_LVDSCFGR,		1,	0),
@@ -2038,8 +2036,15 @@ static int clk_stm32_pll3_enable(struct clk *clk)
 	struct clk *parent = NULL;
 	size_t pidx = 0;
 
-	/* ck_icn_p_gpu activate */
-	stm32_gate_enable(priv, GATE_GPU);
+	/* RCC_MUXSELCFGR, used in clk_stm32_pll_init() is protected by RCC_RIF_PLL4_TO_8 */
+	if (!stm32_rcc_has_access_by_id(priv, RCC_RIF_PLL3) ||
+	    !stm32_rcc_has_access_by_id(priv, RCC_RIF_PLL4_TO_8)) {
+		EMSG("%s not enabled, access error\n", clk_get_name(clk));
+		return -EPERM;
+	}
+
+	/* Force enabled before PLL3 access, protected by STM32MP25_RIFSC_GPU_ID */
+	io_setbits32(clk_stm32_get_rcc_base(priv) + RCC_GPUCFGR, _RCC_GPUCFGR_GPUEN);
 
 	if (clk_stm32_pll_init(priv, PLL3_ID, pll_conf)) {
 		res = -EBUSY;
@@ -2063,8 +2068,7 @@ static int clk_stm32_pll3_enable(struct clk *clk)
 	}
 
 out:
-	if (res)
-		stm32_gate_disable(priv, GATE_GPU);
+	io_clrbits32(clk_stm32_get_rcc_base(priv) + RCC_GPUCFGR, _RCC_GPUCFGR_GPUEN);
 
 	return res;
 }
@@ -2073,8 +2077,17 @@ static void clk_stm32_pll3_disable(struct clk *clk)
 {
 	struct clk_stm32_priv *priv = dev_get_data(clk_get_dev(clk));
 
+	if (!stm32_rcc_has_access_by_id(priv, RCC_RIF_PLL3)) {
+		EMSG("%s not disabled, access error\n", clk_get_name(clk));
+		return;
+	}
+
+	/* Force enabled before PLL3 access, protected by STM32MP25_RIFSC_GPU_ID */
+	io_setbits32(clk_stm32_get_rcc_base(priv) + RCC_GPUCFGR, _RCC_GPUCFGR_GPUEN);
+
 	clk_stm32_pll_disable(clk);
-	stm32_gate_disable(priv, GATE_GPU);
+
+	io_clrbits32(clk_stm32_get_rcc_base(priv) + RCC_GPUCFGR, _RCC_GPUCFGR_GPUEN);
 }
 
 static const struct clk_ops clk_stm32_pll3_ops = {
@@ -3260,8 +3273,6 @@ static STM32_GATE(ck_ker_eth2, &ck_flexgen_55, 0, GATE_ETH2);
 static STM32_GATE(ck_ker_eth1ptp, &ck_flexgen_56, 0, GATE_ETH1);
 static STM32_GATE(ck_ker_eth2ptp, &ck_flexgen_56, 0, GATE_ETH2);
 static STM32_GATE(ck_ker_usb2phy2, &ck_flexgen_58, 0, GATE_USB3DR);
-static STM32_GATE(ck_icn_m_gpu, &ck_flexgen_59, 0, GATE_GPU);
-static STM32_GATE(ck_ker_gpu, &ck_pll3, 0, GATE_GPU);
 static STM32_GATE(ck_ker_ethswref, &ck_flexgen_60, 0, GATE_ETHSWREF);
 
 static STM32_GATE(ck_ker_eth1stp, &ck_icn_ls_mcu, 0, GATE_ETH1STP);
@@ -3660,8 +3671,6 @@ static struct clk *stm32mp25_clk_provided[STM32MP25_ALL_CLK_NB] = {
 	[CK_ETH2_STP]		= &ck_ker_eth2stp,
 	[CK_KER_ETH1PTP]	= &ck_ker_eth1ptp,
 	[CK_KER_ETH2PTP]	= &ck_ker_eth2ptp,
-	[CK_BUS_GPU]		= &ck_icn_m_gpu,
-	[CK_KER_GPU]		= &ck_ker_gpu,
 	[CK_KER_ETHSWREF]	= &ck_ker_ethswref,
 
 	[CK_MCO1]		= &ck_mco1,
