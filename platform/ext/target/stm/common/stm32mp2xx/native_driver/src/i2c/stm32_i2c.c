@@ -357,8 +357,14 @@ static int _stm32_i2c_msg_done(const struct device *dev, struct i2c_msg *msg)
 	if (err)
 		return err;
 
-	if (msg->flags & I2C_MSG_STOP)
+	if (msg->flags & I2C_MSG_STOP) {
 		mmio_setbits_32(drv_cfg->base + _I2C_CR2, _I2C_CR2_STOP_MASK);
+
+		err = _stm32_i2c_wait_flag(dev, (_I2C_ISR_STOPF),
+					   I2C_TIMEOUT_BUSY_US);
+		if (err)
+			return err;
+	}
 
 	return 0;
 }
