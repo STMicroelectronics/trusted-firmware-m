@@ -4,7 +4,8 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#define DT_DRV_COMPAT st_stm32mp25_pwr_regulators
+#define STM32MP21_COMPAT st_stm32mp21_pwr_regulators
+#define STM32MP25_COMPAT st_stm32mp25_pwr_regulators
 
 // include generic device api and devicetree
 #include <device.h>
@@ -68,6 +69,15 @@ struct stm32_pwr_regu {
 	uint16_t iod_offset;
 
 	bool keep_monitor_on;
+
+	/*
+	 * Has_clamp: The VDDA regulator implements a workaround
+	 * to reduce power consumption that occurs when the regulator
+	 * is disabled but its supply is still present.
+	 * In this case, activating the monitor also activates a clamping
+	 * mechanism.
+	 */
+	bool has_clamp;
 
 	/*
 	 * rifsc_filtering_id is used to disable filtering when
@@ -213,8 +223,11 @@ static int stm32_pwr_enable_reg(const struct stm32_pwr_regu_config *drv_cfg)
 
 	mmio_setbits_32(reg, pwr_regu->valid_mask);
 
-	/* Do not keep the voltage monitor enabled except for GPU */
-	if (!pwr_regu->keep_monitor_on)
+	/*
+	 * Disable voltage monitor to reduce consumption.
+	 * Not for GPU or for clamp workaround
+	 */
+	if (!(pwr_regu->keep_monitor_on || pwr_regu->has_clamp))
 		mmio_clrbits_32(reg, pwr_regu->enable_mask);
 
 	return 0;
@@ -225,8 +238,14 @@ static void stm32_pwr_disable_reg(const struct stm32_pwr_regu_config *drv_cfg)
 	const struct stm32_pwr_regu *pwr_regu = &drv_cfg->pwr_regu;
 	uintptr_t reg = drv_cfg->base + pwr_regu->enable_reg;
 
-	if (pwr_regu->enable_mask)
-		io_clrbits32(reg, pwr_regu->enable_mask | pwr_regu->valid_mask);
+	if (pwr_regu->enable_mask) {
+		io_clrbits32(reg, pwr_regu->valid_mask);
+
+		if (pwr_regu->has_clamp)
+			io_setbits32(reg, pwr_regu->enable_mask);
+		else
+			io_clrbits32(reg, pwr_regu->enable_mask);
+	}
 }
 
 static bool stm32_pwr_get_state_reg(const struct stm32_pwr_regu_config *drv_cfg)
@@ -452,6 +471,9 @@ static int stm32_pwr_regulator_init(const struct device *dev)
 		}
 	}
 
+	if (pwr_regu->has_clamp)
+		io_setbits32(drv_cfg->base + pwr_regu->enable_reg, pwr_regu->enable_mask);
+
 	return 0;
 }
 
@@ -462,22 +484,11 @@ static int stm32_pwr_regulator_init(const struct device *dev)
  * taking care of pwr VDD I/O voltage range selection.
  * This function is called after A35 has started to update vddio range selection bit
  * based on the current voltage range.
- *
- * WARNING: this function is not multi-instance
  */
-#define STM32_REGU_RESTORE_VREL_DEV(node_id) DEVICE_DT_GET(node_id),
-
-#define STM32_REGU_RESTORE_VREL_INST(inst) \
-	DT_INST_FOREACH_CHILD_STATUS_OKAY(inst, STM32_REGU_RESTORE_VREL_DEV)
-
-__unused void stm32_pwr_regulator_restore(void)
+__unused static void _stm32_pwr_bootrom_errata(const struct device **regu_devices, uint32_t nb_regu)
 {
-	static const struct device *const iod_devices[] = {
-		DT_INST_FOREACH_STATUS_OKAY(STM32_REGU_RESTORE_VREL_INST)
-	};
-
-	for (size_t i = 0; i < ARRAY_SIZE(iod_devices); i++) {
-		const struct device *dev = iod_devices[i];
+	for (size_t i = 0; i < nb_regu; i++) {
+		const struct device *dev = regu_devices[i];
 		const struct stm32_pwr_regu_config *drv_cfg = dev_get_config(dev);
 		const struct stm32_pwr_regu *pwr_regu = &drv_cfg->pwr_regu;
 
@@ -584,6 +595,17 @@ static int stm32_pwr_regulator_pm_action(const struct device *dev,
 }
 #endif
 
+#define _DEVICE_REGU(node_id) DEVICE_DT_GET(node_id),
+#define _PWR_REGULATORS_DEV(inst) DT_INST_FOREACH_CHILD_STATUS_OKAY(inst, _DEVICE_REGU)
+
+#define STM32_PWR_BOOTROM_ERRATA(inst)								\
+__unused void stm32_pwr_regulator_restore(void)							\
+{												\
+	static const struct device *regu_devices[] = {_PWR_REGULATORS_DEV(inst)};		\
+												\
+	_stm32_pwr_bootrom_errata(regu_devices, ARRAY_SIZE(regu_devices));			\
+}
+
 #define DEFINE_REGU_VDDIO(_node_id, _id, _reg) {						\
 	.enable_reg = _PWR ## _reg ## _OFFSET,							\
 	.enable_mask = _reg ## _ ## _id ## VMEN,						\
@@ -613,6 +635,15 @@ static int stm32_pwr_regulator_pm_action(const struct device *dev,
 	.ready_mask = _reg ## _ ## _id ## RDY,							\
 	.valid_mask = _reg ## _ ## _id ## SV,							\
 	.vin_supply = DT_DEV_REGULATOR_SUPPLY(_node_id, vin),					\
+}
+
+#define DEFINE_REGU_FIXED_CLAMP(_node_id, _id, _reg) {						\
+	.enable_reg = _PWR ## _reg ## _OFFSET,							\
+	.enable_mask = _reg ## _ ## _id ## VMEN,						\
+	.ready_mask = _reg ## _ ## _id ## RDY,							\
+	.valid_mask = _reg ## _ ## _id ## SV,							\
+	.vin_supply = DT_DEV_REGULATOR_SUPPLY(_node_id, vin),					\
+	.has_clamp = true,									\
 }
 
 #define DEFINE_REGU_GPU(_node_id, _id, _reg) {							\
@@ -661,7 +692,16 @@ static int stm32_pwr_regulator_pm_action(const struct device *dev,
 					      macro_desc, name, reg, stm32_pwr_regu_fixed_ops)),\
 		    ())
 
-#define REGULATOR_POWER_DEFINE_ALL(inst)							\
+#define STM32MP21_PWR_REGULATORS_DEFINE_ALL(inst)						\
+	STM32_PWR_BOOTROM_ERRATA(inst)								\
+	REGULATOR_PWR_DEFINE_COND(inst, vddio1, DEFINE_REGU_VDDIO, VDDIO1, _CR8)		\
+	REGULATOR_PWR_DEFINE_COND(inst, vddio2, DEFINE_REGU_VDDIO, VDDIO2, _CR7)		\
+	REGULATOR_PWR_DEFINE_COND(inst, vddio3, DEFINE_REGU_VDDIO, VDDIO3, _CR1)		\
+	REGULATOR_PWR_DEFINE_COND(inst, vddio, DEFINE_REGU_VDD_IO, VDDIO, _CR1)			\
+	FIXED_PWR_DEFINE_COND(inst, vdda18adc, DEFINE_REGU_FIXED_CLAMP, A, _CR1)
+
+#define STM32MP25_PWR_REGULATORS_DEFINE_ALL(inst)						\
+	STM32_PWR_BOOTROM_ERRATA(inst)								\
 	REGULATOR_PWR_DEFINE_COND(inst, vddio1, DEFINE_REGU_VDDIO, VDDIO1, _CR8)		\
 	REGULATOR_PWR_DEFINE_COND(inst, vddio2, DEFINE_REGU_VDDIO, VDDIO2, _CR7)		\
 	REGULATOR_PWR_DEFINE_COND(inst, vddio3, DEFINE_REGU_VDDIO, VDDIO3, _CR1)		\
@@ -671,4 +711,16 @@ static int stm32_pwr_regulator_pm_action(const struct device *dev,
 	FIXED_PWR_DEFINE_COND(inst, vdda18adc, DEFINE_REGU_FIXED, A, _CR1)			\
 	REGULATOR_PWR_DEFINE_COND(inst, vddgpu, DEFINE_REGU_GPU, GPU, _CR12)
 
-DT_INST_FOREACH_STATUS_OKAY(REGULATOR_POWER_DEFINE_ALL)
+#undef DT_DRV_COMPAT
+#define DT_DRV_COMPAT STM32MP21_COMPAT
+
+DT_INST_FOREACH_STATUS_OKAY(STM32MP21_PWR_REGULATORS_DEFINE_ALL)
+
+#undef DT_DRV_COMPAT
+#define DT_DRV_COMPAT STM32MP25_COMPAT
+
+DT_INST_FOREACH_STATUS_OKAY(STM32MP25_PWR_REGULATORS_DEFINE_ALL)
+
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(STM32MP21_COMPAT) +
+	     DT_NUM_INST_STATUS_OKAY(STM32MP25_COMPAT) <= 1,
+	     "only one pwr instance is supported");

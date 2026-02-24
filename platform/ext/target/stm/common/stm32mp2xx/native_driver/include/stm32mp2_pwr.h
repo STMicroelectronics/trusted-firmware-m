@@ -20,6 +20,8 @@ inline const struct device *stm32_pwr_dev(void)
 bool stm32_pwr_ddr_retention_get(const struct device *dev);
 void stm32_pwr_ddr_retention_set(const struct device *dev, bool enable);
 
-void stm32_pwr_regulator_restore(void);
+__weak void stm32_pwr_regulator_restore(void)
+{
+}
 
 #endif /* STM32MP2_PWR_H */

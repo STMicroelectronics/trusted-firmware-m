@@ -4,8 +4,6 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#define DT_DRV_COMPAT st_stm32mp25_pwr
-
 #include <errno.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -116,4 +114,10 @@ DEVICE_DT_INST_DEFINE(n, &stm32mp2_pwr_init, NULL,			\
 		      NULL, &stm32mp2_pwr_cfg_##n,			\
 		      STM32MP2_PWR_LVL, STM32MP2_PWR_PRIO, NULL);
 
+#undef DT_DRV_COMPAT
+#define DT_DRV_COMPAT st_stm32mp21_pwr
+DT_INST_FOREACH_STATUS_OKAY(STM32MP2_PWR_INIT)
+
+#undef DT_DRV_COMPAT
+#define DT_DRV_COMPAT st_stm32mp25_pwr
 DT_INST_FOREACH_STATUS_OKAY(STM32MP2_PWR_INIT)
