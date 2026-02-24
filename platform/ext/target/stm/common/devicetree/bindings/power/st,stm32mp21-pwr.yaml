@@ -3,13 +3,13 @@
 
 description: |
   STMicroelectronics power control (PWR) provides an overview of the supply
-  architecture of the different power domains of STM32MP25 SoC.
+  architecture of the different power domains of STM32MP21 SoC.
 
-compatible: "st,stm32mp25-pwr"
+compatible: "st,stm32mp21-pwr"
 
 include:
   - st,stm32mp2-pwr.yaml
-  - name: st,stm32mp25-syscfg-properties.yaml
+  - name: st,stm32mp21-syscfg-properties.yaml
     property-allowlist:
       - st,syscfg-vddio
 
