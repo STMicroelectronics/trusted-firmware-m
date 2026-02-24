@@ -647,7 +647,7 @@
 		};
 
 		pwr: pwr@54210000 {
-			compatible = "st,stm32mp25-pwr";
+			compatible = "st,stm32mp21-pwr";
 			reg = <0x54210000 0x400>;
 			resets = <&rcc_reset VSW_R>;
 			st,syscfg-vddio = <&syscfg STM32MP21_SYSCFG_VDDIO3CCCR>;
@@ -660,7 +660,7 @@
 			};
 
 			regulators {
-				compatible = "st,stm32mp25-pwr-regulators";
+				compatible = "st,stm32mp21-pwr-regulators";
 
 				vdda18adc: vdda18adc {
 					regulator-name = "vdda18adc";
