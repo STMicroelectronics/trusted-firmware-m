@@ -22,8 +22,6 @@
 
 #include <stm32mp2_pwr_regs.h>
 
-#define STM32MP25_RIFSC_GPU_ID	79
-
 #define TIMEOUT_US_10MS		U(10000)
 #define DELAY_100US		U(100)
 
@@ -78,12 +76,6 @@ struct stm32_pwr_regu {
 	 * mechanism.
 	 */
 	bool has_clamp;
-
-	/*
-	 * rifsc_filtering_id is used to disable filtering when
-	 * accessing to the register
-	 */
-	uint8_t rifsc_filtering_id;
 
 	const struct device *vin_supply;
 
@@ -652,7 +644,6 @@ __unused void stm32_pwr_regulator_restore(void)							\
 	.ready_mask = _reg ## _VDDGPURDY,							\
 	.valid_mask = _reg ## _GPUSV,								\
 	.keep_monitor_on = true,								\
-	.rifsc_filtering_id = STM32MP25_RIFSC_GPU_ID,						\
 	.vin_supply = DT_DEV_REGULATOR_SUPPLY(_node_id, vin),					\
 }
 
