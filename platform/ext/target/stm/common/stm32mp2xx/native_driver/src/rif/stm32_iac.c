@@ -122,11 +122,7 @@ static void stm32_iac_get_hwconfig(const struct device *dev)
 __weak void access_violation_handler(void)
 {
 	IAC_LOG("Ooops...\n\r");
-#ifdef CONFIG_TFM_HALT_ON_CORE_PANIC
-	tfm_hal_system_halt();
-#else
-	tfm_platform_hal_system_reset();
-#endif /* CONFIG_TFM_HALT_ON_CORE_PANIC */
+	panic();
 }
 
 static bool stm32_iac_discarded(uint32_t iac)
