@@ -153,6 +153,7 @@ void stm32mp2_irq_ack_enable(uint32_t irq_ack)
 {
 	/* clear rising pending register C1SEV */
 	EXTI1->RPR3 = EXTI1_C1SEV;
+	EXTI1->RTSR3 |= EXTI1_C1SEV;
 	/* unmask C2 int & event C1SEV (65) */
 	EXTI1->C2IMR3 |= EXTI1_C1SEV;
 	EXTI1->C2EMR3 |= EXTI1_C1SEV;
@@ -171,6 +172,7 @@ void stm32mp2_irq_ack_disable(uint32_t irq_ack)
 
 	/* clear rising pending register C1SEV */
 	EXTI1->RPR3 = EXTI1_C1SEV;
+	EXTI1->RTSR3 &= ~EXTI1_C1SEV;
 
 	if (irq_ack != IRQ_INVALID) {
 		NVIC_DisableIRQ(irq_ack);
@@ -182,6 +184,7 @@ void stm32mp2_irq_ack_clear(uint32_t irq_ack)
 {
 	/* clear rising pending register C1SEV */
 	EXTI1->RPR3 = EXTI1_C1SEV;
+	EXTI1->RTSR3 &= ~EXTI1_C1SEV;
 	if (irq_ack != IRQ_INVALID) {
 		NVIC_ClearPendingIRQ(irq_ack);
 	}
@@ -285,6 +288,10 @@ static __unused int stm32mp2_a35_stop(const struct device *dev)
 	reset_control_assert(&cfg->rst_ctl);
 	/* send CPU2 SEV event to cpu1 (exti 64)*/
 	EXTI1->SWIER3 = EXTI1_C2SEV;
+	/* Disable CPU1 interruption */
+	if (cfg->irq_ack != IRQ_INVALID) {
+		stm32mp2_irq_ack_disable(cfg->irq_ack);
+	}
 	/* check cpu in hold boot */
 	return  mmio_read32_poll_timeout(((uint32_t)&PWR_S->CPU1D1SR), cfgr,
 					 (cfgr & PWR_CPU1D1SR_HOLD_BOOT_Msk) &&
@@ -302,8 +309,6 @@ static __unused int stm32mp2_a35_init(const struct device *dev)
 	EXTI1->C1IMR3 |= EXTI1_C2SEV;
 
 	if (cfg->irq_ack != IRQ_INVALID){
-		/* enable rising trigger C1SEV */
-		EXTI1->RTSR3 |= EXTI1_C1SEV;
 		NVIC_SetPriority(cfg->irq_ack, 1);
 	}
 
@@ -383,12 +388,12 @@ static __unused void stm32mp2_a35_irq_ack(const struct device *dev)
 
 	if (data->restore_on_ack) {
 		stm32mp2_a35_release(dev);
-
-		stm32mp2_irq_ack_disable(cfg->irq_ack);
 		data->restore_on_ack = false;
 	} else {
-		stm32mp2_irq_ack_clear(cfg->irq_ack);
+		/* Allow CPU1 wake-up form D1 DStandby with CPU2 SEV event */
+		EXTI1->SWIER3 = EXTI1_C2SEV;
 	}
+	stm32mp2_irq_ack_clear(cfg->irq_ack);
 }
 
 /* Suspend procedure before low power entry*/
@@ -404,7 +409,7 @@ static __unused int stm32mp2_a35_suspend(const struct device *dev)
 	if (cpu1d1sr != PWR_CPU1D1SR_D1_DSTANDBY) {
 		/* Allow CPU1 wake-up with CPU2 SEV event (exti 64) */
 		EXTI1->SWIER3 = EXTI1_C2SEV;
-		stm32mp2_irq_ack_disable(cfg->irq_ack);
+		stm32mp2_irq_ack_clear(cfg->irq_ack);
 
 		return -EBUSY;
 	}
