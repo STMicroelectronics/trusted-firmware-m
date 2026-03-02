@@ -94,6 +94,7 @@ target_sources(platform_ns
         ${STM_FAMILY_DIR}/native_driver/src/pinctrl/stm32_pinctrl.c
         ${STM_FAMILY_DIR}/native_driver/src/uart/console.c
         ${STM_FAMILY_DIR}/native_driver/src/uart/stm32_uart.c
+	${STM_FAMILY_DIR}/native_driver/src/interrupt-controller/interrupt.c
         $<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILY_DIR}/native_driver/src/remoteproc/remoteproc_driver.c>
         ${STM_FAMILY_DIR}/ns/src/fault_info.c
         $<$<BOOL:${TFM_PLATFORM_WDT_API}>:${STM_FAMILY_DIR}/secure/services/src/tfm_ioctl_wdt_api.c>
@@ -133,6 +134,7 @@ target_sources(tfm_ns
         ${STM_FAMILY_DIR}/native_driver/src/pinctrl/stm32_pinctrl.c
         ${STM_FAMILY_DIR}/native_driver/src/uart/console.c
         ${STM_FAMILY_DIR}/native_driver/src/uart/stm32_uart.c
+	${STM_FAMILY_DIR}/native_driver/src/interrupt-controller/interrupt.c
         $<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILY_DIR}/native_driver/src/remoteproc/remoteproc_driver.c>
         $<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/secure/services/src/tfm_scmi_api.c>

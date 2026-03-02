@@ -140,6 +140,7 @@ target_sources(platform_s
 		${STM_FAMILY_DIR}/native_driver/src/mtd/nor/spi_nor.c
 		${STM_FAMILY_DIR}/native_driver/src/rif/stm32_rif.c
 		${STM_FAMILY_DIR}/native_driver/src/rif/stm32_rcc_rif.c
+		${STM_FAMILY_DIR}/native_driver/src/interrupt-controller/interrupt.c
 		$<$<BOOL:${TFM_PLATFORM_WDT_API}>:${STM_FAMILY_DIR}/secure/services/src/tfm_ioctl_wdt_api.c>
 		$<$<BOOL:${TFM_PLATFORM_WDT_API}>:${STM_FAMILY_DIR}/secure/services/src/wdt.c>
 		$<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
@@ -347,6 +348,7 @@ if(BL2)
 			${STM_FAMILY_DIR}/native_driver/src/pinctrl/stm32_pinctrl.c
 			${STM_FAMILY_DIR}/native_driver/src/uart/console.c
 			${STM_FAMILY_DIR}/native_driver/src/uart/stm32_uart.c
+			${STM_FAMILY_DIR}/native_driver/src/interrupt-controller/interrupt.c
 			$<$<STREQUAL:${STM32_BOOT_DEV},ospi>:${STM_FAMILY_DIR}/native_driver/src/spi/stm32_ospi.c>
 			$<$<STREQUAL:${STM32_BOOT_DEV},ospi>:${STM_FAMILY_DIR}/native_driver/src/spi/stm32_omm.c>
 			$<$<STREQUAL:${STM32_BOOT_DEV},ospi>:${STM_FAMILY_DIR}/native_driver/src/mtd/spi-mem/spi_mem.c>
