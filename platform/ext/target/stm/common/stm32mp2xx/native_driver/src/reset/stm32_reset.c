@@ -80,6 +80,22 @@ struct stm32_reset_config {
 	uintptr_t base;
 };
 
+static int _reset(const struct device *dev, uint32_t id, unsigned int to_us)
+{
+	const struct stm32_reset_config *drv_cfg = dev_get_config(dev);
+	uintptr_t addr = drv_cfg->base + RESET_OFFSET(id);
+	uint32_t rst_mask = RESET_BIT(id);
+	uint32_t cfgr;
+
+	/* assert reset */
+	io_setbits32(addr, rst_mask);
+
+	if (!to_us)
+		return 0;
+	/* poll for reset deassert */
+	return mmio_read32_poll_timeout(addr, cfgr, (~cfgr & rst_mask), to_us);
+}
+
 static int _assert(const struct device *dev, uint32_t id, unsigned int to_us)
 {
 	const struct stm32_reset_config *drv_cfg = dev_get_config(dev);
@@ -147,6 +163,15 @@ static const struct reset_driver_api stm32_reset_ops = {
 	.assert_level = _stm32_reset_assert,
 	.deassert_level = _stm32_reset_deassert,
 	.reset = _stm32_reset_reset,
+};
+
+int _stm32_reset_only(const struct device *dev, uint32_t id)
+{
+	return _reset(dev, id, TIMEOUT_RESET_US);
+}
+
+static const struct reset_driver_api stm32_reset_only_ops = {
+	.reset = _stm32_reset_only,
 };
 
 static int _cpu_assert(const struct device *dev, uint32_t id)
@@ -243,6 +268,12 @@ static const struct reset_driver_api stm32_reset_vsw_ops = {
 	.reset = _stm32_reset_vsw_reset,
 };
 
+#if defined(GPU_R)
+#define stm32_reset_only(_id) (_id == GPU_R)
+#else
+#define stm32_reset_only(_id) (0)
+#endif
+
 #define stm32_reset_op(_op, _dev, _id)			\
 ({							\
 	const struct reset_driver_api *ops;		\
@@ -251,11 +282,13 @@ static const struct reset_driver_api stm32_reset_vsw_ops = {
 		ops = &stm32_reset_cpu_ops;		\
 	else if (_id == VSW_R)				\
 		ops = &stm32_reset_vsw_ops;		\
+	else if stm32_reset_only(_id)			\
+		ops = &stm32_reset_only_ops;		\
 	else						\
 		ops = &stm32_reset_ops;			\
 							\
 	(!ops->_op) ? -ENOSYS : ops->_op(_dev, _id);	\
- })
+})
 
 int stm32_reset_com_status(const struct device *dev, uint32_t id)
 {
