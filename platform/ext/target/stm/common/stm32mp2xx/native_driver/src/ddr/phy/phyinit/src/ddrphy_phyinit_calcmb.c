@@ -53,20 +53,20 @@ int ddrphy_phyinit_calcmb(struct stm32mp_ddr_config *config, struct pmu_smb_ddr_
 #endif /* STM32MP_LPDDR4_TYPE */
 
 	/* A few checks to make sure valid programming */
-	if ((nad0 <= 0U) || (nad1 < 0U) || (config->uib.numdbyte <= 0U)) {
-		DDR_ERROR("%s numactivedbytedfi0, numactivedbytedfi0, NumByte out of range.\n",
+	if ((nad0 == 0U) || (config->uib.numdbyte == 0U)) {
+		DDR_ERROR("%s numactivedbytedfi0 or numdbyte out of range.\n",
 		      __func__);
 		return -1;
 	}
 
 	if ((nad0 + nad1) > config->uib.numdbyte) {
-		DDR_ERROR("%s numactivedbytedfi0+numactivedbytedfi1 is larger than numdbyteDfi0\n",
+		DDR_ERROR("%s numactivedbytedfi0+numactivedbytedfi1 is larger than numdbyte\n",
 		      __func__);
 		return -1;
 	}
 
 	if ((config->uib.dfi1exists == 0U) && (nad1 != 0U)) {
-		DDR_ERROR("%s dfi1exists==0 but numdbyteDfi0 != 0\n", __func__);
+		DDR_ERROR("%s dfi1exists==0 but numdbytedfi1 != 0\n", __func__);
 		return -1;
 	}
 
