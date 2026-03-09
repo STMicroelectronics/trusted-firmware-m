@@ -17,10 +17,22 @@
 #define SET_CURRENT_COMPONENT(p) THRD_UPDATE_CUR_CTXCTRL(&(p)->ctx_ctrl)
 #else
 extern struct partition_t *p_current_partition;
+
+#if PLATFORM_HAS_NS_NOTIF
+extern uint32_t ns_evt_owned;
+#endif
+
 /* Get current component */
 #define GET_CURRENT_COMPONENT()  p_current_partition
 /* Set current component */
+#if !PLATFORM_HAS_NS_NOTIF
 #define SET_CURRENT_COMPONENT(p) p_current_partition = p
-#endif
+#else
+#define SET_CURRENT_COMPONENT(p) do {\
+	p_current_partition = p;\
+	ns_evt_owned = p->p_ldinf->ns_evt_owned;\
+}while(0)
+#endif /* PLATFORM_HAS_NS_NOTIF */
+#endif /* CONFIG_TFM_SPM_BACKEND_SFN */
 
 #endif /* __CURRENT_H__ */

@@ -425,7 +425,7 @@ def process_partition_manifests(manifest_lists, configs):
             raise Exception('Total number of Services and IRQs of {} exceeds the limit (28)'
                             .format(manifest['name']))
 
-        event_idx=-1
+        event_idx = -1
         for event_idx, evt in enumerate(manifest.get('ns_evts', [])):
             ns_notification_map[evt['name']] = manifest['name']
             # Assign signal value, from the most significant bit
@@ -433,7 +433,12 @@ def process_partition_manifests(manifest_lists, configs):
                 raise Exception('Total number of event  {} exceeds the limit(32)')
             evt['evt_value'] = (1 << (31 - (event_idx + event_used)))
             evt['name'] = manifest['name'] + "_" + evt['name']
-        event_used = event_used+event_idx+1
+            if manifest['type'] == 'PSA-ROT':
+                evt['flih_flag'] = 1
+            else:
+                evt['flih_flag'] = 0
+
+        event_used = event_used + event_idx + 1
         logging.debug('{} has {} NS EVT'.format(manifest['name'], event_idx +1))
 
         manifest_out_basename = os.path.splitext(os.path.basename(manifest_path))[0]

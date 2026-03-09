@@ -123,7 +123,14 @@ static psa_status_t ns_notif_do(uint32_t event, uint32_t owned_evt)
 	return PSA_SUCCESS;
 }
 
+#if TFM_ISOLATION_LEVEL > 1
 psa_status_t ns_notif(uint32_t event)
 {
 	return ns_notif_do(event, ns_evt_owned);
 }
+#else
+psa_status_t tfm_ns_notif(uint32_t event)
+{
+	return ns_notif_do(event, ns_evt_owned);
+}
+#endif

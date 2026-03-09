@@ -18,6 +18,7 @@ extern "C" {
         {% for evt in partition.manifest.ns_evts %}
 #define {{"%-58s"|format(evt.name + "_NS_EVT")}} ({{"0x%8.8x"|format(evt.evt_value)}})
         {% set mask.value =  mask.value + evt.evt_value  %}
+#define {{"%-58s"|format(evt.name + "_NS_EVT_FLIH_FLAG")}} ({{"0x%8.8x"|format(evt.flih_flag)}})
         {% endfor %}
     {% endif %}
 {% endfor %}

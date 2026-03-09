@@ -25,11 +25,20 @@ psa_status_t tfm_core_get_boot_data(uint8_t major_type,
 
 #if PLATFORM_HAS_NS_NOTIF
 __attribute__((naked))
-psa_status_t tfm_ns_notif_flih(uint32_t event)
+psa_status_t tfm_ns_notif_flih_priv(uint32_t event)
 {
     __ASM volatile(
-        "SVC    "M2S(TFM_SVC_NS_NOTIF)"           \n"
-        "BX     lr                                \n"
+        "SVC    "M2S(TFM_SVC_NS_NOTIF_FLIH_HANDLER)"   \n"
+        "BX     lr                                     \n"
+        );
+}
+
+__attribute__((naked))
+psa_status_t tfm_ns_notif_flih_unpriv(uint32_t event)
+{
+    __ASM volatile(
+        "SVC    "M2S(TFM_SVC_NS_NOTIF_FLIH_THREAD)" \n"
+        "BX     lr                                  \n"
         );
 }
 #endif
