@@ -32,6 +32,8 @@ struct rproc_spec {
  * @start:	power on the device and boot it
  * @is_running:	check running state after start request (optional)
  * @stop:	power off the device
+ * @suspend:	suspend the device for low-power
+ * @resume:	resume the device
  */
 struct remoteproc_driver_api {
 	struct rproc_spec *(*get_rproc)(const struct device *dev);
@@ -39,6 +41,8 @@ struct remoteproc_driver_api {
 	bool (*is_running)(struct rproc_spec *rproc);
 	int (*stop)(struct rproc_spec *rproc);
 	int (*set_rsc_tab)(struct rproc_spec *rproc, uint32_t addr, uint32_t size);
+	int (*suspend)(struct rproc_spec *dev);
+	int (*resume)(struct rproc_spec *dev);
 };
 
 void rproc_init(const struct device *dev, struct rproc_spec *rproc);
@@ -124,4 +128,6 @@ int rproc_boot(const struct device *dev);
 int rproc_shutdown(const struct device *dev);
 int rproc_status(const struct device *dev);
 int rproc_set_rsc_tab(const struct device *dev, uint32_t addr, uint32_t size);
+int rproc_suspend(const struct device *dev);
+int rproc_resume(const struct device *dev);
 #endif   /* ----- #ifndef INCLUDE_REMOTEPROC_H_  ----- */

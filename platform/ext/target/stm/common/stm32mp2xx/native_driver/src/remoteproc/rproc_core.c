@@ -142,3 +142,61 @@ int rproc_set_rsc_tab(const struct device *dev, uint32_t addr, uint32_t size)
 
 	return api->set_rsc_tab(rproc, addr, size);
 }
+
+int rproc_suspend(const struct device *dev)
+{
+	const struct remoteproc_driver_api *api;
+	struct rproc_spec *rproc = _is_valid_rproc(dev);
+	int err;
+
+	if (!rproc)
+		return -EINVAL;
+
+	if (rproc->state != CPU_RUNNING)
+		return -ENOTSUP;
+
+	api = rproc->dev->api;
+
+	if (api->suspend) {
+		err = api->suspend(rproc);
+		if (err) {
+			EMSG("can't suspend rproc: %d\n", err);
+			return err;
+		}
+	}
+
+	rproc->state = CPU_SUSPENDED;
+
+	return 0;
+}
+
+int rproc_resume(const struct device *dev)
+{
+	const struct remoteproc_driver_api *api;
+	struct rproc_spec *rproc = _is_valid_rproc(dev);
+	int err;
+
+	if (!rproc)
+		return -EINVAL;
+
+	if (rproc->state != CPU_SUSPENDED)
+		return -ENOTSUP;
+
+	api = rproc->dev->api;
+
+	if (api->resume) {
+		err = api->resume(rproc);
+		if (err) {
+			EMSG("can't resume rproc: %d\n", err);
+			return err;
+		}
+	}
+
+	if (api->is_running) {
+		rproc->state = CPU_STARTED;
+	} else {
+		rproc->state = CPU_RUNNING;
+	}
+
+	return 0;
+}
