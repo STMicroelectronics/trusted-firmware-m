@@ -40,11 +40,14 @@ struct stm32_rproc_variant {
 	int (*start_fn)(const struct device *dev);
 	bool (*is_running_fn)(const struct device *dev);
 	int (*stop_fn)(const struct device *dev);
+	int (*suspend_fn)(const struct device *dev);
+	int (*resume_fn)(const struct device *dev);
 	void (*irq_handler)(const struct device *dev);
 };
 
 struct stm32_rproc_config {
 	const struct reset_control rst_ctl;
+	const struct reset_control hold_boot;
 	const struct firewall_spec *firewall_ctrls;
 	const int n_firewall_ctrls;
 	const uint32_t irq_ack;
@@ -388,6 +391,58 @@ static __unused void stm32mp2_a35_irq_ack(const struct device *dev)
 	}
 }
 
+/* Suspend procedure before low power entry*/
+static __unused int stm32mp2_a35_suspend(const struct device *dev)
+{
+	const struct stm32_rproc_config *cfg = dev_get_config(dev);
+	uint32_t cpu1d1sr;
+
+	stm32mp2_irq_ack_enable(cfg->irq_ack);
+
+	/* Check that CPU1 low power state is D1 DStandby */
+	cpu1d1sr = mmio_read_32((uint32_t)&PWR_S->CPU1D1SR);
+	if (cpu1d1sr != PWR_CPU1D1SR_D1_DSTANDBY) {
+		/* Allow CPU1 wake-up with CPU2 SEV event (exti 64) */
+		EXTI1->SWIER3 = EXTI1_C2SEV;
+		stm32mp2_irq_ack_disable(cfg->irq_ack);
+
+		return -EBUSY;
+	}
+	stm32_rproc_running_set(dev, false);
+
+	return 0;
+}
+
+/* Resume procedure after low power exit */
+static __unused int stm32mp2_a35_resume(const struct device *dev)
+{
+	const struct stm32_rproc_config *cfg = dev_get_config(dev);
+	struct stm32_rproc_data *data = dev_get_data(dev);
+	int ret;
+
+	/*
+	 * For Standby exit, the CPU1 is in hold boot,set by HW and
+	 * CPU2 need to reconfigure the RIF before ROM code execution
+	 */
+	if (!reset_control_status(&cfg->hold_boot)) {
+		/* Prepare ROM code execution */
+		ret = stm32mp2_a35_set_boot_config(dev);
+		if (ret)
+			return ret;
+		data->restore_on_ack = true;
+		stm32mp2_irq_ack_enable(cfg->irq_ack);
+	} else {
+		stm32_rproc_running_set(dev, true);
+	}
+	/* Allow CPU1 wake-up with CPU2 SEV event (exti 64) */
+	EXTI1->SWIER3 = EXTI1_C2SEV;
+
+	/* Remove HOLD BOOT */
+	reset_control_assert(&cfg->hold_boot);
+
+	return 0;
+}
+
 static struct rproc_spec *stm32_rproc_get(const struct device *dev)
 {
 	struct stm32_rproc_data *data = dev_get_data(dev);
@@ -452,6 +507,26 @@ static int stm32_rproc_set_rsc_tab(struct rproc_spec *rproc,
 	return _stm32_rproc_set_rsc_tab(rproc->dev, addr, size);
 }
 
+int stm32_rproc_suspend(struct rproc_spec *rproc)
+{
+	struct stm32_rproc_data *data = dev_get_data(rproc->dev);
+
+	if (!data->variant->suspend_fn)
+		return -ENOTSUP;
+
+	return data->variant->suspend_fn(rproc->dev);
+}
+
+int stm32_rproc_resume(struct rproc_spec *rproc)
+{
+	struct stm32_rproc_data *data = dev_get_data(rproc->dev);
+
+	if (!data->variant->resume_fn)
+		return -ENOTSUP;
+
+	return data->variant->resume_fn(rproc->dev);
+}
+
 static __unused int stm32_rproc_init(const struct device *dev)
 {
 	struct stm32_rproc_data *data = dev_get_data(dev);
@@ -473,6 +548,8 @@ static __unused const struct  stm32_rproc_variant stm32mp2_a35_var = {
 	.start_fn = stm32mp2_a35_start,
 	.is_running_fn = stm32mp2_a35_is_running,
 	.stop_fn = stm32mp2_a35_stop,
+	.suspend_fn = stm32mp2_a35_suspend,
+	.resume_fn = stm32mp2_a35_resume,
 	.irq_handler = stm32mp2_a35_irq_ack,
 };
 
@@ -482,6 +559,8 @@ static struct remoteproc_driver_api stm32_rproc_api = {
 	.is_running = stm32_rproc_is_running,
 	.stop = stm32_rproc_stop,
 	.set_rsc_tab = stm32_rproc_set_rsc_tab,
+	.suspend = stm32_rproc_suspend,
+	.resume = stm32_rproc_resume,
 };
 
 #define DT_CLOCK_CONTROL_GET_BY_IDX(node_id, idx)					\
@@ -525,7 +604,8 @@ static const struct clock_control clk_ctrl_##n[] = DT_INST_CLOCK_CONTROL(n);	\
 static const struct device *regu_##n[] = DT_REGU(n);				\
 										\
 static const struct stm32_rproc_config _##name##_cfg##n = {			\
-	.rst_ctl = DT_INST_RESET_CONTROL_GET(n),				\
+	.rst_ctl = DT_INST_RESET_CONTROL_GET_BY_IDX(n, 0),			\
+	.hold_boot = DT_INST_RESET_CONTROL_GET_BY_IDX(n, 1),			\
 	.firewall_ctrls = DT_INST_ACCESS_CTRLS_GET(n),				\
 	.n_firewall_ctrls = DT_INST_ACCESS_CTRLS_NUM(n),			\
 	.irq_ack = DT_INST_IRQ_BY_NAME_OR(n, ack, irq),				\
