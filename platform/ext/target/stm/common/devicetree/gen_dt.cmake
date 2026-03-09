@@ -16,6 +16,7 @@ set(DEVICETREE_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(DT_DTS_DIR ${DEVICETREE_DIR}/dts)
 set(DT_BINDINGS_DIR ${DEVICETREE_DIR}/bindings)
 set(DT_INCLUDE_DIR ${DEVICETREE_DIR}/include)
+set(DT_GEN_EDT_SCRIPT ${DEVICETREE_DIR}/gen_edt.py)
 set(DT_GEN_DEFINES_SCRIPT ${DEVICETREE_DIR}/gen_defines.py)
 set(DT_VENDOR_PREFIXES ${DT_BINDINGS_DIR}/vendor-prefixes.txt)
 set(DT_PYTHON_DEVICETREE_SRC ${DEVICETREE_DIR}/python-devicetree/src)
@@ -112,7 +113,6 @@ function(dt_preprocess)
 	${NOSYSDEF_CFLAG}
 	-D__DTS__
 	${DT_PREPROCESS_EXTRA_CPPFLAGS}
-	-P   #linemarker
 	-E   # Stop after preprocessing
 	${deps_opts}
 	-o ${DT_PREPROCESS_OUT_FILE}
@@ -158,14 +158,23 @@ macro(gen_devicetree_h)
 
 	set(ENV{PYTHONPATH} ${DT_PYTHON_DEVICETREE_SRC})
 
-	set(${A_TARGET}_CMD_GEN_DEFINES ${Python3_EXECUTABLE} ${DT_GEN_DEFINES_SCRIPT}
+	set(${A_TARGET}_CMD_GEN_EDT ${Python3_EXECUTABLE} ${DT_GEN_EDT_SCRIPT}
 		--dts ${${A_TARGET}_DTS_POST_CPP}
 		--dtc-flags '${A_DTC_FLAGS}'
 		--bindings-dirs ${DT_BINDINGS_DIR}
-		--header-out ${A_DT_OUT_DIR}/devicetree_generated.h
+		--workspace-dir ${CMAKE_SOURCE_DIR}
 		--dts-out ${A_DT_OUT_DIR}/out.dts # for debugging and dtc
 		--edt-pickle-out ${A_DT_OUT_DIR}/edt.pickle
 		--vendor-prefixes ${DT_VENDOR_PREFIXES})
+
+	execute_process(COMMAND ${${A_TARGET}_CMD_GEN_EDT} ECHO_ERROR_VARIABLE RESULT_VARIABLE ret)
+	if(NOT "${ret}" STREQUAL "0")
+		message(FATAL_ERROR "failed to generated edt files (error code: ${ret})")
+	endif()
+
+	set(${A_TARGET}_CMD_GEN_DEFINES ${Python3_EXECUTABLE} ${DT_GEN_DEFINES_SCRIPT}
+		--header-out  ${A_DT_OUT_DIR}/devicetree_generated.h
+		--edt-pickle ${A_DT_OUT_DIR}/edt.pickle)
 
 	#for debug add COMMAND_ECHO STDOUT ECHO_OUTPUT_VARIABLE
 	execute_process(COMMAND ${${A_TARGET}_CMD_GEN_DEFINES} ECHO_ERROR_VARIABLE RESULT_VARIABLE ret)
