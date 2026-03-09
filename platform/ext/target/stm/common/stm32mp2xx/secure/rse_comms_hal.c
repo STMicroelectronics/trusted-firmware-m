@@ -22,7 +22,7 @@
 #include "psa_manifest/pid.h"
 #include "psa_manifest/sid.h"
 #include "region_defs.h"
-#include "tfm_ns_notif.h"
+#include <service_api.h>
 #include "ns_evt.h"
 
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,"only one st,psa-mbox node may be present");

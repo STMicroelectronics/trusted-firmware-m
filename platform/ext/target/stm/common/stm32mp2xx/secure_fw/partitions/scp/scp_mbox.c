@@ -15,10 +15,29 @@
 #include "tfm_hal_interrupt.h"
 #include "load/interrupt_defs.h"
 #include "scmi_server.h"
-#include "tfm_ns_notif.h"
+#include <service_api.h>
 #include "ns_evt.h"
 #include <dt-bindings/scmi/stm32mp2-agents.h>
 
+#if !IPCC_LEGACY
+/* struct to identify ns event FILH API to call */
+struct flih_ns_evt {
+	int evt;
+	int priv;
+};
+
+static const struct flih_ns_evt flih_desc[] = {
+	[STM32MP25_AGENT_ID_CA35] = {
+		.evt = TFM_SP_IPCC_SCMI_CA35_NS_EVT,
+		.priv = TFM_SP_IPCC_SCMI_CA35_NS_EVT_FLIH_FLAG
+	},
+	[STM32MP25_AGENT_ID_CA35_BL31] = {
+		.evt = TFM_SP_IPCC_SCMI_CA35_BL31_NS_EVT,
+		.priv = TFM_SP_IPCC_SCMI_CA35_BL31_NS_EVT_FLIH_FLAG
+	}
+};
+
+#endif
 /* function called by mailbox SLIH handler */
 void rx_scp(const struct device *dev,
 	    mbox_channel_id_t channel_id, void *user_data,
@@ -27,7 +46,12 @@ void rx_scp(const struct device *dev,
 #if IPCC_LEGACY
 	psa_call(TFM_SCP_SERVICE_HANDLE, (int32_t)user_data, NULL, 0, NULL, 0);
 #else
-	(void)tfm_ns_notif_flih((int)user_data);
+	struct flih_ns_evt *desc = (struct flih_ns_evt *)user_data;
+
+	if (desc->priv)
+		(void)tfm_ns_notif_flih_priv(desc->evt);
+	else
+		(void)tfm_ns_notif_flih_unpriv(desc->evt);
 #endif
 }
 
@@ -45,7 +69,7 @@ void scp_com_handle(int type)
 
 int scp_com_init(const struct mbox_dt_spec *chan, const int agent_id)
 {
-        /*  Initialize scmi channel for ca35 ns */
+	/*  Initialize scmi channel for ca35 ns */
 	void *user_data;
 
 #if IPCC_LEGACY
@@ -53,10 +77,8 @@ int scp_com_init(const struct mbox_dt_spec *chan, const int agent_id)
 #else
 	switch (agent_id) {
 	case STM32MP25_AGENT_ID_CA35:
-		user_data =(void *)TFM_SP_IPCC_SCMI_CA35_NS_EVT;
-		break;
 	case STM32MP25_AGENT_ID_CA35_BL31:
-		user_data=(void *)TFM_SP_IPCC_SCMI_CA35_BL31_NS_EVT;
+		user_data = (void *)&flih_desc[agent_id];
 		break;
 	default:
 		return -1;
