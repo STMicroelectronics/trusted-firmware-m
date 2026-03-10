@@ -1011,6 +1011,11 @@
 			resets = <&rcc_reset HPDMA1_R>;
 			#dma-cells = <4>;
 			status = "disabled";
+
+			hpdma1_reset: reset-controller {
+				compatible = "st,stm32mp25-hpdma-reset";
+				#reset-cells = <1>;
+			};
 		};
 
 		hpdma2: dma-controller@50410000 {
@@ -1020,6 +1025,11 @@
 			resets = <&rcc_reset HPDMA2_R>;
 			#dma-cells = <4>;
 			status = "disabled";
+
+			hpdma2_reset: reset-controller {
+				compatible = "st,stm32mp25-hpdma-reset";
+				#reset-cells = <1>;
+			};
 		};
 
 		hpdma3: dma-controller@50420000 {
@@ -1029,6 +1039,11 @@
 			resets = <&rcc_reset HPDMA3_R>;
 			#dma-cells = <4>;
 			status = "disabled";
+
+			hpdma3_reset: reset-controller {
+				compatible = "st,stm32mp25-hpdma-reset";
+				#reset-cells = <1>;
+			};
 		};
 
 		exti1: interrupt-controller@54220000 {
