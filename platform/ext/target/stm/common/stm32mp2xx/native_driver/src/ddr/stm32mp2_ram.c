@@ -231,12 +231,12 @@ int stm32mp2_ddr_dt_init(void)
 
 		retsize = stm32mp_ddr_check_size(&drv_data.info, drv_cfg.info.size);
 		if (retsize < drv_cfg.info.size) {
-			DDR_ERROR("DDR size: %#x does not match DT config: %#x\n",
-			      retsize, drv_cfg.info.size);
+			DDR_ERROR("DDR size: 0x%x does not match DT config: 0x%x\n",
+				  retsize, drv_cfg.info.size);
 			panic();
 		}
 
-		DDR_INFO("Memory size = %#x (%u MB)\n", retsize, retsize / (1024U * 1024U));
+		DDR_INFO("Memory size = 0x%x (%u MB)\n", retsize, retsize / (1024U * 1024U));
 	}
 
 	/*

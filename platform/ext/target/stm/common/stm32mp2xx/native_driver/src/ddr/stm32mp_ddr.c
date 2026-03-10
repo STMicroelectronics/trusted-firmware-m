@@ -179,7 +179,7 @@ void stm32mp_ddr_disable_host_interface(struct stm32mp_ddrctl *ctl)
 		DDR_VERBOSE("[0x%lx] dbgcam = 0x%x ",
 			(uintptr_t)&ctl->dbgcam, dbgcam);
 		if (timeout_elapsed(timeout)) {
-			DDR_ERROR("timeout, dbgcam=%#x\n", dbgcam);
+			DDR_ERROR("timeout, dbgcam=0x%x\n", dbgcam);
 			panic();
 		}
 		count++;
