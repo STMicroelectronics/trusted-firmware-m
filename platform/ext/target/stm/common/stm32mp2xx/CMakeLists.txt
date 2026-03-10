@@ -163,6 +163,7 @@ target_sources(platform_s
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/tamper/stm32_tamp_nvram.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/remoteproc/rproc_core.c>
 		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/remoteproc/stm32_rproc.c>
+		$<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/native_driver/src/remoteproc/rproc_srm_core.c>
 		$<$<BOOL:${STM32_CACHE_ENABLED}>:${STM_FAMILY_DIR}/native_driver/src/core/stm32_dcache.c>
 		${STM_FAMILY_DIR}/native_driver/src/i2c/stm32_i2c.c
 		$<$<BOOL:${TFM_PARTITION_PLATFORM}>:${STM_FAMILY_DIR}/secure/services/src/tfm_platform_system.c>
