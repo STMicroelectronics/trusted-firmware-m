@@ -153,7 +153,7 @@ static int stm32_risab_dt_to_region(const struct device *dev,
 	memset(region, 0, sizeof(struct risab_region));
 
 	if (offset_start < 0 || offset_end > drv_cfg->mm_size) {
-		EMSG("[%s] region[%#x:%#x] is out bound of risab[%#x:%#x]\n",
+		EMSG("[%s] region[0x%x:0x%x] is out bound of risab[0x%x:0x%x]\n",
 		     dev->name,
 		     dt_region->base, dt_region->base + dt_region->size,
 		     drv_cfg->mm_base, drv_cfg->mm_base + drv_cfg->mm_size);
