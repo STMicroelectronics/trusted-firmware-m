@@ -1,0 +1,17 @@
+# Copyright (c) 2026, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  STM32 HPDMA Reset node.
+  This node is in charge of hpdma channel reset.
+
+compatible: "st,stm32mp25-hpdma-reset"
+
+include: [reset-controller.yaml, base.yaml]
+
+properties:
+  "#reset-cells":
+    const: 1
+
+reset-cells:
+  - id
