@@ -1,0 +1,33 @@
+# Copyright (c) 2026, STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  This document defines the binding for the remoteproc resource
+  manager component
+
+compatible: "rproc-srm-core"
+
+include:
+  - base.yaml
+  - reset-device.yaml
+  - access-device.yaml
+
+child-binding:
+
+  description: |
+    a child describes peripheral resource to be reset at remote proc stop.
+    It provides the RIF access control to set, the clock to enable, the voltage
+    supply conditioning the reset and the resets to perform.
+
+  include:
+     - reset-device.yaml
+     - access-device.yaml
+  properties:
+    clocks:
+      type: phandle-array
+      description: Clock gate information
+    vin-supply:
+      description: |
+        Reference to the regulator that controls power to the device.
+        It is conditioning reset if enabled.
+      type: phandle
