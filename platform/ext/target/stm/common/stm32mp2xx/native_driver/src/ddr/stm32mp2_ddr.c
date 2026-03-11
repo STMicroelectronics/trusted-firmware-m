@@ -359,7 +359,7 @@ static void restore_refresh(struct stm32mp_ddrctl *ctl, uint32_t rfshctl3, uint3
 void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv,
 		       struct stm32mp_ddr_config *config)
 {
-	int ret = -EINVAL;
+	int ret;
 	bool ddr_ret;
 	enum ddr_type ddr_type;
 	bool cid_filtering = is_ddr_cid_filtering_enabled();

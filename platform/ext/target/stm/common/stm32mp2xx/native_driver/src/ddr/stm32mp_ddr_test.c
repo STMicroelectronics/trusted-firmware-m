@@ -28,7 +28,9 @@ uintptr_t stm32mp_ddr_test_rw_access(struct stm32mp_ddr_size *info)
 		return info->base;
 	}
 
-	mmio_write_32(info->base, saved_value);
+	if (saved_value != DDR_PATTERN) {
+		mmio_write_32(info->base, saved_value);
+	}
 
 	return 0UL;
 }
