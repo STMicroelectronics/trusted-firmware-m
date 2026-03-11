@@ -10,6 +10,7 @@
 
 #include <cpus.h>
 #include <device.h>
+#include <regulator.h>
 #include <remoteproc.h>
 
 struct cpu_info {
@@ -18,6 +19,7 @@ struct cpu_info {
 	const struct device *dev_ctrl;
 	const struct cpu_ctrl_api *ctrl_api;
 	bool enable_at_startup;
+	const struct device *cpu_supply;
 };
 
 struct cpu_ctrl_api {
@@ -92,6 +94,7 @@ static __unused const struct cpu_ctrl_api ctrl_remoteproc = {
 		.name = DEVICE_DT_NAME(node_id),					\
 		.method = ENABLE_METHOD_NONE,						\
 		.enable_at_startup = DT_NODE_HAS_STATUS_OKAY(node_id),			\
+		.cpu_supply = DT_DEV_REGULATOR_SUPPLY(node_id, cpu),			\
 	}
 
 #define EN_METHODE_INVAL(node_id)							\
@@ -99,6 +102,7 @@ static __unused const struct cpu_ctrl_api ctrl_remoteproc = {
 		.name = DEVICE_DT_NAME(node_id),					\
 		.method = ENABLE_METHOD_INVAL,						\
 		.enable_at_startup = DT_NODE_HAS_STATUS_OKAY(node_id),			\
+		.cpu_supply = DT_DEV_REGULATOR_SUPPLY(node_id, cpu),			\
 	}
 
 #define EN_METHODE_REMOTEPROC(node_id)							\
@@ -108,6 +112,7 @@ static __unused const struct cpu_ctrl_api ctrl_remoteproc = {
 		.dev_ctrl = DEVICE_DT_GET_OR_NULL(DT_RPROCS_CTLR(node_id)),		\
 		.ctrl_api = &ctrl_remoteproc,						\
 		.enable_at_startup = DT_NODE_HAS_STATUS_OKAY(node_id),			\
+		.cpu_supply = DT_DEV_REGULATOR_SUPPLY(node_id, cpu),			\
 	}
 
 #define DEFINE_COPRO_STATE(node_id)							\
@@ -144,12 +149,26 @@ bool cpu_is_enable_method(uint32_t id)
 
 static int cpu_start(struct cpu_info *info)
 {
+	int32_t volt_uv;
 	uint32_t err;
 
 	if (info->ctrl_api->cpu_status(info) == CPU_RUNNING)
 		return 0;
 
+	if (info->cpu_supply) {
+		if (!regulator_get_default_voltage(info->cpu_supply, &volt_uv)) {
+			err = regulator_set_voltage(info->cpu_supply, volt_uv, volt_uv);
+			if (err)
+				goto err;
+		}
+		err = regulator_enable(info->cpu_supply);
+		if (err)
+			goto err;
+	}
+
 	err = info->ctrl_api->cpu_start(info);
+
+err:
 	if (err)
 		EMSG("cpu:%s start err:%d\n", info->name, err);
 
@@ -164,7 +183,13 @@ static int cpu_stop(struct cpu_info *info)
 		return 0;
 
 	err = info->ctrl_api->cpu_stop(info);
+	if (err)
+		goto err;
 
+	if (info->cpu_supply)
+		err = regulator_disable(info->cpu_supply);
+
+err:
 	if (err)
 		EMSG("cpu:%s stop err:%d\n", info->name, err);
 
@@ -234,10 +259,10 @@ enum tfm_platform_err_t cpu_send_cmd(uint32_t id, enum tfm_cpu_service_type_t ty
 
 	switch (type) {
 	case TFM_CPU_SERVICE_TYPE_START:
-		err = cpu_start(info);
+		err = cpu_start(cpu);
 		break;
 	case TFM_CPU_SERVICE_TYPE_STOP:
-		err = cpu_stop(info);
+		err = cpu_stop(cpu);
 		break;
 	case TFM_CPU_SERVICE_TYPE_SUSPEND:
 		err = cpu->ctrl_api->cpu_suspend(cpu);
