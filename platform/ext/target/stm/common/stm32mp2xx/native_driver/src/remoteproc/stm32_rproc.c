@@ -27,6 +27,7 @@
 #include <devicetree.h>
 #include <devicetree/nvmem.h>
 #include <nvmem.h>
+#include <rproc_srm_core.h>
 
 #define IRQ_INVALID	UINT32_MAX
 
@@ -55,6 +56,9 @@ struct stm32_rproc_config {
 	int n_clk;
 	const struct device **regu;
 	int nb_regu;
+	const struct device **rproc_srm;
+	int nb_rproc_srm;
+
 };
 
 struct stm32_rproc_data {
@@ -275,6 +279,8 @@ static __unused int stm32mp2_a35_stop(const struct device *dev)
 {
 	const struct stm32_rproc_config *cfg = dev_get_config(dev);
 	uint32_t cfgr;
+	int err_srm = 0;
+	int err;
 
 	/* when ack not received (not running), restore the configuration */
 	if (stm32_rproc_running_get(dev))
@@ -293,10 +299,16 @@ static __unused int stm32mp2_a35_stop(const struct device *dev)
 		stm32mp2_irq_ack_disable(cfg->irq_ack);
 	}
 	/* check cpu in hold boot */
-	return  mmio_read32_poll_timeout(((uint32_t)&PWR_S->CPU1D1SR), cfgr,
-					 (cfgr & PWR_CPU1D1SR_HOLD_BOOT_Msk) &&
-					 ((cfgr & PWR_CPU1D1SR_DSTATE)
-					  != PWR_CPU1D1SR_DSTATE_DSTANDBY), 10);
+	err = mmio_read32_poll_timeout(((uint32_t)&PWR_S->CPU1D1SR), cfgr,
+				       (cfgr & PWR_CPU1D1SR_HOLD_BOOT_Msk) &&
+				       ((cfgr & PWR_CPU1D1SR_DSTATE)
+					!= PWR_CPU1D1SR_DSTATE_DSTANDBY), 10);
+
+	/* Reset Cortex-A35 resource */
+	if (cfg->rproc_srm[0])
+		err_srm = rproc_srm_reset(cfg->rproc_srm[0]);
+
+	return err ? err : err_srm;
 }
 
 static __unused int stm32mp2_a35_init(const struct device *dev)
@@ -600,13 +612,43 @@ static struct remoteproc_driver_api stm32_rproc_api = {
 		LISTIFY(DT_NUM_REGU(inst), _DT_REGU, (,), inst)			\
 	}
 
+#define DT_NUM_SRM(_inst)							\
+	DT_INST_PROP_LEN_OR(_inst, srm, 0)
+
+#define _DT_SRM(_idx, _inst)							\
+	DEVICE_DT_GET(DT_INST_PHANDLE_BY_IDX(_inst, SRM, _idx))
+
+#define DT_SRM(inst)								\
+	{									\
+		LISTIFY(DT_NUM_SRM(inst), _DT_SRM, (,), inst)			\
+	}
+
+#define CHILD_COUNT_STEP(child)		+ 1
+
+#define CHILD_COUNT(parent) \
+	(0 DT_FOREACH_CHILD_STATUS_OKAY(parent, CHILD_COUNT_STEP))
+
+#define MY_PARENT_NODE(n) DT_DRV_INST(n)
+#define MY_PARENT_CHILD_DEV(child) DEVICE_DT_GET(child)
+
+#define MY_PARENT_CHILDREN_ARRAY(n)				\
+	static const struct device *my_parent_children_##n[] = {\
+		DT_FOREACH_CHILD_STATUS_OKAY(			\
+			MY_PARENT_NODE(n),			\
+			MY_PARENT_CHILD_DEV)			\
+	}
+
 #define STM32_RPROC_INIT(n, name, _variant, _irqhandler)			\
+BUILD_ASSERT(CHILD_COUNT(MY_PARENT_NODE(n)) <= 1,				\
+		     "unsupported: too many children under this rproc");	\
 										\
 DT_INST_ACCESS_CTRLS_DEFINE(n);							\
 										\
 static const struct clock_control clk_ctrl_##n[] = DT_INST_CLOCK_CONTROL(n);	\
 										\
 static const struct device *regu_##n[] = DT_REGU(n);				\
+										\
+MY_PARENT_CHILDREN_ARRAY(n);							\
 										\
 static const struct stm32_rproc_config _##name##_cfg##n = {			\
 	.rst_ctl = DT_INST_RESET_CONTROL_GET_BY_IDX(n, 0),			\
@@ -618,6 +660,8 @@ static const struct stm32_rproc_config _##name##_cfg##n = {			\
 	.n_clk = DT_INST_NUM_CLOCKS(n),						\
 	.regu =  regu_##n,							\
 	.nb_regu = DT_NUM_REGU(n),						\
+	.rproc_srm =   my_parent_children_##n,					\
+	.nb_rproc_srm = ARRAY_SIZE(my_parent_children_##n),			\
 };										\
 										\
 static struct stm32_rproc_data _##name##_data##n = {				\
