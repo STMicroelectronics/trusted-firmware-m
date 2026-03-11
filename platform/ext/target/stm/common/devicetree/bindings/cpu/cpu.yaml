@@ -25,3 +25,6 @@ properties:
     description: Enable method for cpu.
     enum:
       - "remoteproc"
+  cpu-supply:
+    type: phandles
+    description: Reference to the regulator that controls cpu power
