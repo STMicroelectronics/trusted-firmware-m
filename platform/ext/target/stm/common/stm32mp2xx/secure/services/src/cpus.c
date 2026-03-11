@@ -142,6 +142,35 @@ bool cpu_is_enable_method(uint32_t id)
 	return true;
 }
 
+static int cpu_start(struct cpu_info *info)
+{
+	uint32_t err;
+
+	if (info->ctrl_api->cpu_status(info) == CPU_RUNNING)
+		return 0;
+
+	err = info->ctrl_api->cpu_start(info);
+	if (err)
+		EMSG("cpu:%s start err:%d\n", info->name, err);
+
+	return err;
+}
+
+static int cpu_stop(struct cpu_info *info)
+{
+	uint32_t err;
+
+	if (info->ctrl_api->cpu_status(info) == CPU_OFFLINE)
+		return 0;
+
+	err = info->ctrl_api->cpu_stop(info);
+
+	if (err)
+		EMSG("cpu:%s stop err:%d\n", info->name, err);
+
+	return err;
+}
+
 static int cpus_init(void)
 {
 	uint32_t i, err = 0;
@@ -158,11 +187,7 @@ static int cpus_init(void)
 			continue;
 
 		if (info->enable_at_startup) {
-			if (info->ctrl_api->cpu_status(info) != CPU_RUNNING) {
-				err = info->ctrl_api->cpu_start(info);
-				if (err)
-					EMSG("cpu:%s err:%d\n", info->name, err);
-			}
+			err = cpu_start(info);
 		}
 	}
 
@@ -209,10 +234,10 @@ enum tfm_platform_err_t cpu_send_cmd(uint32_t id, enum tfm_cpu_service_type_t ty
 
 	switch (type) {
 	case TFM_CPU_SERVICE_TYPE_START:
-		err = cpu->ctrl_api->cpu_start(cpu);
+		err = cpu_start(info);
 		break;
 	case TFM_CPU_SERVICE_TYPE_STOP:
-		err = cpu->ctrl_api->cpu_stop(cpu);
+		err = cpu_stop(info);
 		break;
 	case TFM_CPU_SERVICE_TYPE_SUSPEND:
 		err = cpu->ctrl_api->cpu_suspend(cpu);
