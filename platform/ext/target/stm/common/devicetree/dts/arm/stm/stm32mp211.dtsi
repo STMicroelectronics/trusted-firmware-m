@@ -929,6 +929,15 @@
 				#size-cells = <1>;
 				reg = <0x56010100 0x200>;
 				status = "disabled";
+
+				nvmem-layout {
+					#address-cells = <1>;
+					#size-cells = <1>;
+					stop2_entrypoint: tamp-bkp@2c {
+						#nvmem-cell-cells = <0>;
+						reg = <0x2c 0x4>;
+					};
+				};
 			};
 		};
 
