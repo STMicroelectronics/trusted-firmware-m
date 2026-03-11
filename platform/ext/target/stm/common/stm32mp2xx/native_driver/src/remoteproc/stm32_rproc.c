@@ -23,6 +23,7 @@
 #include <clk.h>
 #include <cmsis.h>
 #include <stm32_bsec3.h>
+#include <stm32_tamp.h>
 #include <tfm_platform_system.h>
 #include <devicetree.h>
 #include <devicetree/nvmem.h>
@@ -68,6 +69,7 @@ struct stm32_rproc_data {
 	const struct stm32_rproc_variant *variant;
 	const struct device *rsc_tab_addr_dev;
 	const struct device *rsc_tab_size_dev;
+	const struct device *stop2_nvmem_dev;
 };
 
 static void stm32_rproc_running_set(const struct device *dev, bool running)
@@ -347,6 +349,21 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 			return err;
 	}
 
+	/* Clear the ROM code context */
+	if (data->stop2_nvmem_dev) {
+		uint32_t addr = 0;
+		const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(tamp));
+
+		/* Grant access to CPU2 to TAMP backup registers Protection Zone 1-RIF1 */
+		stm32_tamp_bkpreg_zone1_rif1(dev, true);
+		/* Clear CA35 return address for stop2 modes in backup registers */
+		err = nvmem_write_cell(data->stop2_nvmem_dev, sizeof(uint32_t), (uint8_t *)&addr);
+		/* Restore access to CPU1 to TAMP backup registers Protection Zone 1-RIF1 */
+		stm32_tamp_bkpreg_zone1_rif1(dev, false);
+		if (err < 0)
+			return err;
+	}
+
 	/* Prepare ROM code execution */
 	err = stm32mp2_a35_set_boot_config(dev);
 	if (err)
@@ -551,6 +568,8 @@ static __unused int stm32_rproc_init(const struct device *dev)
 
 	if (data->variant->init_fn)
 		err = data->variant->init_fn(dev);
+
+	data->stop2_nvmem_dev = DEVICE_DT_GET(DT_NODELABEL(stop2_entrypoint));
 
 	/* reset resource table tamp back-up registers */
 	_stm32_rproc_set_rsc_tab(dev, 0, 0);
