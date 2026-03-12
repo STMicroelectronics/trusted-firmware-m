@@ -359,6 +359,26 @@ static __unused int _stm32mp2_tamp_init_bkpr(const struct device *dev)
 	return 0;
 }
 
+void stm32_tamp_bkpreg_zone1_rif1(const struct device *dev, bool cpu2_grant_access)
+{
+	const struct stm32_tamp_config *cfg = dev_get_config(dev);
+	uint32_t bkp_zone1_rif1;
+
+	/*
+	 * For cpu2_grant_access=true, remove the protection Zone1-RIF1,
+	 * with TAMP_BKPRIFR1 = 0 and the first backup registers are in
+	 * the protection Zone1-RIF2 accessible by R2CID secure
+	 * else restore the default bkpreg protection zone with the value found
+	 * in device tree
+	 */
+	if (cpu2_grant_access)
+		bkp_zone1_rif1 = 0;
+	else
+		bkp_zone1_rif1 = cfg->bkp_zones[0];
+
+	io_write32(cfg->base + _TAMP_BKPRIFR1, bkp_zone1_rif1);
+}
+
 int stm32_tamp_bkpreg_write(const struct device *dev, unsigned int reg_id,
 			    uint32_t value)
 {

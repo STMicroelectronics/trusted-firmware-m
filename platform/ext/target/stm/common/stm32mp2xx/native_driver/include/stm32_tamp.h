@@ -24,3 +24,12 @@ int stm32_tamp_bkpreg_write(const struct device *dev, unsigned int reg_id,
  */
 int stm32_tamp_bkpreg_read(const struct device *dev, unsigned int reg_id,
 			   uint32_t *value);
+
+/**
+ * stm32_tamp_bkpreg_zone1_rif1 - Modify the protection area on the backup
+ * registers Zone1-Rif1; grant access for R2CID or restore access to R1CID
+ *
+ * @param dev TAMP device.
+ * @param cpu2_grant_access true when zone1 is accessible by CPU2
+ */
+void stm32_tamp_bkpreg_zone1_rif1(const struct device *dev, bool cpu2_grant_access);
