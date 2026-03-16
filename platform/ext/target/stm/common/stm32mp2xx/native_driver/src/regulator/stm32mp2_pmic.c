@@ -975,7 +975,7 @@ static int stpmic2_reg_pm_suspend(const struct device *dev, uint8_t mode)
 			err = stpmic2_reg_disable(dev);
 			if (err)
 				return err;
-			IMSG("regulator %s forced OFF", dev->name);
+			IMSG("regulator %s forced OFF\n", dev->name);
 			drv_data->forced_off = true;
 		}
 	}
