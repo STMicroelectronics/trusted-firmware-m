@@ -536,19 +536,24 @@ static int stm32_uart_pm_action(const struct device *dev,
 
 		clk_disable(drv_data->clk);
 	} else {
+		/*
+		 * Clock disable to balance the usage counter in clock framework
+		 * as clk_disable() was skipped for PM_DEVICE_ACTION_SUSPEND.
+		 * Always reapply the pinctrl and execute clock enable
+		 * which are lost in Standby.
+		 */
+		if (IS_ENABLED(STM32_CONSOLE_NO_SUSPEND)) {
+			clk_disable(drv_data->clk);
+		}
+
 		err = pinctrl_apply_state(drv_cfg->pcfg, PINCTRL_STATE_DEFAULT);
 		if (err)
 			goto out;
 
-		if (!IS_ENABLED(STM32_CONSOLE_NO_SUSPEND)) {
-			/*
-			 * Skip only for balancing usage counter in clock framework
-			 * but always reapply the pinctrl lost in Standby
-			 */
-			err = clk_enable(drv_data->clk);
-			if (err)
-				goto out;
-		}
+		err = clk_enable(drv_data->clk);
+		if (err)
+			goto out;
+
 
 		err = stm32_uart_configure(dev, &drv_data->uart_config);
 	}
