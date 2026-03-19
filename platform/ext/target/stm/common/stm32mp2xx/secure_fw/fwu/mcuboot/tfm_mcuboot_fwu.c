@@ -1014,7 +1014,7 @@ psa_status_t fwu_bootloader_get_image_info(psa_fwu_component_t component,
 					   psa_fwu_component_info_t *info)
 {
 	uint8_t __maybe_unused image_ok = BOOT_FLAG_UNSET;
-	const struct flash_area *fap = NULL;
+	const struct flash_area __maybe_unused *fap = NULL;
 	struct image_version image_version;
 	psa_status_t ret = PSA_SUCCESS;
 	uint8_t __maybe_unused image_id;
@@ -1083,6 +1083,8 @@ psa_status_t fwu_bootloader_get_image_info(psa_fwu_component_t component,
 #endif
 
 close_return:
+#if defined(STM32_FWU_STORAGE_ACCESS)
 	flash_area_close(fap);
+#endif
 	return ret;
 }

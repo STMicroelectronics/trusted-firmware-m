@@ -21,16 +21,16 @@ if(STM32_FWU_STORAGE_ACCESS)
             $<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_FAMILY_DIR}/native_driver/src/mmc/stm32_sdmmc2.c>
             $<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_FAMILY_DIR}/native_driver/src/mmc/soft_crc.c>
             $<$<OR:$<STREQUAL:${STM32_BOOT_DEV},sdmmc1>,$<STREQUAL:${STM32_BOOT_DEV},sdmmc2>>:${STM_FAMILY_DIR}/native_driver/src/mmc/partition.c>
+            ${STM_FAMILY_DIR}/bl2/flash_map_bl2.c
+            ${CMAKE_SOURCE_DIR}/bl2/src/flash_map.c
+            ${MCUBOOT_PATH}/boot/bootutil/src/bootutil_public.c
+            ${CMAKE_SOURCE_DIR}/bl2/ext/mcuboot/flash_map_extended.c
     )
 endif()
 
 target_sources(tfm_fwu_mcuboot_util
     INTERFACE
-        ${MCUBOOT_PATH}/boot/bootutil/src/bootutil_public.c
         ${MCUBOOT_PATH}/boot/bootutil/src/tlv.c
-        ${CMAKE_SOURCE_DIR}/bl2/src/flash_map.c
-        ${CMAKE_SOURCE_DIR}/bl2/ext/mcuboot/flash_map_extended.c
-        ${STM_FAMILY_DIR}/bl2/flash_map_bl2.c
         ./tfm_mcuboot_fwu.c
 )
 
