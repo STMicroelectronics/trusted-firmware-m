@@ -169,7 +169,7 @@
 					 TFM_HAL_FLASH_PROGRAM_UNIT)
 
 #if !defined(MCUBOOT_IMAGE_NUMBER) || (MCUBOOT_IMAGE_NUMBER == 2) || (MCUBOOT_IMAGE_NUMBER == 3)
-
+#if (STM32_BL2 || STM32_FWU_STORAGE_ACCESS)
 #define FLASH_AREA_0_ID			(1)
 #define FLASH_DEVICE_ID_0		100
 #define FLASH_AREA_1_ID			(FLASH_AREA_0_ID + 1)
@@ -297,6 +297,7 @@
 /* Cortex-A35 firmware */
 #define CA35_FW_SIZE			DT_REG_SIZE(DT_NODELABEL(ca35_cube_fw))
 #define CA35_FW_DEST_ADDR		DT_REG_ADDR(DT_NODELABEL(ca35_cube_fw))
+#endif /* (STM32_BL2 || STM32_FWU_STORAGE_ACCESS) */
 
 #else /* MCUBOOT_IMAGE_NUMBER > 3 */
 #error "Only MCUBOOT_IMAGE_NUMBER 2 or 3 is supported!"
