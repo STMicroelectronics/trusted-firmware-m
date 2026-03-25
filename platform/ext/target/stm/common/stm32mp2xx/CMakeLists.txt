@@ -532,6 +532,11 @@ if (EXISTS ${STM32_CA35_FW})
 			$<$<C_COMPILER_ID:ARMClang>:-E\;-xc>
 	)
 
+	target_compile_definitions(signing_layout_for_ca35_fw
+		PRIVATE
+			STM32_CA35_FW_SLOT_SIZE
+	)
+
 	add_custom_target(ca35_fw_signed_bin
 		ALL
 		SOURCES ca35_fw_signed.bin
