@@ -23,3 +23,6 @@ set(STM32_DDR_TYPE                      STM32MP_LPDDR4_TYPE		CACHE STRING    "Se
 set(STM32_DDR_SIZE                      0x80000000				CACHE STRING    "Set ddr size in Bytes" FORCE)
 set(STM32_DDR_FREQ                      800000					CACHE STRING    "Set ddr frequency in KHz" FORCE)
 set(TFM_PARTITION_PROTECTED_STORAGE     OFF                     CACHE BOOL      "Enable Protected Storage partition" FORCE)
+if (EXISTS ${STM32_CA35_FW})
+    set(STM32_CA35_FW_SLOT_SIZE         0x200000                CACHE STRING	"Cortex-A35 Firmware slot size in SDMMC interface boot device" FORCE)
+endif()

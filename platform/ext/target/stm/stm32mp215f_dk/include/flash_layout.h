@@ -216,11 +216,11 @@
 /* Cortex A35 firmware primary slot */
 #define FLASH_DEV_NAME_4		FLASH_DEV_NAME
 #define FLASH_AREA_4_OFFSET	        0
-#define FLASH_AREA_4_SIZE		STM32MP_CA35_FW_MAX_SIZE
+#define FLASH_AREA_4_SIZE		STM32_CA35_FW_SLOT_SIZE
 /* Cortex A35 firmware secondary slot */
 #define FLASH_DEV_NAME_5		FLASH_DEV_NAME
 #define FLASH_AREA_5_OFFSET	        0
-#define FLASH_AREA_5_SIZE		STM32MP_CA35_FW_MAX_SIZE
+#define FLASH_AREA_5_SIZE		STM32_CA35_FW_SLOT_SIZE
 #endif
 
 #if (MCUBOOT_IMAGE_NUMBER == 3)
