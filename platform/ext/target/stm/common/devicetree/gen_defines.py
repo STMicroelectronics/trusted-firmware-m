@@ -280,6 +280,7 @@ def write_special_props(node: edtlib.Node) -> None:
     write_regs(node)
     write_ranges(node)
     write_interrupts(node)
+    write_tfm_interrupts(node)
     write_compatibles(node)
     write_status(node)
 
@@ -370,6 +371,51 @@ def write_regs(node: edtlib.Node) -> None:
     for macro, val in name_vals:
         out_dt_define(macro, val)
 
+def write_tfm_interrupts(node: edtlib.Node) -> None:
+    # TFM interrupt is view like phandle-array, it can have several interrupt controllers
+    # with different arguments
+    #
+    # interrupts-extended = <&nvic 268 0>, <&pwr_intc 1>;
+    #
+
+    prop_id = "interrupts"
+    macro = f"{node.z_path_id}_P_{prop_id}"
+    macro2val = {}
+
+    for i, entry in enumerate(node.interrupts):
+        macro2val.update(controller_and_data_macros(entry, i, macro, prop_id))
+
+    ilen = len(node.interrupts)
+    if ilen is not None:
+        # DT_N_<node-id>_P_<prop-id>_FOREACH_PROP_ELEM
+        macro2val[f"{macro}_FOREACH_PROP_ELEM(fn)"] = (
+            ' \\\n\t'.join(f'fn(DT_{node.z_path_id}, {prop_id}, {i})'
+                           for i in range(ilen)))
+
+        # DT_N_<node-id>_P_<prop-id>_FOREACH_PROP_ELEM_SEP
+        macro2val[f"{macro}_FOREACH_PROP_ELEM_SEP(fn, sep)"] = (
+            ' DT_DEBRACKET_INTERNAL sep \\\n\t'.join(
+                f'fn(DT_{node.z_path_id}, {prop_id}, {i})'
+                for i in range(ilen)))
+
+        # DT_N_<node-id>_P_<prop-id>_FOREACH_PROP_ELEM_VARGS
+        macro2val[f"{macro}_FOREACH_PROP_ELEM_VARGS(fn, ...)"] = (
+            ' \\\n\t'.join(
+                f'fn(DT_{node.z_path_id}, {prop_id}, {i}, __VA_ARGS__)'
+                for i in range(ilen)))
+
+        # DT_N_<node-id>_P_<prop-id>_FOREACH_PROP_ELEM_SEP_VARGS
+        macro2val[f"{macro}_FOREACH_PROP_ELEM_SEP_VARGS(fn, sep, ...)"] = (
+            ' DT_DEBRACKET_INTERNAL sep \\\n\t'.join(
+                f'fn(DT_{node.z_path_id}, {prop_id}, {i}, __VA_ARGS__)'
+                for i in range(ilen)))
+
+    if macro2val:
+        out_comment("Special tfm interrupts macro:")
+        out_dt_define(f"{macro}_EXISTS", 1)
+        out_dt_define(f"{macro}_LEN", ilen)
+        for macro, val in macro2val.items():
+            out_dt_define(macro, val)
 
 def write_interrupts(node: edtlib.Node) -> None:
     # interrupts property: we have some hard-coded logic for interrupt
