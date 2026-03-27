@@ -624,7 +624,7 @@ static struct remoteproc_driver_api stm32_rproc_api = {
 
 #define DT_INST_IRQ_BY_NAME_OR(n, name, cell)					\
 	COND_CODE_1(DT_INST_IRQ_HAS_NAME(n, name),				\
-		    (DT_INST_IRQ_BY_NAME(n, name, cell)),			\
+		    (DT_INST_IRQ_CELL_BY_NAME(n, name, cell)),			\
 		    (IRQ_INVALID))
 
 

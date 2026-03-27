@@ -160,8 +160,8 @@ static const struct stm32_dbgmcu_mbx_config stm32_dbgmcu_mbx_cfg = {
 	.clk_dbgmcu = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(0)),
 	.clk_dbgmcu_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(0, bits),
 	/* Not used - managed by secure partition */
-	.dbg_auth_wr_irq = DT_INST_IRQ_BY_NAME(0, dbg_auth_wr, irq),
-	.dbg_auth_rd_irq = DT_INST_IRQ_BY_NAME(0, dbg_auth_rd, irq),
+	.dbg_auth_wr_irq = DT_INST_IRQ_CELL_BY_NAME(0, dbg_auth_wr, irq),
+	.dbg_auth_rd_irq = DT_INST_IRQ_CELL_BY_NAME(0, dbg_auth_rd, irq),
 };
 
 DEVICE_DT_INST_DEFINE(0, &stm32_dbgmcu_mbx_init, NULL,

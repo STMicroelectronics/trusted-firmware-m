@@ -60,10 +60,10 @@
 
 #if STM32_M33TDCID
 #if IPCC_LEGACY
-#define IPCC_IRQ_LEGACY			DT_IRQ(DT_NODELABEL(ipcc1), irq)
+#define IPCC_IRQ_LEGACY			DT_IRQN(DT_NODELABEL(ipcc1))
 #define IPCC_IRQ                        RESERVED_309
 #else
-#define IPCC_IRQ			DT_IRQ(DT_NODELABEL(ipcc1), irq)
+#define IPCC_IRQ			DT_IRQN(DT_NODELABEL(ipcc1))
 #define IPCC_IRQ_LEGACY                 RESERVED_309
 #endif
 #endif
