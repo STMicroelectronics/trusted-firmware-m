@@ -86,6 +86,11 @@ static bool stm32_rproc_running_get(const struct device *dev)
 	return data->running;
 }
 
+static __unused bool stm32mp2_a35_is_running(const struct device *dev)
+{
+	return stm32_rproc_running_get(dev);
+}
+
 static int stm32mp2_a35_regu(const struct device *dev)
 {
 	int i;
@@ -285,7 +290,7 @@ static __unused int stm32mp2_a35_stop(const struct device *dev)
 	int err;
 
 	/* when ack not received (not running), restore the configuration */
-	if (stm32_rproc_running_get(dev))
+	if (stm32mp2_a35_is_running(dev))
 		stm32_rproc_running_set(dev, false);
 	else
 		stm32mp2_a35_restore(dev);
@@ -319,7 +324,7 @@ static __unused int stm32mp2_a35_init(const struct device *dev)
 
 	stm32_rproc_running_set(dev, false);
 
-	/* unmask event before rif has initialized CID1 filtering on EXTI1_C1CIDCFGR*/
+	/* unmask event before rif has initialized CID1 filtering on EXTI1_C1CIDCFGR */
 	EXTI1->C1IMR3 |= EXTI1_C2SEV;
 
 	if (cfg->irq_ack != IRQ_INVALID){
@@ -405,11 +410,6 @@ static __unused int stm32mp2_a35_release(const struct device *dev)
 	return ret;
 }
 
-static __unused bool stm32mp2_a35_is_running(const struct device *dev)
-{
-	return stm32_rproc_running_get(dev);
-}
-
 static __unused void stm32mp2_a35_irq_ack(const struct device *dev)
 {
 	const struct stm32_rproc_config *cfg = dev_get_config(dev);
@@ -419,8 +419,14 @@ static __unused void stm32mp2_a35_irq_ack(const struct device *dev)
 		stm32mp2_a35_release(dev);
 		data->restore_on_ack = false;
 	} else {
-		/* Allow CPU1 wake-up form D1 DStandby with CPU2 SEV event */
-		EXTI1->SWIER3 = EXTI1_C2SEV;
+		/*
+		 * Treat IRQ ack only when allowed.
+		 * Waking up Cortex-A35 is not allowed between
+		 * stm32mp2_a35_suspend() and stm32mp2_a35_resume().
+		 */
+		if (stm32mp2_a35_is_running(dev))
+			/* Allow CPU1 wake-up form D1 DStandby with CPU2 SEV */
+			EXTI1->SWIER3 = EXTI1_C2SEV;
 	}
 	stm32mp2_irq_ack_clear(cfg->irq_ack);
 }
@@ -433,16 +439,19 @@ static __unused int stm32mp2_a35_suspend(const struct device *dev)
 
 	stm32mp2_irq_ack_enable(cfg->irq_ack);
 
+	stm32_rproc_running_set(dev, false);
+
 	/* Check that CPU1 low power state is D1 DStandby */
 	cpu1d1sr = mmio_read_32((uint32_t)&PWR_S->CPU1D1SR);
 	if (cpu1d1sr != PWR_CPU1D1SR_D1_DSTANDBY) {
+		stm32_rproc_running_set(dev, true);
+
 		/* Allow CPU1 wake-up with CPU2 SEV event (exti 64) */
 		EXTI1->SWIER3 = EXTI1_C2SEV;
 		stm32mp2_irq_ack_clear(cfg->irq_ack);
 
 		return -EBUSY;
 	}
-	stm32_rproc_running_set(dev, false);
 
 	return 0;
 }
