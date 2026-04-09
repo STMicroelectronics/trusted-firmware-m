@@ -6,7 +6,7 @@
 
 set(STM32MP2XX_HAL_DRIVER_PATH       "DOWNLOAD"                                                        CACHE PATH   "Path to stm32mp2xx-hal-driver package (or DOWNLOAD to fetch automatically)")
 set(STM32MP2XX_HAL_DRIVER_GIT_REMOTE "https://github.com/STMicroelectronics/stm32mp2xx-hal-driver.git" CACHE STRING "URL (or path) to retrieve stm32mp2xx-hal-driver package")
-set(STM32MP2XX_HAL_DRIVER_VERSION    "v1.3.0"                                                          CACHE STRING "version of stm32mp2xx-hal-driver package")
+set(STM32MP2XX_HAL_DRIVER_VERSION    "v1.3.1"                                                          CACHE STRING "version of stm32mp2xx-hal-driver package")
 
 if (NOT EXISTS ${STM32MP2XX_HAL_DRIVER_PATH})
     fetch_remote_library(

@@ -6,7 +6,7 @@
 
 set(CMSIS_DEVICE_MP2_PATH       "DOWNLOAD"                                                   CACHE PATH   "Path to cmsis-device-mp2 package (or DOWNLOAD to fetch automatically)")
 set(CMSIS_DEVICE_MP2_GIT_REMOTE "https://github.com/STMicroelectronics/cmsis-device-mp2.git" CACHE STRING "URL (or path) to retrieve cmsis-device-mp2 package")
-set(CMSIS_DEVICE_MP2_VERSION    "v1.3.0"                                                     CACHE STRING "version of cmsis-device-mp2 package")
+set(CMSIS_DEVICE_MP2_VERSION    "v1.3.1"                                                     CACHE STRING "version of cmsis-device-mp2 package")
 
 if (NOT EXISTS ${CMSIS_DEVICE_MP2_PATH})
 
