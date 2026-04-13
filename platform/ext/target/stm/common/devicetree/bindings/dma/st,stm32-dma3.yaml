@@ -24,6 +24,9 @@ properties:
   clocks:
     required: true
 
+  resets:
+    required: true
+
   st,errata-ahbrisab:
     type: boolean
     description: |
