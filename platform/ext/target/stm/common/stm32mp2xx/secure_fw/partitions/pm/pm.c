@@ -151,6 +151,10 @@ static int _pm_suspend(enum pm_suspend_mode_t mode)
 		err = -EINVAL;
 	}
 
+	/* if Low power mode is not performed, just restore state */
+	if (err)
+		pm_hint = PM_HINT_CLOCK_STATE;
+
 	pm_resume_devices(pm_hint);
 
 	__set_BASEPRI(0);
