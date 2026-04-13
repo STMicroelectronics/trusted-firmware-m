@@ -4,7 +4,6 @@
  * Author(s): Ludovic Barre, <ludovic.barre@foss.st.com> for STMicroelectronics.
  *
  */
-#define DT_DRV_COMPAT st_stm32_dma3
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -72,6 +71,9 @@ struct stm32_hpdma_config {
 	const bool errata_ahbrisab;
 };
 
+struct stm32_hpdma_reset_config {
+	const struct device *parent;
+};
 /*
  * specific function for:
  *  - no standard offset on priv and sem
@@ -219,6 +221,22 @@ static int stm32_hpdma_pm_action(const struct device *dev,
 }
 #endif
 
+static __maybe_unused int stm32_reset_hpdma_reset(const struct device *dev, uint32_t id)
+{
+	const struct stm32_hpdma_reset_config *drv_cfg = dev_get_config(dev);
+
+	if ((drv_cfg->parent) && (id == 0))
+		return stm32_hpdma_init(drv_cfg->parent);
+
+	return -ENOTSUP;
+}
+
+static __maybe_unused const struct reset_driver_api stm32_reset_hpdma_api = {
+	.reset = stm32_reset_hpdma_reset,
+};
+
+#define DT_DRV_COMPAT st_stm32_dma3
+
 #define STM32_HPDMA_INIT(n)							\
 										\
 static __unused const struct rif_base rbase_##n = {				\
@@ -257,3 +275,21 @@ DEVICE_DT_INST_DEFINE(n, &stm32_hpdma_init,					\
 		      CORE, 10, NULL);
 
 DT_INST_FOREACH_STATUS_OKAY(STM32_HPDMA_INIT)
+
+#undef DT_DRV_COMPAT
+#define DT_DRV_COMPAT st_stm32mp25_hpdma_reset
+
+#define HPDMA_PARENT_NODE(n)			DEVICE_DT_GET(DT_PARENT(DT_DRV_INST(n)))
+
+#define STM32_HPDMA_RESET_INIT(n)							\
+											\
+static const struct stm32_hpdma_reset_config stm32_hpdma_reset_cfg_##n = {		\
+	.parent = HPDMA_PARENT_NODE(n),							\
+};											\
+DEVICE_DT_INST_DEFINE(n,								\
+		      NULL, NULL,							\
+		      NULL, &stm32_hpdma_reset_cfg_##n,					\
+		      PRE_CORE, 0,							\
+		      &stm32_reset_hpdma_api);
+
+DT_INST_FOREACH_STATUS_OKAY(STM32_HPDMA_RESET_INIT)
