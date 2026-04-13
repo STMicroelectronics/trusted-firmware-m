@@ -17,6 +17,7 @@
 #include <device.h>
 #include <pm/device.h>
 #include <pm/pm.h>
+#include <reset.h>
 #include <stm32_rif.h>
 #include <clk.h>
 #include <syscon.h>
@@ -64,6 +65,7 @@ struct stm32_hpdma_config {
 	const struct rifprot_controller *rif_ctl;
 	const struct device *clk_dev;
 	const clk_subsys_t clk_subsys;
+	const struct reset_control rst_ctl;
 	const struct device *syscfg_dev;
 	uint16_t arcr_reg;
 	uint8_t arcr_mask;
@@ -190,6 +192,10 @@ static __unused int stm32_hpdma_init(const struct device *dev)
 	if (err)
 		return err;
 
+	err = reset_control_reset(&cfg->rst_ctl);
+	if (err)
+		goto out;
+
 	err = stm32_rifprot_init(cfg->rif_ctl);
 	if (err)
 		goto out;
@@ -235,6 +241,7 @@ static const struct stm32_hpdma_config hpdma_cfg_##n = {			\
 	.base = DT_INST_REG_ADDR(n),						\
 	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),			\
 	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),		\
+	.rst_ctl = DT_INST_RESET_CONTROL_GET(n),				\
 	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),					\
 	.syscfg_dev = DEVICE_DT_GET_OR_NULL(DT_INST_PHANDLE(n, st_syscfg_arcr)),\
 	.arcr_reg = DT_INST_PHA_OR(n, st_syscfg_arcr, offset, 0),		\
