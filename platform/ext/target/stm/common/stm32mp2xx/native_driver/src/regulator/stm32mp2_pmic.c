@@ -884,7 +884,7 @@ static int stpmic2_set_alt_state(const struct device *dev, bool enable)
 	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
 	uint8_t value = enable ? 1 : 0;
 
-	return i2c_reg_update_byte_dt(&pmic_cfg->i2c, regu_desc->alt_en_cr, value, 1);
+	return i2c_reg_update_byte_dt(&pmic_cfg->i2c, regu_desc->alt_en_cr, 1, value);
 }
 
 static int stpmic2_set_alt_voltage(const struct device *dev,  int32_t volt_uv)
