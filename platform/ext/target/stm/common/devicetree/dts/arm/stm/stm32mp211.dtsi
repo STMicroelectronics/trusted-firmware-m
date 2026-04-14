@@ -990,9 +990,7 @@
 					status = "disabled";
 				};
 				a35_hpdma: a35_hpdma@0 {
-					resets = <&hpdma3_reset 14>, <&hpdma3_reset 15>, <&rcc_reset HPDMA1_R>,
-						<&rcc_reset HPDMA2_R>;
-					clocks = <&rcc CK_BUS_HPDMA1>,  <&rcc CK_BUS_HPDMA2>;
+					resets = <&hpdma1_reset 0>, <&hpdma2_reset 0>;
 					status = "disabled";
 				};
 			};
