@@ -229,6 +229,12 @@
 #define PWRCTRL_SEL_SHIFT	2
 #define PWRCTRL_SEL_MASK	GENMASK_32(3, 2)
 
+/* BUCKx_MAIN/ALT_CR2 LDOx_MAIN/ALT_CR REFDDR_MAIN/ALT_CR*/
+#define CR_EN_SHIFT		0
+#define CR_EN_MASK		BIT(0)
+#define CR_ENABLE		BIT(0)
+#define CR_DISABLE		0
+
 /* BUCKx_MAIN_CR1 / BUCKx_ALT_CR1 */
 #define BUCKX_VOUT_SHIFT	0
 #define BUCKX_VOUT_MASK		GENMASK_32(6, 0)
@@ -751,7 +757,8 @@ static int stpmic2_reg_enable(const struct device *dev)
 	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
 	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
 
-	return i2c_reg_update_byte_dt(&pmic_cfg->i2c, regu_desc->en_cr, 1, 1);
+	return i2c_reg_update_byte_dt(&pmic_cfg->i2c, regu_desc->en_cr,
+				      CR_EN_MASK, CR_ENABLE);
 }
 
 static int stpmic2_reg_disable(const struct device *dev)
@@ -760,7 +767,8 @@ static int stpmic2_reg_disable(const struct device *dev)
 	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
 	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
 
-	return i2c_reg_update_byte_dt(&pmic_cfg->i2c, regu_desc->en_cr, 1, 0);
+	return i2c_reg_update_byte_dt(&pmic_cfg->i2c, regu_desc->en_cr,
+				      CR_EN_MASK, CR_DISABLE);
 }
 
 static unsigned int stpmic2_reg_count_voltages(const struct device *dev)
@@ -882,9 +890,10 @@ static int stpmic2_set_alt_state(const struct device *dev, bool enable)
 	const struct regu_stpmic2_config *drv_cfg = dev_get_config(dev);
 	const struct regu_stpmic2_desc *regu_desc = &drv_cfg->desc;
 	const struct stpmic_config *pmic_cfg = dev_get_config(drv_cfg->pmic_dev);
-	uint8_t value = enable ? 1 : 0;
+	uint8_t value = enable ? CR_ENABLE : CR_DISABLE;
 
-	return i2c_reg_update_byte_dt(&pmic_cfg->i2c, regu_desc->alt_en_cr, 1, value);
+	return i2c_reg_update_byte_dt(&pmic_cfg->i2c, regu_desc->alt_en_cr,
+				      CR_EN_MASK, value);
 }
 
 static int stpmic2_set_alt_voltage(const struct device *dev,  int32_t volt_uv)
@@ -971,7 +980,7 @@ static int stpmic2_reg_pm_suspend(const struct device *dev, uint8_t mode)
 		err = i2c_reg_read_byte_dt(&pmic_cfg->i2c, regu_desc->en_cr, &en_cr);
 		if (err)
 			return err;
-		if (en_cr & BIT(0)) { /* enabled ? */
+		if ((en_cr & CR_EN_MASK) == CR_ENABLE) {
 			err = stpmic2_reg_disable(dev);
 			if (err)
 				return err;
