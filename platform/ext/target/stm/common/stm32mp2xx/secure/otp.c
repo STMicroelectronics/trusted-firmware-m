@@ -256,7 +256,7 @@ static enum tfm_plat_err_t otp_read_by_nvmem(const struct device *dev_nvmem,
 		return TFM_PLAT_ERR_UNSUPPORTED;
 
 	err = nvmem_read_cell(dev_nvmem, out_len, out, &read_len);
-	if (read_len != out_len) {
+	if (err || read_len != out_len) {
 		memset(out, 0, out_len);
 		return TFM_PLAT_ERR_NOT_PERMITTED;
 	}
