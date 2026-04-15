@@ -64,6 +64,7 @@
 #endif
 #define DBG_AUTH_HOST_IRQ		DT_IRQ_CELL_BY_NAME(DT_NODELABEL(dbgmcu_mbx), \
 							    dbg_auth_wr, irq)
+#define EXTI2_IWDG_1			BIT(2)
 #endif
 
 #endif /* __SOC_CONFIG_H__ */
