@@ -229,13 +229,13 @@
 #define PWRCTRL_SEL_SHIFT	2
 #define PWRCTRL_SEL_MASK	GENMASK_32(3, 2)
 
-/* BUCKx_MAIN_CR2 */
+/* BUCKx_MAIN_CR1 / BUCKx_ALT_CR1 */
 #define BUCKX_VOUT_SHIFT	0
 #define BUCKX_VOUT_MASK		GENMASK_32(6, 0)
 
-/* BUCKx_MAIN_CR2 */
-#define PREG_MODE_SHIFT		1
-#define PREG_MODE_MASK		GENMASK_32(2, 1)
+/* BUCKx_MAIN_CR2 / BUCKx_ALT_CR2 */
+#define BUCKX_PREG_MODE_SHIFT	1
+#define BUCKX_PREG_MODE_MASK	GENMASK_32(2, 1)
 
 /* BUCKS_PD_CR1 */
 #define BUCK1_PD_MASK		GENMASK_32(1, 0)
@@ -728,16 +728,16 @@ static int stpmic2_set_prop(const struct device *dev,
 
 		return i2c_reg_update_byte_dt(&pmic_cfg->i2c,
 					      regu_desc->en_cr,
-					      PREG_MODE_MASK,
-					      _FLD_PREP(PREG_MODE, arg));
+					      BUCKX_PREG_MODE_MASK,
+					      _FLD_PREP(BUCKX_PREG_MODE, arg));
 	case STPMIC2_ALT_PREG_MODE:
 		if ((!regu_desc->has_preg) || (arg > 2))
 			return -ENOTSUP;
 
 		return i2c_reg_update_byte_dt(&pmic_cfg->i2c,
 					      regu_desc->alt_en_cr,
-					      PREG_MODE_MASK,
-					      _FLD_PREP(PREG_MODE, arg));
+					      BUCKX_PREG_MODE_MASK,
+					      _FLD_PREP(BUCKX_PREG_MODE, arg));
 	default:
 		err = -EINVAL;
 	}
