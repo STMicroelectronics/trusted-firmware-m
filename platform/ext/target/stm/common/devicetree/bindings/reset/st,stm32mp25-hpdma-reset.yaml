@@ -3,7 +3,7 @@
 
 description: |
   STM32 HPDMA Reset node.
-  This node is in charge of hpdma channel reset.
+  This node is in charge of hpdma ip reset.
 
 compatible: "st,stm32mp25-hpdma-reset"
 
@@ -12,6 +12,7 @@ include: [reset-controller.yaml, base.yaml]
 properties:
   "#reset-cells":
     const: 1
+    description: Since full ip is reset, only cell value to 0 is supported
 
 reset-cells:
   - id
