@@ -110,6 +110,9 @@ int stm32_ramcfg_crc_compute(const struct device *dev, size_t buf_size)
 	/* Save calculated signature in reference signature */
 	mmio_write_32(base + _RAMCFG_CRSR, mmio_read_32(base + _RAMCFG_CCSR));
 
+	/* Disable RETRAM erase on system reset/Standby exit */
+	mmio_setbits_32(drv_cfg->base + _RAMCFG_CR, _RAMCFG_CR_SRAMHWERDIS);
+
 end:
 	/* Deactivate the CRC */
 	mmio_clrsetbits_32(base + _RAMCFG_CCR1, _RAMCFG_CCR1_CRCC_MASK,
