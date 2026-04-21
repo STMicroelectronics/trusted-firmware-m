@@ -16,7 +16,6 @@
 #include <tfm_boot_status.h>
 #include <tfm_sp_log.h>
 #include <uapi/tfm_pm_api.h>
-#include <stm32mp2_lp_fw_api.h>
 #include "tfm_pm.h"
 
 extern const uint8_t __tfm_lp_fw_start[];
@@ -89,11 +88,7 @@ static psa_status_t tfm_pm_load_fw()
 	uintptr_t dst_addr = DT_REG_ADDR(DT_NODELABEL(cm33_retram));
 	size_t dst_sz = DT_REG_SIZE(DT_NODELABEL(cm33_retram));
 	size_t crc_buffer_sz;
-	psa_status_t tfm_res;
 	int ret;
-	uint8_t *key;
-	uint8_t size;
-	bool done;
 
 	if (!fw_size)
 		return PSA_ERROR_DOES_NOT_EXIST;
@@ -116,21 +111,7 @@ static psa_status_t tfm_pm_load_fw()
 	if (ret)
 		return PSA_ERROR_GENERIC_ERROR;
 
-	tfm_res = tfm_core_get_boot_data(TLV_MAJOR_PLATFORM,
-					 (struct tfm_boot_data *)&boot_data,
-					 sizeof(boot_data));
-
-	/* Set DDR Encryption key when present in shared data */
-	if (tfm_res == PSA_SUCCESS &&
-	    tlv_extract_data((struct tfm_boot_data *)&boot_data,
-			     SET_TLV_TYPE(TLV_MAJOR_PLATFORM, TLV_PLAT_DDRENCKEY),
-			     &key, &size) == PSA_SUCCESS) {
-		done = stm32mp2_lp_fw_set_mkey(key, size);
-	} else {
-		done = stm32mp2_lp_fw_set_mkey(NULL, 0);
-	}
-
-	return done ? PSA_SUCCESS : PSA_ERROR_GENERIC_ERROR;
+	return PSA_SUCCESS;
 }
 
 psa_status_t tfm_pm_service_sfn(const psa_msg_t *msg)
@@ -150,6 +131,8 @@ psa_status_t tfm_pm_service_sfn(const psa_msg_t *msg)
 psa_status_t tfm_pm_init(void)
 {
 	psa_status_t ret;
+	uint8_t *key;
+	uint8_t size;
 
 	ret = tfm_pm_load_fw();
 	if (ret) {
@@ -157,7 +140,20 @@ psa_status_t tfm_pm_init(void)
 		return ret;
 	}
 
-	ret = tfm_pm_fw_init();
+	ret = tfm_core_get_boot_data(TLV_MAJOR_PLATFORM,
+				     (struct tfm_boot_data *)&boot_data,
+				     sizeof(boot_data));
+	if (!ret) {
+		ret = tlv_extract_data((struct tfm_boot_data *)&boot_data,
+				       SET_TLV_TYPE(TLV_MAJOR_PLATFORM, TLV_PLAT_DDRENCKEY),
+				       &key, &size);
+	}
+	if (ret) {
+		key = NULL;
+		size = 0;
+	}
+
+	ret = tfm_pm_fw_init(key, size);
 	if (ret) {
 		LOG_ERRFMT("[ERR][PM] init failed\r\n");
 	}

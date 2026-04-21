@@ -209,7 +209,7 @@ psa_status_t tfm_pm_power_off(void)
 	return PSA_SUCCESS;
 }
 
-psa_status_t tfm_pm_fw_init(void)
+psa_status_t tfm_pm_fw_init(uint8_t *key, uint8_t size)
 {
 	const uintptr_t uart_addr = DT_REG_ADDR(DT_CHOSEN(stdout_device));
 
@@ -223,6 +223,10 @@ psa_status_t tfm_pm_fw_init(void)
 
 	/* Display LP version in INIT phase when uart is defined */
 	stm32mp2_lp_fw_set_uart_addr(uart_addr);
+
+	if (!stm32mp2_lp_fw_set_mkey(key, size)) {
+		return PSA_ERROR_INVALID_ARGUMENT;
+	}
 
 	if (jump_low_power_fw(STM32MP2_LP_FW_LPMODE_INIT)) {
 		return PSA_ERROR_GENERIC_ERROR;
