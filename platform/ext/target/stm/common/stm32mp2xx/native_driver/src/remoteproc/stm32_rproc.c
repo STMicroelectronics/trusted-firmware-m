@@ -302,11 +302,13 @@ static __unused int stm32mp2_a35_stop(const struct device *dev)
 	if (cfg->irq_ack != IRQ_INVALID) {
 		stm32mp2_irq_ack_disable(cfg->irq_ack);
 	}
-	/* check cpu in hold boot */
+	/* check cpu in reset with hold boot */
 	err = mmio_read32_poll_timeout(((uint32_t)&PWR_S->CPU1D1SR), cfgr,
 				       (cfgr & PWR_CPU1D1SR_HOLD_BOOT_Msk) &&
+				       ((cfgr & PWR_CPU1D1SR_CSTATE)
+					== PWR_CPU1D1SR_CSTATE_RESET) &&
 				       ((cfgr & PWR_CPU1D1SR_DSTATE)
-					!= PWR_CPU1D1SR_DSTATE_DSTANDBY), 10);
+					!= PWR_CPU1D1SR_DSTATE_DSTANDBY), 1000);
 
 	/* Reset Cortex-A35 resource */
 	if (cfg->rproc_srm[0])
