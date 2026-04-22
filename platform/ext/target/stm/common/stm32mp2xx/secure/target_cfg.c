@@ -26,22 +26,6 @@
  */
 #define SCB_AIRCR_WRITE_MASK ((0x5FAUL << SCB_AIRCR_VECTKEY_Pos))
 
-enum tfm_plat_err_t enable_fault_handlers(void)
-{
-	/* Explicitly set secure fault priority to the highest */
-	NVIC_SetPriority(SecureFault_IRQn, 0);
-
-	/* lower priority than SERC */
-	NVIC_SetPriority(BusFault_IRQn, 2);
-
-	/* Enables BUS, MEM, USG and Secure faults */
-	SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk
-		| SCB_SHCSR_BUSFAULTENA_Msk
-		| SCB_SHCSR_MEMFAULTENA_Msk
-		| SCB_SHCSR_SECUREFAULTENA_Msk;
-	return TFM_PLAT_ERR_SUCCESS;
-}
-
 enum tfm_plat_err_t system_reset_cfg(void)
 {
 	uint32_t reg_value = SCB->AIRCR;
@@ -53,24 +37,6 @@ enum tfm_plat_err_t system_reset_cfg(void)
 	reg_value |= (uint32_t)(SCB_AIRCR_WRITE_MASK | SCB_AIRCR_SYSRESETREQS_Msk);
 
 	SCB->AIRCR = reg_value;
-
-	return TFM_PLAT_ERR_SUCCESS;
-}
-
-/*----------------- NVIC interrupt target state to NS configuration ----------*/
-enum tfm_plat_err_t nvic_interrupt_target_state_cfg(void)
-{
-	/* Target every interrupt to NS; unimplemented interrupts will be WI */
-	for (uint8_t i = 0; i < ARRAY_SIZE(NVIC->ITNS); i++) {
-		NVIC->ITNS[i] = 0xFFFFFFFF;
-	}
-
-	if (IS_ENABLED(STM32_M33TDCID)) {
-		/* Make sure that IAC/SERF are targeted to S state */
-		NVIC_ClearTargetState(CPU1_SEV_IRQn);
-		/* Make sure that interrupt reserved for NS notification is nonsecure */
-		NVIC_SetTargetState(RESERVED_9);
-	}
 
 	return TFM_PLAT_ERR_SUCCESS;
 }
