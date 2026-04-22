@@ -153,9 +153,6 @@ static int stm32mp2_a35_regu(const struct device *dev)
 #define PWR_CPU1D1SR_CSTATE_CSTOP	(LL_PWR_CPU_CSTOP << PWR_CPU1D1SR_CSTATE_Pos)
 #define PWR_CPU1D1SR_CSTATE_RESET	(LL_PWR_CPU_RESET << PWR_CPU1D1SR_CSTATE_Pos)
 
-#define PWR_CPU1D1SR_D1_DSTANDBY	(PWR_CPU1D1SR_DSTATE_DSTANDBY | \
-					 PWR_CPU1D1SR_CSTATE_RESET)
-
 /* Waiting EXTI support with interrupt framework */
 #define EXTI1_C2SEV	BIT(0)
 #define EXTI1_C1SEV	BIT(1)
@@ -443,7 +440,7 @@ static __unused int stm32mp2_a35_suspend(const struct device *dev)
 
 	/* Check that CPU1 low power state is D1 DStandby */
 	cpu1d1sr = mmio_read_32((uint32_t)&PWR_S->CPU1D1SR);
-	if (cpu1d1sr != PWR_CPU1D1SR_D1_DSTANDBY) {
+	if ((cpu1d1sr & PWR_CPU1D1SR_DSTATE) != PWR_CPU1D1SR_DSTATE_DSTANDBY) {
 		stm32_rproc_running_set(dev, true);
 
 		/* Allow CPU1 wake-up with CPU2 SEV event (exti 64) */
