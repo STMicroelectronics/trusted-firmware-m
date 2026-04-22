@@ -9,9 +9,14 @@ properties:
     required: true
 
   arm,num-irq-priority-bits:
-    required: true
     type: int
+    required: true
     description: number of bits of IRQ priorities
+
+  arm,num-irqs:
+    type: int
+    required: true
+    description: Number of irqs supported by the interrupt controller
 
   "#interrupt-cells":
     const: 2
