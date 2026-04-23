@@ -2,7 +2,7 @@
 # SPDX -License-Identifier: Apache-2.0
 
 description: |
-  STMicroelectronics Power Management IC (PMIC) STPMIC25
+  STMicroelectronics Power Management Integrated Circuit (PMIC) STPMIC25
 
   The STPMIC25 has seven buck converters and nine LDOs (inlcuing one refddr).
   All need to be defined as children of regulators node, with node names:
@@ -32,3 +32,6 @@ description: |
   };
 
 compatible: "st,stpmic2"
+
+include:
+  - st,stpmic.yaml

@@ -2,7 +2,7 @@
 # SPDX -License-Identifier: Apache-2.0
 
 description: |
-  STMicroelectronics regulators provided by STPMIC Power Management IC
+  STMicroelectronics regulators provided by STPMIC Power Management Integrated Circuit
 
   The STPMIC2 has several regulators as buck converters and LDOs and all need
   to be defined as children nodes with the expected name.

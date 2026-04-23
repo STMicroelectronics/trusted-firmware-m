@@ -2,7 +2,7 @@
 # SPDX -License-Identifier: Apache-2.0
 
 description: |
-  STMicroelectronics Power Management IC (PMIC) STPMIC1L
+  STMicroelectronics Power Management Integrated Circuit (PMIC) STPMIC1L
 
   The STPMIC1L has two buck converters, four LDOs and five GPOs.
   All need to be defined as children of regulators node, with node names:
@@ -35,3 +35,6 @@ description: |
   };
 
 compatible: "st,stpmic1l"
+
+include:
+  - st,stpmic.yaml
