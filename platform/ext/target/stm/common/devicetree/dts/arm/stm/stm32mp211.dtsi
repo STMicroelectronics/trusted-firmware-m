@@ -3,6 +3,7 @@
  * Copyright (C) STMicroelectronics 2025 - All Rights Reserved
  */
 #include <dt-bindings/clock/st,stm32mp21-rcc.h>
+#include <dt-bindings/interrupt-controller/st,irq.h>
 #include <dt-bindings/reset/st,stm32mp21-rcc.h>
 #include <dt-bindings/scmi/stm32mp2-agents.h>
 #include <dt-bindings/syscfg/st,stm32mp21-syscfg.h>
@@ -908,6 +909,57 @@
 			#interrupt-cells = <2>;
 			#address-cells = <0>;
 			reg = <0x54220000 0x400>;
+			num-lines = <85>;
+			interrupts-extended =
+				<&nvic 268 3>,
+				<&nvic 269 3>,
+				<&nvic 270 3>,
+				<&nvic 271 3>,
+				<&nvic 272 3>,
+				<&nvic 273 3>,
+				<&nvic 274 3>,
+				<&nvic 275 3>,
+				<&nvic 276 3>,
+				<&nvic 277 3>,
+				<&nvic 278 3>,
+				<&nvic 279 3>,
+				<&nvic 280 3>,
+				<&nvic 281 3>,
+				<&nvic 282 3>,
+				<&nvic 283 3>,
+				<&pwr_intc 0 IRQ_TYPE_EDGE_FALLING>,
+				<&pwr_intc 1 IRQ_TYPE_EDGE_FALLING>,
+				<&pwr_intc 2 IRQ_TYPE_EDGE_FALLING>,
+				<&pwr_intc 3 IRQ_TYPE_EDGE_FALLING>,
+				<&pwr_intc 4 IRQ_TYPE_EDGE_FALLING>,
+				<&pwr_intc 5 IRQ_TYPE_EDGE_FALLING>,
+				<&nvic 185 3>;
+
+			line-ranges =
+				<0 1>,
+				<1 1>,
+				<2 1>,
+				<3 1>,
+				<4 1>,
+				<5 1>,
+				<6 1>,
+				<7 1>,
+				<8 1>,
+				<9 1>,
+				<10 1>,
+				<11 1>,
+				<12 1>,
+				<13 1>,
+				<14 1>,
+				<15 1>,
+				<52 1>,
+				<53 1>,
+				<54 1>,
+				<55 1>,
+				<56 1>,
+				<57 1>,
+				<65 1>;
+
 			status = "disabled";
 		};
 
@@ -917,6 +969,43 @@
 			#interrupt-cells = <2>;
 			#address-cells = <0>;
 			reg = <0x542d0000 0x400>;
+			num-lines = <64>;
+			interrupts-extended =
+				<&nvic 15  0>,
+				<&nvic 16  0>,
+				<&nvic 17  0>,
+				<&nvic 18  0>,
+				<&nvic 19  0>,
+				<&nvic 20  0>,
+				<&nvic 21  0>,
+				<&nvic 22  0>,
+				<&nvic 23  0>,
+				<&nvic 24  0>,
+				<&nvic 25  0>,
+				<&nvic 26  0>,
+				<&nvic 27  0>,
+				<&nvic 28  0>,
+				<&nvic 29  0>,
+				<&nvic 30  0>;
+
+			line-ranges =
+				<0 1>,
+				<1 1>,
+				<2 1>,
+				<3 1>,
+				<4 1>,
+				<5 1>,
+				<6 1>,
+				<7 1>,
+				<8 1>,
+				<9 1>,
+				<10 1>,
+				<11 1>,
+				<12 1>,
+				<13 1>,
+				<14 1>,
+				<15 1>;
+
 			status = "disabled";
 		};
 
