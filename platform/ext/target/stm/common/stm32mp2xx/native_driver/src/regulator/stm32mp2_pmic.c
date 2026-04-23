@@ -22,6 +22,7 @@
 
 #include <device.h>
 #include <i2c.h>
+#include <irq.h>
 #include <regulator.h>
 #include <linear_range.h>
 
@@ -296,25 +297,16 @@
 #define FS_OCP_LDO7		BIT(6)
 #define FS_OCP_LDO8		BIT(7)
 
-/* IRQ definitions */
-#define IT_PONKEY_F		U(0)
-#define IT_PONKEY_R		U(1)
-#define IT_BUCK1_OCP		U(16)
-#define IT_BUCK2_OCP		U(17)
-#define IT_BUCK3_OCP		U(18)
-#define IT_BUCK4_OCP		U(19)
-#define IT_BUCK5_OCP		U(20)
-#define IT_BUCK6_OCP		U(21)
-#define IT_BUCK7_OCP		U(22)
-#define IT_REFDDR_OCP		U(23)
-#define IT_LDO1_OCP		U(24)
-#define IT_LDO2_OCP		U(25)
-#define IT_LDO3_OCP		U(26)
-#define IT_LDO4_OCP		U(27)
-#define IT_LDO5_OCP		U(28)
-#define IT_LDO6_OCP		U(29)
-#define IT_LDO7_OCP		U(30)
-#define IT_LDO8_OCP		U(31)
+#define _PMIC_NB_IRQ				U(32)
+#define _PMIC_IRQ_PER_BANK			U(8)
+
+#define _PMIC_SPEC_NARGS			U(1)
+#define _PMIC_SPEC_ARG_IRQ			U(0)
+
+#define PMIC_SPEC_GET_NARGS(ispec)		((ispec)->nargs)
+#define PMIC_SPEC_GET_IRQ(ispec)		((ispec)->args[_PMIC_SPEC_ARG_IRQ])
+
+#define PMIC_INT_REG_RX(_reg, _x)		((_reg) + (_x) / _PMIC_IRQ_PER_BANK)
 
 /* NVM_BUCK1_VOUT_SHR (only for STPMIC1L and STPMIC2L) */
 #define BUCK1_VRANGE_CFG	BIT(7)
@@ -361,7 +353,12 @@ enum stpmic2_pm_mode {
 
 struct stpmic_config {
 	struct i2c_dt_spec i2c;
+	const struct irq_spec *int_spec;
 	uint8_t ref_id;
+};
+
+struct stpmic_data {
+	struct irq_handler **irq_hdl_tbl;
 };
 
 enum stpmic2_prop_id {
@@ -1249,6 +1246,159 @@ static const struct regulator_driver_api stpmic2_api = {
 				  macro_desc, reg_id, pd, ranges)),			\
 		())
 
+static int __maybe_unused _stpmic_irq_mask(const struct device *dev, uint32_t irq, bool state)
+{
+	const struct stpmic_config *dev_cfg = dev_get_config(dev);
+	uint8_t reg = PMIC_INT_REG_RX(INT_MASK_R1, irq);
+	uint8_t mask = BIT(irq % _PMIC_IRQ_PER_BANK);
+	uint8_t val = state ? mask : 0;
+
+	return i2c_reg_update_byte_dt(&dev_cfg->i2c, reg, mask, val);
+}
+
+static __unused int stpmic_i2c_dump(const struct device *dev)
+{
+	const struct stpmic_config *dev_cfg = dev_get_config(dev);
+	int i;
+
+	for (i = 0; i < div_round_up(_PMIC_NB_IRQ, _PMIC_IRQ_PER_BANK); i++) {
+		uint8_t pend, mask, src;
+
+		i2c_reg_read_byte_dt(&dev_cfg->i2c, INT_PENDING_R1 + i, &pend);
+		i2c_reg_read_byte_dt(&dev_cfg->i2c, INT_MASK_R1 + i, &mask);
+		i2c_reg_read_byte_dt(&dev_cfg->i2c, INT_SRC_R1 + i, &src);
+		IMSG("%s: R%d pend:0x%x mask:0x%x src:0x%x\r\n",
+		     dev->name, i, pend, mask, src);
+	}
+
+	return 0;
+}
+
+static irqreturn_t __maybe_unused stpmic_isr(void *data)
+{
+	const struct device *dev = data;
+	const struct stpmic_config *dev_cfg = dev_get_config(dev);
+	struct stpmic_data *dev_data = dev_get_data(dev);
+	irqreturn_t irq_ret = IRQ_NONE;
+	uint8_t i, int_pend_rx, pending;
+	int err;
+
+	for (i = 0; i < div_round_up(_PMIC_NB_IRQ, _PMIC_IRQ_PER_BANK); i++) {
+		err = i2c_reg_read_byte_dt(&dev_cfg->i2c, INT_PENDING_R1 + i, &int_pend_rx);
+		if (err) {
+			EMSG("%s: read INT_PENDING_R%u fail err:%d\r\n", dev->name, i + 1, err);
+			continue;
+		}
+
+		if (!int_pend_rx)
+			continue;
+
+		pending = int_pend_rx;
+
+		do {
+			uint8_t irq_n = (i * _PMIC_IRQ_PER_BANK) + __builtin_ctz(pending);
+			struct irq_handler *irq_hdl = dev_data->irq_hdl_tbl[irq_n];
+
+			pending &= pending - 1;
+
+			if (!irq_hdl || !irq_hdl->callback) {
+				continue;
+			}
+
+			irq_hdl->callback(irq_hdl->data);
+		} while (pending);
+
+		/* Ack all interrupts of RX */
+		err = i2c_reg_write_byte_dt(&dev_cfg->i2c, INT_CLEAR_R1 + i, int_pend_rx);
+		if (err) {
+			EMSG("%s: write INT_CLEAR_R%u fail err:%d\r\n", dev->name, i + 1, err);
+			continue;
+		}
+
+		irq_ret = IRQ_HANDLED;
+	}
+
+	return irq_ret;
+}
+
+static int __maybe_unused stpmic_interrupt_request(const struct irq_spec *spec)
+{
+	const struct device *dev = IRQ_SPEC_DEV(spec);
+	struct stpmic_data *dev_data = dev_get_data(dev);
+	uint32_t irq;
+
+	if (PMIC_SPEC_GET_NARGS(spec) != _PMIC_SPEC_NARGS)
+		return -EINVAL;
+
+	irq = PMIC_SPEC_GET_IRQ(spec);
+	if (irq >= _PMIC_NB_IRQ)
+		return -ENOTSUP;
+
+	spec->irq_hdl->irq = irq;
+	dev_data->irq_hdl_tbl[irq] = spec->irq_hdl;
+
+	return 0;
+}
+
+static int __maybe_unused stpmic_interrupt_enable(const struct irq_spec *spec)
+{
+	const struct device *dev = IRQ_SPEC_DEV(spec);
+	uint32_t irq = spec->irq_hdl->irq;
+
+	if (irq >= _PMIC_NB_IRQ)
+		return -ENOTSUP;
+
+	return _stpmic_irq_mask(dev, irq, false);
+}
+
+static int __maybe_unused stpmic_interrupt_disable(const struct irq_spec *spec)
+{
+	const struct device *dev = IRQ_SPEC_DEV(spec);
+	uint32_t irq = spec->irq_hdl->irq;
+
+	if (irq >= _PMIC_NB_IRQ)
+		return -ENOTSUP;
+
+	return _stpmic_irq_mask(dev, irq, true);
+}
+
+static const struct interrupt_controller_api __maybe_unused stpmic_interrupt_api = {
+	.request = stpmic_interrupt_request,
+	.enable = stpmic_interrupt_enable,
+	.disable = stpmic_interrupt_disable,
+};
+
+static int __maybe_unused stpmic_interrupt_init(const struct device *dev)
+{
+	const struct stpmic_config *drv_cfg = dev_get_config(dev);
+	uint32_t i;
+	int err;
+
+	if (!drv_cfg->int_spec)
+		return 0;
+
+	/* clear and mask all interrupts before request parent interrupt */
+	for (i = 0; i < div_round_up(_PMIC_NB_IRQ, _PMIC_IRQ_PER_BANK); i++) {
+		err = i2c_reg_write_byte_dt(&drv_cfg->i2c, INT_CLEAR_R1 + i, 0xFF);
+		if (err) {
+			EMSG("%s: write INT_CLEAR_R:%u fail\r\n", dev->name, i + 1);
+			return err;
+		}
+
+		err = i2c_reg_write_byte_dt(&drv_cfg->i2c, INT_MASK_R1 + i, 0xFF);
+		if (err) {
+			EMSG("%s: write INT_MASK_R1mask:%d fail\r\n", dev->name, i + 1);
+			return err;
+		}
+	}
+
+	err = interrupt_request(drv_cfg->int_spec, (void *)dev, stpmic_isr, IRQF_NONE);
+	if (err)
+		EMSG("%s: interrupt request fail: %d\r\n", dev->name, err);
+
+	return err;
+}
+
 static int __maybe_unused stpmic_probe(const struct device *dev)
 {
 	const struct stpmic_config *drv_cfg = dev_get_config(dev);
@@ -1273,11 +1423,13 @@ static int __maybe_unused stpmic_probe(const struct device *dev)
 		EMSG("init:%s not accessible (%d)\n", dev->name, err);
 		return err;
 	}
+
 	ref_id = _FLD_GET(PMIC_REF_ID, prod_id);
 	IMSG("init:%s STPMIC:%02x V%d.%d\n", dev->name,
 	     prod_id,
 	     _FLD_GET(MAJOR_VERSION, version),
 	     _FLD_GET(MINOR_VERSION, version));
+
 	if (ref_id != drv_cfg->ref_id) {
 		EMSG("init:%s unexpected ref id, %02x expected.\n",
 		     dev->name, drv_cfg->ref_id);
@@ -1285,23 +1437,37 @@ static int __maybe_unused stpmic_probe(const struct device *dev)
 		return -ENODEV;
 	}
 
-	return 0;
+	if (IS_ENABLED(STM32_SEC))
+		err = stpmic_interrupt_init(dev);
+
+	return err;
 }
+
+#define _PMIC_INTC_IRQ_TBL_NAME(inst) \
+	_CONCAT(DEVICE_DT_NAME_GET(DT_DRV_INST(inst)), _irq_hdl_tbl)
+
+#define _PMIC_INTC_IRQ_HDL_TBL_DEFINE(inst, n_irqs) \
+	static struct irq_handler *_PMIC_INTC_IRQ_TBL_NAME(inst)[n_irqs];
 
 #define STPMIC_INIT(t, n, _ref_id)						\
 										\
+DT_INST_IRQS_SPEC_DEFINE(n)							\
+_PMIC_INTC_IRQ_HDL_TBL_DEFINE(n, _PMIC_NB_IRQ)					\
+										\
 static const struct stpmic_config stpmic##t##_cfg_##n = {			\
 	.i2c = I2C_DT_SPEC_GET(DT_DRV_INST(n)),					\
+	.int_spec = DT_INST_IRQS_SPEC_GET(n),					\
 	.ref_id = _ref_id,							\
 };										\
 										\
-DEVICE_DT_INST_DEFINE(n,							\
-	&stpmic_probe,								\
-	NULL,									\
-	NULL,									\
-	&stpmic##t##_cfg_##n,							\
+static struct stpmic_data stpmic##t##_data_##n = {				\
+	.irq_hdl_tbl = _PMIC_INTC_IRQ_TBL_NAME(n),				\
+};										\
+										\
+DEVICE_DT_INST_DEFINE(n, &stpmic_probe,	NULL,					\
+	&stpmic##t##_data_##n, &stpmic##t##_cfg_##n,				\
 	CORE, 6,								\
-	NULL);
+	&stpmic_interrupt_api);
 
 /* STPMIC25 */
 #define REGULATORS_STPMIC25_DEFINE(dev, n, inst)				\
