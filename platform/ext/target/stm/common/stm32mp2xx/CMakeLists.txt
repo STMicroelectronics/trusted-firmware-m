@@ -380,6 +380,8 @@ if(BL2)
 	target_compile_definitions(platform_bl2
 		PUBLIC
 			STM32_BL2=1
+		PRIVATE
+			STM32_CA35_FW_SLOT_SIZE
 	)
 
 	target_link_libraries(platform_bl2
