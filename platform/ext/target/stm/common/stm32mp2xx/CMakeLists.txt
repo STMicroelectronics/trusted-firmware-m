@@ -381,7 +381,7 @@ if(BL2)
 		PUBLIC
 			STM32_BL2=1
 		PRIVATE
-			STM32_CA35_FW_SLOT_SIZE
+			STM32_CA35_FW_SLOT_SIZE=${STM32_CA35_FW_SLOT_SIZE}
 	)
 
 	target_link_libraries(platform_bl2
@@ -536,7 +536,7 @@ if (EXISTS ${STM32_CA35_FW})
 
 	target_compile_definitions(signing_layout_for_ca35_fw
 		PRIVATE
-			STM32_CA35_FW_SLOT_SIZE
+			STM32_CA35_FW_SLOT_SIZE=${STM32_CA35_FW_SLOT_SIZE}
 	)
 
 	add_custom_target(ca35_fw_signed_bin
