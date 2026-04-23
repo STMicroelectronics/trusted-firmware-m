@@ -97,27 +97,29 @@ int stm32mp2_pwr_rif_master_set_conf(const struct rifprot_controller *ctl,
 	const struct stm32mp2_pwr_rif_config *dev_cfg = dev_get_config(ctl->dev);
 	uintptr_t base = dev_cfg->base;
 	struct rif_base *rif_regs = (struct rif_base *)ctl->rbase;
-	uint32_t shift = cfg->id;
-	struct rif_base srbase = {
+	uint32_t cid_offset, shift = cfg->id;
+	struct rif_base rbase_r = {
 		.sec = base + _PWR_RSECCFGR,
 		.priv = base + _PWR_RPRIVCFGR,
-		.cid = base + _PWR_RCIDCFGR + RCID_X_OFFSET(cfg->id),
+		.cid = base + _PWR_RCIDCFGR,
 		.sem = 0,
 	};
 
 	if (cfg->id < PWR_RIF_FIRST_WIO_ID) {
-		rif_regs = &srbase;
+		rif_regs = &rbase_r;
+		cid_offset = RCID_X_OFFSET(cfg->id);
 	} else {
 		shift = cfg->id - PWR_RIF_FIRST_WIO_ID;
+		cid_offset = WIOCID_X_OFFSET(cfg->id);
 	}
 
 	/* disable filtering before write sec and priv cfgr */
-	io_clrbits32(rif_regs->cid, _RCIDCFGR_CFEN_MASK);
+	io_clrbits32(rif_regs->cid + cid_offset, _RCIDCFGR_CFEN_MASK);
 
 	io_clrsetbits32(rif_regs->sec, BIT(shift), cfg->sec << shift);
 	io_clrsetbits32(rif_regs->priv, BIT(shift), cfg->priv << shift);
 
-	io_write32(rif_regs->cid, cfg->cid_attr);
+	io_write32(rif_regs->cid + cid_offset, cfg->cid_attr);
 
 	if (rif_regs->sem && SEMAPHORE_IS_AVAILABLE(cfg->cid_attr, MY_CID))
 		return stm32_rifprot_acquire_sem(ctl, cfg->id);
