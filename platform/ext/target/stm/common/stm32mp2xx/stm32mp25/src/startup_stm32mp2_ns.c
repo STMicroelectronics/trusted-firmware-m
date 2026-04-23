@@ -22,41 +22,47 @@
  * Git SHA: b5f0603d6a584d1724d952fd8b0737458b90d62b
  */
 
-#include "cmsis.h"
+#include <cmsis.h>
+#include <startup.h>
+#include <fault_info.h>
 
-/*----------------------------------------------------------------------------
-  External References
- *----------------------------------------------------------------------------*/
-extern uint32_t __INITIAL_SP;
-extern uint32_t __STACK_LIMIT;
+__WEAK void arm_nvic_isr(void)
+{
+	while (1) {
+	}
+}
 
-extern void __PROGRAM_START(void) __NO_RETURN;
+void default_ns_exception_handler(void)
+{
+	while (1) {
+	}
+}
 
-/*----------------------------------------------------------------------------
-  Internal References
- *----------------------------------------------------------------------------*/
-void Reset_Handler  (void) __NO_RETURN;
+__NO_RETURN __attribute__((naked)) void default_exception_handler(void)
+{
+	FAULT_INFO();
 
-/*----------------------------------------------------------------------------
-  Exception / Interrupt Handler
- *----------------------------------------------------------------------------*/
-#define DEFAULT_IRQ_HANDLER(handler_name)  \
-void __WEAK handler_name(void) __NO_RETURN; \
-void handler_name(void) { \
-    while(1); \
+	__ASM volatile("BL	default_ns_exception_handler\n"
+		       "B	.\n"
+	);
+}
+
+void default_irq_handler(void)
+{
+	arm_nvic_isr();
 }
 
 /* Exceptions */
-DEFAULT_IRQ_HANDLER(NMI_Handler)
-DEFAULT_IRQ_HANDLER(HardFault_Handler)
-DEFAULT_IRQ_HANDLER(MemManage_Handler)
-DEFAULT_IRQ_HANDLER(BusFault_Handler)
-DEFAULT_IRQ_HANDLER(UsageFault_Handler)
-DEFAULT_IRQ_HANDLER(SecureFault_Handler)
-DEFAULT_IRQ_HANDLER(SVC_Handler)
-DEFAULT_IRQ_HANDLER(DebugMon_Handler)
-DEFAULT_IRQ_HANDLER(PendSV_Handler)
-DEFAULT_IRQ_HANDLER(SysTick_Handler)
+DEFAULT_EXCEPTION_HANDLER(NMI_Handler)
+DEFAULT_EXCEPTION_HANDLER(HardFault_Handler)
+DEFAULT_EXCEPTION_HANDLER(MemManage_Handler)
+DEFAULT_EXCEPTION_HANDLER(BusFault_Handler)
+DEFAULT_EXCEPTION_HANDLER(UsageFault_Handler)
+DEFAULT_EXCEPTION_HANDLER(SecureFault_Handler)
+DEFAULT_EXCEPTION_HANDLER(SVC_Handler)
+DEFAULT_EXCEPTION_HANDLER(DebugMon_Handler)
+DEFAULT_EXCEPTION_HANDLER(PendSV_Handler)
+DEFAULT_EXCEPTION_HANDLER(SysTick_Handler)
 
 /* Core interrupts */
 DEFAULT_IRQ_HANDLER(PVD_IRQHandler)
@@ -338,8 +344,6 @@ DEFAULT_IRQ_HANDLER(RESERVED_9_IRQHandler)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 #endif
-
-extern const VECTOR_TABLE_Type __VECTOR_TABLE[];
 
 const VECTOR_TABLE_Type __VECTOR_TABLE[] __VECTOR_TABLE_ATTRIBUTE = {
 	(VECTOR_TABLE_Type)(&__INITIAL_SP),	/* Initial Stack Pointer */
