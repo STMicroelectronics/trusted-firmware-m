@@ -45,7 +45,12 @@ else()
     if ((NOT TFM_FWU_BOOTLOADER_LIB) OR (NOT EXISTS ${TFM_FWU_BOOTLOADER_LIB}))
         message(FATAL_ERROR "TFM_FWU_BOOTLOADER_LIB invalid")
     endif()
-    add_subdirectory(${TFM_FWU_BOOTLOADER_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${TFM_FWU_BOOTLOADER_LIB})
+    cmake_path(IS_RELATIVE TFM_FWU_BOOTLOADER_LIB FWU_LIB_PATH_IS_RELATIVE)
+    if (FWU_LIB_PATH_IS_RELATIVE)
+        add_subdirectory(${TFM_FWU_BOOTLOADER_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${TFM_FWU_BOOTLOADER_LIB})
+    else()
+        add_subdirectory(${TFM_FWU_BOOTLOADER_LIB} ${CMAKE_CURRENT_BINARY_DIR}/bootloader)
+    endif()
 endif()
 
 target_link_libraries(tfm_psa_rot_partition_fwu
