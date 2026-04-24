@@ -16,10 +16,14 @@
 #include <tfm_boot_status.h>
 #include <tfm_sp_log.h>
 #include <uapi/tfm_pm_api.h>
+#include <irq.h>
+#include <debug.h>
 #include "tfm_pm.h"
 
 extern const uint8_t __tfm_lp_fw_start[];
 extern const uint8_t __tfm_lp_fw_end[];
+
+#define PM_NODE_ID DT_INST(0, st_partition_power)
 
 #define DDR_ENCRYPT_KEY_SZ	32 /* in bytes (256 bits) */
 #define MAX_PLAT_BOOTDATA	(DDR_ENCRYPT_KEY_SZ + \
@@ -50,6 +54,8 @@ struct platform_boot_data {
  */
 __aligned(4)
 static struct platform_boot_data boot_data;
+
+DT_IRQS_SPEC_DEFINE(PM_NODE_ID)
 
 /*
  * Iterates over the TLV section in boot data and returns the address and
@@ -114,6 +120,32 @@ static psa_status_t tfm_pm_load_fw()
 	return PSA_SUCCESS;
 }
 
+static irqreturn_t tfm_pm_isr(void *data)
+{
+	const struct irq_spec *ispec = data;
+
+	DMSG("[PM][NOTIF] notif: %u\r\n", ispec->irq_hdl->irq);
+
+	return IRQ_HANDLED;
+}
+
+static __unused psa_status_t tfm_pm_notification_init(void)
+{
+	int err;
+
+	for (uint32_t i = 0 ; i < DT_NUM_IRQS(PM_NODE_ID); i++) {
+		const struct irq_spec *ispec = DT_IRQS_SPEC_GET_BY_IDX(PM_NODE_ID, i);
+
+		err = interrupt_request(ispec, (void *)ispec, tfm_pm_isr, IRQF_NONE);
+		if (err) {
+			LOG_ERRFMT("[ERR][PM] notif: %u interrupt request fail\r\n", i);
+			return PSA_ERROR_GENERIC_ERROR;
+		}
+	}
+
+	return PSA_SUCCESS;
+}
+
 psa_status_t tfm_pm_service_sfn(const psa_msg_t *msg)
 {
     switch (msg->type) {
@@ -136,7 +168,7 @@ psa_status_t tfm_pm_init(void)
 
 	ret = tfm_pm_load_fw();
 	if (ret) {
-		LOG_ERRFMT("[ERR][PM] load failed\r\n");
+		LOG_ERRFMT("[ERR][PM] fw load failed\r\n");
 		return ret;
 	}
 
@@ -155,7 +187,15 @@ psa_status_t tfm_pm_init(void)
 
 	ret = tfm_pm_fw_init(key, size);
 	if (ret) {
-		LOG_ERRFMT("[ERR][PM] init failed\r\n");
+		LOG_ERRFMT("[ERR][PM] fw init failed\r\n");
+		return ret;
+	}
+
+	if (DT_NUM_IRQS(PM_NODE_ID)) {
+		ret = tfm_pm_notification_init();
+		if (ret) {
+			LOG_ERRFMT("[ERR][PM] notification init failed\r\n");
+		}
 	}
 
 	return ret;
