@@ -224,11 +224,6 @@ if (TFM_PARTITION_SCP)
 	add_subdirectory(${STM_FAMILY_DIR}/secure_fw/partitions/scp scp)
 endif()
 
-if (TFM_PARTITION_STL)
-	add_subdirectory(${STM_FAMILY_DIR}/lib/stl libstl)
-	add_subdirectory(${STM_FAMILY_DIR}/secure_fw/partitions/stl stl)
-endif()
-
 if (TFM_PARTITION_IPCC)
 	add_subdirectory(${STM_FAMILY_DIR}/secure_fw/partitions/ipcc ipcc)
 endif()
@@ -498,7 +493,6 @@ install(FILES
     ${STM_FAMILY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c
     ${STM_FAMILY_DIR}/secure/services/src/tfm_ioctl_wdt_api.c
     ${STM_FAMILY_DIR}/secure/services/src/tfm_pm_api.c
-    ${STM_FAMILY_DIR}/secure/services/src/tfm_stl_api.c
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}/../common/stm32mp2xx/secure/services/src
 )
 
