@@ -151,9 +151,10 @@ int stm32_exti_rif_init(const struct rifprot_controller *ctl)
 
 	/* enable and set processor filtering cmcidcfgr */
 	for (i = 0; i < dev_data->hw_nbcpus; i++)
-		io_write32(cmcidcfgr_base + _EXTI_CID_X_OFFSET(i),
-			   _FLD_PREP(_CIDCFGR_SCID, dev_cfg->proc_cid[i]) |
-			    _CIDCFGR_CFEN_MASK);
+		if (dev_cfg->proc_cid[i])
+			io_write32(cmcidcfgr_base + _EXTI_CID_X_OFFSET(i),
+				   _FLD_PREP(_CIDCFGR_SCID, dev_cfg->proc_cid[i]) |
+				   _CIDCFGR_CFEN_MASK);
 
 	return 0;
 }
