@@ -26,6 +26,10 @@ if(STM32_FWU_STORAGE_ACCESS)
             ${MCUBOOT_PATH}/boot/bootutil/src/bootutil_public.c
             ${CMAKE_SOURCE_DIR}/bl2/ext/mcuboot/flash_map_extended.c
     )
+
+    set(TFM_CONFIG_FWU_STORAGE_ACCESS 1)
+else()
+    set(TFM_CONFIG_FWU_STORAGE_ACCESS 0)
 endif()
 
 target_sources(tfm_fwu_mcuboot_util
