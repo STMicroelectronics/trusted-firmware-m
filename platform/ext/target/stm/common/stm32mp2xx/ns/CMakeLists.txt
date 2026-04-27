@@ -73,6 +73,7 @@ target_include_directories(platform_ns
         ${STM_FAMILY_DIR}/native_driver/include
         ${STM_FAMILY_DIR}/cmsis_driver/include
         ${STM_FAMILY_DIR}/secure/services/include
+        ${STM_FAMILY_DIR}/ns/include
         ${PLATFORM_NS_API_DIR}/include
         ${PLATFORM_NS_API_DIR}/ext/cmsis/Include
         ${PLATFORM_NS_API_DIR}/ext/cmsis/Include/m-profile
@@ -94,6 +95,7 @@ target_sources(platform_ns
         ${STM_FAMILY_DIR}/native_driver/src/uart/console.c
         ${STM_FAMILY_DIR}/native_driver/src/uart/stm32_uart.c
         $<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILY_DIR}/native_driver/src/remoteproc/remoteproc_driver.c>
+        ${STM_FAMILY_DIR}/ns/src/fault_info.c
         $<$<BOOL:${TFM_PLATFORM_WDT_API}>:${STM_FAMILY_DIR}/secure/services/src/tfm_ioctl_wdt_api.c>
         $<$<BOOL:${TFM_PLATFORM_CPU_API}>:${STM_FAMILY_DIR}/secure/services/src/tfm_ioctl_cpu_api.c>
         $<$<BOOL:${TFM_PARTITION_PM}>:${STM_FAMILY_DIR}/secure/services/src/tfm_pm_api.c>

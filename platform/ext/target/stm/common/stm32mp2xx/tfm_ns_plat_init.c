@@ -16,6 +16,7 @@
 #include "ns_evt.h"
 #include <dt-bindings/scmi/stm32mp2-agents.h>
 #include <stdio.h>
+#include <fault_info.h>
 
 /*  SCMI Protocol Define */
 #define _PROT(A)  (((A) >> 10) & 0xff)
@@ -35,6 +36,7 @@ int32_t tfm_ns_platform_init (void)
 	sys_init_run_level(INIT_LEVEL_CORE);
 
 	stdio_init();
+	fault_init();
 
 	sys_init_run_level(INIT_LEVEL_POST_CORE);
 
