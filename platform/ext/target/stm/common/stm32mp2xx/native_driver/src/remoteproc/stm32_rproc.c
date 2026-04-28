@@ -29,6 +29,7 @@
 #include <devicetree/nvmem.h>
 #include <nvmem.h>
 #include <rproc_srm_core.h>
+#include <irq.h>
 
 #define IRQ_INVALID	UINT32_MAX
 
@@ -44,7 +45,6 @@ struct stm32_rproc_variant {
 	int (*stop_fn)(const struct device *dev);
 	int (*suspend_fn)(const struct device *dev);
 	int (*resume_fn)(const struct device *dev);
-	void (*irq_handler)(const struct device *dev);
 };
 
 struct stm32_rproc_config {
@@ -52,7 +52,7 @@ struct stm32_rproc_config {
 	const struct reset_control hold_boot;
 	const struct firewall_spec *firewall_ctrls;
 	const int n_firewall_ctrls;
-	const uint32_t irq_ack;
+	const struct irq_spec *ispec_ack;
 	const struct clock_control *clk_ctl;
 	int n_clk;
 	const struct device **regu;
@@ -157,47 +157,6 @@ static int stm32mp2_a35_regu(const struct device *dev)
 #define EXTI1_C2SEV	BIT(0)
 #define EXTI1_C1SEV	BIT(1)
 
-void stm32mp2_irq_ack_enable(uint32_t irq_ack)
-{
-	/* clear rising pending register C1SEV */
-	EXTI1->RPR3 = EXTI1_C1SEV;
-	EXTI1->RTSR3 |= EXTI1_C1SEV;
-	/* unmask C2 int & event C1SEV (65) */
-	EXTI1->C2IMR3 |= EXTI1_C1SEV;
-	EXTI1->C2EMR3 |= EXTI1_C1SEV;
-
-	if (irq_ack != IRQ_INVALID) {
-		NVIC_ClearPendingIRQ(irq_ack);
-		NVIC_EnableIRQ(irq_ack);
-	}
-}
-
-void stm32mp2_irq_ack_disable(uint32_t irq_ack)
-{
-	/* mask c2 int & event C1SEV */
-	EXTI1->C2IMR3 &= ~EXTI1_C1SEV;
-	EXTI1->C2EMR3 &= ~EXTI1_C1SEV;
-
-	/* clear rising pending register C1SEV */
-	EXTI1->RPR3 = EXTI1_C1SEV;
-	EXTI1->RTSR3 &= ~EXTI1_C1SEV;
-
-	if (irq_ack != IRQ_INVALID) {
-		NVIC_DisableIRQ(irq_ack);
-		NVIC_ClearPendingIRQ(irq_ack);
-	}
-}
-
-void stm32mp2_irq_ack_clear(uint32_t irq_ack)
-{
-	/* clear rising pending register C1SEV */
-	EXTI1->RPR3 = EXTI1_C1SEV;
-	EXTI1->RTSR3 &= ~EXTI1_C1SEV;
-	if (irq_ack != IRQ_INVALID) {
-		NVIC_ClearPendingIRQ(irq_ack);
-	}
-}
-
 static __unused int stm32mp2_a35_set_boot_config(const struct device *dev)
 {
 	const struct stm32_rproc_config *cfg = dev_get_config(dev);
@@ -298,10 +257,11 @@ static __unused int stm32mp2_a35_stop(const struct device *dev)
 	reset_control_assert(&cfg->rst_ctl);
 	/* send CPU2 SEV event to cpu1 (exti 64)*/
 	EXTI1->SWIER3 = EXTI1_C2SEV;
+
 	/* Disable CPU1 interruption */
-	if (cfg->irq_ack != IRQ_INVALID) {
-		stm32mp2_irq_ack_disable(cfg->irq_ack);
-	}
+	if (cfg->ispec_ack)
+		interrupt_disable(cfg->ispec_ack);
+
 	/* check cpu in reset with hold boot */
 	err = mmio_read32_poll_timeout(((uint32_t)&PWR_S->CPU1D1SR), cfgr,
 				       (cfgr & PWR_CPU1D1SR_HOLD_BOOT_Msk) &&
@@ -319,16 +279,10 @@ static __unused int stm32mp2_a35_stop(const struct device *dev)
 
 static __unused int stm32mp2_a35_init(const struct device *dev)
 {
-	const struct stm32_rproc_config *cfg = dev_get_config(dev);
-
 	stm32_rproc_running_set(dev, false);
 
 	/* unmask event before rif has initialized CID1 filtering on EXTI1_C1CIDCFGR */
 	EXTI1->C1IMR3 |= EXTI1_C2SEV;
-
-	if (cfg->irq_ack != IRQ_INVALID){
-		NVIC_SetPriority(cfg->irq_ack, 1);
-	}
 
 	return 0;
 }
@@ -373,9 +327,9 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 	if (err)
 		return err;
 
-	if (cfg->irq_ack != IRQ_INVALID) {
+	if (cfg->ispec_ack) {
 		data->restore_on_ack = true;
-		stm32mp2_irq_ack_enable(cfg->irq_ack);
+		interrupt_enable(cfg->ispec_ack);
 	} else {
 		stm32_rproc_running_set(dev, true);
 	}
@@ -408,15 +362,14 @@ static __unused int stm32mp2_a35_release(const struct device *dev)
 
 	return ret;
 }
-
-static __unused void stm32mp2_a35_irq_ack(const struct device *dev)
+static irqreturn_t stm32mp2_a35_irq_ack(void *data)
 {
-	const struct stm32_rproc_config *cfg = dev_get_config(dev);
-	struct stm32_rproc_data *data = dev_get_data(dev);
+	const struct device *dev = data;
+	struct stm32_rproc_data *dev_data = dev_get_data(dev);
 
-	if (data->restore_on_ack) {
+	if (dev_data->restore_on_ack) {
 		stm32mp2_a35_release(dev);
-		data->restore_on_ack = false;
+		dev_data->restore_on_ack = false;
 	} else {
 		/*
 		 * Treat IRQ ack only when allowed.
@@ -427,7 +380,8 @@ static __unused void stm32mp2_a35_irq_ack(const struct device *dev)
 			/* Allow CPU1 wake-up form D1 DStandby with CPU2 SEV */
 			EXTI1->SWIER3 = EXTI1_C2SEV;
 	}
-	stm32mp2_irq_ack_clear(cfg->irq_ack);
+
+	return IRQ_HANDLED;
 }
 
 /* Suspend procedure before low power entry*/
@@ -436,7 +390,7 @@ static __unused int stm32mp2_a35_suspend(const struct device *dev)
 	const struct stm32_rproc_config *cfg = dev_get_config(dev);
 	uint32_t cpu1d1sr;
 
-	stm32mp2_irq_ack_enable(cfg->irq_ack);
+	interrupt_enable(cfg->ispec_ack);
 
 	stm32_rproc_running_set(dev, false);
 
@@ -447,7 +401,6 @@ static __unused int stm32mp2_a35_suspend(const struct device *dev)
 
 		/* Allow CPU1 wake-up with CPU2 SEV event (exti 64) */
 		EXTI1->SWIER3 = EXTI1_C2SEV;
-		stm32mp2_irq_ack_clear(cfg->irq_ack);
 
 		return -EBUSY;
 	}
@@ -472,7 +425,7 @@ static __unused int stm32mp2_a35_resume(const struct device *dev)
 		if (ret)
 			return ret;
 		data->restore_on_ack = true;
-		stm32mp2_irq_ack_enable(cfg->irq_ack);
+		interrupt_enable(cfg->ispec_ack);
 	} else {
 		stm32_rproc_running_set(dev, true);
 	}
@@ -571,6 +524,7 @@ int stm32_rproc_resume(struct rproc_spec *rproc)
 
 static __unused int stm32_rproc_init(const struct device *dev)
 {
+	const struct stm32_rproc_config *cfg = dev_get_config(dev);
 	struct stm32_rproc_data *data = dev_get_data(dev);
 	uint32_t err = 0;
 
@@ -578,6 +532,11 @@ static __unused int stm32_rproc_init(const struct device *dev)
 		err = data->variant->init_fn(dev);
 
 	data->stop2_nvmem_dev = DEVICE_DT_GET(DT_NODELABEL(stop2_entrypoint));
+
+	if (cfg->ispec_ack)
+		if (interrupt_request(cfg->ispec_ack, (void *)dev,
+				      stm32mp2_a35_irq_ack, IRQF_NO_AUTOEN))
+			EMSG("%s: interrupt request fail\n", dev->name);
 
 	/* reset resource table tamp back-up registers */
 	_stm32_rproc_set_rsc_tab(dev, 0, 0);
@@ -594,7 +553,6 @@ static __unused const struct  stm32_rproc_variant stm32mp2_a35_var = {
 	.stop_fn = stm32mp2_a35_stop,
 	.suspend_fn = stm32mp2_a35_suspend,
 	.resume_fn = stm32mp2_a35_resume,
-	.irq_handler = stm32mp2_a35_irq_ack,
 };
 
 static struct remoteproc_driver_api stm32_rproc_api = {
@@ -665,11 +623,12 @@ static struct remoteproc_driver_api stm32_rproc_api = {
 			MY_PARENT_CHILD_DEV)			\
 	}
 
-#define STM32_RPROC_INIT(n, name, _variant, _irqhandler)			\
+#define STM32_RPROC_INIT(n, name, _variant)					\
 BUILD_ASSERT(CHILD_COUNT(MY_PARENT_NODE(n)) <= 1,				\
 		     "unsupported: too many children under this rproc");	\
 										\
 DT_INST_ACCESS_CTRLS_DEFINE(n);							\
+DT_INST_IRQS_SPEC_DEFINE(n)							\
 										\
 static const struct clock_control clk_ctrl_##n[] = DT_INST_CLOCK_CONTROL(n);	\
 										\
@@ -682,7 +641,7 @@ static const struct stm32_rproc_config _##name##_cfg##n = {			\
 	.hold_boot = DT_INST_RESET_CONTROL_GET_BY_IDX(n, 1),			\
 	.firewall_ctrls = DT_INST_ACCESS_CTRLS_GET(n),				\
 	.n_firewall_ctrls = DT_INST_ACCESS_CTRLS_NUM(n),			\
-	.irq_ack = DT_INST_IRQ_BY_NAME_OR(n, ack, irq),				\
+	.ispec_ack = DT_INST_IRQS_SPEC_GET_BY_NAME(n, ack),			\
 	.clk_ctl = clk_ctrl_##n,						\
 	.n_clk = DT_INST_NUM_CLOCKS(n),						\
 	.regu =  regu_##n,							\
@@ -693,15 +652,9 @@ static const struct stm32_rproc_config _##name##_cfg##n = {			\
 										\
 static struct stm32_rproc_data _##name##_data##n = {				\
 	.variant = &_variant,							\
-	.rsc_tab_addr_dev = DT_INST_DEV_NVMEM(n, rsc_tab_addr),		\
-	.rsc_tab_size_dev = DT_INST_DEV_NVMEM(n, rsc_tab_size),		\
+	.rsc_tab_addr_dev = DT_INST_DEV_NVMEM(n, rsc_tab_addr),			\
+	.rsc_tab_size_dev = DT_INST_DEV_NVMEM(n, rsc_tab_size),			\
 };										\
-										\
-void _irqhandler(void)								\
-{										\
-	if (_variant.irq_handler)						\
-		_variant.irq_handler(DEVICE_DT_INST_GET(n));			\
-}										\
 										\
 DEVICE_DT_INST_DEFINE(n, &stm32_rproc_init, NULL,				\
 		      &_##name##_data##n, &_##name##_cfg##n,			\
@@ -710,5 +663,4 @@ DEVICE_DT_INST_DEFINE(n, &stm32_rproc_init, NULL,				\
 #undef DT_DRV_COMPAT
 #define DT_DRV_COMPAT		st_stm32mp2_a35
 
-DT_INST_FOREACH_STATUS_OKAY_VARGS(STM32_RPROC_INIT, DT_DRV_COMPAT,
-				  stm32mp2_a35_var, CPU1_SEV_IRQHandler)
+DT_INST_FOREACH_STATUS_OKAY_VARGS(STM32_RPROC_INIT, DT_DRV_COMPAT, stm32mp2_a35_var)
