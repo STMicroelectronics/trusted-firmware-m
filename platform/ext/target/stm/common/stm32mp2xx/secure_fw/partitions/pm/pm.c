@@ -145,7 +145,6 @@ static int _pm_suspend(enum pm_suspend_mode_t mode)
 	if (pm_suspend_devices(pm_hint)) {
 		CRITICAL_SECTION_ENTER(cs_assert);
 		err = jump_low_power_fw(lpfwmode);
-		NVIC_DisableIRQ(CPU1_SEV_IRQn);
 		CRITICAL_SECTION_LEAVE(cs_assert);
 	} else {
 		err = -EINVAL;
