@@ -1099,7 +1099,7 @@
 			compatible = "st,stm32mp2-a35";
 			#remoteproc-cells = <0>;
 			resets = <&rcc_reset C1_R>, <&rcc_reset C1_HOLDBOOT_R>;
-			interrupts = <220 0>;
+			interrupts-extended = <&exti1 65 IRQ_TYPE_EDGE_RISING>;
 			interrupt-names = "ack";
 			clocks = <&rcc CK_FLEXGEN_51>, <&rcc CK_FLEXGEN_52>, <&rcc PLL1_CK>;
 			status = "disabled";
