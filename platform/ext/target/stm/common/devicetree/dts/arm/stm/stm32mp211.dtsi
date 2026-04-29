@@ -387,7 +387,7 @@
 			dcache: cache-controller@50480000 {
 				compatible = "st,stm32mp2-dcache";
 				reg = <0x50480000 0x400>;
-				interrupts = <80 0>;
+				interrupts = <80 1>;
 			};
 
 			rng2: rng@52020000 {
