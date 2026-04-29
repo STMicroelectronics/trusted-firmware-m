@@ -22,6 +22,7 @@
 #include <uart_stdout.h>
 #include <pm/device.h>
 #include <pm/pm.h>
+#include <irq.h>
 
 /* IAC offset register */
 #define _IAC_IER0		U(0x000)
@@ -74,7 +75,7 @@
 
 struct stm32_iac_config {
 	uintptr_t base;
-	uint32_t irq;
+	const struct irq_spec *int_spec;
 	uint32_t *id_disable;
 	uint32_t n_id_disable;
 };
@@ -148,8 +149,9 @@ static bool stm32_iac_discarded(uint32_t iac)
 #endif
 }
 
-void stm32_iac_isr(const struct device *dev)
+static irqreturn_t stm32_iac_isr(void *data)
 {
+	const struct device *dev = data;
 	const struct stm32_iac_config *drv_cfg = dev_get_config(dev);
 	struct stm32_iac_data *drv_data = dev_get_data(dev);
 	int nreg = div_round_up(drv_data->num_ilac, _PERIPH_IDS_PER_REG);
@@ -166,15 +168,17 @@ void stm32_iac_isr(const struct device *dev)
 		isr &= io_read32(drv_cfg->base + _IAC_IER0 + offset);
 		if (!isr)
 			continue;
+
 		snprintf(tmp, sizeof(tmp),
 			 "\r\niac exceptions: [%d:%d]=%#08x\r\n",
 			 IAC_EXCEPT_MSB_BIT(i),
 			 IAC_EXCEPT_LSB_BIT(i), isr);
 		IAC_LOG(tmp);
-		for (j = 0; j < 32; j++) {
-			if (!(isr & BIT(j))) {
+
+		for (j = 0; j < _PERIPH_IDS_PER_REG; j++) {
+			if (!(isr & BIT(j)))
 				continue;
-			}
+
 			iac = IAC_EXCEPT_LSB_BIT(i) + j;
 			if (stm32_iac_discarded(iac)) {
 				snprintf(tmp, sizeof(tmp), "Discarded IAC ID: %03d\r\n", iac);
@@ -182,19 +186,20 @@ void stm32_iac_isr(const struct device *dev)
 				error = true;
 				snprintf(tmp, sizeof(tmp), "IAC exception ID: %03d\r\n", iac);
 			}
+
 			IAC_LOG(tmp);
 		}
+
 		io_write32(drv_cfg->base + _IAC_ICR0 + offset, isr);
-
 	}
-
-	NVIC_ClearPendingIRQ(drv_cfg->irq);
 
 	if (error)
 		access_violation_handler();
+
+	return IRQ_HANDLED;
 }
 
-static void stm32_iac_setup(const struct device *dev)
+static int stm32_iac_setup(const struct device *dev)
 {
 	const struct stm32_iac_config *drv_cfg = dev_get_config(dev);
 	struct stm32_iac_data *drv_data = dev_get_data(dev);
@@ -218,18 +223,14 @@ static void stm32_iac_setup(const struct device *dev)
 		io_clrbits32(drv_cfg->base + _IAC_IER0 + reg_ofst, BIT(bit_ofst));
 	}
 
-	/* just less than exception fault */
-	NVIC_SetPriority(drv_cfg->irq, 1);
-	NVIC_ClearTargetState(drv_cfg->irq);
-	NVIC_EnableIRQ(drv_cfg->irq);
+	return interrupt_request(drv_cfg->int_spec, (void *)dev, stm32_iac_isr, IRQF_NONE);
 }
 
 static int stm32_iac_init(const struct device *dev)
 {
 	stm32_iac_get_hwconfig(dev);
-	stm32_iac_setup(dev);
 
-	return 0;
+	return stm32_iac_setup(dev);
 }
 
 #ifdef CONFIG_PM_DEVICE
@@ -245,22 +246,19 @@ static int stm32_iac_pm_action(const struct device *dev,
 
 #define STM32_IAC_INIT(n)								\
 											\
+DT_INST_IRQS_SPEC_DEFINE(n)								\
+											\
 static uint32_t id_disable_##n[] =							\
 	DT_INST_PROP_OR(n, id_disable, {});						\
 											\
 static const struct stm32_iac_config stm32_iac_cfg_##n = {				\
 	.base = DT_INST_REG_ADDR(n),							\
-	.irq = DT_INST_IRQN(n),								\
+	.int_spec = DT_INST_IRQS_SPEC_GET(n),						\
 	.id_disable = id_disable_##n,							\
 	.n_id_disable = DT_INST_PROP_LEN_OR(n, id_disable, 0),				\
 };											\
 											\
 static struct stm32_iac_data stm32_iac_data_##n = {};					\
-											\
-void IAC_IRQHandler(void)								\
-{											\
-	stm32_iac_isr(DEVICE_DT_GET(DT_DRV_INST(n)));					\
-};											\
 											\
 PM_DEVICE_DT_INST_DEFINE(n, stm32_iac_pm_action);					\
 											\
@@ -272,6 +270,3 @@ DEVICE_DT_INST_DEFINE(n, &stm32_iac_init,						\
 		      NULL);
 
 DT_INST_FOREACH_STATUS_OKAY(STM32_IAC_INIT)
-
-BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
-	     "only one iac compatible node is supported");
