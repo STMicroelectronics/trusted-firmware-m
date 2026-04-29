@@ -654,7 +654,7 @@
 		serc: serc@54080000 {
 			compatible = "st,stm32mp25-serc";
 			reg = <0x54080000 0x1000>;
-			interrupts = <240 0>;
+			interrupts = <240 1>;
 			clocks = <&rcc CK_BUS_SERC>;
 			status = "disabled";
 		};
