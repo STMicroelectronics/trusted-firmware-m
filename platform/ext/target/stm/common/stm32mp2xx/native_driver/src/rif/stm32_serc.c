@@ -21,6 +21,7 @@
 #include <uart_stdout.h>
 #include <pm/device.h>
 #include <pm/pm.h>
+#include <irq.h>
 
 /* SERC offset register */
 #define _SERC_IER0		U(0x000)
@@ -53,7 +54,7 @@ struct stm32_serc_config {
 	uintptr_t base;
 	const struct device *clk_dev;
 	const clk_subsys_t clk_subsys;
-	uint32_t irq;
+	const struct irq_spec *int_spec;
 	uint32_t *id_disable;
 	uint32_t n_id_disable;
 };
@@ -95,8 +96,9 @@ __weak void access_violation_handler(void)
 	}
 }
 
-void stm32_serc_isr(const struct device *dev)
+static irqreturn_t stm32_serc_isr(void *data)
 {
+	const struct device *dev = data;
 	const struct stm32_serc_config *drv_cfg = dev_get_config(dev);
 	struct stm32_serc_data *drv_data = dev_get_data(dev);
 	int nreg = div_round_up(drv_data->num_ilac, _PERIPH_IDS_PER_REG);
@@ -120,17 +122,17 @@ void stm32_serc_isr(const struct device *dev)
 		}
 	}
 
-	NVIC_ClearPendingIRQ(drv_cfg->irq);
-
 	access_violation_handler();
+
+	return IRQ_HANDLED;
 }
 
-static void stm32_serc_setup(const struct device *dev)
+static int stm32_serc_setup(const struct device *dev)
 {
 	const struct stm32_serc_config *drv_cfg = dev_get_config(dev);
 	struct stm32_serc_data *drv_data = dev_get_data(dev);
 	int nreg = div_round_up(drv_data->num_ilac, _PERIPH_IDS_PER_REG);
-	int i = 0;
+	int err, i = 0;
 
 	for (i = 0; i < nreg; i++) {
 		uint32_t reg_ofst = drv_cfg->base + sizeof(uint32_t) * i;
@@ -150,12 +152,13 @@ static void stm32_serc_setup(const struct device *dev)
 			     BIT(bit_ofst));
 	}
 
+	err = interrupt_request(drv_cfg->int_spec, (void *)dev, stm32_serc_isr, IRQF_NONE);
+	if (err)
+		return err;
+
 	mmio_setbits_32(drv_cfg->base + _SERC_ENABLE, _SERC_ENABLE_SERFEN);
 
-	/* just less than exception fault */
-	NVIC_SetPriority(drv_cfg->irq, 1);
-	NVIC_ClearTargetState(drv_cfg->irq);
-	NVIC_EnableIRQ(drv_cfg->irq);
+	return 0;
 }
 
 static int stm32_serc_init(const struct device *dev)
@@ -173,9 +176,8 @@ static int stm32_serc_init(const struct device *dev)
 		return err;
 
 	stm32_serc_get_hwconfig(dev);
-	stm32_serc_setup(dev);
 
-	return 0;
+	return stm32_serc_setup(dev);
 }
 
 #ifdef CONFIG_PM_DEVICE
@@ -191,6 +193,8 @@ static int stm32_serc_pm_action(const struct device *dev,
 
 #define STM32_SERC_INIT(n)								\
 											\
+DT_INST_IRQS_SPEC_DEFINE(n)								\
+											\
 static uint32_t id_disable_##n[] =							\
 	DT_INST_PROP_OR(n, id_disable, {});						\
 											\
@@ -198,17 +202,12 @@ static const struct stm32_serc_config stm32_serc_cfg_##n = {				\
 	.base = DT_INST_REG_ADDR(n),							\
 	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),				\
 	.clk_subsys = (clk_subsys_t)DT_INST_CLOCKS_CELL(n, bits),			\
-	.irq = DT_INST_IRQN(n),								\
+	.int_spec = DT_INST_IRQS_SPEC_GET(n),						\
 	.id_disable = id_disable_##n,							\
 	.n_id_disable = DT_INST_PROP_LEN_OR(n, id_disable, 0),				\
 };											\
 											\
 static struct stm32_serc_data stm32_serc_data_##n = {};					\
-											\
-void SERF_IRQHandler(void)								\
-{											\
-	stm32_serc_isr(DEVICE_DT_GET(DT_DRV_INST(n)));					\
-};											\
 											\
 PM_DEVICE_DT_INST_DEFINE(n, stm32_serc_pm_action);					\
 											\
@@ -220,6 +219,3 @@ DEVICE_DT_INST_DEFINE(n, &stm32_serc_init,						\
 		      NULL);
 
 DT_INST_FOREACH_STATUS_OKAY(STM32_SERC_INIT)
-
-BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
-	     "only one serc compatible node is supported");
