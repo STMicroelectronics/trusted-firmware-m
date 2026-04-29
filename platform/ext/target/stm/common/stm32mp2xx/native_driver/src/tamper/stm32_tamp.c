@@ -21,6 +21,7 @@
 #include <string.h>
 #include <uart_stdout.h>
 #include <tfm_platform_system.h>
+#include <irq.h>
 
 #include <dt-bindings/tamp/st,stm32-tamp.h>
 
@@ -255,7 +256,7 @@ struct stm32_tamp_config {
 	const clk_subsys_t pclk_subsys;
 	const struct device *rtc_clk_dev;
 	const clk_subsys_t rtc_clk_subsys;
-	const uint32_t irq;
+	const struct irq_spec *int_spec;
 	const struct rifprot_controller *rif_ctl;
 	const uint32_t bkp_zones[MAX_DT_BKP_ZONES];
 	const uint32_t passive_precharge;
@@ -469,8 +470,9 @@ static __unused int _stm32mp25_bkpr11_errata(const struct device *dev)
 		stdio_output_string((const unsigned char *)str, strlen(str));	\
 	} while (0);
 
-static __unused void stm32_tamper_isr(const struct device *dev)
+static __unused irqreturn_t stm32_tamper_isr(void *data)
 {
+	const struct device *dev = data;
 	const struct stm32_tamp_config *dev_cfg = dev_get_config(dev);
 	struct stm32_tamp_data *dev_data = dev_get_data(dev);
 	uint32_t tamper_mask, sr;
@@ -504,9 +506,9 @@ static __unused void stm32_tamper_isr(const struct device *dev)
 		sr = io_read32(dev_cfg->base + _TAMP_SR);
 	}
 
-	NVIC_ClearPendingIRQ(dev_cfg->irq);
-
 	tfm_platform_hal_system_reset();
+
+	return IRQ_HANDLED;
 }
 
 static int stm32_tamper_passive_conf(const struct device *dev)
@@ -752,12 +754,14 @@ static int stm32_tamper_init(const struct device *dev)
 
 	io_write32(dev_cfg->base + _TAMP_CR1, cr1);
 
+	err = interrupt_request(dev_cfg->int_spec, (void *)dev, stm32_tamper_isr, IRQF_NONE);
+	if (err) {
+		EMSG("%s: interrupt request failed:%d\r\n", dev->name, err);
+		return err;
+	}
+
 	/* Enable interrupts. */
 	io_write32(dev_cfg->base + _TAMP_IER, ier);
-	/* Tamper events require very high priority as they may be triggered by malicious events */
-	NVIC_SetPriority(dev_cfg->irq, 1);
-	NVIC_ClearTargetState(dev_cfg->irq);
-	NVIC_EnableIRQ(dev_cfg->irq);
 
 	return 0;
 }
@@ -900,6 +904,7 @@ BUILD_ASSERT(DT_INST_PROP_LEN_OR(n, st_backup_zones, 0) == (bkp_zone_len),			\
 												\
 STM32_EXT_TAMPER_DEFINE(n)									\
 STM32_INT_TAMPER_DEFINE(n)									\
+DT_INST_IRQS_SPEC_DEFINE(n)									\
 												\
 static __unused const struct rif_base _##name##_rbase##n = {					\
 	.sec = DT_INST_REG_ADDR(n) + _TAMP_SECCFGR,						\
@@ -921,7 +926,7 @@ static const struct stm32_tamp_config _##name##_cfg##n = {					\
 	.pclk_subsys = (clk_subsys_t)DT_INST_CLOCKS_CELL_BY_NAME(n, pclk, bits),		\
 	.rtc_clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR_BY_NAME(n, rtc_ck)),			\
 	.rtc_clk_subsys = (clk_subsys_t)DT_INST_CLOCKS_CELL_BY_NAME(n, rtc_ck, bits),		\
-	.irq = DT_INST_IRQN(n),									\
+	.int_spec = DT_INST_IRQS_SPEC_GET(n),							\
 	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),							\
 	.bkp_zones = DT_INST_PROP_OR(n, st_backup_zones, {}),					\
 	.passive_precharge = DT_INST_PROP_OR(n, st_tamp_passive_precharge, 0),			\
@@ -938,12 +943,6 @@ static struct stm32_tamp_data _##name##_data##n = {						\
 	.n_int_tamper = ARRAY_SIZE(_int_tamper_data_##n),					\
 	.n_ext_tamper = ARRAY_SIZE(_ext_tamper_data_##n),					\
 };												\
-												\
-IF_ENABLED(STM32_SEC,										\
-(void TAMP_S_IRQHandler(void)									\
-{												\
-	stm32_tamper_isr(DEVICE_DT_GET(DT_DRV_INST(n)));					\
-};))												\
 												\
 DEVICE_DT_INST_DEFINE(n, &stm32_tamp_init, NULL,						\
 		      &_##name##_data##n, &_##name##_cfg##n,					\
