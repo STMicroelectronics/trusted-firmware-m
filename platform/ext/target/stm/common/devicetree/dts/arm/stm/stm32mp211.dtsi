@@ -449,7 +449,7 @@
 		iac: iac@52090000 {
 			compatible = "st,stm32mp25-iac";
 			reg = <0x52090000 0x400>;
-			interrupts = <201 0>;
+			interrupts = <201 1>;
 			status = "disabled";
 		};
 
