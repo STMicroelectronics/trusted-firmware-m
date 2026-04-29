@@ -10,13 +10,15 @@
 #include <device.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <irq.h>
 #include <lib/mmio.h>
 #include <lib/mmiopoll.h>
 #include <lib/utils_def.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stm32_dcache.h>
-#include <strings.h>
+#include <string.h>
+#include <uart_stdout.h>
 
 /* DCACHE offset register */
 #define _DCACHE_CR			U(0x000)
@@ -56,6 +58,11 @@
 #define _DCACHE_SR_ERRF			BIT(2)
 #define _DCACHE_SR_BUSYCMDF		BIT(3)
 #define _DCACHE_SR_CMDENDF		BIT(4)
+
+/* DCACHE_IER register fields */
+#define _DCACHE_IER_BSYENDIE		BIT(1)
+#define _DCACHE_IER_ERRIE		BIT(2)
+#define _DCACHE_IER_CMDENDIE		BIT(4)
 
 /* DCACHE_FCR register fields */
 #define _DCACHE_FCR_CBSYENDF		BIT(1)
@@ -99,7 +106,7 @@ struct dcache_driver_data {
 struct stm32_dcache_config {
 	uintptr_t base;
 	struct dcache_driver_data drv_data;
-	int irq;
+	const struct irq_spec *int_spec;
 };
 
 static struct stm32_dcache_config *dcache_conf;
@@ -136,16 +143,34 @@ static int stm32_dcache_waitforready(int flags)
 	return err;
 }
 
-void DCACHE_IRQHandler(void)
+#define DCACHE_LOG(str) \
+	stdio_output_string((const unsigned char *)(str), strlen(str))
+
+static irqreturn_t stm32_dcache_isr(void *data)
 {
+	const struct device *dev = data;
+	const struct stm32_dcache_config *dev_cfg = dev_get_config(dev);
+	uint32_t sr = io_read32(dev_cfg->base + _DCACHE_SR);
+	char tmp[40];
+
+	snprintf(tmp, sizeof(tmp), "\r\ndata cache exceptions: %#08x\r\n", sr);
+	DCACHE_LOG(tmp);
+
+	return IRQ_HANDLED;
 }
 
-int stm32_dcache_enable_irq(void)
+static int stm32_dcache_enable_irq(const struct device *dev)
 {
-	if (dcache_conf->base == 0)
-		return -ENODEV;
+	const struct stm32_dcache_config *dev_cfg = dev_get_config(dev);
+	int err;
 
-	NVIC_EnableIRQ(dcache_conf->irq);
+	err = interrupt_request(dev_cfg->int_spec, (void *)dev, stm32_dcache_isr, IRQF_NONE);
+	if (err)
+		return err;
+
+	io_write32(dev_cfg->base + _DCACHE_IER, _DCACHE_IER_ERRIE);
+
+	return 0;
 }
 
 int stm32_dcache_monitor_reset(void)
@@ -306,16 +331,17 @@ int stm32_dcache_init(const struct device *dev)
 
 	stm32_dcache_get_hwconfig();
 
-	return 0;
+	return stm32_dcache_enable_irq(dev);
 }
 
 #define STM32_DCACHE_INIT(n)					\
 								\
+DT_INST_IRQS_SPEC_DEFINE(n)					\
+								\
 static const struct stm32_dcache_config cfg_##n = {		\
 	.base = DT_INST_REG_ADDR(n),				\
-	.irq = DT_INST_IRQN(n),					\
+	.int_spec = DT_INST_IRQS_SPEC_GET(n),			\
 };								\
-								\
 								\
 static struct dcache_driver_data data_##n = { };		\
 								\
