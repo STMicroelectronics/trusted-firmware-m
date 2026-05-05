@@ -188,8 +188,16 @@ psa_status_t tfm_pm_suspend(const psa_msg_t *msg)
 
 psa_status_t tfm_pm_power_off(void)
 {
+	struct critical_section_t cs_assert = CRITICAL_SECTION_STATIC_INIT;
+	uint32_t pm_hint = PM_HINT_CLOCK_STATE | PM_HINT_PLATFORM_STATE_MASK;
+	psa_status_t status = PSA_SUCCESS;
+	int ret;
+
+	/* Disable external interruptions but allow NVIC internal exceptions */
+	__disable_irq();
+
 	/* call suspend of each device */
-	pm_suspend_devices(PM_HINT_CLOCK_STATE | PM_HINT_PLATFORM_STATE_MASK);
+	pm_suspend_devices(pm_hint);
 
 	stm32mp2_lp_fw_set_lpmode(STM32MP2_LP_FW_LPMODE_OFF);
 	stm32mp2_lp_fw_mark_data_valid();
@@ -203,10 +211,20 @@ psa_status_t tfm_pm_power_off(void)
 			return PSA_ERROR_GENERIC_ERROR;
 	}
 
-	if (stm32mp2_lp_fw_exec())
-		return PSA_ERROR_GENERIC_ERROR;
+	CRITICAL_SECTION_ENTER(cs_assert);
+	ret = stm32mp2_lp_fw_exec();
+	/* We are not supposed to come back here, manage the error */
+	if (ret)
+		status = PSA_ERROR_GENERIC_ERROR;
+	CRITICAL_SECTION_LEAVE(cs_assert);
 
-	return PSA_SUCCESS;
+	pm_resume_devices(pm_hint);
+
+	__enable_irq();
+
+	ERROR("[ERR][PM] power off failed (%d)\r\n", ret);
+
+	return status;
 }
 
 psa_status_t tfm_pm_fw_init(uint8_t *key, uint8_t size)
