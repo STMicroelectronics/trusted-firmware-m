@@ -5,7 +5,7 @@
 #-------------------------------------------------------------------------------
 
 set(STM32MP2_LP_GIT_REMOTE  "https://github.com/STMicroelectronics/stm32mp2-low-power" CACHE STRING "Git remote to fetch the low power firmware from")
-set(STM32MP2_LP_VERSION     "v1.0.0"                  CACHE STRING "The version of stm32mp2 low power firmware to use")
+set(STM32MP2_LP_VERSION     "v1.1.0"                  CACHE STRING "The version of stm32mp2 low power firmware to use")
 set(STM32MP2_LP_PATH        "DOWNLOAD"                CACHE PATH   "Path to stm32mp2 low power firmware (or DOWNLOAD to fetch automatically)")
 
 #set stm32mp2 low power config
