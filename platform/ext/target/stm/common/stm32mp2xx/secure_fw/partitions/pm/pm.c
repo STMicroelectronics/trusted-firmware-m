@@ -15,7 +15,8 @@
 #include <stm32mp2_lp_fw_api.h>
 #include <stm32mp2_ramcfg.h>
 #include <tfm_arch.h>
-#include <tfm_sp_log.h>
+#include <tfm_log.h>
+
 #include <uapi/tfm_pm_api.h>
 
 typedef struct context {
@@ -138,8 +139,8 @@ static int _pm_suspend(enum pm_suspend_mode_t mode)
 	/* platform state = mode, used by some driver as STPMIC2 */
 	pm_hint |= mode << PM_HINT_PLATFORM_STATE_SHIFT;
 
-	/* Mask interruptions but allow TF-M scheduling during driver suspend */
-	__set_BASEPRI(PENDSV_PRIO_FOR_SCHED);
+	/* Disable external interruptions but allow NVIC internal exceptions */
+	__disable_irq();
 
 	/* call suspend of each device */
 	if (pm_suspend_devices(pm_hint)) {
@@ -156,7 +157,7 @@ static int _pm_suspend(enum pm_suspend_mode_t mode)
 
 	pm_resume_devices(pm_hint);
 
-	__set_BASEPRI(0);
+	__enable_irq();
 
 	return err;
 }

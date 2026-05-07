@@ -6,7 +6,7 @@
 #include <device.h>
 #include <errno.h>
 #include <iterable_sections.h>
-#include <tfm_sp_log.h>
+#include <tfm_log.h>
 #include <stdint.h>
 #include <utilities.h>
 
@@ -22,6 +22,10 @@ static const enum pm_device_state action_target_state[] = {
 	[PM_DEVICE_ACTION_RESUME] = PM_DEVICE_STATE_ACTIVE,
 };
 
+/*
+ * The action callback of devices are call under power partition context (priv).
+ * So the callbacks must use tfm_log (ERROR, WARN, INFO, VERBOSE)
+ */
 int pm_device_action_run(const struct device *dev, enum pm_device_action action, uint32_t pm_hint)
 {
 	struct pm_device *pm = dev->pm;
@@ -38,6 +42,8 @@ int pm_device_action_run(const struct device *dev, enum pm_device_action action,
 		return err;
 
 	pm->state = action_target_state[action];
+
+	VERBOSE("[PM] %s, %s return : %d\n", dev->name, action ? "resume" : "suspend", err);
 
 	return 0;
 }
@@ -66,8 +72,8 @@ bool pm_suspend_devices(uint32_t pm_hint)
 		if ((ret == -ENOSYS) || (ret == -ENOTSUP) || (ret == -EALREADY)) {
 			continue;
 		} else if (ret < 0) {
-			LOG_ERRFMT("Device %s suspend (hint: 0x%x) error: %d\n",
-				   dev->name, pm_hint, ret);
+			ERROR("Device %s suspend (hint: 0x%x) error: %d\n",
+			      dev->name, pm_hint, ret);
 			return false;
 		}
 
@@ -90,14 +96,14 @@ void pm_resume_devices(uint32_t pm_hint)
 		if ((ret == -ENOSYS) || (ret == -ENOTSUP) || (ret == -EALREADY))
 			continue;
 		else if (ret < 0) {
-			LOG_ERRFMT("Device %s resume (hint: 0x%x) error: %d\n",
-				   dev->name, pm_hint, ret);
+			ERROR("Device %s resume (hint: 0x%x) error: %d\n",
+			      dev->name, pm_hint, ret);
 			nb_err++;
 		}
 	}
 
 	if (nb_err) {
-		LOG_ERRFMT("resume devices fail\n");
+		ERROR("resume devices fail\n");
 		tfm_core_panic();
 	}
 
