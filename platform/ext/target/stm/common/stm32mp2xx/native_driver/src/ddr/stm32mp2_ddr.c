@@ -473,8 +473,8 @@ void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv,
 		/* Poll on ddrphy_initeng0_phyinlpx.phyinlp3 = 0 */
 		ddr_wait_lp3_mode(false);
 	} else {
-		/* Initialize DDR including training and result saving */
-		ret = ddrphy_phyinit_sequence(config, false, true);
+		/* Initialize DDR including training */
+		ret = ddrphy_phyinit_sequence(config, false, false);
 	}
 
 	if (ret != 0) {
