@@ -140,9 +140,6 @@ static int __maybe_unused arm_sau_init(const struct device *dev)
 
 #define SAU_REGION(_base, _limit, _attr) {_base, _limit, _attr},
 
-#define SAU_MR_PHANDLE(_node_id, _prop, _idx)							\
-	DT_PHANDLE_BY_IDX(_node_id, _prop, _idx)
-
 #define SAU_MR_HAS_SAU_NSC(mr_node_id)								\
 	DT_PROP_OR(mr_node_id, arm_sau_nsc, 0)
 
@@ -152,23 +149,25 @@ static int __maybe_unused arm_sau_init(const struct device *dev)
 #define SAU_MR_ATTR_NSC(_mr_node_id)								\
 	COND_CODE_1(SAU_MR_HAS_SAU_NSC(_mr_node_id), (SAU_NSC), (0))
 
-#define SAU_MR_ATTRS(_mr_node_id)								\
-	(SAU_MR_ATTR_NSC(_mr_node_id) | SAU_MR_ATTR_EN(_mr_node_id))
+#define SAU_REG_BASE(_node_id, _idx)								\
+	DT_MEMORY_REGION_ADDR_BY_IDX(_node_id, _idx)
 
-#define SAU_MR_REG_BASE(_mr_node_id)								\
-	(DT_REG_ADDR(_mr_node_id))
+#define SAU_REG_LIMIT(_node_id, _idx)								\
+	(DT_MEMORY_REGION_ADDR_BY_IDX(_node_id, _idx) +						\
+	 DT_MEMORY_REGION_SIZE_BY_IDX(_node_id, _idx) - 1)
 
-#define SAU_MR_REG_LIMIT(_mr_node_id)								\
-	(DT_REG_ADDR(_mr_node_id) + DT_REG_SIZE(_mr_node_id) - 1)
+#define SAU_REG_ATTRS(_node_id, _idx)								\
+	(SAU_MR_ATTR_NSC(DT_MEMORY_REGION_BY_IDX(_node_id, _idx)) |				\
+	 SAU_MR_ATTR_EN(DT_MEMORY_REGION_BY_IDX(_node_id, _idx)))
 
 #define DT_SAU_REGION(_node_id, _prop, _idx)							\
-	SAU_REGION(SAU_MR_REG_BASE(SAU_MR_PHANDLE(_node_id, _prop, _idx)),			\
-		   SAU_MR_REG_LIMIT(SAU_MR_PHANDLE(_node_id, _prop, _idx)),			\
-		   SAU_MR_ATTRS(SAU_MR_PHANDLE(_node_id, _prop, _idx)))
+	SAU_REGION(SAU_REG_BASE(_node_id, _idx),						\
+		   SAU_REG_LIMIT(_node_id, _idx),						\
+		   SAU_REG_ATTRS(_node_id, _idx))
 
 #define DT_INST_SAU_MEMORY_REGION(inst)								\
-	COND_CODE_1(DT_INST_NODE_HAS_PROP(inst, memory_region),					\
-		    (DT_INST_FOREACH_PROP_ELEM_SEP(inst, memory_region, DT_SAU_REGION, ())),	\
+	COND_CODE_1(DT_INST_MEMORY_REGION_HAS(inst),						\
+		    (DT_INST_FOREACH_MEMORY_REGION_SEP(inst, DT_SAU_REGION, ())),		\
 		    ())
 
 #define SAU_BUILTIN_PERIPHERAL(_base, _size)							\

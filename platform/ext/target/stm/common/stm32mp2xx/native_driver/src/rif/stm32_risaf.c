@@ -859,11 +859,8 @@ static __unused const struct stm32_risaf_variant stm32mp21_enc_variant = {
 	_CONCAT(DEVICE_DT_NAME_GET(_node), _risaf_dt_regions)
 
 #define _RISAF_REGIONS_GET(_node)							\
-	COND_CODE_1(DT_NODE_HAS_PROP(_node, memory_region),				\
+	COND_CODE_1(DT_MEMORY_REGION_HAS(_node),					\
 		    (_RISAF_REGION_NAME(_node)), (NULL))
-
-#define _RISAF_REGION_NUM(_node)							\
-	DT_PROP_LEN_OR(_node, memory_region, 0)
 
 #define _RISAF_ADDR(_mr_node, _mem_region, _root_node)					\
 	(_mem_region - DT_PROP_BY_IDX(_root_node, st_mem_map, 1))
@@ -872,7 +869,7 @@ static __unused const struct stm32_risaf_variant stm32mp21_enc_variant = {
 	_RISAF_ADDR(_mr_node, DT_REG_ADDR(_mr_node), _root_node)
 
 #define _RISAF_END_ADDR(_mr_node, _root_node)						\
-	(_RISAF_ADDR(_mr_node, DT_REG_ADDR(_mr_node), _root_node) +			\
+	(_RISAF_ADDR(_mr_node, DT_REG_ADDR(_mr_node), _root_node) +		\
 	 DT_REG_SIZE(_mr_node) - 1)
 
 #define _RISAF_PROTREG(_mr_node) DT_PROP_BY_IDX(_mr_node, st_protreg, 0)
@@ -883,25 +880,24 @@ static __unused const struct stm32_risaf_variant stm32mp21_enc_variant = {
 		.end_addr = _RISAF_END_ADDR(_mr_node, _root_node),			\
 		.st_protreg = _RISAF_PROTREG(_mr_node),					\
 		.dt_regions = _RISAF_REGIONS_GET(_mr_node),				\
-		.ndt_regions = _RISAF_REGION_NUM(_mr_node),				\
+		.ndt_regions = DT_NUM_MEMORY_REGION(_mr_node),				\
 	}
 
 #define _RISAF_MR_ELEM(_node, _prop, _idx, _root_node)					\
-	__RISAF_MR_ELEM(DT_PHANDLE_BY_IDX(_node, _prop, _idx), _root_node)
+	__RISAF_MR_ELEM(DT_MEMORY_REGION_BY_IDX(_node, _idx), _root_node)
 
 #define __RISAF_REGIONS_DEFINE(_node, _root_node)					\
-	COND_CODE_1(DT_NODE_HAS_PROP(_node, memory_region),				\
+	COND_CODE_1(DT_MEMORY_REGION_HAS(_node),					\
 	(static __unused const struct risaf_dt_region _RISAF_REGION_NAME(_node)[] = {	\
-		DT_FOREACH_PROP_ELEM_SEP_VARGS(_node, memory_region, _RISAF_MR_ELEM,	\
-					       (,), _root_node)				\
+		DT_FOREACH_MEMORY_REGION_SEP_VARGS(_node, _RISAF_MR_ELEM,		\
+						   (,), _root_node)			\
 	 };), ())
 
 #define _RISAF_SUB_REGIONS_DEFINE(_node, _prop, _idx, _root_node)			\
-	__RISAF_REGIONS_DEFINE(DT_PHANDLE_BY_IDX(_node, _prop, _idx), _root_node)
+	__RISAF_REGIONS_DEFINE(DT_MEMORY_REGION_BY_IDX(_node, _idx), _root_node)
 
 #define _RISAF_REGIONS_DEFINE(_node, _root_node)					\
-	DT_FOREACH_PROP_ELEM_VARGS(_node, memory_region,				\
-				   _RISAF_SUB_REGIONS_DEFINE, _root_node)		\
+	DT_FOREACH_MEMORY_REGION_VARGS(_node, _RISAF_SUB_REGIONS_DEFINE, _root_node)	\
 	__RISAF_REGIONS_DEFINE(_node, _root_node)
 
 #define _INST_RISAF_REGIONS_DEFINE(inst)						\
@@ -918,7 +914,7 @@ static const struct stm32_risaf_config stm32_risaf_cfg_##name####n = {			\
 	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),				\
 	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),			\
 	.dt_regions = _RISAF_REGIONS_GET(DT_DRV_INST(n)),				\
-	.ndt_regions = _RISAF_REGION_NUM(DT_DRV_INST(n)),				\
+	.ndt_regions = DT_INST_NUM_MEMORY_REGION(n),					\
 	.firewall_ctrls = DT_INST_ACCESS_CTRLS_GET(n),					\
 	.n_firewall_ctrls = DT_INST_ACCESS_CTRLS_NUM(n),				\
 	.entropy_dev = DEVICE_DT_GET_OR_NULL(DT_INST_ENTROPY_CTLR(n)),			\

@@ -324,14 +324,6 @@ static __unused int stm32_omm_pm_action(const struct device *dev,
 }
 #endif
 
-#define DT_GET_MM_BASE_BY_NAME_OR(n, name)							\
-	COND_CODE_1(DT_INST_PROP_HAS_NAME(n, memory_region, name),				\
-		    (DT_REG_ADDR(DT_INST_PHANDLE_BY_NAME(n, memory_region, name))), (0U))
-
-#define DT_GET_MM_SIZE_BY_NAME_OR(n, name)							\
-	COND_CODE_1(DT_INST_PROP_HAS_NAME(n, memory_region, name),				\
-		    (DT_REG_SIZE(DT_INST_PHANDLE_BY_NAME(n, memory_region, name))), (0U))
-
 #define STM32_OSPI_CHILD_DEFINE(n)								\
 	{											\
 		.clk_dev = DEVICE_DT_GET(DT_CLOCKS_CTLR(n)),					\
@@ -353,10 +345,10 @@ static const struct stm32_omm_cfg stm32_omm_cfg_##n = {						\
 	.base = DT_INST_REG_ADDR_BY_NAME(n, omm),						\
 	.mm_base = DT_INST_REG_ADDR_BY_NAME(n, omm_mm),						\
 	.mm_size = DT_INST_REG_SIZE_BY_NAME(n, omm_mm),						\
-	.mm_ospi1_base = DT_GET_MM_BASE_BY_NAME_OR(n, mm_ospi1),				\
-	.mm_ospi1_size = DT_GET_MM_SIZE_BY_NAME_OR(n, mm_ospi1),				\
-	.mm_ospi2_base = DT_GET_MM_BASE_BY_NAME_OR(n, mm_ospi2),				\
-	.mm_ospi2_size = DT_GET_MM_SIZE_BY_NAME_OR(n, mm_ospi2),				\
+	.mm_ospi1_base = DT_INST_MEMORY_REGION_ADDR_BY_NAME_OR(n, mm_ospi1, 0U),		\
+	.mm_ospi1_size = DT_INST_MEMORY_REGION_SIZE_BY_NAME_OR(n, mm_ospi1, 0U),		\
+	.mm_ospi2_base = DT_INST_MEMORY_REGION_ADDR_BY_NAME_OR(n, mm_ospi2, 0U),		\
+	.mm_ospi2_size = DT_INST_MEMORY_REGION_SIZE_BY_NAME_OR(n, mm_ospi2, 0U),		\
 	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),					\
 	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),				\
 	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(n),						\

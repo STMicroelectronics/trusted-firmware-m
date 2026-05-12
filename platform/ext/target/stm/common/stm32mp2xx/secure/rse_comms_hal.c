@@ -27,8 +27,8 @@
 
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,"only one st,psa-mbox node may be present");
 /* Secure RSS SHMEM */
-#define S_RSS_SHMEM_ADDR		DT_REG_ADDR(DT_INST_PHANDLE(0, memory_region))
-#define S_RSS_SHMEM_SIZE		DT_REG_SIZE(DT_INST_PHANDLE(0, memory_region))
+#define S_RSS_SHMEM_ADDR		DT_INST_MEMORY_REGION_ADDR(0)
+#define S_RSS_SHMEM_SIZE		DT_INST_MEMORY_REGION_SIZE(0)
 
 static const struct mbox_dt_spec channel =  { MBOX_DT_SPEC_GET_IDX(DT_DRV_INST(0),0)};
 /* Declared statically to avoid using huge amounts of stack space. Maybe revisit

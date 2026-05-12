@@ -869,14 +869,6 @@ static __maybe_unused const struct spi_bus_ops stm32_ospi_bus_ops = {
 	.dirmap_read = stm32_ospi_dirmap_read,
 };
 
-#define DT_GET_MM_BASE_OR(n)							\
-	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, memory_region),			\
-		    (DT_REG_ADDR(DT_INST_PHANDLE(n, memory_region))), (0U))
-
-#define DT_GET_MM_SIZE_OR(n)							\
-	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, memory_region),			\
-		    (DT_REG_SIZE(DT_INST_PHANDLE(n, memory_region))), (0U))
-
 #define STM32_OMI_INIT(n)							\
 										\
 PINCTRL_DT_INST_DEFINE(n);							\
@@ -885,8 +877,8 @@ static const struct reset_control rst_ctrl_##n[] = DT_INST_RESETS_CONTROL(n);	\
 										\
 static const struct stm32_omi_config stm32_omi_cfg_##n = {			\
 	.base = DT_INST_REG_ADDR(n),						\
-	.mm_base = DT_GET_MM_BASE_OR(n),					\
-	.mm_size = DT_GET_MM_SIZE_OR(n),					\
+	.mm_base = DT_INST_MEMORY_REGION_ADDR_OR(n, 0U),			\
+	.mm_size = DT_INST_MEMORY_REGION_SIZE_OR(n, 0U),			\
 	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),			\
 	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),		\
 	.rst_ctl = rst_ctrl_##n,						\

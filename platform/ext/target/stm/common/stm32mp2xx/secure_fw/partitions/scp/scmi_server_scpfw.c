@@ -307,14 +307,8 @@ static const struct stm32_scmi_pd *scmi_dt_pd_##n[] = {				\
 };										\
 										\
 static const struct shared_mem scmi_dt_shmem_##n = {				\
-		.area = (uintptr_t *)COND_CODE_1(DT_INST_NODE_HAS_PROP(n,	\
-					memory_region),				\
-					(DT_REG_ADDR(				\
-					DT_INST_PHANDLE(n, memory_region))),	\
-					(0)),					\
-		.size = COND_CODE_1(DT_INST_NODE_HAS_PROP(n, memory_region),	\
-				(DT_REG_SIZE(					\
-				DT_INST_PHANDLE(n, memory_region))),(0)),	\
+		.area = (uintptr_t *)DT_INST_MEMORY_REGION_ADDR_OR(n, 0),	\
+		.size = DT_INST_MEMORY_REGION_ADDR_OR(n, 0),			\
 };										\
 static const const struct mbox_dt_spec scmi_dt_chan_##n = {			\
 	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, mboxes),				\

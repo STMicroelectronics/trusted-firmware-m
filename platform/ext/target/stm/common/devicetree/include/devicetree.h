@@ -5123,5 +5123,6 @@
 #include <devicetree/reset.h>
 #include <devicetree/mbox.h>
 #include <devicetree/interrupt.h>
+#include <devicetree/memory_region.h>
 
 #endif /* DEVICETREE_H */
