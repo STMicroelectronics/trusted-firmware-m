@@ -980,6 +980,14 @@ DEVICE_DT_DEFINE(node_id, NULL, NULL,						\
 
 #define NVMEM_CELL_CHILD_GET(node_id) stm32_otp_cell_##node_id,
 
+#define BSEC_MIRROR_ADDR_OR(n_id)						\
+	COND_CODE_1(DT_NODE_HAS_PROP(n_id, memory_region),			\
+		    (DT_REG_ADDR(DT_PHANDLE(n_id, memory_region))), (0U))
+
+#define BSEC_MIRROR_SIZE_OR(n_id)						\
+	COND_CODE_1(DT_NODE_HAS_PROP(n_id, memory_region),			\
+		    (DT_REG_SIZE(DT_PHANDLE(n_id, memory_region))), (0U))
+
 #define STM32_BSEC3_INIT(node_id, _variant)					\
 										\
 DT_FOREACH_CHILD(node_id, NVMEM_CELL_CHILD_DEFINE)				\
@@ -992,8 +1000,8 @@ DT_ACCESS_CTRLS_DEFINE(node_id);						\
 										\
 static const struct stm32_bsec_config stm32_bsec3_cfg_ ## node_id = {		\
 	.base = DT_REG_ADDR(node_id),						\
-	.mirror_addr = DT_REG_ADDR(DT_PHANDLE(node_id, memory_region)),		\
-	.mirror_size = DT_REG_SIZE(DT_PHANDLE(node_id, memory_region)),		\
+	.mirror_addr = BSEC_MIRROR_ADDR_OR(node_id),				\
+	.mirror_size = BSEC_MIRROR_SIZE_OR(node_id),				\
 	.firewall_ctrls = DT_ACCESS_CTRLS_GET(node_id),				\
 	.n_firewall_ctrls = DT_ACCESS_CTRLS_NUM(node_id),			\
 	.otp_cell = stm32_otp_cells_##node_id,					\
