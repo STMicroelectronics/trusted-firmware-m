@@ -15,7 +15,7 @@ properties:
     required: true
 
   memory-region:
-    required: true
+    required: false
 
 child-binding:
   include: [nvmem-provider.yaml]
