@@ -105,18 +105,19 @@ struct dcache_driver_data {
 
 struct stm32_dcache_config {
 	uintptr_t base;
-	struct dcache_driver_data drv_data;
 	const struct irq_spec *int_spec;
 };
 
-static struct stm32_dcache_config *dcache_conf;
+static const struct device *dcache_dev;
 
-static void stm32_dcache_get_hwconfig(void)
+static void stm32_dcache_get_hwconfig(const struct device *dev)
 {
+	const struct stm32_dcache_config *dcache_conf = dev_get_config(dev);
+	struct dcache_driver_data *dcache_data = dev_get_data(dev);
 	uint32_t regval = 0;
 
 	regval = io_read32(dcache_conf->base + _DCACHE_HWCFGR);
-	dcache_conf->drv_data.ways = _DCACHE_FLD_GET(_DCACHE_HWCFGR_WAYS, regval);
+	dcache_data->ways = _DCACHE_FLD_GET(_DCACHE_HWCFGR_WAYS, regval);
 
 	regval = io_read32(dcache_conf->base + _DCACHE_VERR);
 
@@ -124,11 +125,12 @@ static void stm32_dcache_get_hwconfig(void)
 	     _DCACHE_FLD_GET(_DCACHE_VERR_MAJREV, regval),
 	     _DCACHE_FLD_GET(_DCACHE_VERR_MINREV, regval));
 
-	DMSG("HW cap: ways:%"PRIu8"\n", dcache_conf->drv_data.ways);
+	DMSG("HW cap: ways:%"PRIu8"\n", dcache_data->ways);
 }
 
 static int stm32_dcache_waitforready(int flags)
 {
+	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
 	uint32_t sr;
 	int err;
 
@@ -175,6 +177,8 @@ static int stm32_dcache_enable_irq(const struct device *dev)
 
 int stm32_dcache_monitor_reset(void)
 {
+	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
+
 	if (dcache_conf->base == 0)
 		return -ENODEV;
 
@@ -191,6 +195,8 @@ int stm32_dcache_monitor_reset(void)
 
 int stm32_dcache_monitor_start(void)
 {
+	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
+
 	if (dcache_conf->base == 0)
 		return -ENODEV;
 
@@ -203,6 +209,8 @@ int stm32_dcache_monitor_start(void)
 
 int stm32_dcache_monitor_stop(void)
 {
+	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
+
 	if (dcache_conf->base == 0)
 		return -ENODEV;
 
@@ -215,6 +223,8 @@ int stm32_dcache_monitor_stop(void)
 
 int stm32_dcache_monitor_get(struct stm32_dcache_mon *mon)
 {
+	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
+
 	if (dcache_conf->base == 0)
 		return -ENODEV;
 
@@ -228,6 +238,7 @@ int stm32_dcache_monitor_get(struct stm32_dcache_mon *mon)
 
 int stm32_dcache_enable(bool monitor, bool inv)
 {
+	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
 	uint32_t reg;
 
 	if (dcache_conf->base == 0)
@@ -267,6 +278,8 @@ int stm32_dcache_enable(bool monitor, bool inv)
 
 int stm32_dcache_disable(void)
 {
+	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
+
 	if (dcache_conf->base == 0)
 		return -ENODEV;
 
@@ -277,6 +290,7 @@ int stm32_dcache_disable(void)
 
 int stm32_dcache_full_inv(void)
 {
+	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
 	uintptr_t base = dcache_conf->base;
 	uint32_t sr;
 
@@ -296,6 +310,7 @@ int stm32_dcache_full_inv(void)
 
 int stm32_dcache_maintenance(int cmd, uintptr_t start, uintptr_t end)
 {
+	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
 	uintptr_t base = dcache_conf->base;
 	uint32_t cr;
 	uint32_t sr;
@@ -327,14 +342,15 @@ int stm32_dcache_maintenance(int cmd, uintptr_t start, uintptr_t end)
 
 int stm32_dcache_init(const struct device *dev)
 {
-	dcache_conf = (struct stm32_dcache_config *)dev_get_config(dev);
-
-	stm32_dcache_get_hwconfig();
+	stm32_dcache_get_hwconfig(dev);
 
 	return stm32_dcache_enable_irq(dev);
 }
 
 #define STM32_DCACHE_INIT(n)					\
+								\
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,	\
+	     "only one DCACHE instance is supported");		\
 								\
 DT_INST_IRQS_SPEC_DEFINE(n)					\
 								\
@@ -344,6 +360,8 @@ static const struct stm32_dcache_config cfg_##n = {		\
 };								\
 								\
 static struct dcache_driver_data data_##n = { };		\
+								\
+static const struct device *dcache_dev = DEVICE_DT_INST_GET(0);	\
 								\
 DEVICE_DT_INST_DEFINE(n, &stm32_dcache_init, NULL,		\
 		      &data_##n, &cfg_##n,			\
