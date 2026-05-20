@@ -105,6 +105,8 @@ static int arm_nvic_interrupt_enable(const struct irq_spec *spec)
 		return -ENOTSUP;
 
 	NVIC_EnableIRQ(irq);
+	if (!NVIC_GetEnableIRQ(irq))
+		return -EIO;
 
 	return 0;
 }
