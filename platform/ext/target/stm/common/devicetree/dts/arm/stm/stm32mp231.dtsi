@@ -1051,22 +1051,23 @@
 			reg = <0x56230000 0x400>;
 			num-lines = <77>;
 			interrupts-extended =
-				<&nvic 17  0>,
-				<&nvic 18  0>,
-				<&nvic 19  0>,
-				<&nvic 20  0>,
-				<&nvic 21  0>,
-				<&nvic 22  0>,
-				<&nvic 23  0>,
-				<&nvic 24  0>,
-				<&nvic 25  0>,
-				<&nvic 26  0>,
-				<&nvic 27  0>,
-				<&nvic 28  0>,
-				<&nvic 29  0>,
-				<&nvic 30  0>,
-				<&nvic 31  0>,
-				<&nvic 32  0>;
+				<&nvic 17 0>,
+				<&nvic 18 0>,
+				<&nvic 19 0>,
+				<&nvic 20 0>,
+				<&nvic 21 0>,
+				<&nvic 22 0>,
+				<&nvic 23 0>,
+				<&nvic 24 0>,
+				<&nvic 25 0>,
+				<&nvic 26 0>,
+				<&nvic 27 0>,
+				<&nvic 28 0>,
+				<&nvic 29 0>,
+				<&nvic 30 0>,
+				<&nvic 31 0>,
+				<&nvic 32 0>,
+				<&nvic 4 3>;
 
 			line-ranges =
 				<0 1>,
@@ -1084,7 +1085,8 @@
 				<12 1>,
 				<13 1>,
 				<14 1>,
-				<15 1>;
+				<15 1>,
+				<47 1>;
 
 			status = "disabled";
 		};
