@@ -143,8 +143,6 @@ struct stm32mp_ddr_config {
 	struct stm32mp2_ddrctrl_timing c_timing;
 	struct stm32mp2_ddrctrl_map c_map;
 	struct stm32mp2_ddrctrl_perf c_perf;
-	bool self_refresh;
-	uint32_t zdata;
 	struct user_input_basic uib;
 	struct user_input_advanced uia;
 	struct user_input_mode_register uim;

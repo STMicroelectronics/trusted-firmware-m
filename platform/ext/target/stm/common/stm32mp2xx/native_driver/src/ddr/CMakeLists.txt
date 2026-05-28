@@ -43,13 +43,9 @@ target_sources(platform_bl2
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_isdbytedisabled.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_loadpieprodcode.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_mapdrvstren.c
-		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_progcsrskiptrain.c
-		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_reginterface.c
-		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_restore_sequence.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_sequence.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_softsetmb.c
 		${STM_DDR_DIR}/phy/phyinit/usercustom/ddrphy_phyinit_usercustom_custompretrain.c
-		${STM_DDR_DIR}/phy/phyinit/usercustom/ddrphy_phyinit_usercustom_saveretregs.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_d_loadimem.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_f_loaddmem.c
 		${STM_DDR_DIR}/phy/phyinit/src/ddrphy_phyinit_g_execfw.c

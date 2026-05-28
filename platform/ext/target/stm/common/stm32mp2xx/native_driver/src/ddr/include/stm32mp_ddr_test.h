@@ -9,7 +9,6 @@
 
 #include <stdint.h>
 
-uintptr_t stm32mp_ddr_test_rw_access(struct stm32mp_ddr_size *info);
 uintptr_t stm32mp_ddr_test_data_bus(struct stm32mp_ddr_size *info);
 uintptr_t stm32mp_ddr_test_addr_bus(struct stm32mp_ddr_size *info);
 size_t stm32mp_ddr_check_size(struct stm32mp_ddr_size *info, size_t size);

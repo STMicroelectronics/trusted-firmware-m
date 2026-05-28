@@ -164,6 +164,7 @@ int stm32mp2_ddr_dt_init(void)
 {
 	unsigned long ret;
 	struct clk *clk;
+	size_t retsize;
 
 	struct stm32mp_ddr_config drv_cfg = {
 		.info = {
@@ -192,12 +193,6 @@ int stm32mp2_ddr_dt_init(void)
 		.rcc = DT_REG_ADDR(DT_NODELABEL(rcc)),
 	};
 
-	drv_cfg.self_refresh = false;
-
-/*        if (stm32mp_is_wakeup_from_standby()) {*/
-/*                drv_cfg.self_refresh = true;*/
-/*        }*/
-
 	clk = clk_get(DDR_CLK_DEV, (clk_subsys_t)DDR_CLK_ID);
 	if (!clk)
 		return -ENODEV;
@@ -208,36 +203,26 @@ int stm32mp2_ddr_dt_init(void)
 
 	stm32mp2_ddr_init(&drv_data, &drv_cfg);
 
-	if (drv_cfg.self_refresh) {
-		ret = stm32mp_ddr_test_rw_access(&drv_data.info);
-		if (ret != 0UL) {
-			DDR_ERROR("DDR rw test: can't access memory @ %#lx\n", ret);
-			panic();
-		}
-	} else {
-		size_t retsize;
-
-		ret = stm32mp_ddr_test_data_bus(&drv_data.info);
-		if (ret != 0UL) {
-			DDR_ERROR("DDR data bus test: can't access memory @ %#lx\n", ret);
-			panic();
-		}
-
-		ret = stm32mp_ddr_test_addr_bus(&drv_data.info);
-		if (ret != 0UL) {
-			DDR_ERROR("DDR addr bus test: can't access memory @ %#lx\n", ret);
-			panic();
-		}
-
-		retsize = stm32mp_ddr_check_size(&drv_data.info, drv_cfg.info.size);
-		if (retsize < drv_cfg.info.size) {
-			DDR_ERROR("DDR size: 0x%x does not match DT config: 0x%x\n",
-				  retsize, drv_cfg.info.size);
-			panic();
-		}
-
-		DDR_INFO("Memory size = 0x%x (%u MB)\n", retsize, retsize / (1024U * 1024U));
+	ret = stm32mp_ddr_test_data_bus(&drv_data.info);
+	if (ret != 0UL) {
+		DDR_ERROR("DDR data bus test: can't access memory @ %#lx\n", ret);
+		panic();
 	}
+
+	ret = stm32mp_ddr_test_addr_bus(&drv_data.info);
+	if (ret != 0UL) {
+		DDR_ERROR("DDR addr bus test: can't access memory @ %#lx\n", ret);
+		panic();
+	}
+
+	retsize = stm32mp_ddr_check_size(&drv_data.info, drv_cfg.info.size);
+	if (retsize < drv_cfg.info.size) {
+		DDR_ERROR("DDR size: 0x%x does not match DT config: 0x%x\n",
+			  retsize, drv_cfg.info.size);
+		panic();
+	}
+
+	DDR_INFO("Memory size = 0x%x (%u MB)\n", retsize, retsize / (1024U * 1024U));
 
 	/*
 	 * Initialization sequence has configured DDR registers with settings.

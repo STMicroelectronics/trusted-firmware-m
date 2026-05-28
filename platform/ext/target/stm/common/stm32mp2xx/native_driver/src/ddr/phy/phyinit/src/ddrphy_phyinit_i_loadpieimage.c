@@ -101,7 +101,7 @@ static void seq0bdly_program(struct stm32mp_ddr_config *config)
  *   - skip_training (LPDDR4)
  *   - user_input_basic.frequency (LPDDR4)
  */
-static void seq0bdisableflag_program(struct stm32mp_ddr_config *config, bool skip_training)
+static void seq0bdisableflag_program(struct stm32mp_ddr_config *config)
 {
 	mmio_write_16((uintptr_t)(DDRPHYC_BASE + (4U * (TINITENG | CSR_SEQ0BDISABLEFLAG0_ADDR))),
 		      0x0000U);
@@ -120,8 +120,7 @@ static void seq0bdisableflag_program(struct stm32mp_ddr_config *config, bool ski
 	mmio_write_16((uintptr_t)(DDRPHYC_BASE + (4U * (TINITENG | CSR_SEQ0BDISABLEFLAG6_ADDR))),
 		      0xFFFFU);
 #else /* STM32MP_LPDDR4_TYPE */
-	if (skip_training || (config->uia.disableretraining != 0U) ||
-	    (config->uib.frequency < 333U)) {
+	if ((config->uia.disableretraining != 0U) || (config->uib.frequency < 333U)) {
 		/* Disabling DRAM drift compensation */
 		mmio_write_16((uintptr_t)(DDRPHYC_BASE + (4U * (TINITENG |
 							        CSR_SEQ0BDISABLEFLAG6_ADDR))),
@@ -331,7 +330,7 @@ static void calrate_program(struct stm32mp_ddr_config *config)
  *
  * \return void
  */
-void ddrphy_phyinit_i_loadpieimage(struct stm32mp_ddr_config *config, bool skip_training)
+void ddrphy_phyinit_i_loadpieimage(struct stm32mp_ddr_config *config)
 {
 	DDR_VERBOSE("%s Start\n", __func__);
 
@@ -354,12 +353,10 @@ void ddrphy_phyinit_i_loadpieimage(struct stm32mp_ddr_config *config, bool skip_
 
 	seq0bdly_program(config);
 
-	seq0bdisableflag_program(config, skip_training);
+	seq0bdisableflag_program(config);
 
 #if STM32MP_LPDDR4_TYPE
-	if (!skip_training) {
-		ppttrainsetup_program(config);
-	}
+	ppttrainsetup_program(config);
 
 	acsmplayback_program();
 

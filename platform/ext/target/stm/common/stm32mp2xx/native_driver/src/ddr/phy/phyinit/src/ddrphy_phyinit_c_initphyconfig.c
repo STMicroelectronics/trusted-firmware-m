@@ -179,7 +179,7 @@ static void pllctrl2_program(struct stm32mp_ddr_config *config)
  *   - For MemClk frequency > 933MHz, the valid range of ardptrinitval[3:0] is: 1-5
  *   - For MemClk frequency < 933MHz, the valid range of ardptrinitval[3:0] is: 0-5
  */
-static void ardptrinitval_program(struct stm32mp_ddr_config *config, uint32_t *ardptrinitval)
+static void ardptrinitval_program(struct stm32mp_ddr_config *config)
 {
 	uint16_t regdata;
 
@@ -196,8 +196,6 @@ static void ardptrinitval_program(struct stm32mp_ddr_config *config, uint32_t *a
 
 	mmio_write_16((uintptr_t)(DDRPHYC_BASE + (4U * (TMASTER | CSR_ARDPTRINITVAL_ADDR))),
 		      regdata);
-
-	*ardptrinitval = (uint32_t)regdata;
 }
 
 #if STM32MP_LPDDR4_TYPE
@@ -1042,7 +1040,7 @@ static void aforcetricont_acx4anibdis_program(struct stm32mp_ddr_config *config)
  * \return 0 on success.
  */
 int ddrphy_phyinit_c_initphyconfig(struct stm32mp_ddr_config *config,
-				   struct pmu_smb_ddr_1d *mb_ddr_1d, uint32_t *ardptrinitval)
+				   struct pmu_smb_ddr_1d *mb_ddr_1d)
 {
 	uint32_t twotckrxdqspre;
 	int ret;
@@ -1065,7 +1063,7 @@ int ddrphy_phyinit_c_initphyconfig(struct stm32mp_ddr_config *config,
 
 	pllctrl2_program(config);
 
-	ardptrinitval_program(config, ardptrinitval);
+	ardptrinitval_program(config);
 
 #if STM32MP_LPDDR4_TYPE
 	procodtctl_program();

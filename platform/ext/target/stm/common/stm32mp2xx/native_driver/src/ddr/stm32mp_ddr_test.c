@@ -14,28 +14,6 @@
 #define DDR_ANTIPATTERN	0x55555555U
 
 /*******************************************************************************
- * This function tests a simple read/write access to the DDR.
- * Note that the previous content is restored after test.
- * Returns 0 if success, and address value else.
- ******************************************************************************/
-uintptr_t stm32mp_ddr_test_rw_access(struct stm32mp_ddr_size *info)
-{
-	uint32_t saved_value = mmio_read_32(info->base);
-
-	mmio_write_32(info->base, DDR_PATTERN);
-
-	if (mmio_read_32(info->base) != DDR_PATTERN) {
-		return info->base;
-	}
-
-	if (saved_value != DDR_PATTERN) {
-		mmio_write_32(info->base, saved_value);
-	}
-
-	return 0UL;
-}
-
-/*******************************************************************************
  * This function tests the DDR data bus wiring.
  * This is inspired from the Data Bus Test algorithm written by Michael Barr
  * in "Programming Embedded Systems in C and C++" book.
