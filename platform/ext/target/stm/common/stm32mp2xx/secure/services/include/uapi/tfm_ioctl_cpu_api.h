@@ -26,6 +26,8 @@ enum cpu_state_t {
 	CPU_LAST,
 };
 
+extern const char *cpu_status_str[CPU_LAST + 1];
+
 /**
  * enum ctrl_method - cpu control method
  * @ENABLE_METHOD_NONE:		no method defined

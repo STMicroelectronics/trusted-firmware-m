@@ -8,6 +8,15 @@
 #include <tfm_platform_api.h>
 #include <uapi/tfm_ioctl_api.h>
 
+const char *cpu_status_str[CPU_LAST + 1] = {
+	[CPU_OFFLINE] = "offline",
+	[CPU_SUSPENDED] = "suspended",
+	[CPU_STARTED] = "started",
+	[CPU_RUNNING] = "running",
+	[CPU_CRASHED] = "crashed",
+	[CPU_LAST] = "unknown",
+};
+
 enum tfm_platform_err_t tfm_platform_cpu_service_info(struct cpu_serv_info *serv_info)
 {
 	struct tfm_cpu_service_args_t args;
