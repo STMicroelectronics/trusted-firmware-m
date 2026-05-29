@@ -200,3 +200,50 @@ int rproc_resume(const struct device *dev)
 
 	return 0;
 }
+
+int rproc_register_crash_cb(const struct device *dev, void *data, remoteproc_crash_cb_t cb)
+{
+	struct rproc_spec *rproc = _is_valid_rproc(dev);
+
+	if (!rproc || !cb)
+		return -EINVAL;
+
+	rproc->data = data;
+	rproc->crash_cb = cb;
+
+	return 0;
+}
+
+int rproc_unregister_crash_cb(const struct device *dev)
+{
+	struct rproc_spec *rproc = _is_valid_rproc(dev);
+
+	if (!rproc)
+		return -EINVAL;
+
+	rproc->data = NULL;
+	rproc->crash_cb = NULL;
+
+	return 0;
+}
+
+int rproc_report_crash(const struct device *dev, enum rproc_crash_type type)
+{
+	struct rproc_spec *rproc = _is_valid_rproc(dev);
+
+	if (!rproc)
+		return -EINVAL;
+
+	if (rproc->state != CPU_RUNNING) {
+		EMSG("rproc: %s, spurious crash report (cpu state:%d)",
+		     dev->name, rproc->state);
+		return -ENOTSUP;
+	}
+
+	rproc->state = CPU_CRASHED;
+
+	if (rproc->crash_cb)
+		rproc->crash_cb(rproc->data, type);
+
+	return 0;
+}

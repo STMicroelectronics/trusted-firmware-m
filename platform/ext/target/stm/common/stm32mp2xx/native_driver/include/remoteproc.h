@@ -14,16 +14,38 @@
 #include <stdatomic.h>
 
 /**
+ * enum rproc_crash_type - remote processor crash types
+ * @RPROC_WATCHDOG:	watchdog bite
+ * @RPROC_FATAL_ERROR:	fatal error
+ *
+ * Each element of the enum is used as an array index. So that the value of
+ * the elements should be always something sane.
+ *
+ * Feel free to add more types when needed.
+ */
+enum rproc_crash_type {
+	RPROC_WATCHDOG,
+	RPROC_FATAL_ERROR,
+};
+
+typedef void (*remoteproc_crash_cb_t)(void *data, enum rproc_crash_type type);
+
+/**
  * struct rproc_spec - Specification on remoteproc reference.
  *
  * @dev:	Reference on a remoteproc device.
  * @state:	state of the device.
  * @use_count:	Atomic counter on number of user.
+ * @crash_cb:	Callback for remote processor crash events.
+ * @data:	Pointer to private data which will be passed to
+ *		the callback function
  */
 struct rproc_spec {
 	const struct device *dev;
 	int state;
 	atomic_int use_count;
+	remoteproc_crash_cb_t crash_cb;
+	void *data;
 };
 
 /**
@@ -130,4 +152,20 @@ int rproc_status(const struct device *dev);
 int rproc_set_rsc_tab(const struct device *dev, uint32_t addr, uint32_t size);
 int rproc_suspend(const struct device *dev);
 int rproc_resume(const struct device *dev);
+int rproc_register_crash_cb(const struct device *dev, void *data, remoteproc_crash_cb_t cb);
+int rproc_unregister_crash_cb(const struct device *dev);
+
+/**
+ * rproc_report_crash() - rproc crash reporter function
+ * @dev: remote processor device
+ * @type: crash type
+ *
+ * This function must be called every time a crash is detected by the low-level
+ * drivers implementing a specific remoteproc. This should not be called from a
+ * non-remoteproc driver.
+ *
+ * This function is called under interrupt context.
+ */
+int rproc_report_crash(const struct device *dev, enum rproc_crash_type type);
+
 #endif   /* ----- #ifndef INCLUDE_REMOTEPROC_H_  ----- */
