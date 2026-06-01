@@ -126,7 +126,6 @@ struct stm32mp2_ddrctrl_perf {
 	uint32_t pcfgqos1_0;
 	uint32_t pcfgwqos0_0;
 	uint32_t pcfgwqos1_0;
-#if STM32MP_DDR_DUAL_AXI_PORT
 	uint32_t pcfgr_1;
 	uint32_t pcfgw_1;
 	uint32_t pctrl_1;
@@ -134,7 +133,6 @@ struct stm32mp2_ddrctrl_perf {
 	uint32_t pcfgqos1_1;
 	uint32_t pcfgwqos0_1;
 	uint32_t pcfgwqos1_1;
-#endif /* STM32MP_DDR_DUAL_AXI_PORT */
 };
 
 struct stm32mp_ddr_config {

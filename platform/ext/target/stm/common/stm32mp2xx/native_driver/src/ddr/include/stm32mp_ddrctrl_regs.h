@@ -146,7 +146,6 @@ struct stm32mp_ddrctl {
 	uint32_t pcfgwqos1_0;	/* 0x4a0 Write QoS Configuration 1 */
 	uint8_t reserved4a4[0x4b4 - 0x4a4];
 
-#if STM32MP_DDR_DUAL_AXI_PORT
 	/* PORT 1 */
 	uint32_t pcfgr_1;	/* 0x4b4 Configuration Read */
 	uint32_t pcfgw_1;	/* 0x4b8 Configuration Write */
@@ -156,7 +155,6 @@ struct stm32mp_ddrctl {
 	uint32_t pcfgqos1_1;	/* 0x548 Read QoS Configuration 1 */
 	uint32_t pcfgwqos0_1;	/* 0x54c Write QoS Configuration 0 */
 	uint32_t pcfgwqos1_1;	/* 0x550 Write QoS Configuration 1 */
-#endif /* STM32MP_DDR_DUAL_AXI_PORT */
 
 	uint8_t reserved554[0xff0 - 0x554];
 	uint32_t umctl2_ver_number;	/* 0xff0 UMCTL2 Version Number */
@@ -183,9 +181,7 @@ struct stm32mp_ddrctl {
 #define DDRCTRL_SWSTAT				0x324
 #define DDRCTRL_PSTAT				0x3FC
 #define DDRCTRL_PCTRL_0				0x490
-#if STM32MP_DDR_DUAL_AXI_PORT
 #define DDRCTRL_PCTRL_1				0x540
-#endif /* STM32MP_DDR_DUAL_AXI_PORT */
 
 /* DDR Controller Register fields */
 #define DDRCTRL_MSTR_DDR3			BIT(0)

@@ -108,12 +108,10 @@ void stm32mp_ddr_enable_axi_port(struct stm32mp_ddrctl *ctl)
 	DDR_VERBOSE("[0x%lx] pctrl_0 = 0x%x\n", (uintptr_t)&ctl->pctrl_0,
 		mmio_read_32((uintptr_t)&ctl->pctrl_0));
 
-#if STM32MP_DDR_DUAL_AXI_PORT
 	/* Enable uMCTL2 AXI port 1 */
 	mmio_setbits_32((uintptr_t)&ctl->pctrl_1, DDRCTRL_PCTRL_N_PORT_EN);
 	DDR_VERBOSE("[0x%lx] pctrl_1 = 0x%x\n", (uintptr_t)&ctl->pctrl_1,
 		mmio_read_32((uintptr_t)&ctl->pctrl_1));
-#endif
 }
 
 int stm32mp_ddr_disable_axi_port(struct stm32mp_ddrctl *ctl)
@@ -126,12 +124,10 @@ int stm32mp_ddr_disable_axi_port(struct stm32mp_ddrctl *ctl)
 	DDR_VERBOSE("[0x%lx] pctrl_0 = 0x%x\n", (uintptr_t)&ctl->pctrl_0,
 		mmio_read_32((uintptr_t)&ctl->pctrl_0));
 
-#if STM32MP_DDR_DUAL_AXI_PORT
 	/* Disable uMCTL2 AXI port 1 */
 	mmio_clrbits_32((uintptr_t)&ctl->pctrl_1, DDRCTRL_PCTRL_N_PORT_EN);
 	DDR_VERBOSE("[0x%lx] pctrl_1 = 0x%x\n", (uintptr_t)&ctl->pctrl_1,
 		mmio_read_32((uintptr_t)&ctl->pctrl_1));
-#endif
 
 	/*
 	 * Waits until all AXI ports are idle

@@ -38,11 +38,7 @@
 #define DDRCTL_REG_REG_SIZE	48	/* st,ctl-reg */
 #define DDRCTL_REG_TIMING_SIZE	20	/* st,ctl-timing */
 #define DDRCTL_REG_MAP_SIZE	12	/* st,ctl-map */
-#if STM32MP_DDR_DUAL_AXI_PORT
 #define DDRCTL_REG_PERF_SIZE	21	/* st,ctl-perf */
-#else /* !STM32MP_DDR_DUAL_AXI_PORT */
-#define DDRCTL_REG_PERF_SIZE	14	/* st,ctl-perf */
-#endif /* STM32MP_DDR_DUAL_AXI_PORT */
 
 #define DDRPHY_REG_REG_SIZE	0	/* st,phy-reg */
 #define	DDRPHY_REG_TIMING_SIZE	0	/* st,phy-timing */
@@ -155,7 +151,6 @@ static const struct stm32mp_ddr_reg_desc ddr_perf[DDRCTL_REG_PERF_SIZE] = {
 	DDRCTL_REG_PERF(pcfgqos1_0, true),
 	DDRCTL_REG_PERF(pcfgwqos0_0, true),
 	DDRCTL_REG_PERF(pcfgwqos1_0, true),
-#if STM32MP_DDR_DUAL_AXI_PORT
 	DDRCTL_REG_PERF(pcfgr_1, false),
 	DDRCTL_REG_PERF(pcfgw_1, false),
 	DDRCTL_REG_PERF(pctrl_1, false),
@@ -163,7 +158,6 @@ static const struct stm32mp_ddr_reg_desc ddr_perf[DDRCTL_REG_PERF_SIZE] = {
 	DDRCTL_REG_PERF(pcfgqos1_1, true),
 	DDRCTL_REG_PERF(pcfgwqos0_1, true),
 	DDRCTL_REG_PERF(pcfgwqos1_1, true),
-#endif /* STM32MP_DDR_DUAL_AXI_PORT */
 };
 
 static const struct stm32mp_ddr_reg_desc ddrphy_reg[DDRPHY_REG_REG_SIZE] = {};
