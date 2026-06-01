@@ -57,8 +57,11 @@ int rproc_boot(const struct device *dev)
 	if (rproc->state == CPU_CRASHED)
 		return -EINVAL;
 
-	/* skip the boot process if rproc is already powered up */
-	if (atomic_fetch_add(&rproc->use_count, 1) > 1)
+	/*
+	 * Skip the boot process if rproc is already powered up.
+	 * atomic_fetch_add returns the value held previously by the atomic object.
+	 */
+	if (atomic_fetch_add(&rproc->use_count, 1) > 0)
 		return 0;
 
 	err = api->start(rproc);
@@ -91,8 +94,11 @@ int rproc_shutdown(const struct device *dev)
 	if (rproc->state == CPU_OFFLINE)
 		return 0;
 
-	/* skip the boot process if rproc is already powered dow */
-	if (!atomic_fetch_sub(&rproc->use_count, 1))
+	/*
+	 * Skip the shutdown process if rproc is used by multi users.
+	 * atomic_fetch_sub returns the value held previously by the atomic object.
+	 */
+	if (atomic_fetch_sub(&rproc->use_count, 1) > 1)
 		return 0;
 
 	err = api->stop(rproc);
