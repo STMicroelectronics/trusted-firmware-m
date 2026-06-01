@@ -23,8 +23,6 @@
  * workaround: In waiting that dt prepocessing take account the
  * platform compile definition.
  */
-#define STM32MP_DDR_DUAL_AXI_PORT	1
-
 #define DDR_MEM_NAME	"LPDDR4 1x32Gbits 1x32bits 1200MHz"
 #define DDR_MEM_SPEED	1200000
 #define DDR_MEM_SIZE	0x100000000
