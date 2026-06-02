@@ -9,7 +9,6 @@ set(CMSIS_DEVICE_MP2_GIT_REMOTE "https://github.com/STMicroelectronics/cmsis-dev
 set(CMSIS_DEVICE_MP2_VERSION    "v1.3.1"                                                     CACHE STRING "version of cmsis-device-mp2 package")
 
 if (NOT EXISTS ${CMSIS_DEVICE_MP2_PATH})
-
     fetch_remote_library(
         LIB_NAME                cmsis-device-mp2
         LIB_SOURCE_PATH_VAR     CMSIS_DEVICE_MP2_PATH
@@ -18,12 +17,13 @@ if (NOT EXISTS ${CMSIS_DEVICE_MP2_PATH})
             GIT_TAG             ${CMSIS_DEVICE_MP2_VERSION}
             GIT_PROGRESS        TRUE
     )
+endif()
 
+if (NOT EXISTS ${CMSIS_DEVICE_MP2_PATH}/CMakeLists.txt)
     file(INSTALL
         ${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt
         DESTINATION ${CMSIS_DEVICE_MP2_PATH}
     )
-
 endif()
 
 # to share the set of cmsis-device-mp2 options settled on secure side build
