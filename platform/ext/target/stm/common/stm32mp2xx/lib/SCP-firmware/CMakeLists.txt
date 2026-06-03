@@ -12,7 +12,7 @@ if(${CMAKE_VERSION} VERSION_LESS "3.18.0")
 endif()
 
 set(SCP_FW_GIT_REMOTE "https://github.com/STMicroelectronics/SCP-firmware" CACHE STRING "Git remote to fetch the SCP firmware from")
-set(SCP_FW_VERSION    "v2.13.0-stm32mp-r3"                                 CACHE STRING "The version of SCP-firmware to use")
+set(SCP_FW_VERSION    "v2.13.0-stm32mp-r3.1"                               CACHE STRING "The version of SCP-firmware to use")
 set(SCP_FW_PATH       "DOWNLOAD"                                           CACHE PATH   "Path to SCP-firmware or DOWNLOAD to fetch automatically")
 
 fetch_remote_library(
