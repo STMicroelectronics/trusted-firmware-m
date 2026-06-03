@@ -6,6 +6,7 @@
 #define DT_DRV_COMPAT st_stm32mp2_ddr
 
 #include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include <stm32mp_ddr_debug.h>
@@ -23,10 +24,12 @@
 #include <clk.h>
 
 /*
- * Cortex m33 System control starts at 0xE000 0000
- * Max ddr size is 0xE000 0000 - DDR_MEM_BASE
+ * Cortex-M33 address space is limited to 4GBytes.
+ * Max DDR size is 0x8000 0000 (DDR_MEM_BASE is 0x8000 0000).
+ * Warning: Cortex-M33 System control starts at 0xE000 0000,
+ * but no access to this area is supposed to happen during tests.
  */
-#define DDR_MAX_SIZE	(0xE0000000 - DDR_MEM_BASE)
+#define DDR_MAX_SIZE	0x80000000
 
 uintptr_t stm32mp_ddrphyc_base(void)
 {
@@ -169,7 +172,8 @@ int stm32mp2_ddr_dt_init(void)
 	const struct stm32mp_ddr_config drv_cfg = {
 		.info = {
 			.speed = DT_INST_PROP(0, st_mem_speed),
-			.size = DT_INST_PROP(0, st_mem_size),
+			.size = ((uint64_t)DT_INST_PROP_BY_IDX(0, st_mem_size, 0) << 32) |
+				(DT_INST_PROP_BY_IDX(0, st_mem_size, 1)),
 			.name = DT_INST_PROP(0, st_mem_name),
 		},
 		.c_reg = DT_INST_PROP(0, st_ctl_reg),
@@ -201,6 +205,10 @@ int stm32mp2_ddr_dt_init(void)
 	if (ret)
 		return ret;
 
+	/* Limit drv_data.info.size if size is lower on device tree side */
+	if (drv_cfg.info.size < (uint64_t)drv_data.info.size)
+		drv_data.info.size = (size_t)drv_cfg.info.size;
+
 	stm32mp2_ddr_init(&drv_data, &drv_cfg);
 
 	ret = stm32mp_ddr_test_data_bus(&drv_data.info);
@@ -215,14 +223,26 @@ int stm32mp2_ddr_dt_init(void)
 		panic();
 	}
 
-	retsize = stm32mp_ddr_check_size(&drv_data.info, drv_cfg.info.size);
-	if (retsize < drv_cfg.info.size) {
-		DDR_ERROR("DDR size: 0x%x does not match DT config: 0x%x\n",
-			  retsize, drv_cfg.info.size);
+	retsize = stm32mp_ddr_check_size(&drv_data.info, drv_data.info.size);
+	if (retsize < drv_data.info.size) {
+		DDR_ERROR("DDR size: 0x%" PRIx32 " does not match initial config: 0x%" PRIx32 "\n",
+			  (uint32_t)retsize, (uint32_t)drv_data.info.size);
 		panic();
 	}
 
-	DDR_INFO("Memory size = 0x%x (%u MB)\n", retsize, retsize / (1024U * 1024U));
+	if ((uint64_t)drv_data.info.size != drv_cfg.info.size)
+		DDR_INFO("Memory size (M33 side) = 0x%" PRIx32 " (%" PRIu32 " MB)\n",
+			 (uint32_t)retsize, (uint32_t)(retsize / (1024U * 1024U)));
+
+	/*
+	 * This driver is used in BL2 with minimal printf implementation.
+	 * Long long formatters such as %llx are not supported in this case.
+	 * To avoid using 64bit format specifier, the size is printed in two 32bit values.
+	 */
+	DDR_INFO("Memory size = 0x%" PRIx32 "%08" PRIx32 " (%" PRIu32 " MB)\n",
+		 (uint32_t)(drv_cfg.info.size >> 32),
+		 (uint32_t)(drv_cfg.info.size & 0xFFFFFFFF),
+		 (uint32_t)(drv_cfg.info.size / (1024U * 1024U)));
 
 	/*
 	 * Initialization sequence has configured DDR registers with settings.

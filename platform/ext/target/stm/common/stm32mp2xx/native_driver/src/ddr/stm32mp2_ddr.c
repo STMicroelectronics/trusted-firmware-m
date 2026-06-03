@@ -5,6 +5,7 @@
  */
 
 #include <errno.h>
+#include <inttypes.h>
 
 #include <stm32mp_ddr_debug.h>
 #include <lib/delay.h>
@@ -342,7 +343,14 @@ void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv,
 
 	DDR_VERBOSE("name = %s\n", config->info.name);
 	DDR_VERBOSE("speed = %u kHz\n", config->info.speed);
-	DDR_VERBOSE("size  = 0x%zx\n", config->info.size);
+	/*
+	 * This driver is used in BL2 with minimal printf implementation.
+	 * Long long formatters such as %llx are not supported in this case.
+	 * To avoid using 64bit format specifier, the size is printed in two 32bit values.
+	 */
+	DDR_VERBOSE("size  = 0x%" PRIx32 "%08" PRIx32 "\n",
+		    (uint32_t)(config->info.size >> 32),
+		    (uint32_t)(config->info.size & 0xFFFFFFFF));
 
 	if (stm32mp_board_ddr_power_init(ddr_type) != 0) {
 		DDR_ERROR("DDR power init failed\n");

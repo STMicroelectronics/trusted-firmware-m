@@ -63,7 +63,7 @@ struct stm32mp_ddr_priv {
 struct stm32mp_ddr_info {
 	const char *name;
 	uint32_t speed; /* in KHz */
-	size_t size;    /* Memory size in byte = col * row * width */
+	uint64_t size;  /* Memory size in byte = col * row * width */
 };
 
 #define DDR_DELAY_1US		1U
