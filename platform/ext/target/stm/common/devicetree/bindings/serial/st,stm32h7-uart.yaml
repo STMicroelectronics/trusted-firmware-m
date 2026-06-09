@@ -12,6 +12,10 @@ include:
   - name: uart-controller.yaml
     property-allowlist:
       - current-speed
+      - parity
+      - stop-bits
+      - data-bits
+      - flow-ctrl
 
 properties:
   reg:
