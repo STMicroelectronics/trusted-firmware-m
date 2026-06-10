@@ -492,10 +492,23 @@ static int stm32_uart_rx(const struct device *dev, uint8_t *buf, size_t len,
 	return 0;
 }
 
+static bool stm32_uart_rx_available(const struct device *dev, uint32_t timeout_us)
+{
+	const struct stm32_uart_config *drv_cfg = dev_get_config(dev);
+	uint32_t value;
+	int err;
+
+	err = mmio_read32_poll_timeout(drv_cfg->base + _USART_ISR, value,
+				       (value & _USART_ISR_RXNE), timeout_us);
+
+	return (err == 0);
+}
+
 static const struct uart_driver_api uart_stm32_api = {
 	.configure = stm32_uart_configure,
 	.tx = stm32_uart_tx,
 	.rx = stm32_uart_rx,
+	.rx_available = stm32_uart_rx_available,
 };
 
 int stm32_uart_dt_init(const struct device *dev)

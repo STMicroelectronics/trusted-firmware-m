@@ -71,6 +71,15 @@ struct uart_config {
 	uint8_t flow_ctrl;
 };
 
+/**
+ * struct uart_driver_api - Uart driver API
+ *
+ * @configure:		Callback used to configure the device UART.
+ * @tx:			Callback used to transmit a given number of bytes from a buffer.
+ * @rx:			Callback used to receive a given number of bytes into a buffer.
+ * @rx_available:	Callback used to check if data becomes available for
+ *			reception within the specified timeout.
+ */
 struct uart_driver_api {
 	/** UART configuration functions */
 	int (*configure)(const struct device *dev,
@@ -79,6 +88,7 @@ struct uart_driver_api {
 		  uint32_t timeout);
 	int (*rx)(const struct device *dev, uint8_t *buf, size_t len,
 		  uint32_t timeout);
+	bool (*rx_available)(const struct device *dev, uint32_t timeout);
 };
 
 /**
@@ -98,20 +108,24 @@ struct uart_driver_api {
 static inline int uart_configure(const struct device *dev,
 				 const struct uart_config *cfg)
 {
-	const struct uart_driver_api *api = dev->api;
+	const struct uart_driver_api *api;
+
+	if (!device_is_ready(dev))
+		return -ENODEV;
 
 	if (!pm_device_is_active(dev))
 		return -ECANCELED;
 
-	if (api->configure == NULL)
+	api = dev->api;
+
+	if (!api || !api->configure)
 		return -ENOSYS;
 
 	return api->configure(dev, cfg);
 }
 
-
 /**
- * @brief Send given number of datum from buffer through UART.
+ * @brief Send given number of data from buffer through UART.
  *
  * Function returns after transfer completed
  *
@@ -130,12 +144,17 @@ static inline int uart_configure(const struct device *dev,
 static inline int uart_tx(const struct device *dev, const uint8_t *buf,
 			  size_t len, int32_t timeout)
 {
-	const struct uart_driver_api *api = dev->api;
+	const struct uart_driver_api *api;
+
+	if (!device_is_ready(dev))
+		return -ENODEV;
 
 	if (!pm_device_is_active(dev))
 		return -ECANCELED;
 
-	if (api->tx == NULL)
+	api = dev->api;
+
+	if (!api || !api->tx)
 		return -ENOSYS;
 
 	return api->tx(dev, buf, len, timeout);
@@ -165,15 +184,48 @@ static inline int uart_tx(const struct device *dev, const uint8_t *buf,
 static inline int uart_rx(const struct device *dev, uint8_t *buf,
 			  size_t len, int32_t timeout)
 {
-	const struct uart_driver_api *api = dev->api;
+	const struct uart_driver_api *api;
+
+	if (!device_is_ready(dev))
+		return -ENODEV;
 
 	if (!pm_device_is_active(dev))
 		return -ECANCELED;
 
-	if (api->rx == NULL)
+	api = dev->api;
+
+	if (!api || !api->rx)
 		return -ENOSYS;
 
 	return api->rx(dev, buf, len, timeout);
+}
+
+/**
+ * @brief Check whether data is available for reception through UART.
+ *
+ * Checks whether data becomes available for reception within the specified
+ * timeout.
+ *
+ * @param dev     UART device instance.
+ * @param timeout Timeout in milliseconds.
+ *
+ * @retval true Data is available for reception.
+ * @retval false No data is available, the API is not enabled, or the device
+ *               is not in the active state.
+ */
+static inline bool uart_rx_available(const struct device *dev, uint32_t timeout)
+{
+	const struct uart_driver_api *api;
+
+	if (!device_is_ready(dev) || !pm_device_is_active(dev))
+		return false;
+
+	api = dev->api;
+
+	if (!api || !api->rx_available)
+		return false;
+
+	return api->rx_available(dev, timeout);
 }
 
 #endif   /* ----- #ifndef __UART_H__  ----- */
