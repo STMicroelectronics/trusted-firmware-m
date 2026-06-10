@@ -142,6 +142,10 @@ static uint32_t _stm32_uart_wait_flag(const struct device *dev, uint32_t flag,
 				_USART_CR1_RXNEIE | _USART_CR1_PEIE |
 				_USART_CR1_TXEIE);
 		mmio_clrbits_32(drv_cfg->base + _USART_CR3, _USART_CR3_EIE);
+		/* Clear all error flags */
+		mmio_write_32(drv_cfg->base + _USART_ICR,
+			      _USART_ICR_PECF | _USART_ICR_FECF |
+			      _USART_ICR_NCF | _USART_ICR_ORECF);
 	}
 
 	return err;
@@ -401,6 +405,11 @@ static int stm32_uart_configure(const struct device *dev,
 			USART_CR2_LINEN | USART_CR2_CLKEN);
 	mmio_clrbits_32(drv_cfg->base + _USART_CR3,
 			USART_CR3_SCEN | USART_CR3_HDSEL | USART_CR3_IREN);
+
+	/* Clear all error flags before enabling the peripheral */
+	mmio_write_32(drv_cfg->base + _USART_ICR,
+		      _USART_ICR_PECF | _USART_ICR_FECF |
+		      _USART_ICR_NCF | _USART_ICR_ORECF);
 
 	/* Enable the peripheral */
 	mmio_setbits_32(drv_cfg->base + _USART_CR1, USART_CR1_UE);
