@@ -11,10 +11,6 @@ cmake_policy(SET CMP0076 NEW)
 include(${STM_FAMILY_DIR}/CMakeLists.txt)
 
 # specific for stm32mp21
-if (NOT ${STM32_STM32MP21_SOC_REV} STREQUAL "revA" AND
-    NOT ${STM32_STM32MP21_SOC_REV} STREQUAL "revZ")
-    Message(FATAL_ERROR "STM32_STM32MP21_SOC_REV=\"${STM32_STM32MP21_SOC_REV}\" not supported.")
-endif()
 
 #========================= Platform region defs ===============================#
 # these flags are includes in bl2, tfm_s and tfm_ns
@@ -23,10 +19,6 @@ endif()
 # )
 
 #========================= tfm config ===============================#
-target_compile_definitions(tfm_config
-    INTERFACE
-        $<$<STREQUAL:${STM32_STM32MP21_SOC_REV},revZ>:CONFIG_STM32MP21X_REVZ=1>
-)
 
 #========================= Platform Secure ====================================#
 
