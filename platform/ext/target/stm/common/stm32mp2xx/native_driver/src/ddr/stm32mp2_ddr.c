@@ -239,7 +239,7 @@ static void ddr_reset(struct stm32mp_ddr_priv *priv)
 }
 
 static void ddr_sysconf_configuration(struct stm32mp_ddr_priv *priv,
-				      struct stm32mp_ddr_config *config)
+				      const struct stm32mp_ddr_config *config)
 {
 	mmio_write_32(stm32_ddrdbg_get_base() + DDRDBG_LP_DISABLE,
 		      _DDRDBG_LP_DISABLE_LPI_XPI_DISABLE | _DDRDBG_LP_DISABLE_LPI_DDRC_DISABLE);
@@ -329,7 +329,7 @@ static void restore_refresh(struct stm32mp_ddrctl *ctl, uint32_t rfshctl3, uint3
 }
 
 void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv,
-		       struct stm32mp_ddr_config *config)
+		       const struct stm32mp_ddr_config *config)
 {
 	int ret;
 	enum ddr_type ddr_type;

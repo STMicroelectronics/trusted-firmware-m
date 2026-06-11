@@ -39,7 +39,7 @@
  *
  * @return Void
  */
-void ddrphy_phyinit_usercustom_custompretrain(struct stm32mp_ddr_config *config)
+void ddrphy_phyinit_usercustom_custompretrain(const struct stm32mp_ddr_config *config)
 {
 	uint32_t byte __unused;
 	uint32_t i = 0U;

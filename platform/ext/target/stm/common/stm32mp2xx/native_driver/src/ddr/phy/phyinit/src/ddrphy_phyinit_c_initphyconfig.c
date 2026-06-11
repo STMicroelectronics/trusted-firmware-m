@@ -18,7 +18,7 @@
  * - txslewrate::txpredrvmode is dependent on dramtype.
  * - txslewrate::txprep and txslewrate::txpren are technology-specific.
  */
-static void txslewrate_program(struct stm32mp_ddr_config *config)
+static void txslewrate_program(const struct stm32mp_ddr_config *config)
 {
 	uint32_t txpredrvmode;
 	uint32_t byte;
@@ -63,7 +63,7 @@ static void txslewrate_program(struct stm32mp_ddr_config *config)
  *   the ACX4 instance is used for AC or CK.
  * - atxslewrate::atxprep and atxslewrate::atxpren are technology-specific.
  */
-static void atxslewrate_program(struct stm32mp_ddr_config *config)
+static void atxslewrate_program(const struct stm32mp_ddr_config *config)
 {
 	uint32_t anib;
 	uint32_t atxpren; /* Default to 0xf (max). Optimal setting is technology specific */
@@ -138,7 +138,7 @@ static void dfidatacsdestmap_program(struct pmu_smb_ddr_1d *mb_ddr_1d)
  * Program pllctrl2:
  * - Calculate PLL controls from frequency.
  */
-static void pllctrl2_program(struct stm32mp_ddr_config *config)
+static void pllctrl2_program(const struct stm32mp_ddr_config *config)
 {
 	uint16_t pllctrl2;
 	uint32_t halffreq = config->uib.frequency / 2U;
@@ -179,7 +179,7 @@ static void pllctrl2_program(struct stm32mp_ddr_config *config)
  *   - For MemClk frequency > 933MHz, the valid range of ardptrinitval[3:0] is: 1-5
  *   - For MemClk frequency < 933MHz, the valid range of ardptrinitval[3:0] is: 0-5
  */
-static void ardptrinitval_program(struct stm32mp_ddr_config *config)
+static void ardptrinitval_program(const struct stm32mp_ddr_config *config)
 {
 	uint16_t regdata;
 
@@ -227,7 +227,8 @@ static void procodtctl_program(void)
  *   - user_input_advanced.d4rxpreamblelength (DDR4)
  *   - user_input_advanced.d4txpreamblelength (DDR4)
  */
-static void dbytedllmodecntrl_program(struct stm32mp_ddr_config *config, uint32_t *twotckrxdqspre)
+static void dbytedllmodecntrl_program(const struct stm32mp_ddr_config *config,
+				      uint32_t *twotckrxdqspre)
 {
 	uint32_t disdllgainivseed = 1U;
 	uint32_t disdllseedsel = 0U;
@@ -313,7 +314,7 @@ static void dbytedllmodecntrl_program(struct stm32mp_ddr_config *config, uint32_
  *   - user_input_basic.frequency
  *   - user_input_advanced.wdqsext
  */
-static void procodttimectl_program(struct stm32mp_ddr_config *config, uint32_t twotckrxdqspre)
+static void procodttimectl_program(const struct stm32mp_ddr_config *config, uint32_t twotckrxdqspre)
 {
 	uint16_t procodttimectl;
 
@@ -357,7 +358,7 @@ static void procodttimectl_program(struct stm32mp_ddr_config *config, uint32_t t
  *   - user_input_advanced.odtimpedance
  * \return 0 on success.
  */
-static int txodtdrvstren_program(struct stm32mp_ddr_config *config)
+static int txodtdrvstren_program(const struct stm32mp_ddr_config *config)
 {
 	uint32_t byte;
 	int odtstrenn_state;
@@ -404,7 +405,7 @@ static int txodtdrvstren_program(struct stm32mp_ddr_config *config)
  *   - user_input_advanced.tximpedance
  * \return 0 on success.
  */
-static int tximpedancectrl1_program(struct stm32mp_ddr_config *config)
+static int tximpedancectrl1_program(const struct stm32mp_ddr_config *config)
 {
 	uint32_t byte;
 	int drvstrenfsdqn_state;
@@ -455,7 +456,7 @@ static int tximpedancectrl1_program(struct stm32mp_ddr_config *config)
  *   - user_input_advanced.atximpedance
  * \return 0 on success.
  */
-static int atximpedance_program(struct stm32mp_ddr_config *config)
+static int atximpedance_program(const struct stm32mp_ddr_config *config)
 {
 	int adrvstrenn_state;
 	int adrvstrenp_state;
@@ -494,7 +495,7 @@ static int atximpedance_program(struct stm32mp_ddr_config *config)
  * - Dependencies:
  *   - user_input_basic.dfi1exists
  */
-static void dfimode_program(struct stm32mp_ddr_config *config)
+static void dfimode_program(const struct stm32mp_ddr_config *config)
 {
 	uint16_t dfimode = 0x5U;
 
@@ -538,7 +539,7 @@ static void dficamode_program(void)
  * - Dependencies:
  *   - user_input_advanced.extcalresval
  */
-static void caldrvstr0_program(struct stm32mp_ddr_config *config)
+static void caldrvstr0_program(const struct stm32mp_ddr_config *config)
 {
 	uint16_t caldrvstr0;
 	uint16_t caldrvstrp50 = (uint16_t)config->uia.extcalresval;
@@ -557,7 +558,7 @@ static void caldrvstr0_program(struct stm32mp_ddr_config *config)
  * - Dependencies:
  *   - user_input_basic.frequency
  */
-static void caluclkinfo_program(struct stm32mp_ddr_config *config)
+static void caluclkinfo_program(const struct stm32mp_ddr_config *config)
 {
 	uint32_t caluclkticksper1us_x10;
 	uint16_t caluclkticksper1us;
@@ -588,7 +589,7 @@ static void caluclkinfo_program(struct stm32mp_ddr_config *config)
  *   - user_input_advanced.calinterval
  *   - user_input_advanced.calonce
  */
-static void calibration_program(struct stm32mp_ddr_config *config)
+static void calibration_program(const struct stm32mp_ddr_config *config)
 {
 	uint32_t calinterval;
 	uint32_t calonce;
@@ -631,7 +632,7 @@ static void calibration_program(struct stm32mp_ddr_config *config)
  * - Dependencies:
  *   - user_input_basic.numdbyte
  */
-static void vrefinglobal_program(struct stm32mp_ddr_config *config,
+static void vrefinglobal_program(const struct stm32mp_ddr_config *config,
 				 struct pmu_smb_ddr_1d *mb_ddr_1d)
 {
 	uint32_t majormodedbyte;
@@ -694,7 +695,7 @@ static void vrefinglobal_program(struct stm32mp_ddr_config *config,
  * - Dependencies:
  *   - user_input_basic.dfifreqratio
  */
-static void dfifreqratio_program(struct stm32mp_ddr_config *config)
+static void dfifreqratio_program(const struct stm32mp_ddr_config *config)
 {
 	uint16_t dfifreqratio;
 
@@ -714,7 +715,7 @@ static void dfifreqratio_program(struct stm32mp_ddr_config *config)
  *   - user_input_advanced.is2ttiming
  *   - user_input_advanced.disdynadrtri
  */
-static void tristatemodeca_program(struct stm32mp_ddr_config *config)
+static void tristatemodeca_program(const struct stm32mp_ddr_config *config)
 {
 	uint32_t ckdisval_def;
 	uint32_t ddr2tmode;
@@ -750,7 +751,7 @@ static void tristatemodeca_program(struct stm32mp_ddr_config *config)
  *   - user_input_basic.frequency
  *   - user_input_basic.pllbypass
  */
-static void dfixlat_program(struct stm32mp_ddr_config *config)
+static void dfixlat_program(const struct stm32mp_ddr_config *config)
 {
 	uint16_t loopvector;
 	uint16_t pllbypass_dat = 0U;
@@ -840,7 +841,7 @@ static void dfixlat_program(struct stm32mp_ddr_config *config)
  *   - mb_ddr_1d->mr5 (DDR4)
  *   - user_input_advanced.lp4dbird (LPDDR4)
  */
-static void dqdqsrcvcntrl1_program(struct stm32mp_ddr_config *config,
+static void dqdqsrcvcntrl1_program(const struct stm32mp_ddr_config *config,
 				   struct pmu_smb_ddr_1d *mb_ddr_1d)
 {
 	uint32_t d;
@@ -901,7 +902,7 @@ static void dqdqsrcvcntrl1_program(struct stm32mp_ddr_config *config,
  *
  * \note PHY does not support mixed dram device data width
  */
-static void masterx4config_program(struct stm32mp_ddr_config *config)
+static void masterx4config_program(const struct stm32mp_ddr_config *config)
 {
 	uint32_t x4tg = 0U;
 	uint16_t masterx4config;
@@ -925,7 +926,7 @@ static void masterx4config_program(struct stm32mp_ddr_config *config)
  *   - mb_ddr_1d->mr5 (DDR4)
  *   - user_input_advanced.lp4dbird (LPDDR4)
  */
-static void dmipinpresent_program(struct stm32mp_ddr_config *config,
+static void dmipinpresent_program(const struct stm32mp_ddr_config *config,
 				  struct pmu_smb_ddr_1d *mb_ddr_1d)
 {
 	uint16_t dmipinpresent;
@@ -953,7 +954,7 @@ static void dmipinpresent_program(struct stm32mp_ddr_config *config,
  *   - user_input_basic.numanib
  *   - user_input_advanced.disableunusedaddrlns
  */
-static void aforcetricont_acx4anibdis_program(struct stm32mp_ddr_config *config)
+static void aforcetricont_acx4anibdis_program(const struct stm32mp_ddr_config *config)
 {
 	uint32_t anib;
 	uint16_t acx4anibdis = 0x0U;
@@ -1039,7 +1040,7 @@ static void aforcetricont_acx4anibdis_program(struct stm32mp_ddr_config *config)
  *
  * \return 0 on success.
  */
-int ddrphy_phyinit_c_initphyconfig(struct stm32mp_ddr_config *config,
+int ddrphy_phyinit_c_initphyconfig(const struct stm32mp_ddr_config *config,
 				   struct pmu_smb_ddr_1d *mb_ddr_1d)
 {
 	uint32_t twotckrxdqspre;

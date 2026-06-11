@@ -23,7 +23,8 @@
  *
  * \return 0 on success.
  */
-int ddrphy_phyinit_f_loaddmem(struct stm32mp_ddr_config *config, struct pmu_smb_ddr_1d *mb_ddr_1d)
+int ddrphy_phyinit_f_loaddmem(const struct stm32mp_ddr_config *config,
+			      struct pmu_smb_ddr_1d *mb_ddr_1d)
 {
 	uint32_t sizeofmsgblk;
 	uint16_t *ptr16;

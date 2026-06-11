@@ -15,7 +15,7 @@
  * Helper function to determine if a given DByte is Disabled given PhyInit inputs.
  * @return 1 if disabled, 0 if enabled.
  */
-int ddrphy_phyinit_isdbytedisabled(struct stm32mp_ddr_config *config,
+int ddrphy_phyinit_isdbytedisabled(const struct stm32mp_ddr_config *config,
 				   struct pmu_smb_ddr_1d *mb_ddr_1d, uint32_t dbytenumber)
 {
 	int disabledbyte;

@@ -33,5 +33,6 @@ enum message_block_field {
 /* Function definitions */
 int ddrphy_phyinit_softsetmb(struct pmu_smb_ddr_1d *mb_ddr_1d, enum message_block_field field,
 			     uint32_t value);
-void ddrphy_phyinit_initstruct(struct stm32mp_ddr_config *config, struct pmu_smb_ddr_1d *mb_ddr_1d);
+void ddrphy_phyinit_initstruct(const struct stm32mp_ddr_config *config,
+			       struct pmu_smb_ddr_1d *mb_ddr_1d);
 #endif /* DDRPHY_PHYINIT_H */

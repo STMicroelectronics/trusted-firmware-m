@@ -149,7 +149,7 @@ struct stm32mp_ddr_config {
 	struct user_input_swizzle uis;
 };
 
-void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv, struct stm32mp_ddr_config *config);
+void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv, const struct stm32mp_ddr_config *config);
 int stm32mp2_ddr_dt_init(void);
 
 #endif /* STM32MP2_DDR_H */

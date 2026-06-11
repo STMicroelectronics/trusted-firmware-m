@@ -41,7 +41,7 @@ static void dfiwrrddatacsconfig_program(void)
  * - Dependencies:
  *   - user_input_basic.frequency
  */
-static void seq0bdly_program(struct stm32mp_ddr_config *config)
+static void seq0bdly_program(const struct stm32mp_ddr_config *config)
 {
 	uint16_t lowfreqopt __unused;
 	uint16_t dfifrq_x10;
@@ -101,7 +101,7 @@ static void seq0bdly_program(struct stm32mp_ddr_config *config)
  *   - skip_training (LPDDR4)
  *   - user_input_basic.frequency (LPDDR4)
  */
-static void seq0bdisableflag_program(struct stm32mp_ddr_config *config)
+static void seq0bdisableflag_program(const struct stm32mp_ddr_config *config)
 {
 	mmio_write_16((uintptr_t)(DDRPHYC_BASE + (4U * (TINITENG | CSR_SEQ0BDISABLEFLAG0_ADDR))),
 		      0x0000U);
@@ -154,7 +154,7 @@ static void seq0bdisableflag_program(struct stm32mp_ddr_config *config)
  *   - user_input_advanced.PhyMstrTrainInterval
  *   - user_input_advanced.PhyMstrMaxReqToAck
  */
-static void ppttrainsetup_program(struct stm32mp_ddr_config *config)
+static void ppttrainsetup_program(const struct stm32mp_ddr_config *config)
 {
 	uint16_t ppttrainsetup;
 
@@ -197,7 +197,7 @@ static void acsmplayback_program(void)
  * Program Training Hardware Registers for mission mode retraining
  * and DRAM drift compensation algorithm.
  */
-static void traininghwreg_program(struct stm32mp_ddr_config *config)
+static void traininghwreg_program(const struct stm32mp_ddr_config *config)
 {
 	uint32_t byte;
 
@@ -305,7 +305,7 @@ static void traininghwreg_program(struct stm32mp_ddr_config *config)
  *     - user_input_advanced.calinterval
  *     - user_input_advanced.calonce
  */
-static void calrate_program(struct stm32mp_ddr_config *config)
+static void calrate_program(const struct stm32mp_ddr_config *config)
 {
 	uint32_t calinterval;
 	uint32_t calonce;
@@ -330,7 +330,7 @@ static void calrate_program(struct stm32mp_ddr_config *config)
  *
  * \return void
  */
-void ddrphy_phyinit_i_loadpieimage(struct stm32mp_ddr_config *config)
+void ddrphy_phyinit_i_loadpieimage(const struct stm32mp_ddr_config *config)
 {
 	DDR_VERBOSE("%s Start\n", __func__);
 

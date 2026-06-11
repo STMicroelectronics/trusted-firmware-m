@@ -15,7 +15,7 @@
  *
  * \returns 0 on completion of the sequence, EXIT_FAILURE on error.
  */
-int ddrphy_phyinit_sequence(struct stm32mp_ddr_config *config)
+int ddrphy_phyinit_sequence(const struct stm32mp_ddr_config *config)
 {
 	int ret;
 	struct pmu_smb_ddr_1d mb_ddr_1d; /* Firmware 1D Message Block structure */

@@ -92,21 +92,23 @@ enum drvtype {
  * Fixed Function prototypes
  * -------------------------------------------------------------
  */
-int ddrphy_phyinit_sequence(struct stm32mp_ddr_config *config);
-int ddrphy_phyinit_c_initphyconfig(struct stm32mp_ddr_config *config,
+int ddrphy_phyinit_sequence(const struct stm32mp_ddr_config *config);
+int ddrphy_phyinit_c_initphyconfig(const struct stm32mp_ddr_config *config,
 				   struct pmu_smb_ddr_1d *mb_ddr_1d);
 void ddrphy_phyinit_d_loadimem(void);
-int ddrphy_phyinit_f_loaddmem(struct stm32mp_ddr_config *config, struct pmu_smb_ddr_1d *mb_ddr_1d);
+int ddrphy_phyinit_f_loaddmem(const struct stm32mp_ddr_config *config,
+			      struct pmu_smb_ddr_1d *mb_ddr_1d);
 int ddrphy_phyinit_g_execfw(void);
-void ddrphy_phyinit_i_loadpieimage(struct stm32mp_ddr_config *config);
+void ddrphy_phyinit_i_loadpieimage(const struct stm32mp_ddr_config *config);
 void ddrphy_phyinit_loadpieprodcode(void);
 int ddrphy_phyinit_mapdrvstren(uint32_t drvstren_ohm, enum drvtype targetcsr);
-int ddrphy_phyinit_calcmb(struct stm32mp_ddr_config *config, struct pmu_smb_ddr_1d *mb_ddr_1d);
+int ddrphy_phyinit_calcmb(const struct stm32mp_ddr_config *config,
+			  struct pmu_smb_ddr_1d *mb_ddr_1d);
 void ddrphy_phyinit_writeoutmem(uint32_t *mem, uint32_t mem_offset, uint32_t mem_size);
 void ddrphy_phyinit_writeoutmsgblk(uint16_t *mem, uint32_t mem_offset, uint32_t mem_size);
-int ddrphy_phyinit_isdbytedisabled(struct stm32mp_ddr_config *config,
+int ddrphy_phyinit_isdbytedisabled(const struct stm32mp_ddr_config *config,
 				   struct pmu_smb_ddr_1d *mb_ddr_1d, uint32_t dbytenumber);
-void ddrphy_phyinit_usercustom_custompretrain(struct stm32mp_ddr_config *config);
+void ddrphy_phyinit_usercustom_custompretrain(const struct stm32mp_ddr_config *config);
 int ddrphy_phyinit_usercustom_g_waitfwdone(void);
 
 #endif /* DDRPHY_PHYINIT_USERCUSTOM_H */

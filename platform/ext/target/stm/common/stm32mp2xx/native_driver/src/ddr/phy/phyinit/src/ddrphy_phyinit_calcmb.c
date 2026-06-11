@@ -37,7 +37,8 @@
  *
  * \return 0 on success.
  */
-int ddrphy_phyinit_calcmb(struct stm32mp_ddr_config *config, struct pmu_smb_ddr_1d *mb_ddr_1d)
+int ddrphy_phyinit_calcmb(const struct stm32mp_ddr_config *config,
+			  struct pmu_smb_ddr_1d *mb_ddr_1d)
 {
 	uint32_t nad0 = config->uib.numactivedbytedfi0;
 	uint32_t nad1 = 0;

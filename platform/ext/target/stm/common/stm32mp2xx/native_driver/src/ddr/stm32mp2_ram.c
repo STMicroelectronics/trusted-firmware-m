@@ -166,7 +166,7 @@ int stm32mp2_ddr_dt_init(void)
 	struct clk *clk;
 	size_t retsize;
 
-	struct stm32mp_ddr_config drv_cfg = {
+	const struct stm32mp_ddr_config drv_cfg = {
 		.info = {
 			.speed = DT_INST_PROP(0, st_mem_speed),
 			.size = DT_INST_PROP(0, st_mem_size),
