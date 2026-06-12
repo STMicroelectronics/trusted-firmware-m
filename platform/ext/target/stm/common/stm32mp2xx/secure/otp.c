@@ -311,7 +311,7 @@ enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
 		break;
 	case PLAT_OTP_ID_IAK_LEN:
 		dev_nvmem = DT_INST_DEV_NVMEM(0, iak);
-		if (!dev_nvmem)
+		if (!device_is_ready(dev_nvmem))
 			return TFM_PLAT_ERR_UNSUPPORTED;
 
 		err = nvmem_get_cell_size(dev_nvmem, &read_len);
@@ -321,7 +321,7 @@ enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
 		break;
 	case PLAT_OTP_ID_IMPLEMENTATION_ID:
 		dev_nvmem = DT_INST_DEV_NVMEM(0, implementation_id);
-		if (!dev_nvmem)
+		if (!device_is_ready(dev_nvmem))
 			return TFM_PLAT_ERR_UNSUPPORTED;
 
 		/*
@@ -335,7 +335,7 @@ enum tfm_plat_err_t tfm_plat_otp_read(enum tfm_otp_element_id_t id,
 		break;
 	default:
 		dev_nvmem = nvmem_dev_from_otp_id(id);
-		if (!dev_nvmem)
+		if (!device_is_ready(dev_nvmem))
 			return TFM_PLAT_ERR_UNSUPPORTED;
 
 		err = nvmem_read_cell(dev_nvmem, out_len, out, &read_len);
@@ -374,7 +374,7 @@ enum tfm_plat_err_t tfm_plat_otp_get_size(enum tfm_otp_element_id_t id, size_t *
 		break;
 	default:
 		dev = nvmem_dev_from_otp_id(id);
-		if (!dev)
+		if (!device_is_ready(dev))
 			return TFM_PLAT_ERR_UNSUPPORTED;
 
 		err = nvmem_get_cell_size(dev, size);
