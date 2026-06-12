@@ -177,7 +177,7 @@ static uint32_t _stm32_uart_check_idle_state(const struct device *dev)
  * @param  dev: device reference.
  * @retval UART status.
  */
-static uint32_t _stm32_uart_set_config(const struct device *dev)
+static int _stm32_uart_set_config(const struct device *dev)
 {
 	const struct stm32_uart_config *drv_cfg = dev_get_config(dev);
 	struct stm32_uart_data *drv_data = dev_get_data(dev);
