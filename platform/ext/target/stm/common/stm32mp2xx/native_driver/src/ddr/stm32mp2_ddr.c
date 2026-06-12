@@ -303,7 +303,11 @@ static void restore_refresh(struct stm32mp_ddrctl *ctl, uint32_t rfshctl3, uint3
 		udelay(DDR_DELAY_1US);
 	}
 
-	if ((pwrctl & DDRCTRL_PWRCTL_SELFREF_SW) != 0U) {
+	/* Always disable PWRCTL.SELFREF_SW on LPDDR4 */
+#if !STM32MP_LPDDR4_TYPE
+	if ((pwrctl & DDRCTRL_PWRCTL_SELFREF_SW) != 0U)
+#endif /* !STM32MP_LPDDR4_TYPE */
+	{
 		mmio_clrbits_32((uintptr_t)&ctl->pwrctl, DDRCTRL_PWRCTL_SELFREF_SW);
 
 		udelay(DDR_DELAY_1US);
@@ -354,14 +358,6 @@ void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv,
 	ddr_reset(priv);
 
 	ddr_sysconf_configuration(priv, config);
-
-#if STM32MP_LPDDR4_TYPE
-	/*
-	 * Enable PWRCTL.SELFREF_SW to ensure correct setting of PWRCTL.LPDDR4_SR_ALLOWED.
-	 * Later disabled in restore_refresh().
-	*/
-	config->c_reg.pwrctl |= DDRCTRL_PWRCTL_SELFREF_SW;
-#endif /* STM32MP_LPDDR4_TYPE */
 
 	stm32mp_ddr_set_reg(priv, REG_REG, &config->c_reg, ddr_registers);
 	stm32mp_ddr_set_reg(priv, REG_TIMING, &config->c_timing, ddr_registers);

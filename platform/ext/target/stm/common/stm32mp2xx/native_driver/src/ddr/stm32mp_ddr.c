@@ -48,7 +48,19 @@ void stm32mp_ddr_set_reg(const struct stm32mp_ddr_priv *priv, enum stm32mp_ddr_r
 
 			value = *((uint32_t *)((uintptr_t)param +
 					       desc[i].par_offset));
-			mmio_write_32(ptr, value);
+
+#if STM32MP_LPDDR4_TYPE
+			if (desc[i].offset == offsetof(struct stm32mp_ddrctl, pwrctl)) {
+				/*
+				 * Enable PWRCTL.SELFREF_SW to ensure correct setting
+				 * of PWRCTL.LPDDR4_SR_ALLOWED.
+				 * Later disabled in restore_refresh().
+				 */
+				value |= DDRCTRL_PWRCTL_SELFREF_SW;
+			}
+#endif /* STM32MP_LPDDR4_TYPE */
+
+		       mmio_write_32(ptr, value);
 
 			if (desc[i].qd) {
 				stm32mp_ddr_wait_sw_done_ack(priv->ctl);
