@@ -29,7 +29,7 @@ size_t stm32_mux_get_parent(struct clk *clk, uint32_t mux_id)
 	return (io_read32(rcc_base + mux->offset) & mask) >> mux->shift;
 }
 
-int stm32_mux_set_parent(struct clk_stm32_priv *priv, uint16_t mux_id, uint8_t sel)
+int stm32_mux_set_parent(struct clk_stm32_priv *priv, uint32_t mux_id, uint8_t sel)
 {
 	uintptr_t rcc_base = clk_stm32_get_rcc_base(priv);
 	const struct mux_cfg *mux = &priv->muxes[mux_id];

@@ -152,7 +152,7 @@ int stm32_gate_rdy_disable(struct clk_stm32_priv *priv,
 
 size_t stm32_mux_get_parent(struct clk *clk, uint32_t mux_id);
 int stm32_mux_set_parent(struct clk_stm32_priv *priv,
-			 uint16_t pid, uint8_t sel);
+			 uint32_t mux_id, uint8_t sel);
 
 unsigned long stm32_div_get_rate(struct clk_stm32_priv *priv,
 				 int div_id, unsigned long prate);
