@@ -148,7 +148,7 @@ static int systick_init_with_val(const struct device *dev, uint32_t val)
 
 static int systick_init(const struct device *dev)
 {
-	systick_init_with_val(dev, 0);
+	return systick_init_with_val(dev, 0);
 }
 
 #ifdef CONFIG_PM_DEVICE
