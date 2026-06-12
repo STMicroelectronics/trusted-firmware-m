@@ -74,9 +74,6 @@ enum tfm_platform_err_t watchdog_service(const psa_invec *in_vec, const psa_outv
 	if (in_vec->len != sizeof(struct tfm_wdt_service_args_t))
 		return TFM_PLATFORM_ERR_INVALID_PARAM;
 
-	if (out_vec && out_vec->len != sizeof(struct tfm_wdt_service_out_t))
-		return TFM_PLATFORM_ERR_INVALID_PARAM;
-
 	args = (struct tfm_wdt_service_args_t *)in_vec->base;
 
 	switch (args->type) {
@@ -93,6 +90,9 @@ enum tfm_platform_err_t watchdog_service(const psa_invec *in_vec, const psa_outv
 		ret = _wdt_ping();
 		break;
 	case TFM_WDT_SERVICE_TYPE_INFO:
+		if (!out_vec || out_vec->len != sizeof(struct tfm_wdt_service_out_t))
+			return TFM_PLATFORM_ERR_INVALID_PARAM;
+
 		out = (struct tfm_wdt_service_out_t *)out_vec->base;
 		ret = _wdt_get_info(&out->info);
 		break;
