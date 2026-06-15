@@ -46,6 +46,49 @@ enum tfm_hal_status_t tfm_hal_platform_init(void)
 	sys_init_run_level(INIT_LEVEL_POST_CORE);
 	sys_init_run_level(INIT_LEVEL_REST);
 
+	/*
+	 * Enable CP10/CP11 (FPU coprocessors) in Secure state and grant NS access.
+	 *
+	 * Even though TF-M Secure code never uses the FPU (-mfloat-abi=soft),
+	 * Secure access to CP10/CP11 MUST be enabled before any write to FPCCR,
+	 * because writes to FPCCR are ignored/unpredictable when CP10=0 in CPACR_S.
+	 *
+	 * Additionally, if NS code uses the FPU and a NS→S transition occurs while
+	 * CONTROL_NS.FPCA=1, a NOCP UsageFault is triggered unless Secure CP10/CP11
+	 * access is enabled first (ARM TRM note, also in tfm_arch_v8m_main.c).
+	 *
+	 * NS access via NSACR allows the NS application to use the FPU freely
+	 * (NS CPACR_NS configuration is left to NS software).
+	 */
+	#define SCB_CPACR_CP10_Msk (3U << 20U)
+	#define SCB_CPACR_CP11_Msk (3U << 22U)
+
+	SCB->CPACR |= SCB_CPACR_CP10_Msk |  SCB_CPACR_CP11_Msk; /* CP10+CP11 full access (S) */
+	SCB->NSACR |= SCB_NSACR_CP10_Msk | SCB_NSACR_CP11_Msk; /* allow NS access */
+	__DSB();
+	__ISB();
+
+	/*
+	 * Clear FPCCR.TS (Treat-as-Secure, bit 26).
+	 *
+	 * Reset value of FPCCR.TS = 1, which causes the processor to save NS
+	 * FP callee registers (S16-S31 + FPSCR) on MSP_S during every NS→Secure
+	 * exception transition, producing a 28-word callee-save frame instead of
+	 * 10 words (signature 0xFEF5EDA5 instead of 0xFEFA125B).
+	 *
+	 * Since TF-M Secure code never uses the FPU (-mcpu=cortex-m33+nofp,
+	 * -mfloat-abi=soft, CONFIG_TFM_ENABLE_FP=OFF), there is no reason to
+	 * protect NS FP context from Secure reads.  Clearing TS means NS FP
+	 * registers remain on the NS side, reducing every NS→S exception
+	 * stacking by 72 bytes (18 words: S16-S31 + FPSCR + reserved).
+	 *
+	 * This write requires CP10 to be enabled in CPACR_S (done above).
+	 */
+	FPU->FPCCR &= ~FPU_FPCCR_TS_Msk;
+	__DSB();
+	if (FPU->FPCCR & FPU_FPCCR_TS_Msk)
+		return TFM_HAL_ERROR_BAD_STATE;
+
 	return TFM_HAL_SUCCESS;
 }
 
