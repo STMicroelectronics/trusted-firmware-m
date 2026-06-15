@@ -161,7 +161,9 @@ static void tfm_vprintf_internal(tfm_log_output_str output_func,
             if (num < 0) {
                 output_char(output_func, priv, '-');
                 unum = (unsigned long long int)-num;
-                num_padding--;
+
+                if (num_padding > 0)
+                    num_padding--;
             } else {
                 unum = (unsigned long long int)num;
             }
@@ -170,8 +172,10 @@ static void tfm_vprintf_internal(tfm_log_output_str output_func,
             break;
         case 'p':
             unum = (uintptr_t)va_arg(args, void *);
+
             output_str(output_func, priv, "0x");
-            num_padding -= 2;
+            num_padding = num_padding > 2 ? num_padding - 2 : 0;
+
             output_val(output_func, priv, unum, 16, num_padding, zero_padding);
             break;
         case 'x':
