@@ -12,5 +12,11 @@ properties:
   "#interrupt-cells":
     const: 1
 
+  system-power-controller:
+     type: boolean
+     description: This indicates that STPMIC is the power supply master of the
+       system. With this flag, the driver will initiate an software switch OFF
+       for system poweroff.
+
 interrupt-cells:
   - irq
