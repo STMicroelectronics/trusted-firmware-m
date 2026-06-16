@@ -20,6 +20,9 @@
 #include <string.h>
 #include <uart_stdout.h>
 
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
+	     "only one DCACHE instance is supported");
+
 /* DCACHE offset register */
 #define _DCACHE_CR			U(0x000)
 #define _DCACHE_SR			U(0x004)
@@ -349,9 +352,6 @@ int stm32_dcache_init(const struct device *dev)
 }
 
 #define STM32_DCACHE_INIT(n)					\
-								\
-BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,	\
-	     "only one DCACHE instance is supported");		\
 								\
 DT_INST_IRQS_SPEC_DEFINE(n)					\
 								\
