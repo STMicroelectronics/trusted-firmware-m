@@ -111,7 +111,23 @@ struct stm32_dcache_config {
 	const struct irq_spec *int_spec;
 };
 
-static const struct device *dcache_dev;
+static int stm32_dcache_get_dev_base(uintptr_t *base)
+{
+	const struct device *dev = DEVICE_DT_INST_GET(0);
+	const struct stm32_dcache_config *config;
+
+	if (!device_is_ready(dev))
+		return -ENODEV;
+
+	config = dev_get_config(dev);
+
+	if (config->base == 0)
+		return -ENODEV;
+
+	*base = config->base;
+
+	return 0;
+}
 
 static void stm32_dcache_get_hwconfig(const struct device *dev)
 {
@@ -132,19 +148,18 @@ static void stm32_dcache_get_hwconfig(const struct device *dev)
 	DMSG("HW cap: ways:%"PRIu8"\n", dcache_data->ways);
 }
 
-static int stm32_dcache_waitforready(int flags)
+static int stm32_dcache_waitforready(uintptr_t base, int flags)
 {
-	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
 	uint32_t sr;
 	int err;
 
-	err = mmio_read32_poll_timeout(dcache_conf->base + _DCACHE_SR,
+	err = mmio_read32_poll_timeout(base + _DCACHE_SR,
 				       sr, (sr & (flags)),
 				       _DCACHE_BUSY_TIMEOUT_US);
 	if (err)
 		EMSG("%s: busy timeout, SR: %x\n", __func__, sr);
 
-	io_write32(dcache_conf->base + _DCACHE_FCR, flags);
+	io_write32(base + _DCACHE_FCR, flags);
 
 	return err;
 }
@@ -181,16 +196,18 @@ static int stm32_dcache_enable_irq(const struct device *dev)
 
 int stm32_dcache_monitor_reset(void)
 {
-	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
+	uintptr_t base;
+	int err;
 
-	if (dcache_conf->base == 0)
-		return -ENODEV;
+	err = stm32_dcache_get_dev_base(&base);
+	if (err)
+		return err;
 
-	io_setbits32(dcache_conf->base + _DCACHE_CR,
+	io_setbits32(base + _DCACHE_CR,
 		     _DCACHE_CR_RHITMRST | _DCACHE_CR_RMISSMRST |
 		     _DCACHE_CR_WHITMRST | _DCACHE_CR_WMISSMRST);
 
-	io_clrbits32(dcache_conf->base + _DCACHE_CR,
+	io_clrbits32(base + _DCACHE_CR,
 		     _DCACHE_CR_RHITMRST | _DCACHE_CR_RMISSMRST |
 		     _DCACHE_CR_WHITMRST | _DCACHE_CR_WMISSMRST);
 
@@ -199,12 +216,14 @@ int stm32_dcache_monitor_reset(void)
 
 int stm32_dcache_monitor_start(void)
 {
-	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
+	uintptr_t base;
+	int err;
 
-	if (dcache_conf->base == 0)
-		return -ENODEV;
+	err = stm32_dcache_get_dev_base(&base);
+	if (err)
+		return err;
 
-	io_setbits32(dcache_conf->base + _DCACHE_CR,
+	io_setbits32(base + _DCACHE_CR,
 		     _DCACHE_CR_RHITMEN | _DCACHE_CR_RMISSMEN |
 		     _DCACHE_CR_WHITMEN	 | _DCACHE_CR_WMISSMEN);
 
@@ -213,12 +232,14 @@ int stm32_dcache_monitor_start(void)
 
 int stm32_dcache_monitor_stop(void)
 {
-	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
+	uintptr_t base;
+	int err;
 
-	if (dcache_conf->base == 0)
-		return -ENODEV;
+	err = stm32_dcache_get_dev_base(&base);
+	if (err)
+		return err;
 
-	io_clrbits32(dcache_conf->base + _DCACHE_CR,
+	io_clrbits32(base + _DCACHE_CR,
 		     _DCACHE_CR_RHITMEN | _DCACHE_CR_RMISSMEN |
 		     _DCACHE_CR_WHITMEN	 | _DCACHE_CR_WMISSMEN);
 
@@ -227,28 +248,32 @@ int stm32_dcache_monitor_stop(void)
 
 int stm32_dcache_monitor_get(struct stm32_dcache_mon *mon)
 {
-	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
+	uintptr_t base;
+	int err;
 
-	if (dcache_conf->base == 0)
-		return -ENODEV;
+	err = stm32_dcache_get_dev_base(&base);
+	if (err)
+		return err;
 
-	mon->rmiss = io_read32(dcache_conf->base + _DCACHE_RMMONR);
-	mon->rhit = io_read32(dcache_conf->base + _DCACHE_RHMONR);
-	mon->wmiss = io_read32(dcache_conf->base + _DCACHE_WMMONR);
-	mon->whit = io_read32(dcache_conf->base + _DCACHE_WHMONR);
+	mon->rmiss = io_read32(base + _DCACHE_RMMONR);
+	mon->rhit = io_read32(base + _DCACHE_RHMONR);
+	mon->wmiss = io_read32(base + _DCACHE_WMMONR);
+	mon->whit = io_read32(base + _DCACHE_WHMONR);
 
 	return 0;
 }
 
 int stm32_dcache_enable(bool monitor, bool inv)
 {
-	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
+	uintptr_t base;
 	uint32_t reg;
+	int err;
 
-	if (dcache_conf->base == 0)
-		return -ENODEV;
+	err = stm32_dcache_get_dev_base(&base);
+	if (err)
+		return err;
 
-	reg = io_read32(dcache_conf->base + _DCACHE_SR);
+	reg = io_read32(base + _DCACHE_SR);
 	if (reg & (_DCACHE_SR_BUSYF | _DCACHE_SR_BUSYCMDF))
 		return -EBUSY;
 
@@ -266,7 +291,7 @@ int stm32_dcache_enable(bool monitor, bool inv)
 	 * warning: the mpu must be disabled to avoid unpredictable behavior
 	 * before the busyendf
 	 */
-	reg = io_read32(dcache_conf->base + _DCACHE_CR);
+	reg = io_read32(base + _DCACHE_CR);
 	if (reg & (_DCACHE_CR_EN)) {
 		if (!inv)
 			return 0;
@@ -274,7 +299,7 @@ int stm32_dcache_enable(bool monitor, bool inv)
 		return stm32_dcache_full_inv();
 	} else {
 		/* if en=0 cache is clean (by reset or 1->0) */
-		io_setbits32(dcache_conf->base + _DCACHE_CR, _DCACHE_CR_EN);
+		io_setbits32(base + _DCACHE_CR, _DCACHE_CR_EN);
 	}
 
 	return 0;
@@ -282,24 +307,27 @@ int stm32_dcache_enable(bool monitor, bool inv)
 
 int stm32_dcache_disable(void)
 {
-	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
+	uintptr_t base;
+	int err;
 
-	if (dcache_conf->base == 0)
-		return -ENODEV;
+	err = stm32_dcache_get_dev_base(&base);
+	if (err)
+		return err;
 
-	io_clrbits32(dcache_conf->base + _DCACHE_CR, _DCACHE_CR_EN);
+	io_clrbits32(base + _DCACHE_CR, _DCACHE_CR_EN);
 
-	return stm32_dcache_waitforready(_DCACHE_SR_BUSYENDF);
+	return stm32_dcache_waitforready(base, _DCACHE_SR_BUSYENDF);
 }
 
 int stm32_dcache_full_inv(void)
 {
-	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
-	uintptr_t base = dcache_conf->base;
+	uintptr_t base;
 	uint32_t sr;
+	int err;
 
-	if (!base)
-		return -ENODEV;
+	err = stm32_dcache_get_dev_base(&base);
+	if (err)
+		return err;
 
 	sr = io_read32(base + _DCACHE_SR);
 	if (sr & (_DCACHE_SR_BUSYF | _DCACHE_SR_BUSYCMDF))
@@ -309,18 +337,19 @@ int stm32_dcache_full_inv(void)
 
 	io_setbits32(base + _DCACHE_CR, _DCACHE_CR_CACHEINV);
 
-	return stm32_dcache_waitforready(_DCACHE_SR_BUSYENDF);
+	return stm32_dcache_waitforready(base, _DCACHE_SR_BUSYENDF);
 }
 
 int stm32_dcache_maintenance(int cmd, uintptr_t start, uintptr_t end)
 {
-	const struct stm32_dcache_config *dcache_conf = dev_get_config(dcache_dev);
-	uintptr_t base = dcache_conf->base;
+	uintptr_t base;
 	uint32_t cr;
 	uint32_t sr;
+	int err;
 
-	if (!base)
-		return -ENODEV;
+	err = stm32_dcache_get_dev_base(&base);
+	if (err)
+		return err;
 
 	sr = io_read32(base + _DCACHE_SR);
 	if (sr & (_DCACHE_SR_BUSYF | _DCACHE_SR_BUSYCMDF))
@@ -341,7 +370,7 @@ int stm32_dcache_maintenance(int cmd, uintptr_t start, uintptr_t end)
 
 	io_setbits32(base + _DCACHE_CR, _DCACHE_CR_STARTCMD);
 
-	return stm32_dcache_waitforready(_DCACHE_SR_CMDENDF);
+	return stm32_dcache_waitforready(base, _DCACHE_SR_CMDENDF);
 }
 
 int stm32_dcache_init(const struct device *dev)
@@ -361,8 +390,6 @@ static const struct stm32_dcache_config cfg_##n = {		\
 };								\
 								\
 static struct dcache_driver_data data_##n = { };		\
-								\
-static const struct device *dcache_dev = DEVICE_DT_INST_GET(0);	\
 								\
 DEVICE_DT_INST_DEFINE(n, &stm32_dcache_init, NULL,		\
 		      &data_##n, &cfg_##n,			\
