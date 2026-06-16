@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <debug.h>
+#include <lib/delay.h>
 #include <lib/mmio.h>
 #include <lib/mmiopoll.h>
 #include <lib/utils_def.h>
@@ -188,6 +189,9 @@
 #define MAJOR_VERSION_MASK	GENMASK_32(7, 4)
 #define MAJOR_VERSION_SHIFT	4
 
+/* MAIN_CR bits definition */
+#define MAIN_CR_SWOFF		BIT(0)
+
 /* BUCKS_MRST_CR bits definition */
 #define BUCK1_MRST		BIT(0)
 #define BUCK2_MRST		BIT(1)
@@ -355,6 +359,7 @@ struct stpmic_config {
 	struct i2c_dt_spec i2c;
 	const struct irq_spec *int_spec;
 	uint8_t ref_id;
+	bool system_power_controller;
 };
 
 struct stpmic_data {
@@ -1246,6 +1251,14 @@ static const struct regulator_driver_api stpmic2_api = {
 				  macro_desc, reg_id, pd, ranges)),			\
 		())
 
+/* STPMIC2 Software switch-OFF */
+static int stpmic2_switch_off(const struct device *dev)
+{
+	const struct stpmic_config *dev_cfg = dev_get_config(dev);
+
+	return i2c_reg_update_byte_dt(&dev_cfg->i2c, MAIN_CR, MAIN_CR_SWOFF, MAIN_CR_SWOFF);
+}
+
 static int __maybe_unused _stpmic_irq_mask(const struct device *dev, uint32_t irq, bool state)
 {
 	const struct stpmic_config *dev_cfg = dev_get_config(dev);
@@ -1399,6 +1412,30 @@ static int __maybe_unused stpmic_interrupt_init(const struct device *dev)
 	return err;
 }
 
+static int stpmic2_pm_action(const struct device *dev,
+			     enum pm_device_action action,
+			     uint32_t pm_hint)
+{
+	const struct stpmic_config *drv_cfg = dev_get_config(dev);
+	unsigned int pwrlvl = PM_HINT_PLATFORM_STATE(pm_hint);
+
+	if (action != PM_DEVICE_ACTION_SUSPEND)
+		return 0;
+
+	if (pwrlvl == PM_OFF && drv_cfg->system_power_controller) {
+		int err;
+
+		IMSG("pm:%s STPMIC: software switch OFF\n", dev->name);
+		mdelay(10);
+		err = stpmic2_switch_off(dev);
+		udelay(100);
+
+		return err;
+	}
+
+	return 0;
+}
+
 static int __maybe_unused stpmic_probe(const struct device *dev)
 {
 	const struct stpmic_config *drv_cfg = dev_get_config(dev);
@@ -1458,13 +1495,18 @@ static const struct stpmic_config stpmic##t##_cfg_##n = {			\
 	.i2c = I2C_DT_SPEC_GET(DT_DRV_INST(n)),					\
 	.int_spec = DT_INST_IRQS_SPEC_GET(n),					\
 	.ref_id = _ref_id,							\
+	.system_power_controller =						\
+		DT_INST_PROP_OR(n, system_power_controller, false)		\
 };										\
 										\
 static struct stpmic_data stpmic##t##_data_##n = {				\
 	.irq_hdl_tbl = _PMIC_INTC_IRQ_TBL_NAME(n),				\
 };										\
 										\
-DEVICE_DT_INST_DEFINE(n, &stpmic_probe,	NULL,					\
+PM_DEVICE_DT_INST_DEFINE(n, stpmic2_pm_action);					\
+										\
+DEVICE_DT_INST_DEFINE(n, &stpmic_probe,						\
+	PM_DEVICE_DT_INST_GET(n),						\
 	&stpmic##t##_data_##n, &stpmic##t##_cfg_##n,				\
 	CORE, 6,								\
 	&stpmic_interrupt_api);
