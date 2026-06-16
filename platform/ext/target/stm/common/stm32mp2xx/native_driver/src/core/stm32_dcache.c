@@ -120,6 +120,7 @@ static void stm32_dcache_get_hwconfig(const struct device *dev)
 	dcache_data->ways = _DCACHE_FLD_GET(_DCACHE_HWCFGR_WAYS, regval);
 
 	regval = io_read32(dcache_conf->base + _DCACHE_VERR);
+	dcache_data->version = regval;
 
 	DMSG("DCACHE version %"PRIu32".%"PRIu32"\n",
 	     _DCACHE_FLD_GET(_DCACHE_VERR_MAJREV, regval),
