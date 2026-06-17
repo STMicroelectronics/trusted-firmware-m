@@ -9,9 +9,6 @@
 
 #include <cmsis.h>
 
-/* TODO: must be defined with systick */
-__WEAK void udelay(unsigned long usec)
-{
+void udelay(unsigned long usec);
 
-}
 #endif   /* ----- #ifndef __DELAY_H__  ----- */
