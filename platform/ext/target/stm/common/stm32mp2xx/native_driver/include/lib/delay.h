@@ -11,4 +11,9 @@
 
 void udelay(unsigned long usec);
 
+static inline void mdelay(unsigned long msec)
+{
+	udelay(1000 * msec);
+}
+
 #endif   /* ----- #ifndef __DELAY_H__  ----- */
