@@ -212,7 +212,7 @@ void _fault_info(uint32_t MSP_in, uint32_t PSP_in, uint32_t LR_in, uint32_t *cal
 	fault_print(&fault);
 }
 
-int fault_init(void)
+void fault_init(void)
 {
 	SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk
 		| SCB_SHCSR_BUSFAULTENA_Msk

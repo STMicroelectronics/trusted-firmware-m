@@ -29,6 +29,6 @@ void _fault_info(uint32_t MSP_in, uint32_t PSP_in, uint32_t LR_in, uint32_t *cal
 		"ADD    SP, #32\n"		\
 	)
 
-int fault_init(void);
+void fault_init(void);
 
 #endif /* _FAULT_INFO_H_ */
