@@ -53,6 +53,7 @@ struct stm32_rproc_config {
 	const struct firewall_spec *firewall_ctrls;
 	const int n_firewall_ctrls;
 	const struct irq_spec *ispec_ack;
+	const struct irq_spec *ispec_wakeup;
 	const struct clock_control *clk_ctl;
 	int n_clk;
 	const struct device **regu;
@@ -362,6 +363,7 @@ static __unused int stm32mp2_a35_release(const struct device *dev)
 
 	return ret;
 }
+
 static irqreturn_t stm32mp2_a35_irq_ack(void *data)
 {
 	const struct device *dev = data;
@@ -522,6 +524,20 @@ int stm32_rproc_resume(struct rproc_spec *rproc)
 	return data->variant->resume_fn(rproc->dev);
 }
 
+static irqreturn_t stm32_rproc_wakeup_isr(void *data)
+{
+	const struct device *dev = data;
+
+	/* Waking up Cortex-A35 if allowed (not supended) */
+	if (stm32mp2_a35_is_running(dev)) {
+		IMSG("[RPROC][ISR] %s: wakeup\r\n", dev->name);
+		/* Allow CPU1 wake-up from D1 DStandby with CPU2 SEV */
+		EXTI1->SWIER3 = EXTI1_C2SEV;
+	}
+
+	return IRQ_HANDLED;
+}
+
 static __unused int stm32_rproc_init(const struct device *dev)
 {
 	const struct stm32_rproc_config *cfg = dev_get_config(dev);
@@ -537,6 +553,11 @@ static __unused int stm32_rproc_init(const struct device *dev)
 		if (interrupt_request(cfg->ispec_ack, (void *)dev,
 				      stm32mp2_a35_irq_ack, IRQF_NO_AUTOEN))
 			EMSG("%s: interrupt request fail\n", dev->name);
+
+	if (cfg->ispec_wakeup)
+		if (interrupt_request(cfg->ispec_wakeup, (void *)dev,
+				      stm32_rproc_wakeup_isr, IRQF_NONE))
+			EMSG("%s: interrupt wakeup request fail\n", dev->name);
 
 	/* reset resource table tamp back-up registers */
 	_stm32_rproc_set_rsc_tab(dev, 0, 0);
@@ -642,6 +663,7 @@ static const struct stm32_rproc_config _##name##_cfg##n = {			\
 	.firewall_ctrls = DT_INST_ACCESS_CTRLS_GET(n),				\
 	.n_firewall_ctrls = DT_INST_ACCESS_CTRLS_NUM(n),			\
 	.ispec_ack = DT_INST_IRQS_SPEC_GET_BY_NAME(n, ack),			\
+	.ispec_wakeup = DT_INST_IRQS_SPEC_GET_BY_NAME_OR(n, wakeup, NULL),	\
 	.clk_ctl = clk_ctrl_##n,						\
 	.n_clk = DT_INST_NUM_CLOCKS(n),						\
 	.regu =  regu_##n,							\
