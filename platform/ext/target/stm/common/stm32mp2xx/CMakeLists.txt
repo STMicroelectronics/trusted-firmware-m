@@ -182,6 +182,18 @@ target_sources(platform_s
 target_compile_options(platform_s
 	PUBLIC
 		${COMPILER_CMSE_FLAG}
+	PRIVATE
+		-Wreturn-type
+		-Wunused-but-set-variable
+		-Wmissing-include-dirs
+		-Wunused
+		-Wdisabled-optimization
+		-Wvla
+		-Wshadow
+		-Wextra
+		-Wno-sign-compare
+		-Wno-unused-parameter
+		-Wno-ignored-qualifiers
 )
 
 target_compile_definitions(platform_s
@@ -378,6 +390,18 @@ if(BL2)
 	target_compile_options(platform_bl2
 		PUBLIC
 			${COMPILER_CMSE_FLAG}
+		PRIVATE
+			-Wreturn-type
+			-Wunused-but-set-variable
+			-Wmissing-include-dirs
+			-Wunused
+			-Wdisabled-optimization
+			-Wvla
+			-Wshadow
+			-Wextra
+			-Wno-sign-compare
+			-Wno-unused-parameter
+			-Wno-ignored-qualifiers
 	)
 
 	target_compile_definitions(platform_bl2

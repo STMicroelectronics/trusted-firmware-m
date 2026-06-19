@@ -104,6 +104,21 @@ target_sources(platform_ns
         $<$<BOOL:${STM32_M33TDCID}>:${STM_FAMILY_DIR}/secure/services/src/tfm_scmi_api.c>
 )
 
+target_compile_options(platform_ns
+	PRIVATE
+		-Wreturn-type
+		-Wunused-but-set-variable
+		-Wmissing-include-dirs
+		-Wunused
+		-Wdisabled-optimization
+		-Wvla
+		-Wshadow
+		-Wextra
+		-Wno-sign-compare
+		-Wno-unused-parameter
+		-Wno-ignored-qualifiers
+)
+
 target_compile_definitions(platform_ns
     PUBLIC
         STM32_NSEC=1
