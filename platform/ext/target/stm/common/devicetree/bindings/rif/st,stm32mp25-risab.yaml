@@ -17,6 +17,13 @@ properties:
   reg:
     required: true
 
+  ranges:
+    type: array
+    required: true
+    description: |
+      List the translation areas available for the memory device protected
+      by this RISAB instance.
+
   clocks:
     required: true
 
