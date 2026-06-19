@@ -211,19 +211,19 @@ int stm32mp2_ddr_dt_init(void)
 
 	stm32mp2_ddr_init(&drv_data, &drv_cfg);
 
-	ret = stm32mp_ddr_test_data_bus(&drv_data.info);
+	ret = stm32mp_ddr_test_data_bus(drv_data.info.base);
 	if (ret != 0UL) {
 		DDR_ERROR("DDR data bus test: can't access memory @ %#lx\n", ret);
 		panic();
 	}
 
-	ret = stm32mp_ddr_test_addr_bus(&drv_data.info);
+	ret = stm32mp_ddr_test_addr_bus(drv_data.info.base, drv_data.info.size);
 	if (ret != 0UL) {
 		DDR_ERROR("DDR addr bus test: can't access memory @ %#lx\n", ret);
 		panic();
 	}
 
-	retsize = stm32mp_ddr_check_size(&drv_data.info, drv_data.info.size);
+	retsize = stm32mp_ddr_check_size(drv_data.info.base, drv_data.info.size);
 	if (retsize < drv_data.info.size) {
 		DDR_ERROR("DDR size: 0x%" PRIx32 " does not match initial config: 0x%" PRIx32 "\n",
 			  (uint32_t)retsize, (uint32_t)drv_data.info.size);

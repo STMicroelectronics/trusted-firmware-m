@@ -21,15 +21,15 @@
  * File: memtest.c - This source code belongs to Public Domain.
  * Returns 0 if success, and address value else.
  ******************************************************************************/
-uintptr_t stm32mp_ddr_test_data_bus(struct stm32mp_ddr_size *info)
+uintptr_t stm32mp_ddr_test_data_bus(uintptr_t base)
 {
 	uint32_t pattern;
 
 	for (pattern = 1U; pattern != 0U; pattern <<= 1U) {
-		mmio_write_32(info->base, pattern);
+		mmio_write_32(base, pattern);
 
-		if (mmio_read_32(info->base) != pattern) {
-			return info->base;
+		if (mmio_read_32(base) != pattern) {
+			return base;
 		}
 	}
 
@@ -45,48 +45,48 @@ uintptr_t stm32mp_ddr_test_data_bus(struct stm32mp_ddr_size *info)
  * size: size in bytes of the DDR memory device.
  * Returns 0 if success, and address value else.
  ******************************************************************************/
-uintptr_t stm32mp_ddr_test_addr_bus(struct stm32mp_ddr_size *info)
+uintptr_t stm32mp_ddr_test_addr_bus(uintptr_t base, size_t size)
 {
-	size_t addressmask = info->size - 1U;
+	size_t addressmask = size - 1U;
 	size_t offset;
 	size_t testoffset = 0U;
 
 	/* Write the default pattern at each of the power-of-two offsets. */
 	for (offset = sizeof(uint32_t); (offset & addressmask) != 0U;
 	     offset <<= 1U) {
-		mmio_write_32(info->base + offset, DDR_PATTERN);
+		mmio_write_32(base + offset, DDR_PATTERN);
 	}
 
 	/* Check for address bits stuck high. */
-	mmio_write_32(info->base + testoffset, DDR_ANTIPATTERN);
+	mmio_write_32(base + testoffset, DDR_ANTIPATTERN);
 
 	for (offset = sizeof(uint32_t); (offset & addressmask) != 0U;
 	     offset <<= 1U) {
-		if (mmio_read_32(info->base + offset) != DDR_PATTERN) {
-			return info->base + offset;
+		if (mmio_read_32(base + offset) != DDR_PATTERN) {
+			return base + offset;
 		}
 	}
 
-	mmio_write_32(info->base + testoffset, DDR_PATTERN);
+	mmio_write_32(base + testoffset, DDR_PATTERN);
 
 	/* Check for address bits stuck low or shorted. */
 	for (testoffset = sizeof(uint32_t); (testoffset & addressmask) != 0U;
 	     testoffset <<= 1U) {
-		mmio_write_32(info->base + testoffset, DDR_ANTIPATTERN);
+		mmio_write_32(base + testoffset, DDR_ANTIPATTERN);
 
-		if (mmio_read_32(info->base) != DDR_PATTERN) {
-			return info->base;
+		if (mmio_read_32(base) != DDR_PATTERN) {
+			return base;
 		}
 
 		for (offset = sizeof(uint32_t); (offset & addressmask) != 0U;
 		     offset <<= 1) {
-			if ((mmio_read_32(info->base + offset) != DDR_PATTERN) &&
+			if ((mmio_read_32(base + offset) != DDR_PATTERN) &&
 			    (offset != testoffset)) {
-				return info->base + offset;
+				return base + offset;
 			}
 		}
 
-		mmio_write_32(info->base + testoffset, DDR_PATTERN);
+		mmio_write_32(base + testoffset, DDR_PATTERN);
 	}
 
 	return 0UL;
@@ -99,17 +99,17 @@ uintptr_t stm32mp_ddr_test_addr_bus(struct stm32mp_ddr_size *info)
  * restore its content.
  * Returns DDR computed size.
  ******************************************************************************/
-size_t stm32mp_ddr_check_size(struct stm32mp_ddr_size *info, size_t size)
+size_t stm32mp_ddr_check_size(uintptr_t base, size_t size)
 {
 	size_t offset = sizeof(uint32_t);
 
-	mmio_write_32(info->base, DDR_PATTERN);
+	mmio_write_32(base, DDR_PATTERN);
 
 	while (offset < size) {
-		mmio_write_32(info->base + offset, DDR_ANTIPATTERN);
+		mmio_write_32(base + offset, DDR_ANTIPATTERN);
 		__DSB();
 
-		if (mmio_read_32(info->base) != DDR_PATTERN) {
+		if (mmio_read_32(base) != DDR_PATTERN) {
 			break;
 		}
 
