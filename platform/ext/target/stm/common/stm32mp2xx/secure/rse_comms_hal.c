@@ -52,24 +52,24 @@ static void rx_psa(const struct device *dev,
 #endif
 }
 
-static inline bool sendmsg(void *msg, size_t msg_len)
+static inline bool sendmsg(void *m, size_t m_len)
 {
-        bool notify = *( rse_shmem_size_t*)(S_RSS_SHMEM_ADDR) & RSE_SHMEM_FLAGS_SIZE_NO_NOTIFICATION
+        bool notify = *(rse_shmem_size_t *)(S_RSS_SHMEM_ADDR) & RSE_SHMEM_FLAGS_SIZE_NO_NOTIFICATION
 		? false : true;
 
-	memcpy((uint8_t*)(S_RSS_SHMEM_ADDR + RSE_SHMEM_PAYLOAD_OFFSET), msg, msg_len);
-	(*(rse_shmem_size_t*)(S_RSS_SHMEM_ADDR + RSE_SHMEM_SIZE_OFFSET))= msg_len;
+	memcpy((uint8_t *)(S_RSS_SHMEM_ADDR + RSE_SHMEM_PAYLOAD_OFFSET), m, m_len);
+	(*(rse_shmem_size_t *)(S_RSS_SHMEM_ADDR + RSE_SHMEM_SIZE_OFFSET)) = m_len;
 
 	return notify;
 }
 
-static inline void recvmsg(void *msg, size_t * msg_len)
+static inline void recvmsg(void *m, size_t *m_len)
 {
 	rse_shmem_size_t len = (*(rse_shmem_size_t *)(S_RSS_SHMEM_ADDR + RSE_SHMEM_PAYLOAD_OFFSET))
 		& ~RSE_SHMEM_FLAGS_SIZE_NO_NOTIFICATION;
-	*msg_len = *msg_len >= len ? len : *msg_len;
-	memcpy((uint8_t *)msg, (uint8_t*)(S_RSS_SHMEM_ADDR + RSE_SHMEM_PAYLOAD_OFFSET)
-	       , *msg_len);
+
+	*m_len = *m_len >= len ? len : *m_len;
+	memcpy((uint8_t *)m, (uint8_t *)(S_RSS_SHMEM_ADDR + RSE_SHMEM_PAYLOAD_OFFSET), *m_len);
 }
 
 enum tfm_plat_err_t tfm_multi_core_hal_receive(void *mhu_receiver_dev,
