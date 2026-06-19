@@ -125,6 +125,7 @@ target_sources(platform_s
 		${STM_FAMILY_DIR}/native_driver/src/syscfg/stm32_syscfg.c
 		${STM_FAMILY_DIR}/native_driver/src/clk/clk.c
 		${STM_FAMILY_DIR}/native_driver/src/clk/clk-stm32-core.c
+		${STM_FAMILY_DIR}/native_driver/src/clk/fixed-clock.c
 		${STM_FAMILY_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
 		${STM_FAMILY_DIR}/native_driver/src/reset/core.c
 		${STM_FAMILY_DIR}/native_driver/src/reset/stm32_reset.c
@@ -338,6 +339,7 @@ if(BL2)
 			${STM_FAMILY_DIR}/native_driver/src/syscfg/stm32_syscfg.c
 			${STM_FAMILY_DIR}/native_driver/src/clk/clk.c
 			${STM_FAMILY_DIR}/native_driver/src/clk/clk-stm32-core.c
+			${STM_FAMILY_DIR}/native_driver/src/clk/fixed-clock.c
 			${STM_FAMILY_DIR}/native_driver/src/clk/stm32mp_clkfunc.c
 			${STM_FAMILY_DIR}/native_driver/src/reset/core.c
 			${STM_FAMILY_DIR}/native_driver/src/reset/stm32_reset.c
