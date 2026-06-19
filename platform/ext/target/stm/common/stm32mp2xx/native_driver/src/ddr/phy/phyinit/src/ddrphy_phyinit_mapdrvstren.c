@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -271,8 +272,8 @@ int ddrphy_phyinit_mapdrvstren(uint32_t drvstren_ohm, enum drvtype targetcsr)
 		} else if (drvstren_ohm == 20U) {
 			stren_setting = 0x1F;
 		} else {
-			DDR_ERROR("%s userinputadvanced.atximpedance %d Ohms value is not valid.\n",
-			      __func__, drvstren_ohm);
+			DDR_ERROR("%s userinputadvanced.atximpedance %" PRIu32
+				  " Ohms value is not valid.\n", __func__, drvstren_ohm);
 			DDR_ERROR("Valid values are: 20, 24, 30, 40, 60 and 120 Ohms.\n");
 		}
 	}

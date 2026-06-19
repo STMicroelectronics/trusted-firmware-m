@@ -5,6 +5,7 @@
  */
 
 #include <debug.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include <stm32mp_ddr_debug.h>
@@ -91,7 +92,7 @@ int ddrphy_phyinit_softsetmb(struct pmu_smb_ddr_1d *mb_ddr_1d, enum message_bloc
 		break;
 #endif /* STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE */
 	default:
-		DDR_ERROR("unknown message block field %u\n", field);
+		DDR_ERROR("unknown message block field %" PRIu32 "\n", (uint32_t)field);
 		ret = -1;
 		break;
 	}

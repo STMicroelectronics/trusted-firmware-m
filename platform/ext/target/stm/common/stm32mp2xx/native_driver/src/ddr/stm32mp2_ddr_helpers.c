@@ -5,6 +5,7 @@
  */
 
 #include <errno.h>
+#include <inttypes.h>
 
 #include <stm32mp_ddr_debug.h>
 #include <lib/delay.h>
@@ -49,14 +50,16 @@ static void wait_dfi_init_complete(struct stm32mp_ddrctl *ctl)
 	timeout = timeout_init_us(DDR_TIMEOUT_US_1S);
 	do {
 		dfistat = mmio_read_32((uintptr_t)&ctl->dfistat);
-		DDR_VERBOSE("[0x%lx] dfistat = 0x%x\n", (uintptr_t)&ctl->dfistat, dfistat);
+		DDR_VERBOSE("[0x%" PRIxPTR "] dfistat = 0x%" PRIx32 "\n",
+			    (uintptr_t)&ctl->dfistat, dfistat);
 
 		if (timeout_elapsed(timeout)) {
 			panic();
 		}
 	} while ((dfistat & DDRCTRL_DFISTAT_DFI_INIT_COMPLETE) == 0U);
 
-	DDR_VERBOSE("[0x%lx] dfistat = 0x%x\n", (uintptr_t)&ctl->dfistat, dfistat);
+	DDR_VERBOSE("[0x%" PRIxPTR "] dfistat = 0x%" PRIx32 "\n",
+		    (uintptr_t)&ctl->dfistat, dfistat);
 }
 
 void ddr_activate_controller(struct stm32mp_ddrctl *ctl)

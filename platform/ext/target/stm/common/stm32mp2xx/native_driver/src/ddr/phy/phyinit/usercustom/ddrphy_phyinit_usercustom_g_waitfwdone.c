@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#include <inttypes.h>
+
 #include <stm32mp_ddr_debug.h>
 #include <lib/timeout.h>
 #include <lib/delay.h>
@@ -145,7 +147,7 @@ int ddrphy_phyinit_usercustom_g_waitfwdone(void)
 			return ret;
 		}
 
-		DDR_VERBOSE("fw_major_message = %x\n", (unsigned int)fw_major_message);
+		DDR_VERBOSE("fw_major_message = 0x%" PRIx32 "\n", fw_major_message);
 
 		if (fw_major_message == FW_MAJ_MSG_START_STREAMING) {
 			uint32_t i;
@@ -165,7 +167,7 @@ int ddrphy_phyinit_usercustom_g_waitfwdone(void)
 					return ret;
 				}
 
-				DDR_VERBOSE("streaming message = %x\n", (unsigned int)read_data);
+				DDR_VERBOSE("streaming message = 0x%" PRIx32 "\n", read_data);
 			}
 		}
 	} while ((fw_major_message != FW_MAJ_MSG_TRAINING_SUCCESS) &&

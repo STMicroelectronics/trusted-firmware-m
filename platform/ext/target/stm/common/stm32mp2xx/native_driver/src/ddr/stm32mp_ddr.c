@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#include <inttypes.h>
+
 #include <stm32mp_ddr_debug.h>
 #include <lib/delay.h>
 #include <lib/timeout.h>
@@ -73,8 +75,8 @@ void stm32mp_ddr_set_reg(const struct stm32mp_ddr_priv *priv, enum stm32mp_ddr_r
 void stm32mp_ddr_start_sw_done(struct stm32mp_ddrctl *ctl)
 {
 	mmio_clrbits_32((uintptr_t)&ctl->swctl, DDRCTRL_SWCTL_SW_DONE);
-	DDR_VERBOSE("[0x%lx] swctl = 0x%x\n",
-		(uintptr_t)&ctl->swctl,  mmio_read_32((uintptr_t)&ctl->swctl));
+	DDR_VERBOSE("[0x%" PRIxPTR "] swctl = 0x%" PRIx32 "\n",
+		    (uintptr_t)&ctl->swctl,  mmio_read_32((uintptr_t)&ctl->swctl));
 }
 
 /* Wait quasi dynamic register update */
@@ -84,34 +86,34 @@ void stm32mp_ddr_wait_sw_done_ack(struct stm32mp_ddrctl *ctl)
 	uint32_t swstat;
 
 	mmio_setbits_32((uintptr_t)&ctl->swctl, DDRCTRL_SWCTL_SW_DONE);
-	DDR_VERBOSE("[0x%lx] swctl = 0x%x\n",
-		(uintptr_t)&ctl->swctl, mmio_read_32((uintptr_t)&ctl->swctl));
+	DDR_VERBOSE("[0x%" PRIxPTR "] swctl = 0x%" PRIx32 "\n",
+		    (uintptr_t)&ctl->swctl, mmio_read_32((uintptr_t)&ctl->swctl));
 
 	timeout = timeout_init_us(DDR_TIMEOUT_US_1S);
 	do {
 		swstat = mmio_read_32((uintptr_t)&ctl->swstat);
-		DDR_VERBOSE("[0x%lx] swstat = 0x%x\n",
-			(uintptr_t)&ctl->swstat, swstat);
+		DDR_VERBOSE("[0x%" PRIxPTR "] swstat = 0x%" PRIx32 "\n",
+			    (uintptr_t)&ctl->swstat, swstat);
 		if (timeout_elapsed(timeout)) {
 			panic();
 		}
 	} while ((swstat & DDRCTRL_SWSTAT_SW_DONE_ACK) == 0U);
 
-	DDR_VERBOSE("[0x%lx] swstat = 0x%x\n",
-		(uintptr_t)&ctl->swstat, swstat);
+	DDR_VERBOSE("[0x%" PRIxPTR "] swstat = 0x%" PRIx32 "\n",
+		    (uintptr_t)&ctl->swstat, swstat);
 }
 
 void stm32mp_ddr_enable_axi_port(struct stm32mp_ddrctl *ctl)
 {
 	/* Enable uMCTL2 AXI port 0 */
 	mmio_setbits_32((uintptr_t)&ctl->pctrl_0, DDRCTRL_PCTRL_N_PORT_EN);
-	DDR_VERBOSE("[0x%lx] pctrl_0 = 0x%x\n", (uintptr_t)&ctl->pctrl_0,
-		mmio_read_32((uintptr_t)&ctl->pctrl_0));
+	DDR_VERBOSE("[0x%" PRIxPTR "] pctrl_0 = 0x%" PRIx32 "\n",
+		    (uintptr_t)&ctl->pctrl_0, mmio_read_32((uintptr_t)&ctl->pctrl_0));
 
 	/* Enable uMCTL2 AXI port 1 */
 	mmio_setbits_32((uintptr_t)&ctl->pctrl_1, DDRCTRL_PCTRL_N_PORT_EN);
-	DDR_VERBOSE("[0x%lx] pctrl_1 = 0x%x\n", (uintptr_t)&ctl->pctrl_1,
-		mmio_read_32((uintptr_t)&ctl->pctrl_1));
+	DDR_VERBOSE("[0x%" PRIxPTR "] pctrl_1 = 0x%" PRIx32 "\n",
+		    (uintptr_t)&ctl->pctrl_1, mmio_read_32((uintptr_t)&ctl->pctrl_1));
 }
 
 int stm32mp_ddr_disable_axi_port(struct stm32mp_ddrctl *ctl)
@@ -121,13 +123,13 @@ int stm32mp_ddr_disable_axi_port(struct stm32mp_ddrctl *ctl)
 
 	/* Disable uMCTL2 AXI port 0 */
 	mmio_clrbits_32((uintptr_t)&ctl->pctrl_0, DDRCTRL_PCTRL_N_PORT_EN);
-	DDR_VERBOSE("[0x%lx] pctrl_0 = 0x%x\n", (uintptr_t)&ctl->pctrl_0,
-		mmio_read_32((uintptr_t)&ctl->pctrl_0));
+	DDR_VERBOSE("[0x%" PRIxPTR "] pctrl_0 = 0x%" PRIx32 "\n",
+		    (uintptr_t)&ctl->pctrl_0, mmio_read_32((uintptr_t)&ctl->pctrl_0));
 
 	/* Disable uMCTL2 AXI port 1 */
 	mmio_clrbits_32((uintptr_t)&ctl->pctrl_1, DDRCTRL_PCTRL_N_PORT_EN);
-	DDR_VERBOSE("[0x%lx] pctrl_1 = 0x%x\n", (uintptr_t)&ctl->pctrl_1,
-		mmio_read_32((uintptr_t)&ctl->pctrl_1));
+	DDR_VERBOSE("[0x%" PRIxPTR "] pctrl_1 = 0x%" PRIx32 "\n",
+		    (uintptr_t)&ctl->pctrl_1, mmio_read_32((uintptr_t)&ctl->pctrl_1));
 
 	/*
 	 * Waits until all AXI ports are idle
@@ -137,8 +139,8 @@ int stm32mp_ddr_disable_axi_port(struct stm32mp_ddrctl *ctl)
 	timeout = timeout_init_us(DDR_TIMEOUT_US_1S);
 	do {
 		pstat = mmio_read_32((uintptr_t)&ctl->pstat);
-		DDR_VERBOSE("[0x%lx] pstat = 0x%x\n",
-			(uintptr_t)&ctl->pstat, pstat);
+		DDR_VERBOSE("[0x%" PRIxPTR "] pstat = 0x%" PRIx32 "\n",
+			    (uintptr_t)&ctl->pstat, pstat);
 		if (timeout_elapsed(timeout)) {
 			return -1;
 		}
@@ -155,9 +157,8 @@ static bool ddr_is_axi_port_enabled(struct stm32mp_ddrctl *ctl)
 void stm32mp_ddr_enable_host_interface(struct stm32mp_ddrctl *ctl)
 {
 	mmio_clrbits_32((uintptr_t)&ctl->dbg1, DDRCTRL_DBG1_DIS_HIF);
-	DDR_VERBOSE("[0x%lx] dbg1 = 0x%x\n",
-		(uintptr_t)&ctl->dbg1,
-		mmio_read_32((uintptr_t)&ctl->dbg1));
+	DDR_VERBOSE("[0x%" PRIxPTR "] dbg1 = 0x%" PRIx32 "\n",
+		    (uintptr_t)&ctl->dbg1, mmio_read_32((uintptr_t)&ctl->dbg1));
 }
 
 void stm32mp_ddr_disable_host_interface(struct stm32mp_ddrctl *ctl)
@@ -167,9 +168,8 @@ void stm32mp_ddr_disable_host_interface(struct stm32mp_ddrctl *ctl)
 	int count = 0;
 
 	mmio_setbits_32((uintptr_t)&ctl->dbg1, DDRCTRL_DBG1_DIS_HIF);
-	DDR_VERBOSE("[0x%lx] dbg1 = 0x%x\n",
-		(uintptr_t)&ctl->dbg1,
-		mmio_read_32((uintptr_t)&ctl->dbg1));
+	DDR_VERBOSE("[0x%" PRIxPTR "] dbg1 = 0x%" PRIx32 "\n",
+		    (uintptr_t)&ctl->dbg1, mmio_read_32((uintptr_t)&ctl->dbg1));
 
 	/*
 	 * Waits until all queues and pipelines are empty
@@ -184,10 +184,10 @@ void stm32mp_ddr_disable_host_interface(struct stm32mp_ddrctl *ctl)
 	timeout = timeout_init_us(DDR_TIMEOUT_US_1S);
 	do {
 		dbgcam = mmio_read_32((uintptr_t)&ctl->dbgcam);
-		DDR_VERBOSE("[0x%lx] dbgcam = 0x%x ",
-			(uintptr_t)&ctl->dbgcam, dbgcam);
+		DDR_VERBOSE("[0x%" PRIxPTR "] dbgcam = 0x%" PRIx32 "\n",
+			    (uintptr_t)&ctl->dbgcam, dbgcam);
 		if (timeout_elapsed(timeout)) {
-			DDR_ERROR("timeout, dbgcam=0x%x\n", dbgcam);
+			DDR_ERROR("timeout, dbgcam=0x%" PRIx32 "\n", dbgcam);
 			panic();
 		}
 		count++;
@@ -208,9 +208,8 @@ int stm32mp_ddr_sw_selfref_entry(struct stm32mp_ddrctl *ctl)
 	uint32_t selref_type;
 
 	mmio_setbits_32((uintptr_t)&ctl->pwrctl, DDRCTRL_PWRCTL_SELFREF_SW);
-	DDR_VERBOSE("[0x%lx] pwrctl = 0x%x\n",
-		(uintptr_t)&ctl->pwrctl,
-		mmio_read_32((uintptr_t)&ctl->pwrctl));
+	DDR_VERBOSE("[0x%" PRIxPTR "] pwrctl = 0x%" PRIx32 "\n",
+		    (uintptr_t)&ctl->pwrctl, mmio_read_32((uintptr_t)&ctl->pwrctl));
 
 	/*
 	 * Wait operating mode change in self-refresh mode
@@ -236,9 +235,8 @@ int stm32mp_ddr_sw_selfref_entry(struct stm32mp_ddrctl *ctl)
 void stm32mp_ddr_sw_selfref_exit(struct stm32mp_ddrctl *ctl)
 {
 	mmio_clrbits_32((uintptr_t)&ctl->pwrctl, DDRCTRL_PWRCTL_SELFREF_SW);
-	DDR_VERBOSE("[0x%lx] pwrctl = 0x%x\n",
-		(uintptr_t)&ctl->pwrctl,
-		mmio_read_32((uintptr_t)&ctl->pwrctl));
+	DDR_VERBOSE("[0x%" PRIxPTR "] pwrctl = 0x%" PRIx32 "\n",
+		    (uintptr_t)&ctl->pwrctl, mmio_read_32((uintptr_t)&ctl->pwrctl));
 }
 
 void stm32mp_ddr_set_qd3_update_conditions(struct stm32mp_ddrctl *ctl)
@@ -288,17 +286,19 @@ void stm32mp_ddr_wait_refresh_update_done_ack(struct stm32mp_ddrctl *ctl)
 		refresh_update_level = 0U;
 	}
 
-	DDR_VERBOSE("[0x%lx] rfshctl3 = 0x%x\n",
-		(uintptr_t)&ctl->rfshctl3, mmio_read_32((uintptr_t)&ctl->rfshctl3));
+	DDR_VERBOSE("[0x%" PRIxPTR "] rfshctl3 = 0x%" PRIx32 "\n",
+		    (uintptr_t)&ctl->rfshctl3, mmio_read_32((uintptr_t)&ctl->rfshctl3));
 
 	timeout = timeout_init_us(DDR_TIMEOUT_US_1S);
 	do {
 		rfshctl3 = mmio_read_32((uintptr_t)&ctl->rfshctl3);
-		DDR_VERBOSE("[0x%lx] rfshctl3 = 0x%x\n", (uintptr_t)&ctl->rfshctl3, rfshctl3);
+		DDR_VERBOSE("[0x%" PRIxPTR "] rfshctl3 = 0x%" PRIx32 "\n",
+			    (uintptr_t)&ctl->rfshctl3, rfshctl3);
 		if (timeout_elapsed(timeout)) {
 			panic();
 		}
 	} while ((rfshctl3 & DDRCTRL_RFSHCTL3_REFRESH_UPDATE_LEVEL) == refresh_update_level);
 
-	DDR_VERBOSE("[0x%lx] rfshctl3 = 0x%x\n", (uintptr_t)&ctl->rfshctl3, rfshctl3);
+	DDR_VERBOSE("[0x%" PRIxPTR "] rfshctl3 = 0x%" PRIx32 "\n",
+		    (uintptr_t)&ctl->rfshctl3, rfshctl3);
 }

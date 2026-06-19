@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#include <inttypes.h>
 #include <stdlib.h>
 
 #include <stm32mp_ddr_debug.h>
@@ -30,8 +31,9 @@ int ddrphy_phyinit_isdbytedisabled(const struct stm32mp_ddr_config *config,
 
 	if ((nad0 + nad1) > config->uib.numdbyte) {
 		DDR_ERROR("%s invalid PHY configuration:\n", __func__);
-		DDR_ERROR("numactivedbytedfi0(%d)+numactivedbytedfi1(%d)>numdbytes(%d).\n",
-			  nad0, nad1, config->uib.numdbyte);
+		DDR_ERROR("numactivedbytedfi0(%" PRIu32 ") + numactivedbytedfi1(%" PRIu32 ") >\n",
+			  nad0, nad1);
+		DDR_ERROR("> numdbytes(%" PRIu32 ").\n", config->uib.numdbyte);
 	}
 
 	if (config->uib.dfi1exists != 0U) {
@@ -56,7 +58,7 @@ int ddrphy_phyinit_isdbytedisabled(const struct stm32mp_ddr_config *config,
 #if STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE
 	if ((mb_ddr_1d->enableddqs < 1U) ||
 	    (mb_ddr_1d->enableddqs > (uint8_t)(8U * config->uib.numactivedbytedfi0))) {
-		DDR_ERROR("%s enableddqs(%d)\n", __func__, mb_ddr_1d[0].enableddqs);
+		DDR_ERROR("%s enableddqs(%" PRIu8 ")\n", __func__, mb_ddr_1d[0].enableddqs);
 		DDR_ERROR("Value must be 0 < enableddqs < config->uib.numactivedbytedfi0 * 8.\n");
 	}
 
@@ -66,14 +68,14 @@ int ddrphy_phyinit_isdbytedisabled(const struct stm32mp_ddr_config *config,
 #else /* STM32MP_LPDDR4_TYPE */
 	if ((mb_ddr_1d->enableddqscha < 1U) ||
 	    (mb_ddr_1d->enableddqscha > (uint8_t)(8U * config->uib.numactivedbytedfi0))) {
-		DDR_ERROR("%s enableddqscha(%d)\n", __func__, mb_ddr_1d[0].enableddqscha);
+		DDR_ERROR("%s enableddqscha(%" PRIu8 ")\n", __func__, mb_ddr_1d[0].enableddqscha);
 		DDR_ERROR("Value must be 0 < enableddqscha < config->uib.numactivedbytedfi0 * 8.\n");
 	}
 
 	if ((config->uib.dfi1exists != 0U) && (config->uib.numactivedbytedfi1 > 0U) &&
 	    ((mb_ddr_1d->enableddqschb < 1U) ||
 	     (mb_ddr_1d->enableddqschb > (uint8_t)(8U * config->uib.numactivedbytedfi1)))) {
-		DDR_ERROR("%s enableddqschb(%d)\n", __func__, mb_ddr_1d[0].enableddqschb);
+		DDR_ERROR("%s enableddqschb(%" PRIu8 ")\n", __func__, mb_ddr_1d[0].enableddqschb);
 		DDR_ERROR("Value must be 0 < enableddqschb < config->uib.numactivedbytedfi1 * 8.\n");
 	}
 #endif /* STM32MP_DDR3_TYPE || STM32MP_DDR4_TYPE */

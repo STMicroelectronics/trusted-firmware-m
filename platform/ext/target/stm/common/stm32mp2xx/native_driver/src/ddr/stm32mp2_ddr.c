@@ -342,7 +342,7 @@ void stm32mp2_ddr_init(struct stm32mp_ddr_priv *priv,
 	}
 
 	DDR_VERBOSE("name = %s\n", config->info.name);
-	DDR_VERBOSE("speed = %u kHz\n", config->info.speed);
+	DDR_VERBOSE("speed = %" PRIu32 " kHz\n", config->info.speed);
 	/*
 	 * This driver is used in BL2 with minimal printf implementation.
 	 * Long long formatters such as %llx are not supported in this case.
