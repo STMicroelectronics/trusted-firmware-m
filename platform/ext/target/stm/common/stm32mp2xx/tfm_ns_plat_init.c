@@ -58,7 +58,6 @@ static uint32_t event_area[16+sizeof(struct ns_event_fifo)];
 
 int32_t tfm_ns_platform_post_init(void)
 {
-	int err;
 	uint32_t in_buf[2];
 	uint32_t out_buf[2];
 	size_t out_sz, in_sz;
@@ -66,7 +65,9 @@ int32_t tfm_ns_platform_post_init(void)
 
 	NVIC_SetPriority(Software_IRQ, 1);
 	NVIC_EnableIRQ(Software_IRQ);
-	err = tfm_ns_notif_init(event_area, sizeof(event_area));
+	ret = tfm_ns_notif_init(event_area, sizeof(event_area));
+	if (ret)
+		printf("%s non secure notitifications not activated\r\n", __func__);
 
 	/* Active scmi system power notification */
 	in_buf[0] = _MSG(SYS_POWER, SYS_POWER_STATE_NOTIFY);
