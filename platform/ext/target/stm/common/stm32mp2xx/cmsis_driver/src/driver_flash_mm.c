@@ -71,7 +71,8 @@ static const uint32_t data_width_byte[DATA_WIDTH_ENUM_SIZE] = {
 static const ARM_FLASH_CAPABILITIES DriverCapabilities = {
 	ARM_FLASH_EVENT_READY,
 	DATA_WIDTH_8BIT,
-	CHIP_ERASE_SUPPORTED
+	CHIP_ERASE_SUPPORTED,
+	0
 };
 
 /*
