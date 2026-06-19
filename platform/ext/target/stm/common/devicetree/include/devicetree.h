@@ -1856,6 +1856,7 @@
  * @param node_id node identifier
  */
 #define DT_NUM_RANGES(node_id) DT_CAT(node_id, _RANGES_NUM)
+#define DT_INST_NUM_RANGES(inst) DT_NUM_RANGES(DT_DRV_INST(inst))
 
 /**
  * @brief Is @p idx a valid range block index?
@@ -2193,8 +2194,8 @@
  * @param node_id node identifier
  * @param fn macro to invoke
  */
-#define DT_FOREACH_RANGE(node_id, fn) \
-	DT_CAT(node_id, _FOREACH_RANGE)(fn)
+#define DT_FOREACH_RANGE(node_id, fn) DT_CAT(node_id, _FOREACH_RANGE)(fn)
+#define DT_INST_FOREACH_RANGE(inst, fn) DT_FOREACH_RANGE(DT_DRV_INST(inst), fn)
 
 /**
  * @}
