@@ -311,14 +311,14 @@ static __unused int stm32mp2_a35_start(const struct device *dev)
 	/* Clear the ROM code context */
 	if (data->stop2_nvmem_dev) {
 		uint32_t addr = 0;
-		const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(tamp));
+		const struct device *tamp_dev = DEVICE_DT_GET(DT_NODELABEL(tamp));
 
 		/* Grant access to CPU2 to TAMP backup registers Protection Zone 1-RIF1 */
-		stm32_tamp_bkpreg_zone1_rif1(dev, true);
+		stm32_tamp_bkpreg_zone1_rif1(tamp_dev, true);
 		/* Clear CA35 return address for stop2 modes in backup registers */
 		err = nvmem_write_cell(data->stop2_nvmem_dev, sizeof(uint32_t), (uint8_t *)&addr);
 		/* Restore access to CPU1 to TAMP backup registers Protection Zone 1-RIF1 */
-		stm32_tamp_bkpreg_zone1_rif1(dev, false);
+		stm32_tamp_bkpreg_zone1_rif1(tamp_dev, false);
 		if (err < 0)
 			return err;
 	}
