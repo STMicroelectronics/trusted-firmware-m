@@ -91,16 +91,21 @@ struct risab_region {
 	uint32_t last_page;
 };
 
-struct risab_dt_region{
+struct risab_dt_region {
 	uint32_t st_protreg;
+	uintptr_t base;
+	size_t size;
+};
+
+struct risab_memory_area {
 	uintptr_t base;
 	size_t size;
 };
 
 struct stm32_risab_config {
 	uintptr_t base;
-	uintptr_t mm_base;
-	size_t mm_size;
+	const struct risab_memory_area *risab_marea;
+	const int n_risab_marea;
 	const struct device *clk_dev;
 	const clk_subsys_t clk_subsys;
 	const struct risab_dt_region *dt_regions;
@@ -144,19 +149,27 @@ static int stm32_risab_dt_to_region(const struct device *dev,
 	const struct stm32_risab_config *drv_cfg = dev_get_config(dev);
 	struct stm32_risab_data *drv_data = dev_get_data(dev);
 	const struct risab_dt_region *dt_region = &(drv_cfg->dt_regions[idx]);
-	int32_t offset_start = dt_region->base - drv_cfg->mm_base;
-	int32_t offset_end = dt_region->base + dt_region->size - drv_cfg->mm_base;
 	uint32_t page_sz = drv_data->hw_block_sz * drv_data->hw_n_blocks;
+	const struct risab_memory_area *m_area = drv_cfg->risab_marea;
+	uintptr_t offset_start = 0;
+	uintptr_t offset_end = 0;
 	uint32_t region_pages;
 	uint8_t dccid;
+	int i;
 
 	memset(region, 0, sizeof(struct risab_region));
 
-	if (offset_start < 0 || offset_end > drv_cfg->mm_size) {
-		EMSG("[%s] region[0x%x:0x%x] is out bound of risab[0x%x:0x%x]\n",
-		     dev->name,
-		     dt_region->base, dt_region->base + dt_region->size,
-		     drv_cfg->mm_base, drv_cfg->mm_base + drv_cfg->mm_size);
+	for (i = 0; i < drv_cfg->n_risab_marea; i++, m_area++) {
+		offset_start = dt_region->base - m_area->base;
+		offset_end = dt_region->base + dt_region->size - m_area->base;
+
+		if (offset_start >= 0 && offset_end <= m_area->size)
+			break;
+	}
+
+	if (drv_cfg->n_risab_marea == 0 || i >= drv_cfg->n_risab_marea) {
+		EMSG("[%s] region[0x%x:0x%x] is out bound of memory area ranges\n",
+		     dev->name, dt_region->base, dt_region->base + dt_region->size);
 		return -EINVAL;
 	}
 
@@ -447,16 +460,26 @@ static __unused int stm32_risab_pm_action(const struct device *dev,
 		.st_protreg = RISAB_MR_DT_PROTREG(_node_id, _prop, _idx),	\
 	},
 
+#define RISAB_MAREA(_node_id, _idx)						\
+	{									\
+		.base = DT_RANGES_PARENT_BUS_ADDRESS_BY_IDX(_node_id, _idx),	\
+		.size = DT_RANGES_LENGTH_BY_IDX(_node_id, _idx),		\
+	},
+
 #define STM32_RISAB_INIT(n)							\
 										\
 static const struct risab_dt_region risab_dt_regions_##n[] = {			\
 	DT_INST_FOREACH_MEMORY_REGION_SEP(n, RISAB_REGION, ())			\
 };										\
 										\
+static const struct risab_memory_area risab_marea_##n[] = {			\
+	DT_INST_FOREACH_RANGE(n, RISAB_MAREA)					\
+};										\
+										\
 static const struct stm32_risab_config stm32_risab_cfg_##n = {			\
 	.base = DT_INST_REG_ADDR_BY_NAME(n, risab),				\
-	.mm_base = DT_INST_REG_ADDR_BY_NAME(n, risab_mm),			\
-	.mm_size = DT_INST_REG_SIZE_BY_NAME(n, risab_mm),			\
+	.risab_marea = risab_marea_##n,						\
+	.n_risab_marea = DT_INST_NUM_RANGES(n),					\
 	.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),			\
 	.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),		\
 	.dt_regions = risab_dt_regions_##n,					\
@@ -474,7 +497,7 @@ DEVICE_DT_INST_DEFINE(n, &stm32_risab_init,					\
 		      PM_DEVICE_DT_INST_GET(n),					\
 		      &stm32_risab_data_##n,					\
 		      &stm32_risab_cfg_##n,					\
-		      CORE, 4,				\
+		      CORE, 4,							\
 		      NULL);
 
 DT_INST_FOREACH_STATUS_OKAY(STM32_RISAB_INIT)
