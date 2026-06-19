@@ -118,7 +118,7 @@ static int check_data_integrity(const struct device *dev)
 	if ((status & (_SR_SECS | _SR_SEIS | _SR_DRDY)) != _SR_DRDY) {
 		for (nb_tries = RNG_TIMEOUT_TRIALS; nb_tries > 0; nb_tries--) {
 
-			uint32_t status = mmio_read_32(drv_cfg->base + _RNG_SR);
+			status = mmio_read_32(drv_cfg->base + _RNG_SR);
 			if ((status & (_SR_SECS | _SR_SEIS)) != 0U) {
 				err = seed_error_recovery(dev);
 				if (err)
