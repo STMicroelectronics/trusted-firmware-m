@@ -464,33 +464,49 @@
 
 		risab1: risab@520f0000 {
 			compatible = "st,stm32mp25-risab";
-			reg = <0x520f0000 0x1000>, <0xe000000 0x20000>;
-			reg-names = "risab", "risab_mm";
+			reg = <0x520f0000 0x1000>;
+			reg-names = "risab";
 			clocks = <&rcc CK_ICN_LS_MCU>;
+			ranges = <0 0x0a000000 0x0a000000 0x20000>,
+				 <0 0x0e000000 0x0e000000 0x20000>,
+				 <0 0x20000000 0x20000000 0x20000>,
+				 <0 0x30000000 0x30000000 0x20000>;
 			status = "disabled";
 		};
 
 		risab2: risab@52100000 {
 			compatible = "st,stm32mp25-risab";
-			reg = <0x52100000 0x1000>, <0xe020000 0x20000>;
-			reg-names = "risab", "risab_mm";
+			reg = <0x52100000 0x1000>;
+			reg-names = "risab";
 			clocks = <&rcc CK_ICN_LS_MCU>;
+			ranges = <0 0x0a020000 0x0a020000 0x20000>,
+				 <0 0x0e020000 0x0e020000 0x20000>,
+				 <0 0x20020000 0x20020000 0x20000>,
+				 <0 0x30020000 0x30020000 0x20000>;
 			status = "disabled";
 		};
 
 		risab3: risab@52110000 {
 			compatible = "st,stm32mp25-risab";
-			reg = <0x52110000 0x1000>, <0xe060000 0x10000>;
-			reg-names = "risab", "risab_mm";
+			reg = <0x52110000 0x1000>;
+			reg-names = "risab";
 			clocks = <&rcc CK_ICN_LS_MCU>;
+			ranges = <0 0x0a060000 0x0a060000 0x10000>,
+				 <0 0x0e060000 0x0e060000 0x10000>,
+				 <0 0x20060000 0x20060000 0x10000>,
+				 <0 0x30060000 0x30060000 0x10000>;
 			status = "disabled";
 		};
 
 		risab5: risab@52130000 {
 			compatible = "st,stm32mp25-risab";
-			reg = <0x52130000 0x1000>, <0xe040000 0x20000>;
-			reg-names = "risab", "risab_mm";
+			reg = <0x52130000 0x1000>;
+			reg-names = "risab";
 			clocks = <&rcc CK_ICN_LS_MCU>;
+			ranges = <0 0x0a040000 0x0a040000 0x20000>,
+				 <0 0x0e040000 0x0e040000 0x20000>,
+				 <0 0x20040000 0x20040000 0x20000>,
+				 <0 0x30040000 0x30040000 0x20000>;
 			status = "disabled";
 		};
 
