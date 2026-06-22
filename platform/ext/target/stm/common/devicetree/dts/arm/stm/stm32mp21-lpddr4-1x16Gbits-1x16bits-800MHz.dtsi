@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only OR BSD-3-Clause
 /*
- * Copyright (C) 2025, STMicroelectronics - All Rights Reserved
+ * Copyright (C) 2025-2026, STMicroelectronics - All Rights Reserved
  */
 
 /*
@@ -46,7 +46,7 @@
 #define DDR_CRCPARCTL1 0x00001000
 #define DDR_INIT0 0xC0020002
 #define DDR_INIT1 0x00010002
-#define DDR_INIT2 0x00000D00
+#define DDR_INIT2 0x00000000
 #define DDR_INIT3 0x00A40012
 #define DDR_INIT4 0x00310008
 #define DDR_INIT5 0x00100004
