@@ -68,11 +68,6 @@ add_convert_to_bin_target(bl2)
 
 add_library(bl2_hal INTERFACE)
 
-target_include_directories(bl2_hal
-    INTERFACE
-        include
-)
-
 ############################### MBEDCRYPTO #####################################
 
 add_library(bl2_mbedcrypto_config INTERFACE)
