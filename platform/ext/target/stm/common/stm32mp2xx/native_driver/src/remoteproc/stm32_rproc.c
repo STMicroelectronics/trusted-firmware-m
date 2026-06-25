@@ -601,12 +601,6 @@ static struct remoteproc_driver_api stm32_rproc_api = {
 
 #define DT_INST_CLOCK_CONTROL(inst) DT_CLOCK_CONTROL(DT_DRV_INST(inst))
 
-#define DT_INST_IRQ_BY_NAME_OR(n, name, cell)					\
-	COND_CODE_1(DT_INST_IRQ_HAS_NAME(n, name),				\
-		    (DT_INST_IRQ_CELL_BY_NAME(n, name, cell)),			\
-		    (IRQ_INVALID))
-
-
 #define DT_NUM_REGU(_inst)							\
 	DT_INST_PROP_LEN_OR(_inst, regus, 0)
 
