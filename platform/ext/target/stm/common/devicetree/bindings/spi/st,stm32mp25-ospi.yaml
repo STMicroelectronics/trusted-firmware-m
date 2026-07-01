@@ -12,7 +12,7 @@ description: |
   - if it contains "spi-nand", then SPI is used.
   - if it contains "cfi-flash", then HyperFlash is used.
 
-compatible: "st,stm32mp25-omi"
+compatible: "st,stm32mp25-ospi"
 
 include:
   - base.yaml

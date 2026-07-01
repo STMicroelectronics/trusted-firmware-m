@@ -24,6 +24,22 @@ properties:
   reg:
     required: true
 
+  reg-names:
+    required: true
+    description: Name of each register space "regs", "memory_map"
+
+  ranges:
+    type: array
+    required: true
+
+  "#address-cells":
+    required: true
+    const: 2
+
+  "#size-cells":
+    required: true
+    const: 1
+
   clocks:
     required: true
 
