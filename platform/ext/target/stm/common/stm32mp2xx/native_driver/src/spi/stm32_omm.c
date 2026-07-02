@@ -342,9 +342,9 @@ static const struct stm32_ospi_cfg stm32_ospi_cfg_##n[] = {					\
 };												\
 												\
 static const struct stm32_omm_cfg stm32_omm_cfg_##n = {						\
-	.base = DT_INST_REG_ADDR_BY_NAME(n, omm),						\
-	.mm_base = DT_INST_REG_ADDR_BY_NAME(n, omm_mm),						\
-	.mm_size = DT_INST_REG_SIZE_BY_NAME(n, omm_mm),						\
+	.base = DT_INST_REG_ADDR_BY_NAME(n, regs),						\
+	.mm_base = DT_INST_REG_ADDR_BY_NAME(n, memory_map),					\
+	.mm_size = DT_INST_REG_SIZE_BY_NAME(n, memory_map),					\
 	.mm_ospi1_base = DT_INST_MEMORY_REGION_ADDR_BY_NAME_OR(n, mm_ospi1, 0U),		\
 	.mm_ospi1_size = DT_INST_MEMORY_REGION_SIZE_BY_NAME_OR(n, mm_ospi1, 0U),		\
 	.mm_ospi2_base = DT_INST_MEMORY_REGION_ADDR_BY_NAME_OR(n, mm_ospi2, 0U),		\

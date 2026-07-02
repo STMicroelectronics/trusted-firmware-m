@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-only OR BSD-3-Clause
  */
-#define DT_DRV_COMPAT st_stm32mp25_omi
+#define DT_DRV_COMPAT st_stm32mp25_ospi
 
 #include <stdint.h>
 #include <string.h>
@@ -109,7 +109,7 @@
 #define _OP_READ_ID			0x9FU
 #define _MAX_ID_LEN			8U
 
-struct stm32_omi_config {
+struct stm32_ospi_config {
 	uintptr_t base;
 	uintptr_t mm_base;
 	size_t mm_size;
@@ -122,14 +122,14 @@ struct stm32_omi_config {
 	uint16_t dlyb_base;
 };
 
-struct stm32_omi_data {
+struct stm32_ospi_data {
 	uint64_t str_idcode;
 	int cs_used;
 };
 
 static int stm32_ospi_wait_for_not_busy(const struct device *dev)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
 	uint32_t sr;
 	int ret;
 
@@ -146,7 +146,7 @@ static int stm32_ospi_wait_for_not_busy(const struct device *dev)
 static int stm32_ospi_wait_cmd(const struct device *dev,
 			       const struct spi_mem_op *op)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
 	uint32_t sr;
 	int ret = 0;
 
@@ -184,7 +184,7 @@ static void stm32_ospi_write_fifo(uint8_t *val, uintptr_t addr)
 static int stm32_ospi_poll(const struct device *dev,
 			   const struct spi_mem_op *op)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
 	void (*fifo)(uint8_t *val, uintptr_t addr);
 	uint32_t len;
 	uint8_t *buf;
@@ -216,7 +216,7 @@ static int stm32_ospi_poll(const struct device *dev,
 
 static int stm32_ospi_mm(const struct device *dev, const struct spi_mem_op *op)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
 	uintptr_t from = drv_cfg->mm_base + op->addr.val;
 	uint32_t nbytes = op->data.nbytes;
 	uint8_t *buf = op->data.buf;
@@ -274,7 +274,7 @@ static unsigned int stm32_ospi_get_mode(uint8_t buswidth)
 static int stm32_ospi_send(const struct device *dev,
 			   const struct spi_mem_op *op, uint8_t fmode)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
 	uint32_t ccr;
 	uint32_t dcyc = 0U;
 	uint32_t cr;
@@ -364,7 +364,7 @@ abort:
 
 static int stm32_ospi_set_mode(const struct device *dev, unsigned int mode)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
 
 	if ((mode & SPI_CS_HIGH) != 0U) {
 		return -ENODEV;
@@ -407,7 +407,7 @@ static int stm32_ospi_set_mode(const struct device *dev, unsigned int mode)
 
 static int stm32_ospi_set_speed(const struct device *dev, unsigned int hz)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
 	struct clk *clk = clk_get(drv_cfg->clk_dev, drv_cfg->clk_subsys);
 	unsigned long ospi_clk = clk_get_rate(clk);
 	unsigned int bus_freq;
@@ -447,7 +447,7 @@ static int stm32_ospi_set_speed(const struct device *dev, unsigned int hz)
 
 static int stm32_ospi_readid(const struct device *dev)
 {
-	struct stm32_omi_data *drv_data = dev_get_data(dev);
+	struct stm32_ospi_data *drv_data = dev_get_data(dev);
 	uint64_t id;
 	struct spi_mem_op readid_op;
 	int ret;
@@ -481,7 +481,7 @@ static int stm32_ospi_readid(const struct device *dev)
 static int stm32_ospi_dlyb_set_tap(const struct device *dev, uint8_t tap,
 				   bool rx_tap)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
 	uint32_t mask, ack, sr;
 	uint8_t shift;
 	int ret;
@@ -513,7 +513,7 @@ static int stm32_ospi_dlyb_set_tap(const struct device *dev, uint8_t tap,
 
 static void stm32_ospi_dlyb_stop(const struct device *dev)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
 
 	syscon_write(drv_cfg->dlyb_dev, drv_cfg->dlyb_base + _DLYBOS_CR, 0x0U);
 }
@@ -572,7 +572,7 @@ static int stm32_ospi_dlyb_find_tap(const struct device *dev, uint8_t *window_le
 
 static int stm32_ospi_dlyb_init(const struct device *dev)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
 	uint32_t sr;
 	int ret;
 
@@ -619,7 +619,7 @@ static int stm32_ospi_dlyb_set_cr(const struct device *dev, uint32_t dlyb_cr)
 
 static void stm32_ospi_dlyb_get_cr(const struct device *dev, uint32_t *dlyb_cr)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
 
 	syscon_read(drv_cfg->dlyb_dev, drv_cfg->dlyb_base + _DLYBOS_CR,
 		    dlyb_cr);
@@ -628,7 +628,7 @@ static void stm32_ospi_dlyb_get_cr(const struct device *dev, uint32_t *dlyb_cr)
 static int stm32_ospi_str_calibration(const struct device *dev,
 				      unsigned int max_hz)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
 	struct clk *clk = clk_get(drv_cfg->clk_dev, drv_cfg->clk_subsys);
 	uint32_t dlyb_cr;
 	uint8_t window_len_tcr0 = 0U;
@@ -725,7 +725,7 @@ static int stm32_ospi_exec_op(const struct device *dev,
 static int stm32_ospi_dirmap_read(const struct device *dev,
 				  const struct spi_mem_op *op)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
 	uint8_t fmode = _OSPI_CR_FMODE_INDR;
 	size_t addr_max;
 
@@ -740,8 +740,8 @@ static int stm32_ospi_dirmap_read(const struct device *dev,
 static int stm32_ospi_claim_bus(const struct device *dev, unsigned int cs,
 				unsigned int max_hz, unsigned int mode)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
-	struct stm32_omi_data *drv_data = dev_get_data(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
+	struct stm32_ospi_data *drv_data = dev_get_data(dev);
 	int ret;
 
 	if (cs >= _OSPI_MAX_CHIP) {
@@ -785,15 +785,15 @@ static int stm32_ospi_claim_bus(const struct device *dev, unsigned int cs,
 
 static void stm32_ospi_release_bus(const struct device *dev)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
 
 	mmio_clrbits_32(drv_cfg->base + _OSPI_CR, _OSPI_CR_EN);
 }
 
-static __unused int stm32_omi_init(const struct device *dev)
+static __unused int stm32_ospi_init(const struct device *dev)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
-	struct stm32_omi_data *drv_data = dev_get_data(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
+	struct stm32_ospi_data *drv_data = dev_get_data(dev);
 	struct clk *clk;
 	int ret, i;
 
@@ -828,11 +828,11 @@ static __unused int stm32_omi_init(const struct device *dev)
 }
 
 #ifdef CONFIG_PM_DEVICE
-static __unused int stm32_omi_pm_action(const struct device *dev,
-					enum pm_device_action action,
-					uint32_t pm_hint)
+static __unused int stm32_ospi_pm_action(const struct device *dev,
+					 enum pm_device_action action,
+					 uint32_t pm_hint)
 {
-	const struct stm32_omi_config *drv_cfg = dev_get_config(dev);
+	const struct stm32_ospi_config *drv_cfg = dev_get_config(dev);
 	struct clk *clk;
 	int ret;
 
@@ -858,7 +858,7 @@ static __unused int stm32_omi_pm_action(const struct device *dev,
 		return clk_enable(clk);
 	}
 
-	return stm32_omi_init(dev);
+	return stm32_ospi_init(dev);
 }
 #endif
 
@@ -869,13 +869,13 @@ static __maybe_unused const struct spi_bus_ops stm32_ospi_bus_ops = {
 	.dirmap_read = stm32_ospi_dirmap_read,
 };
 
-#define STM32_OMI_INIT(n)							\
+#define STM32_OSPI_INIT(n)							\
 										\
 PINCTRL_DT_INST_DEFINE(n);							\
 										\
 static const struct reset_control rst_ctrl_##n[] = DT_INST_RESETS_CONTROL(n);	\
 										\
-static const struct stm32_omi_config stm32_omi_cfg_##n = {			\
+static const struct stm32_ospi_config stm32_ospi_cfg_##n = {			\
 	.base = DT_INST_REG_ADDR(n),						\
 	.mm_base = DT_INST_MEMORY_REGION_ADDR_OR(n, 0U),			\
 	.mm_size = DT_INST_MEMORY_REGION_SIZE_OR(n, 0U),			\
@@ -888,15 +888,15 @@ static const struct stm32_omi_config stm32_omi_cfg_##n = {			\
 	.dlyb_base = DT_INST_PHA_BY_IDX(n, st_syscfg_dlyb, 0, offset),		\
 };										\
 										\
-static struct stm32_omi_data stm32_omi_data_##n = {};				\
+static struct stm32_ospi_data stm32_ospi_data_##n = {};				\
 										\
-PM_DEVICE_DT_INST_DEFINE(n, stm32_omi_pm_action, PM_DEVICE_F_NONE);		\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_ospi_pm_action, PM_DEVICE_F_NONE);		\
 										\
 DEVICE_DT_INST_DEFINE(n,							\
-		      &stm32_omi_init,						\
+		      &stm32_ospi_init,						\
 		      PM_DEVICE_DT_INST_GET(n),					\
-		      &stm32_omi_data_##n, &stm32_omi_cfg_##n,			\
+		      &stm32_ospi_data_##n, &stm32_ospi_cfg_##n,			\
 		      CORE, 12,							\
 		      &stm32_ospi_bus_ops);
 
-DT_INST_FOREACH_STATUS_OKAY(STM32_OMI_INIT)
+DT_INST_FOREACH_STATUS_OKAY(STM32_OSPI_INIT)

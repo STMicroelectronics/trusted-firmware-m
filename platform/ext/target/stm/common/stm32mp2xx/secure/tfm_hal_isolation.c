@@ -89,7 +89,7 @@ static const struct mpu_armv8m_region_cfg_t __maybe_unused mpu_regions[] = {
 		MPU_ARMV8M_AP_RW_PRIV_UNPRIV,
 		MPU_ARMV8M_SH_NONE
 	},
-#if DT_HAS_COMPAT_STATUS_OKAY(st_stm32mp25_omi)
+#if DT_HAS_COMPAT_STATUS_OKAY(st_stm32mp25_ospi)
 	{
 		0, /* will be updated before using */
 		OSPI1_MEM_BASE,
