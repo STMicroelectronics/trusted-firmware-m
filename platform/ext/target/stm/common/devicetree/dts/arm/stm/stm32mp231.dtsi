@@ -135,7 +135,7 @@
 		ommanager: ommanager@50500000 {
 			compatible = "st,stm32mp25-omm";
 			reg = <0x50500000 0x400>, <0x60000000 0x10000000>;
-			reg-names = "omm", "omm_mm";
+			reg-names = "regs", "memory_map";
 			ranges = <0 0 0x50430000 0x400>,
 				 <1 0 0x50440000 0x400>;
 			clocks = <&rcc CK_BUS_OSPIIOM>;
@@ -145,8 +145,8 @@
 			#address-cells = <2>;
 			#size-cells = <1>;
 
-			ospi1: spi@50430000 {
-				compatible = "st,stm32mp25-omi";
+			ospi1: spi@0 {
+				compatible = "st,stm32mp25-ospi";
 				reg = <0 0 0x400>;
 				clocks = <&rcc CK_KER_OSPI1>;
 				resets = <&rcc_reset OSPI1_R>, <&rcc_reset OSPI1DLL_R>;
@@ -154,8 +154,8 @@
 				status = "disabled";
 			};
 
-			ospi2: spi@50440000 {
-				compatible = "st,stm32mp25-omi";
+			ospi2: spi@1 {
+				compatible = "st,stm32mp25-ospi";
 				reg = <1 0 0x400>;
 				clocks = <&rcc CK_KER_OSPI2>;
 				resets = <&rcc_reset OSPI2_R>, <&rcc_reset OSPI2DLL_R>;
