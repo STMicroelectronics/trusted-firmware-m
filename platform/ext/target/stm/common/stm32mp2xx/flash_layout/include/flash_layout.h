@@ -151,7 +151,6 @@
 #define TFM_HAL_PS_PROGRAM_UNIT		(0x1)
 #endif
 
-/* FIXME LBA integration for M33tdcid */
 #ifdef STM32_M33TDCID
 
 #define FLASH_BASE_ADDRESS		(OSPI1_MEM_BASE)
@@ -298,7 +297,6 @@
 #define CA35_FW_SIZE			DT_REG_SIZE(DT_NODELABEL(ca35_cube_fw))
 #define CA35_FW_DEST_ADDR		DT_REG_ADDR(DT_NODELABEL(ca35_cube_fw))
 #endif /* (STM32_BL2 || STM32_FWU_STORAGE_ACCESS) */
-
 #else /* MCUBOOT_IMAGE_NUMBER > 3 */
 #error "Only MCUBOOT_IMAGE_NUMBER 2 or 3 is supported!"
 #endif /* MCUBOOT_IMAGE_NUMBER */

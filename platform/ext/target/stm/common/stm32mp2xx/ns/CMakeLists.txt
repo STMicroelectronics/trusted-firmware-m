@@ -43,6 +43,7 @@ target_include_directories(platform_region_defs
     INTERFACE
         partition
         ${PLATFORM_NS_API_DIR}/include
+        ${STM_FAMILY_DIR}/flash_layout/include
         ${STM_FAMILY_DIR}/native_driver/include
         ${STM_FAMILY_DIR}/cmsis_driver/include
 )

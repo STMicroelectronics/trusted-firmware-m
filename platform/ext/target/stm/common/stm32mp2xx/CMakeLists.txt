@@ -70,6 +70,7 @@ target_include_directories(platform_region_defs
 	INTERFACE
 		include
 		${STM_FAMILY_DIR}
+		${STM_FAMILY_DIR}/flash_layout/include
 		${STM_FAMILY_DIR}/native_driver/include
 		${STM_FAMILY_DIR}/cmsis_driver/include
 		${STM_FAMILY_DIR}/secure/services/include
@@ -96,8 +97,8 @@ add_subdirectory(${STM_FAMILY_DIR}/lib/qsort qsort)
 target_include_directories(platform_s
 	PUBLIC
 		${CMAKE_BINARY_DIR}/generated
+		${STM_FAMILY_DIR}/flash_layout/include
 		${STM_FAMILY_DIR}/native_driver/include
-		${STM_FAMILY_DIR}/cmsis_driver/include
 		${STM_FAMILY_DIR}/secure
 		${STM_FAMILY_DIR}/secure/services/include
 )
@@ -529,6 +530,8 @@ install(FILES
     ${STM_FAMILY_DIR}/accelerator/crypto_accelerator_config.h
     ${STM_FAMILY_DIR}/accelerator/mbedtls_accelerator_config.h
     ${STM_FAMILY_DIR}/secure/tfm_builtin_key_ids.h
+    ${STM_FAMILY_DIR}/flash_layout/include/flash_layout.h
+    ${STM_FAMILY_DIR}/flash_layout/include/bl2_image_id.h
     DESTINATION ${INSTALL_PLATFORM_NS_DIR}/include
 )
 
