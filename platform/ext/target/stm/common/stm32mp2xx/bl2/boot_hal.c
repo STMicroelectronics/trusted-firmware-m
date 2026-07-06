@@ -31,6 +31,7 @@
 #include <stm32_tamp.h>
 #include <stm_version.h>
 #include <watchdog.h>
+#include <nvmem.h>
 
 #include <tfm_plat_bl2_fwu.h>
 
@@ -131,8 +132,11 @@ SYS_INIT(stm32mp2_prepare_fw, CORE, 15);
 
 #if (DT_NODE_EXISTS(DT_NODELABEL(ca35_cube_fw))) && (MCUBOOT_IMAGE_NUMBER == 3)
 static int stm32mp2_prep_a35_fw(void) {
-	const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(tamp));
+	const struct device *dev_nvmem_cell = DEVICE_DT_GET(DT_NODELABEL(ca35_load_addr));
+	uint32_t fw_load_addr = CA35_FW_DEST_ADDR + BL2_HEADER_SIZE;
+	size_t cell_size = 0;
 	int err = 0;
+
 #if defined(STM32_BOOT_DEV_SDMMC1) || defined(STM32_BOOT_DEV_SDMMC2)
 	const partition_entry_t *tfm_entry = NULL;
 
@@ -145,15 +149,25 @@ static int stm32mp2_prep_a35_fw(void) {
 	flash_map[4].fa_off = tfm_entry->start;
 	flash_map[4].fa_size = tfm_entry->length;
 
-	/* TODO: remove*/
 	flash_map[5].fa_off = tfm_entry->start;
 	flash_map[5].fa_size = tfm_entry->length;
 #endif /* defined(STM32_BOOT_DEV_SDMMC1) || defined(STM32_BOOT_DEV_SDMMC2) */
 
-	/* Fill the backup register 72 with the load address of the firmware */
-	err = stm32_tamp_bkpreg_write(dev, 72, CA35_FW_DEST_ADDR + BL2_HEADER_SIZE);
+	/* Fill the backup register with the firmware load address */
+	err = nvmem_get_cell_size(dev_nvmem_cell, &cell_size);
 	if (err)
-		BOOT_LOG_ERR("Error while writing CA35 load address in backup register 72");
+		goto out;
+
+	if (cell_size != sizeof(uint32_t)) {
+		err = -EINVAL;
+		goto out;
+	}
+
+	err = nvmem_write_cell(dev_nvmem_cell, cell_size, (uint8_t *)&fw_load_addr);
+
+out:
+	if (err)
+		BOOT_LOG_ERR("Error while writing CA35 load address in backup");
 
 	return err;
 }
