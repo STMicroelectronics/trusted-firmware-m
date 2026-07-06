@@ -29,8 +29,10 @@ void tfm_plat_bl2_notify_init(void)
 	if (err)
 		goto fail;
 
-	if (cell_size != sizeof(uint32_t))
+	if (cell_size != sizeof(uint32_t)) {
+		err = -1;
 		goto fail;
+	}
 
 	err = nvmem_write_cell(_NVMEM_FWU_INFO_FAIL, cell_size, (uint8_t *)&reg);
 fail:
@@ -49,8 +51,10 @@ void tfm_plat_bl2_notify_erase(void)
 	if (err)
 		goto fail;
 
-	if (cell_size != sizeof(uint32_t))
+	if (cell_size != sizeof(uint32_t)) {
+		err = -1;
 		goto fail;
+	}
 
 	err = nvmem_read_cell(_NVMEM_FWU_INFO_FAIL, cell_size, (uint8_t *)&reg, &read_len);
 	if (err)
