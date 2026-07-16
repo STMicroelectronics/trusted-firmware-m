@@ -678,7 +678,7 @@ static int stm32_tamper_init(const struct device *dev)
 		cr1 |= _FLD_PREP(_CR1_ITAMP, ITAMP_BIT(id_in));
 		ier |= _FLD_PREP(_IER_ITAMP_IE, ITAMP_BIT(id_in));
 
-		if (dev_data->int_tamper[i].mode && TAMPER_POTENTIAL_MODE)
+		if (dev_data->int_tamper[i].mode & TAMPER_POTENTIAL_MODE)
 			cr3 |= _FLD_PREP(_CR3_ITAMP_POM, ITAMP_BIT(id_in));
 
 		dev_data->int_tamper[i].status = INITIALIZED;
@@ -706,7 +706,7 @@ static int stm32_tamper_init(const struct device *dev)
 		if (dev_data->ext_tamper[i].trig_on)
 			cr2 |= _FLD_PREP(_CR2_ETAMP_TRG, ETAMP_BIT(id_in));
 
-		if (dev_data->ext_tamper[i].mode && TAMPER_POTENTIAL_MODE)
+		if (dev_data->ext_tamper[i].mode & TAMPER_POTENTIAL_MODE)
 			cr2 |= _FLD_PREP(_CR2_ETAMP_POM, ETAMP_BIT(id_in));
 
 		/* active mode */
