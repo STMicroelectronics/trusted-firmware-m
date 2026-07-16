@@ -165,10 +165,10 @@ static irqreturn_t stm32_iac_isr(void *data)
 		if (!isr)
 			continue;
 
-		snprintf(tmp, sizeof(tmp),
-			 "\r\niac exceptions: [%d:%d]=%#08x\r\n",
-			 IAC_EXCEPT_MSB_BIT(i),
-			 IAC_EXCEPT_LSB_BIT(i), isr);
+		(void)snprintf(tmp, sizeof(tmp),
+			       "\r\niac exceptions: [%d:%d]=%#08x\r\n",
+			       IAC_EXCEPT_MSB_BIT(i),
+			       IAC_EXCEPT_LSB_BIT(i), isr);
 		IAC_LOG(tmp);
 
 		for (j = 0; j < _PERIPH_IDS_PER_REG; j++) {
@@ -177,10 +177,10 @@ static irqreturn_t stm32_iac_isr(void *data)
 
 			iac = IAC_EXCEPT_LSB_BIT(i) + j;
 			if (stm32_iac_discarded(iac)) {
-				snprintf(tmp, sizeof(tmp), "Discarded IAC ID: %03d\r\n", iac);
+				(void)snprintf(tmp, sizeof(tmp), "Discarded IAC ID: %03d\r\n", iac);
 			} else {
 				error = true;
-				snprintf(tmp, sizeof(tmp), "IAC exception ID: %03d\r\n", iac);
+				(void)snprintf(tmp, sizeof(tmp), "IAC exception ID: %03d\r\n", iac);
 			}
 
 			IAC_LOG(tmp);
