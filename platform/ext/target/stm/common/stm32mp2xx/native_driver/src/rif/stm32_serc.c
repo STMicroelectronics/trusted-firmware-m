@@ -112,10 +112,10 @@ static irqreturn_t stm32_serc_isr(void *data)
 		isr = io_read32(drv_cfg->base + _SERC_ISR0 + offset);
 		isr &= io_read32(drv_cfg->base + _SERC_IER0 + offset);
 		if (isr) {
-			snprintf(tmp, sizeof(tmp),
-				 "\r\nserc exceptions: [%d:%d]=%#08x\r\n",
-				 SERC_EXCEPT_MSB_BIT(i),
-				 SERC_EXCEPT_LSB_BIT(i), isr);
+			(void)snprintf(tmp, sizeof(tmp),
+				       "\r\nserc exceptions: [%d:%d]=%#08x\r\n",
+				       SERC_EXCEPT_MSB_BIT(i),
+				       SERC_EXCEPT_LSB_BIT(i), isr);
 
 			SERC_LOG(tmp);
 			io_write32(drv_cfg->base + _SERC_ICR0 + offset, isr);
