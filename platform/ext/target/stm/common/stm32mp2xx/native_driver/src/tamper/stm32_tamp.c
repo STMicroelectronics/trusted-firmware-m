@@ -483,7 +483,8 @@ static __unused irqreturn_t stm32_tamper_isr(void *data)
 	tamper_mask |= _FLD_PREP(_SR_ETAMP_F, GENMASK_32(dev_data->hw_nb_ext_tamper - 1, 0));
 
 	if ((sr | tamper_mask) != tamper_mask) {
-		snprintf(tmp, sizeof(tmp), "[INF] [%s] spurious detection: 0x%x\n", dev->name, sr);
+		(void)snprintf(tmp, sizeof(tmp), "[INF] [%s] spurious detection: 0x%x\n",
+			       dev->name, sr);
 		TAMP_LOG(tmp);
 		panic();
 	}
@@ -495,9 +496,9 @@ static __unused irqreturn_t stm32_tamper_isr(void *data)
 
 		t_id -= _FLD_GET(_SR_ITAMP_F, scr) ? _SR_ITAMP_F_SHIFT : 0;
 
-		snprintf(tmp, sizeof(tmp), "[INF] [%s] %s tamper detection (id: %d)\r\n",
-			 dev->name,
-			 _FLD_GET(_SR_ITAMP_F, scr) ? "internal" : "external", t_id);
+		(void)snprintf(tmp, sizeof(tmp), "[INF] [%s] %s tamper detection (id: %d)\r\n",
+			       dev->name,
+			       _FLD_GET(_SR_ITAMP_F, scr) ? "internal" : "external", t_id);
 
 		TAMP_LOG(tmp);
 
