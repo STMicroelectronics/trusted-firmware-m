@@ -312,19 +312,23 @@ enum tfm_platform_err_t cpus_service(const psa_invec *in_vec, const psa_outvec *
 
 	if (out_vec != NULL) {
 		out = (struct tfm_cpu_service_out_t *)out_vec->base;
-		if (!out)
-			return TFM_PLATFORM_ERR_INVALID_PARAM;
 	}
 
 	switch (args->type) {
 	case TFM_CPU_SERVICE_TYPE_SERV_INFO:
+		if (!out)
+			return TFM_PLATFORM_ERR_INVALID_PARAM;
 		return cpu_service_info(&out->service_info);
 	case TFM_CPU_SERVICE_TYPE_INFO:
+		if (!out)
+			return TFM_PLATFORM_ERR_INVALID_PARAM;
 		return cpu_get_info(args->cpu.id, &out->cpu_info);
 	case TFM_CPU_SERVICE_TYPE_START:
 	case TFM_CPU_SERVICE_TYPE_STOP:
 	case TFM_CPU_SERVICE_TYPE_SUSPEND:
 	case TFM_CPU_SERVICE_TYPE_RESUME:
+		if (!out)
+			return TFM_PLATFORM_ERR_INVALID_PARAM;
 		return cpu_send_cmd(args->cpu.id, args->type, &out->cpu_cmd);
 	case TFM_CPU_SERVICE_TYPE_SET_RSC_TAB:
 		return cpu_set_rsc_table(args->rsc_tab.id, args->rsc_tab.addr,
