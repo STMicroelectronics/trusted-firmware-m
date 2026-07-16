@@ -174,7 +174,7 @@ static irqreturn_t stm32_dcache_isr(void *data)
 	uint32_t sr = io_read32(dev_cfg->base + _DCACHE_SR);
 	char tmp[40];
 
-	snprintf(tmp, sizeof(tmp), "\r\ndata cache exceptions: %#08x\r\n", sr);
+	(void)snprintf(tmp, sizeof(tmp), "\r\ndata cache exceptions: %#08x\r\n", sr);
 	DCACHE_LOG(tmp);
 
 	return IRQ_HANDLED;
