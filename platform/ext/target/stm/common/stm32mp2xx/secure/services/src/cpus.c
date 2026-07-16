@@ -150,7 +150,7 @@ bool cpu_is_enable_method(uint32_t id)
 static int cpu_start(struct cpu_info *info)
 {
 	int32_t volt_uv;
-	uint32_t err;
+	int err;
 
 	if (info->ctrl_api->cpu_status(info) == CPU_RUNNING)
 		return 0;
@@ -159,16 +159,16 @@ static int cpu_start(struct cpu_info *info)
 		if (!regulator_get_default_voltage(info->cpu_supply, &volt_uv)) {
 			err = regulator_set_voltage(info->cpu_supply, volt_uv, volt_uv);
 			if (err)
-				goto err;
+				goto end;
 		}
 		err = regulator_enable(info->cpu_supply);
 		if (err)
-			goto err;
+			goto end;
 	}
 
 	err = info->ctrl_api->cpu_start(info);
 
-err:
+end:
 	if (err)
 		EMSG("cpu:%s start err:%d\n", info->name, err);
 
@@ -177,19 +177,19 @@ err:
 
 static int cpu_stop(struct cpu_info *info)
 {
-	uint32_t err;
+	int err;
 
 	if (info->ctrl_api->cpu_status(info) == CPU_OFFLINE)
 		return 0;
 
 	err = info->ctrl_api->cpu_stop(info);
 	if (err)
-		goto err;
+		goto end;
 
 	if (info->cpu_supply)
 		err = regulator_disable(info->cpu_supply);
 
-err:
+end:
 	if (err)
 		EMSG("cpu:%s stop err:%d\n", info->name, err);
 
