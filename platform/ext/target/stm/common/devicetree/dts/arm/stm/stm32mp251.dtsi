@@ -1271,7 +1271,7 @@
 					clocks = <&rcc CK_BUS_DCMIPP>;
 					status = "disabled";
 				};
-				a35_usb2: a35_ubs2@0 {
+				a35_usb2: a35_usb2@0 {
 					resets = <&rcc_reset USB2_R>, <&rcc_reset USBTC_R>;
 					clocks = <&rcc CK_BUS_USBTC>, <&rcc  CK_BUS_USB2OHCI>,
 						<&rcc CK_BUS_USB2EHCI>;
