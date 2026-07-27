@@ -12,6 +12,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "psa/error.h"
+
 /* Follow CMSE flag definitions */
 #define MEM_CHECK_MPU_READWRITE         (1 << 0x0)
 #define MEM_CHECK_AU_NONSECURE          (1 << 0x1)
@@ -110,6 +112,32 @@ int32_t tfm_has_access_to_region(const void *p, size_t s, uint32_t flags);
  * \retval Other return code    Operation failed with an error code.
  */
 int32_t tfm_inter_core_comm_init(void);
+
+/**
+ * \brief SFN backend: mailbox agent partition init.
+ *
+ * Boots the non-secure core and sets up the inter-core communication. Intended
+ * to be used as the "entry_init" of the mailbox agent partition when the SFN
+ * backend is selected, since the agent has no dedicated thread to run an entry
+ * loop. Only defined when CONFIG_TFM_SPM_BACKEND_IPC != 1.
+ *
+ * \param[in] param           Unused init parameter.
+ *
+ * \retval PSA_SUCCESS        Initialization succeeded (never returns on error).
+ */
+psa_status_t ns_agent_mailbox_init(void *param);
+
+/**
+ * \brief SFN backend: process pending mailbox request(s).
+ *
+ * Generic mailbox request pump for the SFN model. A platform's mailbox agent
+ * secure service SFN handler must call this function to dispatch the queued
+ * request(s) and reply, synchronously, from Thread mode. Only defined when
+ * CONFIG_TFM_SPM_BACKEND_IPC != 1.
+ *
+ * \retval PSA_SUCCESS        The pending request(s) were processed.
+ */
+psa_status_t ns_agent_mailbox_process_request(void);
 
 /**
  * \brief Check whether a memory range is inside a memory region.

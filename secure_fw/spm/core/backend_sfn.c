@@ -138,11 +138,27 @@ void backend_init_comp_assuredly(struct partition_t *p_pt,
      * It needs to be specific cared here.
      */
     if (IS_NS_AGENT(p_pldi)) {
+        struct partition_t *p_curr = GET_CURRENT_COMPONENT();
+
         if (IS_NS_AGENT_TZ(p_pldi)) {
             tz_ns_agent_register_client_id_range(p_pt->p_ldinf->client_id_base,
                                                  p_pt->p_ldinf->client_id_limit);
         }
-        SET_CURRENT_COMPONENT(p_pt);
+
+        /*
+         * Only one NS agent is launched as the system entry by
+         * backend_system_run(). When several NS agents coexist (e.g. a
+         * TrustZone agent together with a mailbox agent in a multi-core SFN
+         * configuration), the TrustZone agent must be the launched one: it
+         * enters the local non-secure world, while the mailbox agent is
+         * initialized as a regular SFN partition and driven by its service.
+         * Therefore, do not let a non-TZ NS agent override an already selected
+         * TZ agent.
+         */
+        if (IS_NS_AGENT_TZ(p_pldi) || (p_curr == NULL) ||
+            !IS_NS_AGENT(p_curr->p_ldinf)) {
+            SET_CURRENT_COMPONENT(p_pt);
+        }
     }
 }
 

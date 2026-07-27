@@ -31,10 +31,12 @@ endif()
 # selected via build command line. Otherwise, load SFN backend config by default.
 # If a pair of invalid settings are passed via command line, it will be captured later via config
 # check.
-# Also select IPC model by default for multi-core platforms that enable TrustZone.
+# Also select IPC model by default for multi-core platforms that enable TrustZone, unless the SFN
+# backend is explicitly requested on the command line.
 if((DEFINED TFM_ISOLATION_LEVEL AND TFM_ISOLATION_LEVEL GREATER 1) OR
    (CONFIG_TFM_SPM_BACKEND STREQUAL "IPC") OR
-   (TFM_MULTI_CORE_TOPOLOGY AND CONFIG_TFM_USE_TRUSTZONE))
+   (TFM_MULTI_CORE_TOPOLOGY AND CONFIG_TFM_USE_TRUSTZONE AND
+    NOT CONFIG_TFM_SPM_BACKEND STREQUAL "SFN"))
     include(config/tfm_ipc_config_default.cmake)
 else()
     #The default backend is SFN
