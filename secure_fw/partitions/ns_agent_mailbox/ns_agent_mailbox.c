@@ -43,6 +43,17 @@ static void ns_agent_mailbox_common_init(void)
     }
 }
 
+/*
+ * Optional deferred-receive hook. Default is empty: platforms that receive and
+ * enqueue the inter-core request directly in their interrupt handler keep
+ * their existing behavior. A platform can override this (strong definition) to
+ * move the reception/deserialization out of the interrupt context and perform
+ * it here, from Thread mode, just before the request is dispatched.
+ */
+__attribute__((weak)) void tfm_mailbox_hal_pending_receive(void)
+{
+}
+
 #if CONFIG_TFM_SPM_BACKEND_IPC == 1
 
 void ns_agent_mailbox_entry(void)
@@ -57,6 +68,7 @@ void ns_agent_mailbox_entry(void)
         signals = psa_wait(PSA_WAIT_ANY, PSA_BLOCK);
         if (MAILBOX_SIGNAL_IS_ACTIVE(signals)) {
             MAILBOX_CLEAR_SIGNAL(MAILBOX_SIGNAL_GET_ACTIVE(signals));
+            tfm_mailbox_hal_pending_receive();
             tfm_rpc_client_call_handler();
         } else if (signals & ASYNC_MSG_REPLY) {
             tfm_rpc_client_call_reply();
@@ -105,6 +117,7 @@ psa_status_t ns_agent_mailbox_init(void *param)
  */
 psa_status_t ns_agent_mailbox_process_request(void)
 {
+    tfm_mailbox_hal_pending_receive();
     tfm_rpc_client_call_handler();
 
     return PSA_SUCCESS;

@@ -140,6 +140,27 @@ psa_status_t ns_agent_mailbox_init(void *param);
 psa_status_t ns_agent_mailbox_process_request(void);
 
 /**
+ * \brief Mailbox agent deferred-receive hook (optional, platform-defined).
+ *
+ * Called by the mailbox agent pump (both the IPC entry loop and the SFN
+ * process-request function) right before dispatching queued requests, i.e.
+ * from Thread mode. It lets a platform move the reception/deserialization of
+ * an inter-core request OUT of the interrupt (FLIH) context and perform it
+ * here instead, keeping the interrupt handler minimal.
+ *
+ * The default implementation is empty (weak): platforms that receive and
+ * enqueue the request directly in their interrupt handler do not need to
+ * override it and keep their existing behavior.
+ *
+ * A platform overriding this hook is responsible for filling the request
+ * queue (typically by calling tfm_multi_core_hal_receive()) so that the
+ * subsequent dispatch finds the deserialized request(s). This is only safe
+ * for protocols with a single outstanding request whose shared buffer stays
+ * stable until the reply is produced (e.g. RSE comms).
+ */
+void tfm_mailbox_hal_pending_receive(void);
+
+/**
  * \brief Check whether a memory range is inside a memory region.
  *
  * \param[in] p             The start address of the range to check
