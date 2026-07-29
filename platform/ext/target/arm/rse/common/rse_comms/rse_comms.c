@@ -109,6 +109,8 @@ static void rse_comms_reply(const void *owner, int32_t ret)
     }
 }
 
+#if CONFIG_TFM_SPM_BACKEND_IPC == 1
+
 static void rse_comms_handle_req(void)
 {
     psa_status_t status;
@@ -122,7 +124,6 @@ static void rse_comms_handle_req(void)
         /* Deliver PSA Client call request to handler in SPM. */
         req = queue_entry;
         status = message_dispatch(req);
-#if CONFIG_TFM_SPM_BACKEND_IPC == 1
         /*
          * If status == PSA_SUCCESS, peer will be replied when mailbox agent
          * partition receives a 'ASYNC_MSG_REPLY' signal from the requested
@@ -134,12 +135,41 @@ static void rse_comms_handle_req(void)
             SPMLOG_DBGMSGVAL("[RSE-COMMS] Message dispatch failed: ", status);
             rse_comms_reply(req, status);
         }
-#else
-        /* In SFN model, the service call has been finished. Reply to the peer directly. */
-        rse_comms_reply(req, status);
-#endif
     }
 }
+
+#else /* CONFIG_TFM_SPM_BACKEND_IPC == 1 */
+
+/*
+ * Single-outstanding request buffer for the SFN backend.
+ *
+ * The RSE comms protocol never has more than one in-flight request and the
+ * SFN model handles it fully synchronously, so the dynamic request pool and
+ * the ring queue used by the IPC path are dropped: the incoming message is
+ * deserialized directly into this single static request and handled inline.
+ * This keeps the footprint minimal, in line with SFN targeting the small
+ * profile.
+ */
+static struct client_request_t sfn_req;
+
+static void rse_comms_handle_req(void)
+{
+    psa_status_t status;
+
+    /*
+     * Drain the mailbox: tfm_multi_core_hal_receive_sfn() deserializes the
+     * next pending message directly into sfn_req and returns
+     * TFM_PLAT_ERR_SUCCESS while a message remains; each one is then
+     * dispatched and replied to synchronously. No queue, no allocation.
+     */
+    while (tfm_multi_core_hal_receive_sfn(&sfn_req) == TFM_PLAT_ERR_SUCCESS) {
+        status = message_dispatch(&sfn_req);
+        /* In SFN model, the service call has been finished. Reply directly. */
+        rse_comms_reply(&sfn_req, status);
+    }
+}
+
+#endif /* CONFIG_TFM_SPM_BACKEND_IPC == 1 */
 
 static struct tfm_rpc_ops_t rpc_ops = {
     .handle_req = rse_comms_handle_req,

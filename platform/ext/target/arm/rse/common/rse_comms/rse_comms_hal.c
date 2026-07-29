@@ -176,6 +176,14 @@ out:
     return err;
 }
 
+#if CONFIG_TFM_SPM_BACKEND_IPC != 1
+enum tfm_plat_err_t tfm_multi_core_hal_receive_sfn(struct client_request_t *req)
+{
+        /* The rse common hal is not supporting backend SFN */
+        return TFM_PLAT_ERR_UNSUPPORTED
+}
+#endif
+
 enum tfm_plat_err_t tfm_multi_core_hal_init(void)
 {
     int32_t spm_err;

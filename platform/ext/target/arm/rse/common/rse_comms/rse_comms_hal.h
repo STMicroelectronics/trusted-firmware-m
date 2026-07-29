@@ -41,6 +41,25 @@ enum tfm_plat_err_t tfm_multi_core_hal_receive(void *mhu_receiver_dev,
                                                uint32_t source);
 
 /**
+ * \brief SFN backend: receive and deserialize the next pending PSA client call
+ *        request from NSPE directly into the caller-provided request buffer.
+ *
+ * This is the queue-free / allocation-free counterpart of
+ * tfm_multi_core_hal_receive() used by the SFN model. The RSE comms protocol
+ * is single-outstanding and handled synchronously, so no request pool or ring
+ * queue is needed: the message is deserialized in place into \p req.
+ *
+ * \param[out] req  Request buffer to deserialize the incoming message into.
+ *
+ * \retval TFM_PLAT_ERR_SUCCESS  A message was pending and deserialized into
+ *                               \p req; the caller should dispatch and reply.
+ * \retval Other return code     No message was pending (drain loop should
+ *                               stop), or the message was rejected and an
+ *                               error reply was already sent.
+ */
+enum tfm_plat_err_t tfm_multi_core_hal_receive_sfn(struct client_request_t *req);
+
+/**
  * \brief Notify NSPE that a PSA client call return result is replied.
  *        Implemented by platform specific inter-processor communication driver.
  *

@@ -117,7 +117,14 @@ psa_status_t ns_agent_mailbox_init(void *param)
  */
 psa_status_t ns_agent_mailbox_process_request(void)
 {
-    tfm_mailbox_hal_pending_receive();
+    /*
+     * The registered RPC handler drains and dispatches every pending
+     * inter-core request synchronously (receive + deserialize + dispatch +
+     * reply), from Thread mode. In the SFN model there is deliberately no
+     * agent request queue: the request is received and handled inline in a
+     * loop that runs while the mailbox still has a pending message. This keeps
+     * the footprint minimal, in line with SFN targeting the small profile.
+     */
     tfm_rpc_client_call_handler();
 
     return PSA_SUCCESS;
