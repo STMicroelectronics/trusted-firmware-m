@@ -23,11 +23,15 @@
 typedef struct context {
 	uint32_t VTOR;
 	uint32_t MSPLIM;
+	uint32_t MSPLIM_NS;
 	uint32_t PSPLIM;
+	uint32_t PSPLIM_NS;
 	uint32_t CONTROL;
 	uint32_t FPSCR;
 	uint32_t MSP;
+	uint32_t MSP_NS;
 	uint32_t PSP;
+	uint32_t PSP_NS;
 	uint32_t BASEPRI;
 } cm33_context_t;
 
@@ -60,9 +64,13 @@ static int jump_low_power_fw(stm32mp2_lp_fw_suspend_mode_t lpfwmode)
 
 	/* save tfm execution context */
 	tfm_context.MSPLIM = __get_MSPLIM();
+	tfm_context.MSPLIM_NS = __TZ_get_MSPLIM_NS();
 	tfm_context.PSPLIM = __get_PSPLIM();
+	tfm_context.PSPLIM_NS = __TZ_get_PSPLIM_NS();
 	tfm_context.PSP = __get_PSP();
+	tfm_context.PSP_NS = __TZ_get_PSP_NS();
 	tfm_context.MSP = __get_MSP();
+	tfm_context.MSP_NS = __TZ_get_MSP_NS();
 	tfm_context.CONTROL = __get_CONTROL();
 	tfm_context.FPSCR = __get_FPSCR();
 
@@ -93,9 +101,13 @@ static int jump_low_power_fw(stm32mp2_lp_fw_suspend_mode_t lpfwmode)
 
 	/* restore tfm execution context after stm32mp2_lp_fw_exec() */
 	__set_MSPLIM(tfm_context.MSPLIM);
+	__TZ_set_MSPLIM_NS(tfm_context.MSPLIM_NS);
 	__set_PSPLIM(tfm_context.PSPLIM);
+	__TZ_set_PSPLIM_NS(tfm_context.PSPLIM_NS);
 	__set_PSP(tfm_context.PSP);
+	__TZ_set_PSP_NS(tfm_context.PSP_NS);
 	__set_MSP(tfm_context.MSP);
+	__TZ_set_MSP_NS(tfm_context.MSP_NS);
 	__set_CONTROL(tfm_context.CONTROL);
 	__set_FPSCR(tfm_context.FPSCR);
 
