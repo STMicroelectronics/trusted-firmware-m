@@ -241,7 +241,8 @@ enum tfm_platform_err_t cpu_get_info(uint32_t id, struct cpu_info_res *cpu_info_
 		cpu_info_out->status = cpu->enable_at_startup ? CPU_RUNNING : CPU_OFFLINE;
 
 	cpu_info_out->method = cpu->method;
-	strncpy(cpu_info_out->name, cpu->name, CPU_MAX_NAME_LEN);
+	strncpy(cpu_info_out->name, cpu->name, CPU_MAX_NAME_LEN - 1);
+	cpu_info_out->name[CPU_MAX_NAME_LEN - 1] = '\0';
 
 	return TFM_PLATFORM_ERR_SUCCESS;
 }
