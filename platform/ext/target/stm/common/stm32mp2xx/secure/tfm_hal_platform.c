@@ -105,6 +105,11 @@ void tfm_hal_system_reset(void)
 		IMSG("Cortex-M33 reset\n");
 		NVIC_SystemReset();
 	}
+
+	/* The reset is not immediate, never give the hand back to the caller */
+	while (1) {
+		__WFE();
+	}
 }
 
 void tfm_hal_system_halt(void)
