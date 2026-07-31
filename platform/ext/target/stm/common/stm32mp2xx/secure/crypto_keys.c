@@ -25,6 +25,8 @@
 
 #define HUK_SUBKEY_MAX_LEN	32
 #define HUK_MAX_DATA_LEN	25
+/* Data given to the CMAC PRF is at most an input prefixed by a 32bit index */
+#define HUK_CMAC_MAX_DATA_LEN	(HUK_MAX_DATA_LEN + sizeof(uint32_t))
 
 #if defined(STM32_M33TDCID)
 #define SAES_NODE_NAME	saes
@@ -54,11 +56,15 @@ static int crypto_keys_cmac_prf_128(const struct device *dev,
 	uint8_t k2[AES_BLOCK_SIZE] = { };
 	uint8_t l[AES_BLOCK_SIZE] = { };
 	size_t processed = 0;
+	size_t pad_size = 0;
 	uint8_t bit = 0;
 	int i = 0;
 
 	if (!dev)
 		return -ENODEV;
+
+	if (!data || (data_size > HUK_CMAC_MAX_DATA_LEN))
+		return -EINVAL;
 
 	config = (struct sk_cipher_config_t){
 		.is_dec = false,
@@ -101,7 +107,7 @@ static int crypto_keys_cmac_prf_128(const struct device *dev,
 		k2[sizeof(k2) - 1] = k2[sizeof(k2) - 1] ^ 0x87;
 
 	if (data_size > AES_BLOCK_SIZE) {
-		uint8_t data_out[AES_BLOCK_SIZE] = {0};
+		uint8_t data_out[HUK_CMAC_MAX_DATA_LEN] = {0};
 
 		config = (struct sk_cipher_config_t){
 			.is_dec = false,
@@ -132,12 +138,18 @@ static int crypto_keys_cmac_prf_128(const struct device *dev,
 	}
 
 	/* Manage last block */
-	xor_block(block, data + processed, data_size - processed);
-	if (data_size - processed == AES_BLOCK_SIZE) {
+	pad_size = data_size - processed;
+	if (pad_size > AES_BLOCK_SIZE) {
+		res = -EINVAL;
+		goto end;
+	}
+
+	xor_block(block, data + processed, pad_size);
+	if (pad_size == AES_BLOCK_SIZE) {
 		xor_block(block, k1, AES_BLOCK_SIZE);
 	} else {
 		/* xor with padding = 0b100... */
-		block[data_size - processed] ^= 0x80;
+		block[pad_size] ^= 0x80;
 		xor_block(block, k2, AES_BLOCK_SIZE);
 	}
 
