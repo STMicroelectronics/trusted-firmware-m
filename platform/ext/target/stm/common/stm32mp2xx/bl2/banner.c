@@ -313,8 +313,8 @@ static enum tfm_plat_err_t get_chip_info(char name[STM32_SOC_NAME_SIZE])
 		break;
 	}
 
-	snprintf(name, STM32_SOC_NAME_SIZE,
-		 "STM32MP%s%s Rev.%s", cpu_s, pkg, cpu_r);
+	(void)snprintf(name, STM32_SOC_NAME_SIZE,
+		       "STM32MP%s%s Rev.%s", cpu_s, pkg, cpu_r);
 
 	return TFM_PLAT_ERR_SUCCESS;
 }
@@ -350,12 +350,12 @@ enum tfm_plat_err_t get_board_info(char name[STM32_SOC_NAME_SIZE])
 	if (!board_id)
 		return TFM_PLAT_ERR_INVALID_INPUT;
 
-	snprintf(name, STM32_SOC_NAME_SIZE, "MB%04x Var%u.%u Rev.%c-%02u",
-		 _FLD_GET(BOARD_ID_BOARD_NB, board_id),
-		 _FLD_GET(BOARD_ID_VARCPN, board_id),
-		 _FLD_GET(BOARD_ID_VARFG, board_id),
-		 (char)_FLD_GET(BOARD_ID_REVISION, board_id) - 1 + 'A',
-		 _FLD_GET(BOARD_ID_BOM, board_id));
+	(void)snprintf(name, STM32_SOC_NAME_SIZE, "MB%04x Var%u.%u Rev.%c-%02u",
+		       _FLD_GET(BOARD_ID_BOARD_NB, board_id),
+		       _FLD_GET(BOARD_ID_VARCPN, board_id),
+		       _FLD_GET(BOARD_ID_VARFG, board_id),
+		       (char)_FLD_GET(BOARD_ID_REVISION, board_id) - 1 + 'A',
+		       _FLD_GET(BOARD_ID_BOM, board_id));
 
 	return TFM_PLAT_ERR_SUCCESS;
 }
