@@ -52,7 +52,7 @@ static void rx_psa(const struct device *dev,
 #endif
 }
 
-static inline bool sendmsg(void *m, size_t m_len)
+static inline bool rse_shmem_send(void *m, size_t m_len)
 {
         bool notify = *(rse_shmem_size_t *)(S_RSS_SHMEM_ADDR) & RSE_SHMEM_FLAGS_SIZE_NO_NOTIFICATION
 		? false : true;
@@ -63,7 +63,7 @@ static inline bool sendmsg(void *m, size_t m_len)
 	return notify;
 }
 
-static inline void recvmsg(void *m, size_t *m_len)
+static inline void rse_shmem_recv(void *m, size_t *m_len)
 {
 	rse_shmem_size_t len = (*(rse_shmem_size_t *)(S_RSS_SHMEM_ADDR + RSE_SHMEM_PAYLOAD_OFFSET))
 		& ~RSE_SHMEM_FLAGS_SIZE_NO_NOTIFICATION;
@@ -87,7 +87,7 @@ enum tfm_plat_err_t tfm_multi_core_hal_receive(void *mhu_receiver_dev,
 
 	msg_len = sizeof(msg);
 	/* Receive complete message */
-	recvmsg(&msg, &msg_len);
+	rse_shmem_recv(&msg, &msg_len);
 
 	req = tfm_pool_alloc(req_pool);
 	if (!req) {
@@ -121,7 +121,7 @@ out_return_err:
 					 PSA_ERROR_CONNECTION_BUSY,
 					 &reply, &reply_size)
 	    == TFM_PLAT_ERR_SUCCESS) {
-		if (sendmsg((uint8_t *)&reply, reply_size))
+		if (rse_shmem_send((uint8_t *)&reply, reply_size))
 			mbox_send_dt(&channel, NULL);
 	}
 
@@ -147,7 +147,7 @@ enum tfm_plat_err_t tfm_multi_core_hal_reply(struct client_request_t *req)
 		SPMLOG_DBGMSGVAL("[COMMS] Serialize reply failed: ", err);
 		goto out_free_req;
 	}
-	if (sendmsg(&reply, reply_size))
+	if (rse_shmem_send(&reply, reply_size))
 		if (mbox_send_dt(&channel, NULL))
 			err = TFM_PLAT_ERR_SYSTEM_ERR;
 
