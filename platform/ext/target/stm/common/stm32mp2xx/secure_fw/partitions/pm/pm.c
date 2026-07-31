@@ -16,6 +16,7 @@
 #include <stm32mp2_ramcfg.h>
 #include <tfm_arch.h>
 #include <tfm_log.h>
+#include <tfm_sp_log.h>
 
 #include <uapi/tfm_pm_api.h>
 
@@ -158,6 +159,10 @@ static int _pm_suspend(enum pm_suspend_mode_t mode)
 	pm_resume_devices(pm_hint);
 
 	__enable_irq();
+
+	if (mode == PM_STANDBY1) {
+		LOG_INFFMT("[INF][PM] standby exit\r\n");
+	}
 
 	return err;
 }
