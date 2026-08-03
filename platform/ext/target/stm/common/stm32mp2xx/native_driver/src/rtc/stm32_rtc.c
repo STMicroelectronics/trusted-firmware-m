@@ -231,6 +231,7 @@ static int _stm32_rtc_init(const struct device *dev)
 {
 	const struct stm32_rtc_config *cfg = dev_get_config(dev);
 	uint32_t prediv_a, prediv_s;
+	int err_rif;
 	int err;
 
 	/*
@@ -274,9 +275,9 @@ static int _stm32_rtc_init(const struct device *dev)
 
 out:
 	_stm32_rtc_write_protect(dev);
-	err = stm32_rifprot_init(cfg->rif_ctl);
+	err_rif = stm32_rifprot_init(cfg->rif_ctl);
 
-	return err;
+	return err ? err : err_rif;
 }
 
 static int stm32_rtc_init(const struct device *dev)
