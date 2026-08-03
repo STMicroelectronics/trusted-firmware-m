@@ -421,23 +421,25 @@ int32_t scmi_scpfw_cfg_early_init(void)
 		channel_cfg->voltd_count = scmi_cfg[i]->ndt_regus_max;
 		channel_cfg->pd_count = scmi_cfg[i]->ndt_pd_max;
 
-		channel_cfg->clock =
-			calloc(scpfw_cfg.agent_config[index].channel_config->clock_count,
-			       sizeof(*scpfw_cfg.agent_config[index].channel_config->clock));
-		channel_cfg->reset =
-			calloc(scpfw_cfg.agent_config[index].channel_config->reset_count,
-			       sizeof(*scpfw_cfg.agent_config[index].channel_config->reset));
-		channel_cfg->voltd =
-			calloc(scpfw_cfg.agent_config[index].channel_config->voltd_count,
-			       sizeof(*scpfw_cfg.agent_config[index].channel_config->voltd));
-		channel_cfg->pd =
-			calloc(scpfw_cfg.agent_config[index].channel_config->pd_count,
-			       sizeof(*scpfw_cfg.agent_config[index].channel_config->pd));
+		/* a zero count is valid, calloc may then legitimately return NULL */
+		channel_cfg->clock = calloc(channel_cfg->clock_count,
+					    sizeof(*channel_cfg->clock));
+		if (channel_cfg->clock_count && !channel_cfg->clock)
+			return TFM_SCMI_OUT_OF_MEMORY;
 
-		if ((channel_cfg->clock_count && !channel_cfg->clock) ||
-		    (channel_cfg->reset_count && !channel_cfg->reset) ||
-		    (channel_cfg->voltd_count && !channel_cfg->voltd) ||
-		    (channel_cfg->pd_count && !channel_cfg->pd))
+		channel_cfg->reset = calloc(channel_cfg->reset_count,
+					    sizeof(*channel_cfg->reset));
+		if (channel_cfg->reset_count && !channel_cfg->reset)
+			return TFM_SCMI_OUT_OF_MEMORY;
+
+		channel_cfg->voltd = calloc(channel_cfg->voltd_count,
+					    sizeof(*channel_cfg->voltd));
+		if (channel_cfg->voltd_count && !channel_cfg->voltd)
+			return TFM_SCMI_OUT_OF_MEMORY;
+
+		channel_cfg->pd = calloc(channel_cfg->pd_count,
+					 sizeof(*channel_cfg->pd));
+		if (channel_cfg->pd_count && !channel_cfg->pd)
 			return TFM_SCMI_OUT_OF_MEMORY;
 
 		/* initialize with dummy name */
