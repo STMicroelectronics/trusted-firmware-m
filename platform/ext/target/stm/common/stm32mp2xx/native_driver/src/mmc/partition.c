@@ -267,8 +267,7 @@ static int load_partition_table(void) {
 
 	result = load_mbr_header(&mbr_entry);
 	if (result != 0) {
-		ERROR("Loading mbr header failed with image id=%u (%i)\n",
-		      result);
+		ERROR("Loading mbr header failed (%i)\n", result);
 		return result;
 	}
 
