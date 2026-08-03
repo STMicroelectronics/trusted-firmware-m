@@ -255,7 +255,9 @@ static __unused int stm32mp2_a35_stop(const struct device *dev)
 	/* clear event if pending C2SEV */
 	EXTI1->RPR3 = EXTI1_C2SEV;
 	/* reset cpu */
-	reset_control_assert(&cfg->rst_ctl);
+	err = reset_control_assert(&cfg->rst_ctl);
+	if (err)
+		return err;
 	/* send CPU2 SEV event to cpu1 (exti 64)*/
 	EXTI1->SWIER3 = EXTI1_C2SEV;
 
@@ -435,9 +437,7 @@ static __unused int stm32mp2_a35_resume(const struct device *dev)
 	EXTI1->SWIER3 = EXTI1_C2SEV;
 
 	/* Remove HOLD BOOT */
-	reset_control_assert(&cfg->hold_boot);
-
-	return 0;
+	return reset_control_assert(&cfg->hold_boot);
 }
 
 static struct rproc_spec *stm32_rproc_get(const struct device *dev)
