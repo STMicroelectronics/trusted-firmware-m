@@ -11,6 +11,8 @@
 #include <region.h>
 #include <lib/mmio.h>
 #include <lib/utils_def.h>
+#include <pm/device.h>
+#include <pm/pm.h>
 
 #define DT_DRV_COMPAT arm_armv8m_sau
 
@@ -138,6 +140,17 @@ static int __maybe_unused arm_sau_init(const struct device *dev)
 	return 0;
 }
 
+#ifdef CONFIG_PM_DEVICE
+static int arm_sau_pm_action(const struct device *dev,
+			     enum pm_device_action action, uint32_t pm_hint)
+{
+	if (PM_HINT_IS_STATE(pm_hint, CONTEXT) && (action == PM_DEVICE_ACTION_RESUME))
+		arm_sau_set_region(dev);
+
+	return 0;
+}
+#endif
+
 #define SAU_REGION(_base, _limit, _attr) {_base, _limit, _attr},
 
 #define SAU_MR_HAS_SAU_NSC(mr_node_id)								\
@@ -208,7 +221,9 @@ static const struct arm_sau_config cfg_##n = {							\
 												\
 static struct arm_sau_data data_##n = {};							\
 												\
-DEVICE_DT_INST_DEFINE(n, &arm_sau_init, NULL,							\
+PM_DEVICE_DT_INST_DEFINE(n, arm_sau_pm_action);							\
+												\
+DEVICE_DT_INST_DEFINE(n, &arm_sau_init, PM_DEVICE_DT_INST_GET(n),				\
 		      &data_##n,								\
 		      &cfg_##n,									\
 		      ARCH, 1,									\
