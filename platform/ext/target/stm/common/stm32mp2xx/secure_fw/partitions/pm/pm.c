@@ -22,11 +22,13 @@
 
 typedef struct context {
 	uint32_t VTOR;
+	uint32_t VTOR_NS;
 	uint32_t MSPLIM;
 	uint32_t MSPLIM_NS;
 	uint32_t PSPLIM;
 	uint32_t PSPLIM_NS;
 	uint32_t CONTROL;
+	uint32_t CONTROL_NS;
 	uint32_t FPSCR;
 	uint32_t MSP;
 	uint32_t MSP_NS;
@@ -41,6 +43,7 @@ static void save_it_status(void)
 {
 	tfm_context.BASEPRI = __get_BASEPRI();
 	tfm_context.VTOR = SCB->VTOR;
+	tfm_context.VTOR_NS = SCB_NS->VTOR;
 
 	__set_BASEPRI(0);
 }
@@ -48,6 +51,7 @@ static void save_it_status(void)
 static void restore_it_status(void)
 {
 	SCB->VTOR = tfm_context.VTOR;
+	SCB_NS->VTOR = tfm_context.VTOR_NS;
 	__DSB();
 	__ISB();
 
@@ -72,6 +76,7 @@ static int jump_low_power_fw(stm32mp2_lp_fw_suspend_mode_t lpfwmode)
 	tfm_context.MSP = __get_MSP();
 	tfm_context.MSP_NS = __TZ_get_MSP_NS();
 	tfm_context.CONTROL = __get_CONTROL();
+	tfm_context.CONTROL_NS = __TZ_get_CONTROL_NS();
 	tfm_context.FPSCR = __get_FPSCR();
 
 	stm32mp2_lp_fw_set_lpmode(lpfwmode);
@@ -109,6 +114,7 @@ static int jump_low_power_fw(stm32mp2_lp_fw_suspend_mode_t lpfwmode)
 	__set_MSP(tfm_context.MSP);
 	__TZ_set_MSP_NS(tfm_context.MSP_NS);
 	__set_CONTROL(tfm_context.CONTROL);
+	__TZ_set_CONTROL_NS(tfm_context.CONTROL_NS);
 	__set_FPSCR(tfm_context.FPSCR);
 
 cache_error:
