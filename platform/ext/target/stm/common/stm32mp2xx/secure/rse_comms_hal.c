@@ -57,13 +57,26 @@ static const struct mbox_dt_spec channel =  { MBOX_DT_SPEC_GET_IDX(DT_DRV_INST(0
 static __ALIGNED(4) struct serialized_psa_msg_t msg;
 static __ALIGNED(4) struct serialized_psa_reply_t reply;
 
+#if CONFIG_TFM_SPM_BACKEND_IPC == 1
 TFM_POOL_DECLARE(req_pool, sizeof(struct client_request_t),
                  RSE_COMMS_MAX_CONCURRENT_REQ);
+#else
+/*
+ * SFN backend: the mailbox interrupt only records that a message is pending;
+ * the actual reception/deserialization and dispatch happen synchronously from
+ * Thread mode in the mailbox agent service. As the protocol is
+ * single-outstanding, a plain flag is enough and no request pool is needed.
+ */
+static volatile bool mailbox_msg_pending;
+#endif
 
 static void rx_psa(const struct device *dev,
 		   mbox_channel_id_t channel_id, void *user_data,
 		   struct mbox_msg *data)
 {
+#if CONFIG_TFM_SPM_BACKEND_IPC != 1
+	mailbox_msg_pending = true;
+#endif
 #if IPCC_LEGACY
 	psa_call(TFM_MBOX_SERVICE_HANDLE, TFM_MBOX_SERVICE_SID, NULL, 0, NULL, 0);
 #else
@@ -100,6 +113,7 @@ enum tfm_plat_err_t tfm_multi_core_hal_receive(void *mhu_receiver_dev,
                                                void *mhu_sender_dev,
                                                uint32_t source)
 {
+#if CONFIG_TFM_SPM_BACKEND_IPC == 1
 	/*    enum mhu_error_t mhu_err;*/
 	enum tfm_plat_err_t err;
 	size_t msg_len = sizeof(msg);
@@ -154,17 +168,70 @@ out_return_err:
 	}
 
 	return err;
+#else /* CONFIG_TFM_SPM_BACKEND_IPC == 1 */
+	(void)mhu_receiver_dev;
+	(void)mhu_sender_dev;
+	(void)source;
+	return TFM_PLAT_ERR_SYSTEM_ERR;
+#endif /* CONFIG_TFM_SPM_BACKEND_IPC == 1 */
 }
+
+#if CONFIG_TFM_SPM_BACKEND_IPC != 1
+enum tfm_plat_err_t tfm_multi_core_hal_receive_sfn(struct client_request_t *req)
+{
+	enum tfm_plat_err_t err;
+	size_t msg_len = sizeof(msg);
+	size_t reply_size;
+
+	/*
+	 * Drain-loop terminator: process at most the single outstanding request
+	 * flagged by the interrupt. Once consumed, report "empty" so the caller's
+	 * loop stops instead of re-dispatching stale shared-memory content.
+	 */
+	if (!mailbox_msg_pending) {
+		return TFM_PLAT_ERR_SYSTEM_ERR;
+	}
+	mailbox_msg_pending = false;
+
+	memset(&msg, 0, sizeof(msg));
+	memset(&reply, 0, sizeof(reply));
+	memset(req, 0, sizeof(*req));
+
+	/* Receive complete message from shared memory */
+	recvmsg(&msg, &msg_len);
+
+	/* Record the sender device to be used for the reply */
+	req->mhu_sender_dev = (void *)CLIENT_ID_OWNER_MAGIC;
+
+	err = rse_protocol_deserialize_msg(req, &msg, msg_len);
+	if (err != TFM_PLAT_ERR_SUCCESS) {
+		/* Deserialisation failed: reply with an error and stop the loop */
+		if (rse_protocol_serialize_error(req, &msg.header,
+						 PSA_ERROR_CONNECTION_BUSY,
+						 &reply, &reply_size)
+		    == TFM_PLAT_ERR_SUCCESS) {
+			if (sendmsg((uint8_t *)&reply, reply_size))
+				mbox_send_dt(&channel, NULL);
+		}
+		return err;
+	}
+
+	/* Message ready: caller dispatches and replies via the single req */
+	return TFM_PLAT_ERR_SUCCESS;
+}
+#endif /* CONFIG_TFM_SPM_BACKEND_IPC != 1 */
 
 enum tfm_plat_err_t tfm_multi_core_hal_reply(struct client_request_t *req)
 {
 	enum tfm_plat_err_t err;
 	size_t reply_size;
 
+#if CONFIG_TFM_SPM_BACKEND_IPC == 1
 	if (!is_valid_chunk_data_in_pool(req_pool, (uint8_t *)req)) {
 		err = TFM_PLAT_ERR_SYSTEM_ERR;
 		goto out;
 	}
+#endif
 
 	err = rse_protocol_serialize_reply(req, &reply, &reply_size);
 	if (err != TFM_PLAT_ERR_SUCCESS) {
@@ -178,13 +245,16 @@ enum tfm_plat_err_t tfm_multi_core_hal_reply(struct client_request_t *req)
 	SPMLOG_DBGMSG("[COMMS] Sent reply\r\n");
 
 out_free_req:
+#if CONFIG_TFM_SPM_BACKEND_IPC == 1
 	tfm_pool_free(req_pool, req);
 out:
+#endif
 	return err;
 }
 
 enum tfm_plat_err_t tfm_multi_core_hal_init(void)
 {
+#if CONFIG_TFM_SPM_BACKEND_IPC == 1
 	int32_t spm_err;
 
 	spm_err = tfm_pool_init(req_pool, POOL_BUFFER_SIZE(req_pool),
@@ -193,6 +263,7 @@ enum tfm_plat_err_t tfm_multi_core_hal_init(void)
 	if (spm_err) {
 		return TFM_PLAT_ERR_SYSTEM_ERR;
 	}
+#endif
 	if (mbox_register_callback_dt(&channel, rx_psa, NULL)) {
 		return PSA_ERROR_BAD_STATE;
 	}
