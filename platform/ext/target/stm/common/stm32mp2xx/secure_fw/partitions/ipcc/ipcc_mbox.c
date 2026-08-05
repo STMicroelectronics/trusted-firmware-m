@@ -29,6 +29,7 @@ psa_flih_result_t ipcc_flih(void)
 psa_status_t tfm_ipcc_entry(void)
 {
 	psa_irq_enable(ipcc_irq.p_ildi->signal);
+#if CONFIG_TFM_SPM_BACKEND_IPC == 1
 	do {
 		psa_wait(ipcc_irq.p_ildi->signal, PSA_BLOCK);
 #if IPCC_LEGACY
@@ -38,5 +39,8 @@ psa_status_t tfm_ipcc_entry(void)
 		psa_panic();
 #endif
 	} while(1);
+#else
+	return PSA_SUCCESS;
+#endif
 
 }

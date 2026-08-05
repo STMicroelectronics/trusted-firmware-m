@@ -8,6 +8,8 @@
 
 #include <device.h>
 #include <mbox.h>
+#include <psa/service.h>
+#include "config_impl.h"
 #include "tfm_multi_core.h"
 #include "rse_comms_hal.h"
 #include "rse_comms.h"
@@ -26,6 +28,24 @@
 #include "ns_evt.h"
 
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,"only one st,psa-mbox node may be present");
+
+#if CONFIG_TFM_SPM_BACKEND_IPC != 1
+/*
+ * SFN backend: mailbox agent service handler.
+ *
+ * In the SFN model the mailbox agent has no blocking entry loop. The queued
+ * request is pumped synchronously from Thread mode when the (local) non-secure
+ * caller invokes the TFM_MBOX_SERVICE service. The generic pump does the
+ * dispatch and reply.
+ */
+psa_status_t tfm_mbox_service_sfn(const psa_msg_t *msg)
+{
+	(void)msg;
+
+	return ns_agent_mailbox_process_request();
+}
+#endif /* CONFIG_TFM_SPM_BACKEND_IPC != 1 */
+
 /* Secure RSS SHMEM */
 #define S_RSS_SHMEM_ADDR		DT_INST_MEMORY_REGION_ADDR(0)
 #define S_RSS_SHMEM_SIZE		DT_INST_MEMORY_REGION_SIZE(0)

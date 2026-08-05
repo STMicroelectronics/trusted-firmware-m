@@ -48,10 +48,14 @@ void rx_scp(const struct device *dev,
 #else
 	struct flih_ns_evt *desc = (struct flih_ns_evt *)user_data;
 
+#if CONFIG_TFM_SPM_BACKEND_IPC == 1
 	if (desc->priv)
 		(void)tfm_ns_notif_flih_priv(desc->evt);
 	else
 		(void)tfm_ns_notif_flih_unpriv(desc->evt);
+#else
+	(void)tfm_ns_notif_flih(desc->evt);
+#endif
 #endif
 }
 
