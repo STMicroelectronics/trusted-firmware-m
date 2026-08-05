@@ -260,12 +260,12 @@ static uint32_t handle_spm_svc_requests(uint32_t svc_number, uint32_t exc_return
     case TFM_SVC_THREAD_MODE_SPM_RETURN:
         exc_return = thread_mode_spm_return(svc_args[0]);
         break;
-#endif
 #if PLATFORM_HAS_NS_NOTIF
     case TFM_SVC_NS_NOTIF_FLIH_THREAD:
     case TFM_SVC_NS_NOTIF_FLIH_HANDLER:
         svc_args[0] = ns_notif(svc_args[0]);
         break;
+#endif
 #endif
     default:
         SPMLOG_ERRMSGVAL("Unknown SPM SVC requested: ", svc_number);

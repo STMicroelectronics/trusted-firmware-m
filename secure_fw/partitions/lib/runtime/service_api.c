@@ -27,6 +27,7 @@ psa_status_t tfm_core_get_boot_data(uint8_t major_type,
 __attribute__((naked))
 psa_status_t tfm_ns_notif_flih_priv(uint32_t event)
 {
+#if TFM_ISOLATION_LEVEL != 1
     __ASM volatile(
         "SVC    "M2S(TFM_SVC_NS_NOTIF_FLIH_HANDLER)"   \n"
         "BX     lr                                     \n"
@@ -40,6 +41,9 @@ psa_status_t tfm_ns_notif_flih_unpriv(uint32_t event)
         "SVC    "M2S(TFM_SVC_NS_NOTIF_FLIH_THREAD)" \n"
         "BX     lr                                  \n"
         );
+#else
+    return ns_notif(event);
+#endif
 }
 #endif
 
