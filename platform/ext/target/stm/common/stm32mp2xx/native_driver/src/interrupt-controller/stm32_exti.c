@@ -14,6 +14,8 @@
 #include <debug.h>
 #include <errno.h>
 #include <tfm_arch.h>
+#include <pm/device.h>
+#include <pm/pm.h>
 
 #include <device.h>
 #include <irq.h>
@@ -27,6 +29,7 @@
 #define _EXTI_FPR(n)				U(0x010 + (n) * 0x20)
 #define _EXTI_SECCFGR				U(0x014)
 #define _EXTI_PRIVCFGR				U(0x018)
+#define _EXTI_C1IMR(n)				U(0x080 + (n) * 0x10)
 #define _EXTI_C2IMR(n)				U(0x0C0 + (n) * 0x10)
 #define _EXTI_ENCIDCFGR				U(0x180)
 #define _EXTI_CMCIDCFGR				U(0x300)
@@ -85,11 +88,19 @@ struct stm32_exti_config {
 	const struct irq_spec *int_spec;
 };
 
+struct stm32_exti_pm_context {
+	uint32_t rtsr[_EXTI_BANK_NR];
+	uint32_t ftsr[_EXTI_BANK_NR];
+	uint32_t c1imr[_EXTI_BANK_NR];
+	uint32_t c2imr[_EXTI_BANK_NR];
+};
+
 struct stm32_exti_data {
 	uint8_t hw_nbcpus;
 	uint8_t hw_nbevents;
 	uint32_t event_trg[_EXTI_BANK_NR];
 	struct stm32_exti_map *lines_map;
+	struct stm32_exti_pm_context pm_ctx;
 };
 
 /*
@@ -430,6 +441,76 @@ static __unused int stm32_exti_init(const struct device *dev)
 	return stm32_rifprot_init(dev_cfg->rif_ctl);
 }
 
+#ifdef  CONFIG_PM_DEVICE
+static int stm32_exti_pm_suspend(const struct device *dev)
+{
+	const struct stm32_exti_config *dev_cfg = dev_get_config(dev);
+	uintptr_t cmcidcfgr_base = dev_cfg->base + _EXTI_CMCIDCFGR;
+	struct stm32_exti_data *dev_data = dev_get_data(dev);
+	struct stm32_exti_pm_context* pm_ctx = &(dev_data->pm_ctx);
+	int i;
+
+	/* disable cmcidcfgr */
+	for (i = 0; i < dev_data->hw_nbcpus; i++)
+		io_clrbits32(cmcidcfgr_base + _EXTI_CMCID_X_OFFSET(i),
+			     _CIDCFGR_CFEN_MASK);
+
+	for (i = 0; i < _EXTI_BANK_NR; i++) {
+		pm_ctx->rtsr[i] = io_read32(dev_cfg->base + _EXTI_RTSR(i));
+		pm_ctx->ftsr[i] = io_read32(dev_cfg->base + _EXTI_FTSR(i));
+		pm_ctx->c1imr[i] = io_read32(dev_cfg->base + _EXTI_C1IMR(i));
+		pm_ctx->c2imr[i] = io_read32(dev_cfg->base + _EXTI_C2IMR(i));
+	}
+
+	/* enable and set processor filtering cmcidcfgr */
+	for (i = 0; i < dev_data->hw_nbcpus; i++)
+		if (dev_cfg->proc_cid[i])
+			io_setbits32(cmcidcfgr_base + _EXTI_CID_X_OFFSET(i),
+				     _CIDCFGR_CFEN_MASK);
+
+	return 0;
+}
+
+static int stm32_exti_pm_resume(const struct device *dev)
+{
+	const struct stm32_exti_config *dev_cfg = dev_get_config(dev);
+	const struct stm32_exti_data *dev_data = dev_get_data(dev);
+	const struct stm32_exti_pm_context pm_ctx = dev_data->pm_ctx;
+	int i;
+
+	for (i = 0; i < _EXTI_BANK_NR; i++) {
+		io_write32(dev_cfg->base + _EXTI_RTSR(i), pm_ctx.rtsr[i]);
+		io_write32(dev_cfg->base + _EXTI_FTSR(i), pm_ctx.ftsr[i]);
+		io_write32(dev_cfg->base + _EXTI_C1IMR(i), pm_ctx.c1imr[i]);
+		io_write32(dev_cfg->base + _EXTI_C2IMR(i), pm_ctx.c2imr[i]);
+	}
+
+	return stm32_rifprot_init(dev_cfg->rif_ctl);
+}
+
+static int stm32_exti_pm_action(const struct device *dev, enum pm_device_action action,
+				uint32_t pm_hint)
+{
+
+	if (!PM_HINT_IS_STATE(pm_hint, CONTEXT))
+		return 0;
+
+	switch (action) {
+	case PM_DEVICE_ACTION_SUSPEND:
+		return stm32_exti_pm_suspend(dev);
+		break;
+	case PM_DEVICE_ACTION_RESUME:
+		return stm32_exti_pm_resume(dev);
+		break;
+	default:
+		ERROR("invalid pm action : %d", action);
+		panic();
+	}
+
+	return 0;
+}
+#endif
+
 #define VALUE_2X(i, _) UTIL_X2(i)
 
 /*
@@ -507,7 +588,9 @@ static struct stm32_exti_data exti_data_##n = {						\
 	.lines_map = _EXTI_IRQ_NESTED_TBL_NAME(n),					\
 };											\
 											\
-DEVICE_DT_INST_DEFINE(n, &stm32_exti_init, NULL,					\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_exti_pm_action);					\
+											\
+DEVICE_DT_INST_DEFINE(n, &stm32_exti_init, PM_DEVICE_DT_INST_GET(n),			\
 		      &exti_data_##n, &exti_cfg_##n,					\
 		      PRE_CORE, 7, &stm32_exti_interrupt_api);
 
