@@ -367,6 +367,9 @@ int stm32_rng_pm_suspend(const struct device *dev)
 	err = mmio_read32_poll_timeout(drv_cfg->base + _RNG_CR, cr,
 				       !(cr & _CR_CONDRST), RNG_TIMEOUT_US);
 
+	clk_disable(drv_data->hclk);
+	clk_disable(drv_data->clk);
+
 	return err;
 }
 
@@ -376,6 +379,15 @@ int stm32_rng_pm_resume(const struct device *dev)
 	struct stm32_rng_data *drv_data = dev_get_data(dev);
 	uintptr_t rng_base = drv_cfg->base;
 	uint32_t cr;
+	int err;
+
+	err = clk_enable(drv_data->clk);
+	if (err)
+		return err;
+
+	err = clk_enable(drv_data->hclk);
+	if (err)
+		goto disable_clk;
 
 	mmio_write_32(rng_base + _RNG_SR, 0U);
 
@@ -389,8 +401,17 @@ int stm32_rng_pm_resume(const struct device *dev)
 
 	stm32_rng_set_enable(rng_base, drv_data->pm_health, drv_data->pm_noise_ctrl);
 
-	return mmio_read32_poll_timeout(rng_base + _RNG_CR, cr,
-					!(cr & _CR_CONDRST), RNG_TIMEOUT_US);
+	err = mmio_read32_poll_timeout(rng_base + _RNG_CR, cr,
+				       !(cr & _CR_CONDRST), RNG_TIMEOUT_US);
+
+	if (!err)
+		return 0;
+
+	clk_disable(drv_data->hclk);
+disable_clk:
+	clk_disable(drv_data->clk);
+
+	return err;
 }
 
 static int stm32_rng_pm_action(const struct device *dev,
