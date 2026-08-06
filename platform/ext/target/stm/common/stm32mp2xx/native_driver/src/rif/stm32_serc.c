@@ -61,6 +61,7 @@ struct stm32_serc_config {
 
 struct stm32_serc_data {
 	uint8_t num_ilac;
+	struct clk* clk;
 };
 
 static void stm32_serc_get_hwconfig(const struct device *dev)
@@ -164,14 +165,14 @@ static int stm32_serc_setup(const struct device *dev)
 static int stm32_serc_init(const struct device *dev)
 {
 	const struct stm32_serc_config *drv_cfg = dev_get_config(dev);
-	struct clk *clk;
+	struct stm32_serc_data *drv_data = dev_get_data(dev);
 	int err;
 
-	clk = clk_get(drv_cfg->clk_dev, drv_cfg->clk_subsys);
-	if (!clk)
+	drv_data->clk = clk_get(drv_cfg->clk_dev, drv_cfg->clk_subsys);
+	if (!drv_data->clk)
 		return -ENODEV;
 
-	err = clk_enable(clk);
+	err = clk_enable(drv_data->clk);
 	if (err)
 		return err;
 
@@ -184,10 +185,30 @@ static int stm32_serc_init(const struct device *dev)
 static int stm32_serc_pm_action(const struct device *dev,
 				enum pm_device_action action, uint32_t pm_hint)
 {
-	if (action == PM_DEVICE_ACTION_RESUME && PM_HINT_IS_STATE(pm_hint, CONTEXT))
-		return stm32_serc_init(dev);
+	const struct stm32_serc_data *drv_data = dev_get_data(dev);
+	const struct stm32_serc_config *drv_cfg = dev_get_config(dev);
+	int err;
 
-	return 0;
+	if (!PM_HINT_IS_STATE(pm_hint, CONTEXT))
+		return 0;
+
+	switch (action) {
+	case PM_DEVICE_ACTION_SUSPEND:
+		mmio_clrbits_32(drv_cfg->base + _SERC_ENABLE, _SERC_ENABLE_SERFEN);
+		clk_disable(drv_data->clk);
+
+		return 0;
+	case PM_DEVICE_ACTION_RESUME:
+		err = clk_enable(drv_data->clk);
+		if (err)
+			return err;
+
+		return stm32_serc_setup(dev);
+	default:
+		EMSG("unsupported pm action %d\r\n", action);
+
+		return -ENOTSUP;
+	}
 }
 #endif
 
