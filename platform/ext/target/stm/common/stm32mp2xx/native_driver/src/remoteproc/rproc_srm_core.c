@@ -62,8 +62,7 @@ static __unused int periph_reset(const struct periph_cfg *cfg)
 	/* Set rif config for ca35 peripheral on m33td side */
 	err = set_for_each_firewall(cfg->firewall_ctrls, firewall, cfg->n_firewall_ctrls, i);
 	if (err != 0) {
-		DMSG("[%s] fail to set firewall [%d} %s\n", __func__, i,
-		     firewall->dev->name);
+		DMSG("[%s] fail to set firewall, err %d\n", __func__, err);
 		return err;
 	}
 
@@ -102,8 +101,7 @@ static __unused int periph_reset(const struct periph_cfg *cfg)
 	/* Restore rif config for ca35 peripheral */
 	err = release_for_each_firewall(cfg->firewall_ctrls, firewall, cfg->n_firewall_ctrls, i);
 	if (err != 0) {
-		DMSG("[%s] fail to release firewall [%d} %s\n", __func__, i,
-		     firewall->dev->name);
+		DMSG("[%s] fail to release firewall, err %d\n", __func__, err);
 		return err;
 	}
 

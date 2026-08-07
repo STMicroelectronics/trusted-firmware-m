@@ -36,20 +36,54 @@ struct firewall_spec {
 	     i++, firewall++)
 
 /*
- * internal only, you must used:
+ * internal only, you must use:
  * - set_for_each_firewall
- * - release_for_each_firewall
+ * - acquire_sem_for_each_firewall
+ *
+ * On failure, already successful steps (indexes before the failing one)
+ * are unwound in reverse order through undo_firewall.
  * @return 0 on success, negative errno on failure.
  */
-#define _fn_for_each_fwall(fn_firewall, fwall_tbl, fwall, n_fwall, i)	\
+#define _fn_for_each_fwall(fn_firewall, undo_firewall, fwall_tbl, fwall, n_fwall, i)	\
 ({									\
 	int __err = 0;							\
 									\
 	if (n_fwall) {							\
 		for_each_firewall(fwall_tbl, fwall, n_fwall, i) {	\
 			__err = fn_firewall(fwall);			\
-			if (__err)					\
+			if (__err) {					\
+				while (i-- > 0) {			\
+					fwall--;			\
+					(void)undo_firewall(fwall);	\
+				}					\
 				break;					\
+			}						\
+		}							\
+	}								\
+									\
+	__err;								\
+})
+
+/*
+ * internal only, you must use:
+ * - release_for_each_firewall
+ * - release_sem_for_each_firewall
+ *
+ * Best-effort variant: every firewall of the table is processed even if
+ * some fail, so a single failure never leaves the others un-released.
+ * The first error met, if any, is returned once all firewalls are done.
+ * @return 0 on success, negative errno on failure.
+ */
+#define _fn_for_each_fwall_all(fn_firewall, fwall_tbl, fwall, n_fwall, i)	\
+({									\
+	int __err = 0;							\
+	int __ret;							\
+									\
+	if (n_fwall) {							\
+		for_each_firewall(fwall_tbl, fwall, n_fwall, i) {	\
+			__ret = fn_firewall(fwall);			\
+			if (__ret && !__err)				\
+				__err = __ret;				\
 		}							\
 	}								\
 									\
@@ -57,16 +91,18 @@ struct firewall_spec {
 })
 
 #define set_for_each_firewall(fwall_tbl, fwall, n_fwall, i) \
-	_fn_for_each_fwall(firewall_set_configuration, fwall_tbl, fwall, n_fwall, i)
+	_fn_for_each_fwall(firewall_set_configuration, firewall_release_configuration, \
+			    fwall_tbl, fwall, n_fwall, i)
 
 #define release_for_each_firewall(fwall_tbl, fwall, n_fwall, i) \
-	_fn_for_each_fwall(firewall_release_configuration, fwall_tbl, fwall, n_fwall, i)
+	_fn_for_each_fwall_all(firewall_release_configuration, fwall_tbl, fwall, n_fwall, i)
 
 #define acquire_sem_for_each_firewall(fwall_tbl, fwall, n_fwall, i) \
-	_fn_for_each_fwall(firewall_acquire_access, fwall_tbl, fwall, n_fwall, i)
+	_fn_for_each_fwall(firewall_acquire_access, firewall_release_access, \
+			    fwall_tbl, fwall, n_fwall, i)
 
 #define release_sem_for_each_firewall(fwall_tbl, fwall, n_fwall, i) \
-	_fn_for_each_fwall(firewall_release_access, fwall_tbl, fwall, n_fwall, i)
+	_fn_for_each_fwall_all(firewall_release_access, fwall_tbl, fwall, n_fwall, i)
 
 typedef int (*firewall_controller_set_conf_t)(const struct firewall_spec *spec);
 typedef int (*firewall_controller_release_conf_t)(const struct firewall_spec *spec);
