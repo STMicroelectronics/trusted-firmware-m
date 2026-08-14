@@ -1571,10 +1571,17 @@ static void clk_stm32_osc_ker_disable(struct clk *clk)
 		clk_stm32_gate_disable(clk);
 }
 
+static void __maybe_unused clk_stm32_osc_ker_pm_restore(struct clk *clk)
+{
+	if (clk_is_enabled(clk) && clk_stm32_osc_ker_enable(clk))
+		panic();
+}
+
 static const struct clk_ops clk_stm32_osc_ker_ops = {
 	.enable		= clk_stm32_osc_ker_enable,
 	.disable	= clk_stm32_osc_ker_disable,
 	.is_enabled	= clk_stm32_gate_is_enabled,
+	.restore_context = clk_stm32_osc_ker_pm_restore,
 };
 
 static int clk_stm32_hse_div_set_rate(struct clk *clk,
