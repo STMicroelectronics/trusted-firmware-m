@@ -30,20 +30,21 @@
 #include "tfm_scmi.h"
 #include <assert.h>
 #include <scmi_agent_configuration.h>
-/*  include memory layout for scmi tfm smt memory */
+/* include memory layout for scmi tfm smt memory */
 #include <region_defs.h>
 /*
  * struct stm32_scmi_clk - Data for the exposed clock
- * @change_rate: SCMMI agent is allowed to change the rate
+ * @change_rate: SCMI agent is allowed to change the rate
  */
 struct stm32_scmi_clk {
 	bool change_rate;
 };
+
 /*
  * struct stm32_scmi_clkd - Data for the exposed clock controller
  * @scmi_id: scmi id for voltage service
  * @clk_dev: clock controller manipulated by the SCMI channel
- * @clk_subsys; rcc id for the clock mainupation
+ * @clk_subsys; rcc id for the clock manipulation
  */
 struct stm32_scmi_clkd {
 	unsigned long scmi_id;
@@ -54,7 +55,7 @@ struct stm32_scmi_clkd {
 };
 
 /*
- * struct stm32_scmi_regud - Data for the exposed voltage contreoller
+ * struct stm32_scmi_regud - Data for the exposed voltage controller
  * @scmi_id: scmi id for voltage service
  * @regu_dev: regu controller manipulated by the SCMI channel
  */
@@ -81,7 +82,7 @@ struct stm32_scmi_rd {
  * @scmi_id: scmi id for power domain service
  * @name: Power domain name exposed to the channel
  * @clk_dev: clock controller manipulated by the SCMI channel
- * @clk_subsys: rcc id for the clock mainupation
+ * @clk_subsys: rcc id for the clock manipulation
  * @regu_dev: regu controller manipulated by the SCMI channel
  */
 struct stm32_scmi_pd {
@@ -98,8 +99,7 @@ struct stm32_scmi_pd {
  * Platform clocks exposed with SCMI
  */
 static int plat_scmi_clk_get_rates_array(struct clk *clk, size_t index,
-						unsigned long *rates,
-						size_t *nb_elts)
+					 unsigned long *rates, size_t *nb_elts)
 {
 	uint32_t plat_clock_flags = *(uint32_t *)clk->priv;
 
@@ -134,9 +134,9 @@ static int plat_scmi_clk_get_rates_array(struct clk *clk, size_t index,
 }
 
 static int plat_scmi_clk_get_rates_steps(struct clk *clk,
-						unsigned long *min,
-						unsigned long *max,
-						unsigned long *step)
+					 unsigned long *min,
+					 unsigned long *max,
+					 unsigned long *step)
 {
 	uint32_t plat_clock_flags = *(uint32_t *)clk->priv;
 
@@ -157,6 +157,7 @@ static const struct clk_ops plat_scmi_clk_ops = {
 	.get_rates_array = plat_scmi_clk_get_rates_array,
 	.get_rates_steps = plat_scmi_clk_get_rates_steps,
 };
+
 struct stm32_scmi_config {
 	const int dt_agent_id;
 	const char *dt_agent_name;
@@ -182,16 +183,17 @@ static const struct stm32_scmi_config *scmi_cfg[AGENT_NUM] = {0};
 static struct clk *plat_clocks[AGENT_NUM] = {0};
 static int stm32_scmi_init(const struct device *dev)
 {
-	int agent_count = ((struct stm32_scmi_config *)
-			   dev_get_config(dev))->dt_agent_id -1;
-	assert(agent_count <  ARRAY_SIZE(plat_clocks));
-	assert(agent_count <  ARRAY_SIZE(scmi_cfg));
+	int agent_count = ((struct stm32_scmi_config *)dev_get_config(dev))->dt_agent_id - 1;
+
+	assert(agent_count < ARRAY_SIZE(plat_clocks));
+	assert(agent_count < ARRAY_SIZE(scmi_cfg));
 	scmi_cfg[agent_count] = dev_get_config(dev);
 	plat_clocks[agent_count] = dev_get_data(dev);
+
 	return 0;
 }
 
-#define SCMI_DT_ID( _node_id, _prop, _idx)					\
+#define SCMI_DT_ID(_node_id, _prop, _idx)					\
 	DT_PROP(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx), scmi_id)
 
 #define SCMI_DT_RESET_NAME(_node_id, _prop, _idx)				\
@@ -213,7 +215,7 @@ static int stm32_scmi_init(const struct device *dev)
 	DT_PROP(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx), rate)
 
 #define SCMI_DT_CLOCK_SUB(_node_id, _prop, _idx)				\
-	(clk_subsys_t) DT_CLOCKS_CELL(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx), bits)
+	(clk_subsys_t)DT_CLOCKS_CELL(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx), bits)
 
 #define SCMI_DT_REGU(_node_id, _prop, _idx)					\
 	DEVICE_DT_GET(DT_PHANDLE_BY_IDX(DT_PHANDLE_BY_IDX(_node_id, _prop, _idx), regu, 0))
@@ -249,16 +251,16 @@ static int stm32_scmi_init(const struct device *dev)
 #define _PD_PH_NAME(_node_id) \
 	_CONCAT(_scmi_dt_pd_, DEVICE_DT_NAME_GET(_node_id))
 
-#define STM32_SCMI_PD_INIT(n)								\
-	DT_INST_ACCESS_CTRLS_DEFINE(n);							\
-	static const struct stm32_scmi_pd _PD_PH_NAME(DT_DRV_INST(n)) =			\
-	{										\
-		.scmi_id = DT_INST_PROP(n, scmi_id),					\
-		.name = DT_NODE_FULL_NAME(DT_DRV_INST(n)),				\
-		.clk_subsys = (clk_subsys_t) DT_INST_CLOCKS_CELL(n, bits),		\
-		.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),			\
-	        .regu_dev = DEVICE_DT_GET(DT_INST_PHANDLE_BY_IDX(n, regu, 0)),		\
-		.firewall = DT_INST_ACCESS_CTRLS_GET(n),				\
+#define STM32_SCMI_PD_INIT(n)							\
+	DT_INST_ACCESS_CTRLS_DEFINE(n);						\
+	static const struct stm32_scmi_pd _PD_PH_NAME(DT_DRV_INST(n)) =		\
+	{									\
+		.scmi_id = DT_INST_PROP(n, scmi_id),				\
+		.name = DT_NODE_FULL_NAME(DT_DRV_INST(n)),			\
+		.clk_subsys = (clk_subsys_t)DT_INST_CLOCKS_CELL(n, bits),	\
+		.clk_dev = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(n)),		\
+		.regu_dev = DEVICE_DT_GET(DT_INST_PHANDLE_BY_IDX(n, regu, 0)),	\
+		.firewall = DT_INST_ACCESS_CTRLS_GET(n),			\
 		.n_firewall = DT_INST_ACCESS_CTRLS_NUM(n),			\
 	};
 
@@ -275,7 +277,6 @@ DT_INST_FOREACH_STATUS_OKAY(STM32_SCMI_PD_INIT)
 #define _DT_INST_CLK_LIST_NUM(n) DT_INST_PROP_LEN_OR(n, clk_list, 0)
 #define _DT_INST_RST_LIST_NUM(n) DT_INST_PROP_LEN_OR(n, rst_list, 0)
 
-
 #define STM32_SCMI_INIT(n)							\
 static const struct stm32_scmi_rd scmi_dt_resets_##n[] = {			\
 	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, rst_list),				\
@@ -287,7 +288,7 @@ static const struct stm32_scmi_clkd scmi_dt_clocks_##n[] = {			\
 	(DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, clk_list, CLK_ELE, (), n)),	\
 	())									\
 };										\
-static const struct stm32_scmi_regud scmi_dt_regus_##n[] = {                    \
+static const struct stm32_scmi_regud scmi_dt_regus_##n[] = {			\
 	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, regu_list),			\
 	(DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, regu_list, REGU_ELE, (), n)),	\
 	())									\
@@ -295,7 +296,7 @@ static const struct stm32_scmi_regud scmi_dt_regus_##n[] = {                    
 static struct clk plat_clk_##n[] = {						\
 	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, clk_list),				\
 		(DT_INST_FOREACH_PROP_ELEM_SEP_VARGS(n, clk_list,		\
-						    ZERO_ELE, (), n)),		\
+						     ZERO_ELE, (), n)),		\
 		())								\
 };										\
 										\
@@ -310,29 +311,29 @@ static const struct shared_mem scmi_dt_shmem_##n = {				\
 		.area = (uintptr_t *)DT_INST_MEMORY_REGION_ADDR_OR(n, 0),	\
 		.size = DT_INST_MEMORY_REGION_ADDR_OR(n, 0),			\
 };										\
-static const const struct mbox_dt_spec scmi_dt_chan_##n = {			\
+static const struct mbox_dt_spec scmi_dt_chan_##n = {				\
 	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, mboxes),				\
-		(MBOX_DT_SPEC_GET_IDX(DT_DRV_INST(n), 0)),(0))};		\
+		(MBOX_DT_SPEC_GET_IDX(DT_DRV_INST(n), 0)), (0))};		\
 										\
 static const struct stm32_scmi_config stm32_scmi_cfg_##n = {			\
 	.dt_agent_id = DT_INST_PROP(n, agent_id),				\
-	.dt_agent_name =  DT_INST_PROP(n, agent_name),				\
+	.dt_agent_name = DT_INST_PROP(n, agent_name),				\
 	.dt_shm = &scmi_dt_shmem_##n,						\
 	.dt_chan = &scmi_dt_chan_##n,						\
 	.dt_resets = scmi_dt_resets_##n,					\
-	.ndt_resets = _DT_INST_RST_LIST_NUM(n),				        \
+	.ndt_resets = _DT_INST_RST_LIST_NUM(n),					\
 	.ndt_resets_max = DT_INST_PROP_OR(n, rst_id_max, 0),			\
 	.dt_clocks = scmi_dt_clocks_##n,					\
-	.ndt_clocks = _DT_INST_CLK_LIST_NUM(n), 				\
-	.ndt_clocks_max =  DT_INST_PROP_OR(n, clk_id_max, 0),			\
-	.dt_regus  = scmi_dt_regus_##n,						\
+	.ndt_clocks = _DT_INST_CLK_LIST_NUM(n),					\
+	.ndt_clocks_max = DT_INST_PROP_OR(n, clk_id_max, 0),			\
+	.dt_regus = scmi_dt_regus_##n,						\
 	.ndt_regus = ARRAY_SIZE(scmi_dt_regus_##n),				\
 	.ndt_regus_max = DT_INST_PROP_OR(n, regu_id_max, 0),			\
 	.dt_pd = scmi_dt_pd_##n,						\
 	.ndt_pd = _DT_INST_PD_LIST_NUM(n),					\
-	.ndt_pd_max =  DT_INST_PROP_OR(n, pd_id_max, 0),			\
+	.ndt_pd_max = DT_INST_PROP_OR(n, pd_id_max, 0),				\
 };										\
-DEVICE_DT_INST_DEFINE(n ,&stm32_scmi_init, NULL,				\
+DEVICE_DT_INST_DEFINE(n, &stm32_scmi_init, NULL,				\
 		      &plat_clk_##n[0],						\
 		      &stm32_scmi_cfg_##n,					\
 		      CORE, 30,							\
@@ -352,7 +353,7 @@ DT_INST_FOREACH_STATUS_OKAY(STM32_SCMI_INIT)
  * At early_init initcall level, prepare scpfw_cfg agent and channel parts.
  * At driver_init_late initcall level, get clock and reset devices.
  * When scmi-regulator-consumer driver probes, it adds the regulators.
- * When CPU OPP driver probesn it adds the DVFS part.
+ * When CPU OPP driver probes, it adds the DVFS part.
  */
 static struct scpfw_config scpfw_cfg;
 
@@ -362,31 +363,34 @@ struct scpfw_config *scmi_scpfw_get_configuration(void)
 
 	return &scpfw_cfg;
 }
-static const char dummy[]="";
+
+static const char dummy[] = "";
 extern int scp_com_init(const struct mbox_dt_spec *chan, const int agent_id);
 
 int32_t scmi_scpfw_cfg_early_init(void)
 {
-	int i=0;
-	int j=0;
+	int i = 0;
+	int j = 0;
+
 	scpfw_cfg.agent_count = AGENT_NUM;
 	scpfw_cfg.agent_config = calloc(AGENT_NUM, sizeof(*scpfw_cfg.agent_config));
 	struct scpfw_channel_config *channel_cfg = NULL;
 
-	for(i = 0; i < AGENT_NUM; i++) {
-		/*  agent id 0 is uncorrect */
-		int index = scmi_cfg[i]->dt_agent_id-1;
+	for (i = 0; i < AGENT_NUM; i++) {
+		/* agent id 0 is incorrect */
+		int index = scmi_cfg[i]->dt_agent_id - 1;
+
 		assert(index < AGENT_NUM);
 		scpfw_cfg.agent_config[index].name = scmi_cfg[i]->dt_agent_name;
 		scpfw_cfg.agent_config[index].agent_id = scmi_cfg[i]->dt_agent_id;
-		/*  initialialize mbox channel if some */
+		/* initialize mbox channel if some */
 		scpfw_cfg.agent_config[index].channel_count = 1;
 		channel_cfg = calloc(scpfw_cfg.agent_config[index].channel_count,
 				     sizeof(*scpfw_cfg.agent_config[index].channel_config));
-		/*  initialialize mbox channel if some */
+		/* initialize mbox channel if some */
 		if ((scmi_cfg[i]->dt_chan) && (scmi_cfg[i]->dt_shm->area) &&
 		    (scmi_cfg[i]->dt_shm->size)) {
-			/*  smt module  */
+			/* smt module */
 			channel_cfg->shm.area = scmi_cfg[i]->dt_shm->area;
 			channel_cfg->shm.size = scmi_cfg[i]->dt_shm->size;
 			if (scp_com_init(scmi_cfg[i]->dt_chan, scmi_cfg[i]->dt_agent_id))
@@ -414,28 +418,28 @@ int32_t scmi_scpfw_cfg_early_init(void)
 			       sizeof(*scpfw_cfg.agent_config[index].channel_config->pd));
 
 		/* initialize with dummy name */
-		for(j = 0; j < channel_cfg->clock_count; j++)
+		for (j = 0; j < channel_cfg->clock_count; j++)
 			channel_cfg->clock[j] =
 				(struct scmi_clock) {
-					.name  = dummy,
+					.name = dummy,
 				};
 
-		for(j = 0; j < channel_cfg->reset_count; j++)
+		for (j = 0; j < channel_cfg->reset_count; j++)
 			channel_cfg->reset[j] =
 				(struct scmi_reset) {
-					.name  = dummy,
+					.name = dummy,
 				};
 
-		for(j = 0; j < channel_cfg->voltd_count; j++)
+		for (j = 0; j < channel_cfg->voltd_count; j++)
 			channel_cfg->voltd[j] =
 				(struct scmi_voltd) {
-					.name  = dummy,
+					.name = dummy,
 				};
 
-		for(j = 0; j < channel_cfg->pd_count; j++)
+		for (j = 0; j < channel_cfg->pd_count; j++)
 			channel_cfg->pd[j] =
 				(struct scmi_pd) {
-					.name  = dummy,
+					.name = dummy,
 				};
 	}
 
@@ -450,17 +454,18 @@ static int32_t scmi_scpfw_cfg_init_agent(const struct stm32_scmi_config *agent)
 	struct scpfw_channel_config *channel_cfg = NULL;
 	size_t j = 0;
 	struct scmi_clock *scmi_clk;
-	struct clk * clk;
+	struct clk *clk;
 
 	/* Clock and reset are exposed to agent#0/channel#0 */
-	channel_cfg = scpfw_cfg.agent_config[agent->dt_agent_id-1].channel_config;
+	channel_cfg = scpfw_cfg.agent_config[agent->dt_agent_id - 1].channel_config;
 	assert(channel_cfg);
 	if (channel_cfg->clock_count) {
 		for (j = 0; j < agent->ndt_clocks; j++) {
-			/*  Retrieve clk device with j indice*/
-			clk = plat_clocks[agent->dt_agent_id-1]+j;
-			/*  Retrieve scmi_clk according to scmi id, clk are
-			 *  ordered in table according to scmi id  */
+			/* Retrieve clk device with j indices */
+			clk = plat_clocks[agent->dt_agent_id - 1] + j;
+			/* Retrieve scmi_clk according to scmi id, clk are
+			 * ordered in table according to scmi id
+			 */
 			assert(agent->dt_clocks[j].scmi_id < agent->ndt_clocks_max);
 
 			scmi_clk = channel_cfg->clock +
@@ -468,16 +473,15 @@ static int32_t scmi_scpfw_cfg_init_agent(const struct stm32_scmi_config *agent)
 			clk->parent = clk_get(agent->dt_clocks[j].clk_dev,
 					      agent->dt_clocks[j].clk_subsys);
 
-			if (!clk->parent)
-			{
-				LOG_INFFMT("\r\nget scmi clock  %d : no parent\r\n",
-				       agent->dt_clocks[j].scmi_id);
+			if (!clk->parent) {
+				LOG_INFFMT("\r\nget scmi clock %d : no parent\r\n",
+					   agent->dt_clocks[j].scmi_id);
 				continue;
 			}
 			clk->name = agent->dt_clocks[j].name;
 			clk->ops = &plat_scmi_clk_ops;
 			clk->priv = (struct sm32_scmi_clock *)&no_rate;
-			/*  dt option to add */
+			/* dt option to add */
 			if (agent->dt_clocks[j].rate) {
 				clk->flags = CLK_SET_RATE_PARENT;
 				clk->priv = (struct stm32_scmi_clock *)&rate;
@@ -495,8 +499,8 @@ static int32_t scmi_scpfw_cfg_init_agent(const struct stm32_scmi_config *agent)
 	}
 
 	if (channel_cfg->reset_count) {
-		/*  re-order reset within table according to scmi id  */
-		for (j = 0; j <agent->ndt_resets; j++) {
+		/* re-order reset within table according to scmi id */
+		for (j = 0; j < agent->ndt_resets; j++) {
 			assert(agent->dt_resets[j].scmi_id < agent->ndt_resets_max);
 			channel_cfg->reset[agent->dt_resets[j].scmi_id] =
 				(struct scmi_reset) {
@@ -507,10 +511,11 @@ static int32_t scmi_scpfw_cfg_init_agent(const struct stm32_scmi_config *agent)
 	}
 
 	if (channel_cfg->voltd_count) {
-		/*  re-order regu within table according to scmi id  */
-		for (j = 0; j <agent->ndt_regus; j++) {
+		/* re-order regu within table according to scmi id */
+		for (j = 0; j < agent->ndt_regus; j++) {
 			const struct device *dev = agent->dt_regus[j].regu_dev;
 			bool enabled = false;
+
 			assert(agent->dt_regus[j].scmi_id < agent->ndt_regus_max);
 
 			if (regulator_common_is_init_enabled(dev))
@@ -520,7 +525,7 @@ static int32_t scmi_scpfw_cfg_init_agent(const struct stm32_scmi_config *agent)
 				psa_panic();
 
 			channel_cfg->voltd[agent->dt_regus[j].scmi_id] =
-				(struct scmi_voltd ){
+				(struct scmi_voltd){
 					.name = agent->dt_regus[j].regu_dev->name,
 					.dev = agent->dt_regus[j].regu_dev,
 					.enabled = enabled,
@@ -530,13 +535,13 @@ static int32_t scmi_scpfw_cfg_init_agent(const struct stm32_scmi_config *agent)
 
 	if (channel_cfg->pd_count) {
 
-		/*  re-order pd within table according to scmi id  */
+		/* re-order pd within table according to scmi id */
 		for (j = 0; j < agent->ndt_pd; j++) {
 			clk = clk_get(agent->dt_pd[j]->clk_dev,
 				      agent->dt_pd[j]->clk_subsys);
 			assert(agent->pd[j].scmi_id < agent->ndt_pd_max);
 			channel_cfg->pd[agent->dt_pd[j]->scmi_id] =
-				(struct scmi_pd ){
+				(struct scmi_pd){
 					.name = agent->dt_pd[j]->name,
 					.regu = agent->dt_pd[j]->regu_dev,
 					.clk = clk,
@@ -555,8 +560,9 @@ int32_t scmi_scpfw_cfg_init(void)
 	int32_t ret;
 
 	for (i = 0; i < AGENT_NUM; i++) {
-		ret =  scmi_scpfw_cfg_init_agent(scmi_cfg[i]);
-		if (ret) return ret;
+		ret = scmi_scpfw_cfg_init_agent(scmi_cfg[i]);
+		if (ret)
+			return ret;
 	}
 
 	return TFM_SCMI_SUCCESS;
