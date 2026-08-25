@@ -9,6 +9,7 @@
 
 #include <device.h>
 #include <devicetree.h>
+#include <errno.h>
 #include "psa/service.h"
 #include <stdint.h>
 #include <string.h>
@@ -185,8 +186,12 @@ static int stm32_scmi_init(const struct device *dev)
 {
 	int agent_count = ((struct stm32_scmi_config *)dev_get_config(dev))->dt_agent_id - 1;
 
-	assert(agent_count < ARRAY_SIZE(plat_clocks));
-	assert(agent_count < ARRAY_SIZE(scmi_cfg));
+	/* agent id 0 is incorrect, index must stay within the agent tables */
+	if ((agent_count < 0) ||
+	    (agent_count >= (int)ARRAY_SIZE(plat_clocks)) ||
+	    (agent_count >= (int)ARRAY_SIZE(scmi_cfg)))
+		return -EINVAL;
+
 	scmi_cfg[agent_count] = dev_get_config(dev);
 	plat_clocks[agent_count] = dev_get_data(dev);
 
@@ -376,17 +381,29 @@ int32_t scmi_scpfw_cfg_early_init(void)
 	scpfw_cfg.agent_config = calloc(AGENT_NUM, sizeof(*scpfw_cfg.agent_config));
 	struct scpfw_channel_config *channel_cfg = NULL;
 
+	if (!scpfw_cfg.agent_config)
+		return TFM_SCMI_OUT_OF_MEMORY;
+
 	for (i = 0; i < AGENT_NUM; i++) {
 		/* agent id 0 is incorrect */
-		int index = scmi_cfg[i]->dt_agent_id - 1;
+		int index;
 
-		assert(index < AGENT_NUM);
+		if (!scmi_cfg[i])
+			return TFM_SCMI_INVAL_PARAM;
+
+		index = scmi_cfg[i]->dt_agent_id - 1;
+		if ((index < 0) || (index >= AGENT_NUM))
+			return TFM_SCMI_INVAL_PARAM;
+
 		scpfw_cfg.agent_config[index].name = scmi_cfg[i]->dt_agent_name;
 		scpfw_cfg.agent_config[index].agent_id = scmi_cfg[i]->dt_agent_id;
 		/* initialize mbox channel if some */
 		scpfw_cfg.agent_config[index].channel_count = 1;
 		channel_cfg = calloc(scpfw_cfg.agent_config[index].channel_count,
 				     sizeof(*scpfw_cfg.agent_config[index].channel_config));
+		if (!channel_cfg)
+			return TFM_SCMI_OUT_OF_MEMORY;
+
 		/* initialize mbox channel if some */
 		if ((scmi_cfg[i]->dt_chan) && (scmi_cfg[i]->dt_shm->area) &&
 		    (scmi_cfg[i]->dt_shm->size)) {
@@ -416,6 +433,12 @@ int32_t scmi_scpfw_cfg_early_init(void)
 		channel_cfg->pd =
 			calloc(scpfw_cfg.agent_config[index].channel_config->pd_count,
 			       sizeof(*scpfw_cfg.agent_config[index].channel_config->pd));
+
+		if ((channel_cfg->clock_count && !channel_cfg->clock) ||
+		    (channel_cfg->reset_count && !channel_cfg->reset) ||
+		    (channel_cfg->voltd_count && !channel_cfg->voltd) ||
+		    (channel_cfg->pd_count && !channel_cfg->pd))
+			return TFM_SCMI_OUT_OF_MEMORY;
 
 		/* initialize with dummy name */
 		for (j = 0; j < channel_cfg->clock_count; j++)
@@ -456,9 +479,15 @@ static int32_t scmi_scpfw_cfg_init_agent(const struct stm32_scmi_config *agent)
 	struct scmi_clock *scmi_clk;
 	struct clk *clk;
 
+	/* agent id 0 is incorrect, index must stay within the agent tables */
+	if (!agent || (agent->dt_agent_id < 1) ||
+	    (agent->dt_agent_id > (int)AGENT_NUM))
+		return TFM_SCMI_INVAL_PARAM;
+
 	/* Clock and reset are exposed to agent#0/channel#0 */
 	channel_cfg = scpfw_cfg.agent_config[agent->dt_agent_id - 1].channel_config;
-	assert(channel_cfg);
+	if (!channel_cfg)
+		return TFM_SCMI_INVAL_PARAM;
 	if (channel_cfg->clock_count) {
 		for (j = 0; j < agent->ndt_clocks; j++) {
 			/* Retrieve clk device with j indices */
