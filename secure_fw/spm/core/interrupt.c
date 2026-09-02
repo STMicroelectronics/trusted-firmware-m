@@ -8,6 +8,8 @@
  *
  */
 
+#include <stdbool.h>
+
 #include "interrupt.h"
 
 #include "bitops.h"
@@ -27,6 +29,10 @@
 extern uintptr_t spm_boundary;
 #if PLATFORM_HAS_NS_NOTIF
 extern uint32_t ns_evt_owned;
+#endif
+
+#if (CONFIG_TFM_SPM_BACKEND_IPC == 1) && (CONFIG_TFM_SCHEDULE_WHEN_NS_INTERRUPTED == 0)
+static bool isr_sched_hint_cookie;
 #endif
 
 #if TFM_ISOLATION_LEVEL != 1
@@ -69,6 +75,15 @@ uint32_t tfm_flih_prepare_depriv_flih(struct partition_t *p_owner_sp,
         ctx_stack = p_owner_sp->thrd.p_context_ctrl->sp;
     }
 
+    /*
+     * FPU lazy stacking context preservation uses privilege and relative priorities
+     * recorded during original stacking. Thus it's important to flush FP context
+     * before boundary is changed for a new partition.
+     * Flush is always done (even if tfm_hal_boundary_need_switch returns false) to
+     * avoid issues in complex scheduling scenarios.
+     */
+    ARCH_FLUSH_FP_CONTEXT();
+
     FIH_CALL(tfm_hal_boundary_need_switch, fih_bool,
              p_curr_sp->boundary, p_owner_sp->boundary);
     if (fih_not_eq(fih_bool, fih_int_encode(false))) {
@@ -107,6 +122,15 @@ uint32_t tfm_flih_return_to_isr(psa_flih_result_t result,
 
     p_prev_sp = (struct partition_t *)(p_ctx_flih_ret->state_ctx.r2);
     p_owner_sp = GET_CURRENT_COMPONENT();
+
+    /*
+     * FPU lazy stacking context preservation uses privilege and relative priorities
+     * recorded during original stacking. Thus it's important to flush FP context
+     * before boundary is changed for a new partition.
+     * Flush is always done (even if tfm_hal_boundary_need_switch returns false) to
+     * avoid issues in complex scheduling scenarios.
+     */
+    ARCH_FLUSH_FP_CONTEXT();
 
     FIH_CALL(tfm_hal_boundary_need_switch, fih_bool,
              p_owner_sp->boundary, p_prev_sp->boundary);
@@ -159,8 +183,25 @@ const struct irq_load_info_t *get_irq_info_for_signal(
     return NULL;
 }
 
-void spm_handle_interrupt(void *p_pt, const struct irq_load_info_t *p_ildi)
+#if (CONFIG_TFM_SPM_BACKEND_IPC == 1) && (CONFIG_TFM_SCHEDULE_WHEN_NS_INTERRUPTED == 0)
+static inline void tfm_set_isr_cookie(void)
 {
+    isr_sched_hint_cookie = true;
+}
+
+bool tfm_get_isr_cookie(void)
+{
+    if (isr_sched_hint_cookie) {
+        isr_sched_hint_cookie = false;
+        return true;
+    }
+
+    return false;
+}
+#endif
+
+void spm_handle_interrupt(void *p_pt, const struct irq_load_info_t *p_ildi)
+{   
     psa_flih_result_t flih_result;
     struct partition_t *p_part;
     psa_status_t ret;
@@ -211,6 +252,17 @@ void spm_handle_interrupt(void *p_pt, const struct irq_load_info_t *p_ildi)
 
     if (flih_result == PSA_FLIH_SIGNAL) {
         ret = backend_assert_signal(p_pt, p_ildi->signal);
+
+#if CONFIG_TFM_SPM_BACKEND_IPC == 1 && (CONFIG_TFM_SCHEDULE_WHEN_NS_INTERRUPTED == 0)
+        if (ret == STATUS_NEED_SCHEDULE) {
+            /*
+             * Save an isr scheduling hint in the cookie for possible later
+             * processing.
+             */
+            tfm_set_isr_cookie();
+        }
+#endif
+
         /* In SFN backend, there is only one thread, no thread switch. */
 #if CONFIG_TFM_SPM_BACKEND_SFN != 1
         if (ret == STATUS_NEED_SCHEDULE) {

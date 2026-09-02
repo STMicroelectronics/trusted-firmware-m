@@ -8,7 +8,6 @@
 #include <stdint.h>
 
 #include "cmsis_compiler.h"
-#include "compiler_ext_defs.h"
 #include "config_impl.h"
 #include "security_defs.h"
 #include "svc_num.h"
@@ -17,6 +16,8 @@
 #include "psa/client.h"
 #include "psa/service.h"
 #include "tfm_arch.h"
+
+#include "compiler_ext_defs.h" /* Keep last. */
 
 /*
  * This is the veneers of FF-M Client APIs for Armv8.0-m.
@@ -79,7 +80,8 @@ static void clear_caller_context(void)
         "   bics   r12, r1                                    \n"
         "   vmsr   fpscr, r12                                 \n"
 #endif
-        "   movs    r3, #0x0                                  \n"
+        "   movs   r3, #0x0                                   \n"
+        "   mov    r12, r3                                    \n"
         "   msr    APSR_nzcvq, r3                             \n"
         "   bx     lr                                         \n"
     );

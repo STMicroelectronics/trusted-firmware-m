@@ -13,7 +13,6 @@
 #include "async.h"
 #include "config_spm.h"
 #include "critical_section.h"
-#include "compiler_ext_defs.h"
 #include "config_spm.h"
 #include "ffm/psa_api.h"
 #include "fih.h"
@@ -34,6 +33,8 @@
 #include "psa/error.h"
 #include "internal_status_code.h"
 #include "sprt_partition_metadata_indicator.h"
+
+#include "compiler_ext_defs.h" /* Keep last. */
 
 /* Declare the global component list */
 struct partition_head_t partition_listhead;
@@ -533,6 +534,15 @@ uint64_t ipc_schedule(uint32_t exc_return)
         }
 
         /*
+         * FPU lazy stacking context preservation uses privilege and relative priorities
+         * recorded during original stacking. Thus it's important to flush FP context
+         * before boundary is changed for a new partition.
+         * Flush is always done (even if tfm_hal_boundary_need_switch returns false) to
+         * avoid issues in complex scheduling scenarios.
+         */
+        ARCH_FLUSH_FP_CONTEXT();
+
+        /*
          * If required, let the platform update boundary based on its
          * implementation. Change privilege, MPU or other configurations.
          */
@@ -545,7 +555,6 @@ uint64_t ipc_schedule(uint32_t exc_return)
                 tfm_core_panic();
             }
         }
-        ARCH_FLUSH_FP_CONTEXT();
 
 #if ((CONFIG_TFM_SECURE_THREAD_MASK_NS_INTERRUPT == 1) ||\
      (CONFIG_TFM_SECURE_SLIH_MASK_NS_INTERRUPT == 1)) && defined(CONFIG_TFM_USE_TRUSTZONE)
