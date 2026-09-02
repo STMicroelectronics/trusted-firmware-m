@@ -28,11 +28,10 @@
 /* Data given to the CMAC PRF is at most an input prefixed by a 32bit index */
 #define HUK_CMAC_MAX_DATA_LEN	(HUK_MAX_DATA_LEN + sizeof(uint32_t))
 
-#if defined(STM32_M33TDCID)
-#define SAES_NODE_NAME	saes
-#define HUK_SUBKEY_DIE_ID	2
+#define SAES_NODE_NAME		saes
 
-BUILD_ASSERT(DT_NODE_HAS_STATUS(DT_NODELABEL(SAES_NODE_NAME), okay), "saes node is mandatory");
+#if DT_NODE_HAS_STATUS(DT_NODELABEL(SAES_NODE_NAME), okay)
+#define HUK_SUBKEY_DIE_ID	2
 
 /* HUK subkey management section */
 static void xor_block(uint8_t *b1, uint8_t *b2, size_t size)
@@ -333,7 +332,7 @@ static enum tfm_plat_err_t tfm_plat_get_huk(uint8_t *buf, size_t buf_len,
 
 	return TFM_PLAT_ERR_SUCCESS;
 }
-#else
+#else /* !DT_NODE_HAS_STATUS(DT_NODELABEL(SAES_NODE_NAME), okay) */
 static enum tfm_plat_err_t tfm_plat_get_huk(uint8_t *buf, size_t buf_len,
 					    size_t *key_len,
 					    psa_key_bits_t *key_bits,
@@ -380,7 +379,7 @@ psa_abort:
 
 	return TFM_PLAT_ERR_SYSTEM_ERR;
 }
-#endif
+#endif /* DT_NODE_HAS_STATUS(DT_NODELABEL(SAES_NODE_NAME), okay) */
 
 #ifdef TFM_PARTITION_INITIAL_ATTESTATION
 static enum tfm_plat_err_t tfm_plat_get_iak(uint8_t *buf, size_t buf_len,
