@@ -206,6 +206,8 @@ target_compile_definitions(platform_s
 )
 
 target_link_libraries(platform_s
+    PRIVATE
+        psa_interface
     PUBLIC
         lib_qsort
         tfm_log
