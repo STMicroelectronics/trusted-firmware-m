@@ -599,7 +599,7 @@ __unused void stm32_pwr_regulator_restore(void)							\
 }
 
 #define DEFINE_REGU_VDDIO(_node_id, _id, _reg) {						\
-	.enable_reg = _PWR ## _reg ## _OFFSET,							\
+	.enable_reg = _PWR ## _reg,								\
 	.enable_mask = _reg ## _ ## _id ## VMEN,						\
 	.ready_mask = _reg ## _ ## _id ## RDY,							\
 	.valid_mask = _reg ## _ ## _id ## SV,							\
@@ -612,7 +612,7 @@ __unused void stm32_pwr_regulator_restore(void)							\
 }
 
 #define DEFINE_REGU_VDD_IO(_node_id, _id, _reg) {						\
-	.enable_reg = _PWR ## _reg ## _OFFSET,							\
+	.enable_reg = _PWR ## _reg,								\
 	.vrsel_mask = _reg ## _ ## _id ## VRSEL,						\
 	.vin_supply = DT_DEV_REGULATOR_SUPPLY(_node_id, vin),					\
 	.is_an_iod = true,									\
@@ -622,7 +622,7 @@ __unused void stm32_pwr_regulator_restore(void)							\
 }
 
 #define DEFINE_REGU_FIXED(_node_id, _id, _reg) {						\
-	.enable_reg = _PWR ## _reg ## _OFFSET,							\
+	.enable_reg = _PWR ## _reg,								\
 	.enable_mask = _reg ## _ ## _id ## VMEN,						\
 	.ready_mask = _reg ## _ ## _id ## RDY,							\
 	.valid_mask = _reg ## _ ## _id ## SV,							\
@@ -630,7 +630,7 @@ __unused void stm32_pwr_regulator_restore(void)							\
 }
 
 #define DEFINE_REGU_FIXED_CLAMP(_node_id, _id, _reg) {						\
-	.enable_reg = _PWR ## _reg ## _OFFSET,							\
+	.enable_reg = _PWR ## _reg,								\
 	.enable_mask = _reg ## _ ## _id ## VMEN,						\
 	.ready_mask = _reg ## _ ## _id ## RDY,							\
 	.valid_mask = _reg ## _ ## _id ## SV,							\
@@ -639,7 +639,7 @@ __unused void stm32_pwr_regulator_restore(void)							\
 }
 
 #define DEFINE_REGU_GPU(_node_id, _id, _reg) {							\
-	.enable_reg = _PWR ## _reg ## _OFFSET,							\
+	.enable_reg = _PWR ## _reg,								\
 	.enable_mask = _reg ## _GPUVMEN,							\
 	.ready_mask = _reg ## _VDDGPURDY,							\
 	.valid_mask = _reg ## _GPUSV,								\

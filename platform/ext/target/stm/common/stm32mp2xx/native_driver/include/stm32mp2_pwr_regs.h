@@ -8,13 +8,13 @@
 #define STM32MP2_PWR_REGS_H
 
 /* PWR offset register */
-#define _PWR_CR1_OFFSET			U(0x000)
-#define _PWR_CR7_OFFSET			U(0x018)
-#define _PWR_CR8_OFFSET			U(0x01C)
-#define _PWR_CR9_OFFSET			U(0x020)
+#define _PWR_CR1			U(0x000)
+#define _PWR_CR7			U(0x018)
+#define _PWR_CR8			U(0x01C)
+#define _PWR_CR9			U(0x020)
 #define _PWR_CR11			U(0x028)
-#define _PWR_CR12_OFFSET		U(0x02C)
-#define _PWR_UCPDR_OFFSET		U(0x030)
+#define _PWR_CR12			U(0x02C)
+#define _PWR_UCPDR			U(0x030)
 #define _PWR_BDCR1			U(0x038)
 #define _PWR_CPU2CR			U(0x044)
 #define _PWR_D1CR			U(0x04C)
