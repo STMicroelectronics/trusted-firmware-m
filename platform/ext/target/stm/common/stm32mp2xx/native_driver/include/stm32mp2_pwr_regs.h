@@ -60,6 +60,10 @@
 #define _CR8_VDDIO1RDY			BIT(16)
 #define _CR8_VDDIO1VRSEL		BIT(24)
 
+/* PWR_CR9 register fields */
+#define _CR9_BKPRBSEN			BIT(0)
+#define _CR9_LPR1BSEN			BIT(4)
+
 /* PWR_CR11 register fields */
 #define _CR11_DDRRETDIS			BIT(0)
 

@@ -86,6 +86,9 @@ int stm32mp2_pwr_init(const struct device *dev)
 		      _FLD_PREP(_D2CR_LPLVDLY_D2, dev_cfg->lplvdly_d2) |
 		      _FLD_PREP(_D2CR_PODH_D2, dev_cfg->podh_d2_ms));
 
+	/* Maintain BKPSRAM content (used for TF-M ITS) in Standby modes */
+	io_setbits32(dev_cfg->base + _PWR_CR9, _CR9_BKPRBSEN);
+
 	/* Clear the CPU2 status flags on boot */
 	io_setbits32(dev_cfg->base + _PWR_CPU2CR, _CPU2CR_CSSF);
 #endif
