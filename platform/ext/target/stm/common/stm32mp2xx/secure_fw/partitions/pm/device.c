@@ -37,11 +37,14 @@ int pm_device_action_run(const struct device *dev, enum pm_device_action action,
 	if (pm->state == action_target_state[action])
 		return -EALREADY;
 
+	if (action == PM_DEVICE_ACTION_SUSPEND && pm_device_flags_has(dev, PM_DEVICE_F_NO_SUSPEND))
+		return 0;
+
 	err = pm->action_cb(dev, action, pm_hint);
 	if (err)
 		return err;
 
-	pm->state = action_target_state[action];
+	pm_device_set_state(dev, action_target_state[action]);
 
 	VERBOSE("[PM] %s, %s return : %d\n", dev->name, action ? "resume" : "suspend", err);
 
@@ -60,15 +63,12 @@ bool pm_suspend_devices(uint32_t pm_hint)
 	for (const struct device *dev = devs + devc - 1; dev >= devs; dev--) {
 		int ret;
 
-		/*
-		 * Ignore uninitialized devices, busy devices, wake up sources, and
-		 * devices with runtime PM enabled.
-		 */
+		/* Ignore uninitialized devices */
 		if (!device_is_ready(dev))
 			continue;
 
 		ret = pm_device_action_run(dev, PM_DEVICE_ACTION_SUSPEND, pm_hint);
-		/* ignore devices not supporting or already at the given state */
+		/* Ignore devices not supporting or already at the given state */
 		if ((ret == -ENOSYS) || (ret == -ENOTSUP) || (ret == -EALREADY)) {
 			continue;
 		} else if (ret < 0) {
@@ -87,6 +87,14 @@ bool pm_suspend_devices(uint32_t pm_hint)
 void pm_resume_devices(uint32_t pm_hint)
 {
 	int ret, nb_err = 0;
+
+	/* Update pm state for device which has set PM_DEVICE_F_NO_SUSPEND flag */
+	for (int i = (num_susp - 1); i >= 0; i--) {
+		const struct device *dev = TYPE_SECTION_START(pm_device_slots)[i];
+
+		if (device_is_ready(dev) && pm_device_flags_has(dev, PM_DEVICE_F_NO_SUSPEND))
+			pm_device_set_state(dev, PM_DEVICE_STATE_SUSPENDED);
+	}
 
 	for (int i = (num_susp - 1); i >= 0; i--) {
 		const struct device *dev = TYPE_SECTION_START(pm_device_slots)[i];

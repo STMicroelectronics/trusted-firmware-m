@@ -30,6 +30,7 @@ enum pm_device_state {
 
 /** @brief PM flags */
 #define PM_DEVICE_F_NONE		0
+#define PM_DEVICE_F_NO_SUSPEND		BIT(0)
 
 #define PM_DEVICE_NAME(dev_id) _CONCAT(__pm_device_, dev_id)
 
@@ -113,6 +114,15 @@ struct pm_device {
 #ifdef CONFIG_PM_DEVICE
 bool pm_suspend_devices(uint32_t pm_hint);
 void pm_resume_devices(uint32_t pm_hint);
+
+static inline void pm_device_set_state(const struct device *dev, enum pm_device_state state)
+{
+	struct pm_device *pm = dev->pm;
+
+	if (pm != NULL)
+		pm->state = state;
+}
+
 static inline bool pm_device_is_active(const struct device *dev)
 {
 	struct pm_device *pm = dev->pm;
@@ -139,6 +149,7 @@ static inline bool pm_device_flags_has(const struct device *dev, uint32_t flags)
 #else
 static inline bool pm_suspend_devices(uint32_t pm_hint __unused) {return true;}
 static inline void pm_resume_devices(uint32_t pm_hint __unused) {}
+static inline void pm_device_set_state(const struct device *dev, enum pm_device_state state) {}
 static inline bool pm_device_is_active(const struct device *dev __unused) {return true;}
 static inline void pm_device_flags_set(const struct device *dev __unused, uint32_t flag __unused) {}
 static inline bool pm_device_flags_has(const struct device *dev __unused, uint32_t flags __unused)
