@@ -538,6 +538,9 @@ int stm32_uart_dt_init(const struct device *dev)
 	if (err)
 		return err;
 
+	if (IS_ENABLED(STM32_CONSOLE_NO_SUSPEND))
+		pm_device_flags_set(dev, PM_DEVICE_F_NO_SUSPEND);
+
 	return stm32_uart_configure(dev, &drv_data->uart_config);
 }
 
@@ -550,8 +553,6 @@ static int stm32_uart_pm_action(const struct device *dev,
 	int err = 0;
 
 	if (action == PM_DEVICE_ACTION_SUSPEND) {
-		if (IS_ENABLED(STM32_CONSOLE_NO_SUSPEND))
-			goto out;
 		err = pinctrl_apply_state_optional(drv_cfg->pcfg, PINCTRL_STATE_SLEEP);
 		if (err)
 			goto out;
