@@ -239,7 +239,7 @@ static const struct stm32mp2_pwr_rif_config pwr_rif_cfg_##n = {			\
 	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),					\
 };										\
 										\
-PM_DEVICE_DT_INST_DEFINE(n, stm32mp2_pwr_rif_pm_action);			\
+PM_DEVICE_DT_INST_DEFINE(n, stm32mp2_pwr_rif_pm_action, PM_DEVICE_F_NONE);	\
 										\
 DEVICE_DT_INST_DEFINE(n, &stm32mp2_pwr_rif_init,				\
 		      PM_DEVICE_DT_INST_GET(n),					\

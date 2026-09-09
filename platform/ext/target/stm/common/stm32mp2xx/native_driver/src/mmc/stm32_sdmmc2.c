@@ -736,7 +736,7 @@ static const struct stm32_sdmmc2_config stm32_sdmmc2_mmc_cfg_##n = {		\
 										\
 static struct stm32_sdmmc2_data stm32_sdmmc2_mmc_data_##n = {};			\
 										\
-PM_DEVICE_DT_INST_DEFINE(n, stm32_sdmmc_pm_action);				\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_sdmmc_pm_action, PM_DEVICE_F_NONE);		\
 										\
 DEVICE_DT_INST_DEFINE(n,							\
 		      &stm32_sdmmc2_mmc_init,					\

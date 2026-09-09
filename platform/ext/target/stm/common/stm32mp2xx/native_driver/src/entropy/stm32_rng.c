@@ -462,7 +462,8 @@ static const struct stm32_rng_config stm32_rng_cfg_##n = {				  \
 static struct stm32_rng_data stm32_rng_data_##n = {					  \
 	.variant = _variant,								  \
 };											  \
-PM_DEVICE_DT_INST_DEFINE(n, stm32_rng_pm_action);					  \
+											  \
+PM_DEVICE_DT_INST_DEFINE(n, stm32_rng_pm_action, PM_DEVICE_F_NONE);			  \
 											  \
 DEVICE_DT_INST_DEFINE(n,								  \
 		 &stm32_rng_init,							  \

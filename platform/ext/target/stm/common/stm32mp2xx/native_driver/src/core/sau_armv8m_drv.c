@@ -221,7 +221,7 @@ static const struct arm_sau_config cfg_##n = {							\
 												\
 static struct arm_sau_data data_##n = {};							\
 												\
-PM_DEVICE_DT_INST_DEFINE(n, arm_sau_pm_action);							\
+PM_DEVICE_DT_INST_DEFINE(n, arm_sau_pm_action, PM_DEVICE_F_NONE);				\
 												\
 DEVICE_DT_INST_DEFINE(n, &arm_sau_init, PM_DEVICE_DT_INST_GET(n),				\
 		      &data_##n,								\

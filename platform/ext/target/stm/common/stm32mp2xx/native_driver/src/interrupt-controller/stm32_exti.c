@@ -588,7 +588,7 @@ static struct stm32_exti_data exti_data_##n = {						\
 	.lines_map = _EXTI_IRQ_NESTED_TBL_NAME(n),					\
 };											\
 											\
-PM_DEVICE_DT_INST_DEFINE(n, stm32_exti_pm_action);					\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_exti_pm_action, PM_DEVICE_F_NONE);			\
 											\
 DEVICE_DT_INST_DEFINE(n, &stm32_exti_init, PM_DEVICE_DT_INST_GET(n),			\
 		      &exti_data_##n, &exti_cfg_##n,					\

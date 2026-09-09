@@ -3506,7 +3506,7 @@ static struct clk_controller_api stm32mp21_clk_api = {
 	.get = stm32_clk_get,
 };
 
-PM_DEVICE_DT_INST_DEFINE(0, stm32_rcc_pm_action);
+PM_DEVICE_DT_INST_DEFINE(0, stm32_rcc_pm_action, PM_DEVICE_F_NONE);
 
 DEVICE_DT_INST_DEFINE(0,
 		      &stm32mp21_clk_dt_init,

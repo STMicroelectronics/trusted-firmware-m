@@ -171,7 +171,7 @@ static struct stm32_syscfg_data stm32_syscfg_data_##n = {				\
 	.variant = _variant,								\
 };											\
 											\
-PM_DEVICE_DT_INST_DEFINE(n, stm32_syscfg_pm_action);					\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_syscfg_pm_action, PM_DEVICE_F_NONE);			\
 											\
 DEVICE_DT_INST_DEFINE(n,								\
 		      &stm32_syscfg_init,						\

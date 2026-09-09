@@ -890,7 +890,7 @@ static const struct stm32_omi_config stm32_omi_cfg_##n = {			\
 										\
 static struct stm32_omi_data stm32_omi_data_##n = {};				\
 										\
-PM_DEVICE_DT_INST_DEFINE(n, stm32_omi_pm_action);				\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_omi_pm_action, PM_DEVICE_F_NONE);		\
 										\
 DEVICE_DT_INST_DEFINE(n,							\
 		      &stm32_omi_init,						\

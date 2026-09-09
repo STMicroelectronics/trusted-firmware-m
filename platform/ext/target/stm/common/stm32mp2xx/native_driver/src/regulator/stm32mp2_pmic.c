@@ -1236,7 +1236,7 @@ static const struct regulator_driver_api stpmic2_api = {
 		.pmic_dev = dev,							\
 	};										\
 											\
-	PM_DEVICE_DT_DEFINE(node_id, stpmic2_reg_pm_action);				\
+	PM_DEVICE_DT_DEFINE(node_id, stpmic2_reg_pm_action, PM_DEVICE_F_NONE);		\
 											\
 	DEVICE_DT_DEFINE(node_id, &stpmic2_reg_init,					\
 			 PM_DEVICE_DT_GET(node_id),					\
@@ -1503,7 +1503,7 @@ static struct stpmic_data stpmic##t##_data_##n = {				\
 	.irq_hdl_tbl = _PMIC_INTC_IRQ_TBL_NAME(n),				\
 };										\
 										\
-PM_DEVICE_DT_INST_DEFINE(n, stpmic2_pm_action);					\
+PM_DEVICE_DT_INST_DEFINE(n, stpmic2_pm_action, PM_DEVICE_F_NONE);		\
 										\
 DEVICE_DT_INST_DEFINE(n, &stpmic_probe,						\
 	PM_DEVICE_DT_INST_GET(n),						\

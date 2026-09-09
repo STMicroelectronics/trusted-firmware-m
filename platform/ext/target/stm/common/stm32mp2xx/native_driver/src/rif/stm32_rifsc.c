@@ -624,7 +624,7 @@ static const struct stm32_rifsc_config stm32_rifsc_cfg_##n = {				\
 											\
 static struct rifsc_driver_data stm32_rifsc_data_##n = {};				\
 											\
-PM_DEVICE_DT_INST_DEFINE(n, stm32_rifsc_pm_action);					\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_rifsc_pm_action, PM_DEVICE_F_NONE);			\
 											\
 DEVICE_DT_INST_DEFINE(n, &stm32_rifsc_init,						\
 		      PM_DEVICE_DT_INST_GET(n),						\

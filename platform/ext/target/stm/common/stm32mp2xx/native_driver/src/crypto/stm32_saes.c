@@ -1049,7 +1049,7 @@ static struct stm32_saes_data stm32_saes_data_##n = {				\
 	.variant = _variant,							\
 };										\
 										\
-PM_DEVICE_DT_INST_DEFINE(n, stm32_saes_pm_action);				\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_saes_pm_action, PM_DEVICE_F_NONE);		\
 										\
 DEVICE_DT_INST_DEFINE(n,							\
 		      &stm32_saes_probe,					\

@@ -926,7 +926,7 @@ static struct stm32_risaf_data stm32_risaf_data_##name####n = {				\
 	.variant = &_variant,								\
 };											\
 											\
-PM_DEVICE_DT_INST_DEFINE(n, stm32_risaf_pm_action);					\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_risaf_pm_action, PM_DEVICE_F_NONE);			\
 											\
 DEVICE_DT_INST_DEFINE(n, &stm32_risaf_init,						\
 		      PM_DEVICE_DT_INST_GET(n),						\

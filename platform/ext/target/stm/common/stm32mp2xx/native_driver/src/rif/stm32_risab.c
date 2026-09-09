@@ -490,7 +490,7 @@ static const struct stm32_risab_config stm32_risab_cfg_##n = {			\
 	.st_glock = DT_INST_PROP_OR(n, st_glock, false),			\
 };										\
 										\
-PM_DEVICE_DT_INST_DEFINE(n, stm32_risab_pm_action);				\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_risab_pm_action, PM_DEVICE_F_NONE);		\
 										\
 static struct stm32_risab_data stm32_risab_data_##n = {};			\
 										\

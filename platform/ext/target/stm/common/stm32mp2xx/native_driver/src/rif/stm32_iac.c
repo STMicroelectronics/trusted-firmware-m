@@ -256,7 +256,7 @@ static const struct stm32_iac_config stm32_iac_cfg_##n = {				\
 											\
 static struct stm32_iac_data stm32_iac_data_##n = {};					\
 											\
-PM_DEVICE_DT_INST_DEFINE(n, stm32_iac_pm_action);					\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_iac_pm_action, PM_DEVICE_F_NONE);			\
 											\
 DEVICE_DT_INST_DEFINE(n, &stm32_iac_init,						\
 		      PM_DEVICE_DT_INST_GET(n),						\

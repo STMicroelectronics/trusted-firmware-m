@@ -230,7 +230,7 @@ static const struct stm32_serc_config stm32_serc_cfg_##n = {				\
 											\
 static struct stm32_serc_data stm32_serc_data_##n = {};					\
 											\
-PM_DEVICE_DT_INST_DEFINE(n, stm32_serc_pm_action);					\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_serc_pm_action, PM_DEVICE_F_NONE);			\
 											\
 DEVICE_DT_INST_DEFINE(n, &stm32_serc_init,						\
 		      PM_DEVICE_DT_INST_GET(n),						\

@@ -186,7 +186,7 @@ static const struct stm32_gpio_config stm32_gpio_cfg_##n = {				\
 	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),						\
 };											\
 											\
-PM_DEVICE_DT_INST_DEFINE(n, stm32_gpio_pm_action);					\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_gpio_pm_action, PM_DEVICE_F_NONE);			\
 											\
 DEVICE_DT_INST_DEFINE(n,								\
 		      &stm32_gpio_init,							\

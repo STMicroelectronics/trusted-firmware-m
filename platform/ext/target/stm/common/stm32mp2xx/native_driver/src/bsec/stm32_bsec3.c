@@ -1006,7 +1006,7 @@ static struct stm32_bsec_data stm32_bsec3_data_ ## node_id = {			\
 										\
 static const struct device *bsec_dev = DEVICE_DT_INST_GET(0);			\
 										\
-PM_DEVICE_DT_DEFINE(node_id, stm32_bsec_pm_action);				\
+PM_DEVICE_DT_DEFINE(node_id, stm32_bsec_pm_action, PM_DEVICE_F_NONE);		\
 										\
 DEVICE_DT_DEFINE(node_id, &stm32_bsec_dt_init, PM_DEVICE_DT_GET(node_id),	\
 		 &stm32_bsec3_data_##node_id,					\

@@ -267,7 +267,7 @@ static const struct stm32_hpdma_config hpdma_cfg_##n = {			\
 	.errata_ahbrisab = DT_INST_PROP_OR(n, st_errata_ahbrisab, false)	\
 };										\
 										\
-PM_DEVICE_DT_INST_DEFINE(n, stm32_hpdma_pm_action);				\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_hpdma_pm_action, PM_DEVICE_F_NONE);		\
 										\
 DEVICE_DT_INST_DEFINE(n, &stm32_hpdma_init,					\
 		      PM_DEVICE_DT_INST_GET(n),					\

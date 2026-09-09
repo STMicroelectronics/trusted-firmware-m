@@ -28,12 +28,16 @@ enum pm_device_state {
 	PM_DEVICE_STATE_SUSPENDED,
 };
 
+/** @brief PM flags */
+#define PM_DEVICE_F_NONE		0
+
 #define PM_DEVICE_NAME(dev_id) _CONCAT(__pm_device_, dev_id)
 
-#define PM_DEVICE_INIT(node_id, pm_action_cb)					\
+#define PM_DEVICE_INIT(node_id, pm_action_cb, _flags)				\
 	{									\
 		.state = PM_DEVICE_STATE_ACTIVE,				\
 		.action_cb = pm_action_cb,					\
+		.flags = _flags							\
 	}
 
 #define PM_DEVICE_DEFINE_SLOT(dev_id)						\
@@ -46,11 +50,12 @@ enum pm_device_state {
  * @param node_id Node identifier (DT_INVALID_NODE if not a DT device).
  * @param dev_id Device id.
  * @param pm_action_cb PM control callback.
+ * @param flags Initial value for the device PM flags field.
  */
-#define PM_DEVICE_DEFINE(node_id, dev_id, pm_action_cb)				\
+#define PM_DEVICE_DEFINE(node_id, dev_id, pm_action_cb, _flags)			\
 	PM_DEVICE_DEFINE_SLOT(dev_id);						\
 	static struct pm_device PM_DEVICE_NAME(dev_id) =			\
-		PM_DEVICE_INIT(node_id, pm_action_cb)
+		PM_DEVICE_INIT(node_id, pm_action_cb, _flags)
 
 /**
  * Get a reference to the device PM resources.
@@ -60,16 +65,16 @@ enum pm_device_state {
 #define PM_DEVICE_GET(dev_id) ((struct pm_device *)&PM_DEVICE_NAME(dev_id))
 
 #else
-#define PM_DEVICE_DEFINE(node_id, dev_id, pm_action_cb)
+#define PM_DEVICE_DEFINE(node_id, dev_id, pm_action_cb, _flags)
 #define PM_DEVICE_GET(dev_id) NULL
 
 #endif /* CONFIG_PM_DEVICE */
 
-#define PM_DEVICE_DT_DEFINE(node_id, pm_action_cb)				\
-	PM_DEVICE_DEFINE(node_id, DEVICE_DT_DEV_ID(node_id), pm_action_cb)
+#define PM_DEVICE_DT_DEFINE(node_id, pm_action_cb, _flags)			\
+	PM_DEVICE_DEFINE(node_id, DEVICE_DT_DEV_ID(node_id), pm_action_cb, _flags)
 
-#define PM_DEVICE_DT_INST_DEFINE(inst, pm_action_cb)				\
-	PM_DEVICE_DT_DEFINE(DT_DRV_INST(inst), pm_action_cb)
+#define PM_DEVICE_DT_INST_DEFINE(inst, pm_action_cb, _flags)			\
+	PM_DEVICE_DT_DEFINE(DT_DRV_INST(inst), pm_action_cb, _flags)
 
 #define PM_DEVICE_DT_GET(node_id)						\
 	PM_DEVICE_GET(DEVICE_DT_DEV_ID(node_id))
@@ -102,6 +107,7 @@ struct pm_device {
 	enum pm_device_state state;
 	/** Device PM action callback */
 	pm_device_action_cb_t action_cb;
+	uint32_t flags;
 };
 
 #ifdef CONFIG_PM_DEVICE

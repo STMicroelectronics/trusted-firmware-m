@@ -190,7 +190,7 @@ const struct systick_config systick_cfg = {
 	.tick_hz = DT_INST_PROP(0, clock_frequency),
 };
 
-PM_DEVICE_DT_INST_DEFINE(0, systick_pm_action);
+PM_DEVICE_DT_INST_DEFINE(0, systick_pm_action, PM_DEVICE_F_NONE);
 
 DEVICE_DT_INST_DEFINE(0,
 		      &systick_init, PM_DEVICE_DT_INST_GET(0),

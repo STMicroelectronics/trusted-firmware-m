@@ -894,7 +894,7 @@ static const struct stm32_i2c_config cfg_##n = {				\
 										\
 static struct stm32_i2c_data data_##n = {};					\
 										\
-PM_DEVICE_DT_INST_DEFINE(n, stm32_i2c_pm_action);				\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_i2c_pm_action, PM_DEVICE_F_NONE);		\
 										\
 DEVICE_DT_INST_DEFINE(n,							\
 		      &stm32_i2c_init,						\

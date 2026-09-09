@@ -202,7 +202,7 @@ static const struct stm32_fmc_config fmc_cfg_##n = {					\
 											\
 static struct stm32_fmc_data fmc_data_##n = {};						\
 											\
-PM_DEVICE_DT_INST_DEFINE(n, stm32_fmc_pm_action);					\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_fmc_pm_action, PM_DEVICE_F_NONE);			\
 											\
 DEVICE_DT_INST_DEFINE(n, &stm32_fmc_init,						\
 		      PM_DEVICE_DT_INST_GET(n),						\

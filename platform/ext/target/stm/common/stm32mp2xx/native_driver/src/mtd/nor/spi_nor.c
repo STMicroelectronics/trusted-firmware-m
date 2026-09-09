@@ -743,7 +743,7 @@ static const struct spi_nor_config spi_nor_cfg_##n = {					\
 											\
 static struct spi_nor_data spi_nor_data_##n = {};					\
 											\
-PM_DEVICE_DT_INST_DEFINE(n, spi_nor_pm_action);						\
+PM_DEVICE_DT_INST_DEFINE(n, spi_nor_pm_action, PM_DEVICE_F_NONE);			\
 											\
 DEVICE_DT_INST_DEFINE(n,								\
 		      &spi_nor_init,							\

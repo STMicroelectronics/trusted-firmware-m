@@ -661,7 +661,7 @@ __unused void stm32_pwr_regulator_restore(void)							\
 					     st_syscfg_vddio, 0, offset),			\
 	};											\
 												\
-	PM_DEVICE_DT_DEFINE(node_id, stm32_pwr_regulator_pm_action);				\
+	PM_DEVICE_DT_DEFINE(node_id, stm32_pwr_regulator_pm_action, PM_DEVICE_F_NONE);		\
 												\
 	DEVICE_DT_DEFINE(node_id, &stm32_pwr_regulator_init, PM_DEVICE_DT_GET(node_id),		\
 			 &stm32_data_##id, &stm32_cfg_##id,					\

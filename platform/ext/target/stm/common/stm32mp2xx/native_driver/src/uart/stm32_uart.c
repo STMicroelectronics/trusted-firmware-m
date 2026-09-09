@@ -609,7 +609,7 @@ static struct stm32_uart_data stm32_uart_data_##n = {					\
 	.uart_config = _UART_CFG(n),							\
 };											\
 											\
-PM_DEVICE_DT_INST_DEFINE(n, stm32_uart_pm_action);					\
+PM_DEVICE_DT_INST_DEFINE(n, stm32_uart_pm_action, PM_DEVICE_F_NONE);			\
 											\
 DEVICE_DT_INST_DEFINE(n,								\
 		      &stm32_uart_dt_init,						\
