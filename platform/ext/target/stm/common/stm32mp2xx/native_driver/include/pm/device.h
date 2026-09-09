@@ -118,10 +118,31 @@ static inline bool pm_device_is_active(const struct device *dev)
 	struct pm_device *pm = dev->pm;
 	return (pm == NULL) || (pm->state == PM_DEVICE_STATE_ACTIVE);
 }
+
+static inline void pm_device_flags_set(const struct device *dev, uint32_t flag)
+{
+	struct pm_device *pm = dev->pm;
+
+	if (pm != NULL)
+		pm->flags |= flag;
+}
+
+static inline bool pm_device_flags_has(const struct device *dev, uint32_t flags)
+{
+	struct pm_device *pm = dev->pm;
+
+	if (pm == NULL)
+		return false;
+
+	return (pm->flags & flags) == flags;
+}
 #else
 static inline bool pm_suspend_devices(uint32_t pm_hint __unused) {return true;}
 static inline void pm_resume_devices(uint32_t pm_hint __unused) {}
 static inline bool pm_device_is_active(const struct device *dev __unused) {return true;}
+static inline void pm_device_flags_set(const struct device *dev __unused, uint32_t flag __unused) {}
+static inline bool pm_device_flags_has(const struct device *dev __unused, uint32_t flags __unused)
+{return false; }
 #endif
 
 #endif /* TFM_PM_DEVICE_H */
