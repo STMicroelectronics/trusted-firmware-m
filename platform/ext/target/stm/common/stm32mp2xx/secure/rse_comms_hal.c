@@ -198,7 +198,7 @@ enum tfm_plat_err_t tfm_multi_core_hal_receive_sfn(struct client_request_t *req)
 	memset(req, 0, sizeof(*req));
 
 	/* Receive complete message from shared memory */
-	recvmsg(&msg, &msg_len);
+	rse_shmem_recv(&msg, &msg_len);
 
 	/* Record the sender device to be used for the reply */
 	req->mhu_sender_dev = (void *)CLIENT_ID_OWNER_MAGIC;
@@ -210,7 +210,7 @@ enum tfm_plat_err_t tfm_multi_core_hal_receive_sfn(struct client_request_t *req)
 						 PSA_ERROR_CONNECTION_BUSY,
 						 &reply, &reply_size)
 		    == TFM_PLAT_ERR_SUCCESS) {
-			if (sendmsg((uint8_t *)&reply, reply_size))
+			if (rse_shmem_send((uint8_t *)&reply, reply_size))
 				mbox_send_dt(&channel, NULL);
 		}
 		return err;
