@@ -17,4 +17,3 @@
 
 int stm32_ramcfg_crc_compute(const struct device *dev, size_t buf_size);
 void stm32_ramcfg_crc_enable(const struct device *dev);
-void stm32_ramcfg_crc_disable(const struct device *dev);

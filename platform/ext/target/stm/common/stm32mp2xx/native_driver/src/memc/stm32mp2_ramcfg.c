@@ -133,19 +133,6 @@ void stm32_ramcfg_crc_enable(const struct device *dev)
 			   _RAMCFG_CCR1_CRCC_CHECK);
 }
 
-void stm32_ramcfg_crc_disable(const struct device *dev)
-{
-	const struct stm32_ramcfg_config *drv_cfg = dev_get_config(dev);
-	const uint32_t base = drv_cfg->base;
-
-	if (!drv_cfg->has_crc)
-		return;
-
-	/* Disable CRC  */
-	mmio_clrsetbits_32(base + _RAMCFG_CCR1, _RAMCFG_CCR1_CRCC_MASK,
-			   _RAMCFG_CCR1_CRCC_DISA);
-}
-
 static void stm32_ramcfg_ecc_enable(const struct device *dev)
 {
 	const struct stm32_ramcfg_config *drv_cfg = dev_get_config(dev);
