@@ -60,7 +60,6 @@ static void restore_it_status(void)
 
 static int jump_low_power_fw(stm32mp2_lp_fw_suspend_mode_t lpfwmode)
 {
-	const struct device *ramcfg_retram = DT_RAMCFG_DEVICE(retram);
 	int res;
 	int err;
 
@@ -93,16 +92,7 @@ static int jump_low_power_fw(stm32mp2_lp_fw_suspend_mode_t lpfwmode)
 			goto cache_error;
 	}
 
-	/*
-	 * CRC and signature check is enabled only during Standby
-	 * to avoid LP FW execution on cortex-M33 reset
-	 */
-	if (lpfwmode == STM32MP2_LP_FW_LPMODE_STANDBY1)
-		stm32_ramcfg_crc_enable(ramcfg_retram);
-
 	res = stm32mp2_lp_fw_exec();
-
-	stm32_ramcfg_crc_disable(ramcfg_retram);
 
 	/* restore tfm execution context after stm32mp2_lp_fw_exec() */
 	__set_MSPLIM(tfm_context.MSPLIM);
@@ -253,6 +243,7 @@ psa_status_t tfm_pm_power_off(void)
 psa_status_t tfm_pm_fw_init(uint8_t *key, uint8_t size)
 {
 	const uintptr_t uart_addr = DT_REG_ADDR(DT_CHOSEN(stdout_device));
+	const struct device *ramcfg_retram = DT_RAMCFG_DEVICE(retram);
 
 #if (TFM_PARTITION_LOG_LEVEL < TFM_PARTITION_LOG_LEVEL_INFO)
 	/* Deactivate LP firmware trace */
@@ -276,6 +267,9 @@ psa_status_t tfm_pm_fw_init(uint8_t *key, uint8_t size)
 	/* Debug trace in LP firmware only if UART device is not suspended */
 	if (!IS_ENABLED(STM32_CONSOLE_NO_SUSPEND))
 		stm32mp2_lp_fw_set_uart_addr(0x0);
+
+	/* CRC and signature check is enabled to manage Standby exit */
+	stm32_ramcfg_crc_enable(ramcfg_retram);
 
 	return PSA_SUCCESS;
 }
