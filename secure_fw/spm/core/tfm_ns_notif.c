@@ -28,20 +28,17 @@ __tz_c_veneer
 int32_t tfm_ns_notif_init_s(void *area, size_t area_size)
 {
 	struct critical_section_t cs_signal = CRITICAL_SECTION_STATIC_INIT;
-	uintptr_t boundary = (1 << HANDLE_ATTR_NS_POS) &
-		HANDLE_ATTR_NS_MASK;
-	uint32_t attr = TFM_HAL_ACCESS_READWRITE;
-	bool ns_caller = tfm_spm_is_ns_caller();
-	uint32_t ret;
+	fih_int fih_rc = FIH_FAILURE;
 
-	if (!ns_caller)
-		return TFM_HAL_ERROR_INVALID_INPUT;
+	if (!tfm_spm_is_ns_caller())
+		tfm_core_panic();
 
-	ret = tfm_hal_memory_check(boundary, (uintptr_t)area,
-				   area_size, attr);
-
-	if (ret != TFM_HAL_SUCCESS)
-		return ret;
+	FIH_CALL(tfm_hal_memory_check, fih_rc,
+		 (1 << HANDLE_ATTR_NS_POS) & HANDLE_ATTR_NS_MASK,
+		 (uintptr_t)area, area_size, TFM_HAL_ACCESS_READWRITE);
+	if (fih_not_eq(fih_rc, fih_int_encode(PSA_SUCCESS))) {
+		tfm_core_panic();
+	}
 
 	if (p_ns_fifo)
 		return  TFM_HAL_ERROR_BAD_STATE;
@@ -66,7 +63,8 @@ int32_t tfm_ns_notif_init_s(void *area, size_t area_size)
 		return TFM_HAL_ERROR_GENERIC;
 	}
 	CRITICAL_SECTION_LEAVE(cs_signal);
-	return 0;
+
+	return TFM_HAL_SUCCESS;
 }
 
 __tz_c_veneer
