@@ -386,7 +386,7 @@ def write_tfm_interrupts(node: edtlib.Node) -> None:
         macro2val.update(controller_and_data_macros(entry, i, macro, prop_id))
 
     ilen = len(node.interrupts)
-    if ilen is not None:
+    if ilen > 0:
         # DT_N_<node-id>_P_<prop-id>_FOREACH_PROP_ELEM
         macro2val[f"{macro}_FOREACH_PROP_ELEM(fn)"] = (
             ' \\\n\t'.join(f'fn(DT_{node.z_path_id}, {prop_id}, {i})'
