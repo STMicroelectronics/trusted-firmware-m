@@ -47,6 +47,7 @@ struct tfm_wdt_service_out_t {
 	union {
 		struct wdt_info  {
 			int32_t status;
+			uint32_t timeout;
 		} info;
 	};
 };
