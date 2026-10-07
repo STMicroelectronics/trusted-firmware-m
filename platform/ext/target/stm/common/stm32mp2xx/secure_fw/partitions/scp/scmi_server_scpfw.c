@@ -570,7 +570,7 @@ static int32_t scmi_scpfw_cfg_init_agent(const struct stm32_scmi_config *agent)
 		for (j = 0; j < agent->ndt_pd; j++) {
 			clk = clk_get(agent->dt_pd[j]->clk_dev,
 				      agent->dt_pd[j]->clk_subsys);
-			assert(agent->pd[j].scmi_id < agent->ndt_pd_max);
+			assert(agent->dt_pd[j]->scmi_id < agent->ndt_pd_max);
 			channel_cfg->pd[agent->dt_pd[j]->scmi_id] =
 				(struct scmi_pd){
 					.name = agent->dt_pd[j]->name,
