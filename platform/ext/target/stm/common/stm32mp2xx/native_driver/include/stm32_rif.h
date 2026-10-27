@@ -234,23 +234,23 @@ struct rifprot_controller {
 	DT_RIFPROT_CTRL_EXTERN(DT_DRV_INST(inst))
 
 #if (IS_ENABLED(STM32_NSEC))
-inline int stm32_rifprot_init(const struct rifprot_controller *ctl)
+static inline int stm32_rifprot_init(const struct rifprot_controller *ctl)
 {
 	return 0;
 }
 
-inline int stm32_rifprot_release_conf(const struct rifprot_controller *ctl, uint32_t id)
+static inline int stm32_rifprot_release_conf(const struct rifprot_controller *ctl, uint32_t id)
 {
 	return 0;
 }
 
-inline int stm32_rifprot_set_conf(const struct rifprot_controller *ctl,
-				  struct rifprot_config *cfg)
+static inline int stm32_rifprot_set_conf(const struct rifprot_controller *ctl,
+					 struct rifprot_config *cfg)
 {
 	return 0;
 }
 
-inline int stm32_rifprot_check_access(const struct rifprot_controller *ctl, uint32_t id)
+static inline int stm32_rifprot_check_access(const struct rifprot_controller *ctl, uint32_t id)
 {
 	return 0;
 }

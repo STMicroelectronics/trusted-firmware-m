@@ -13,7 +13,7 @@
 #include <inttypes.h>
 #include <debug.h>
 #include <errno.h>
-#include <tfm_arch.h>
+#include <cmsis.h>
 #include <pm/device.h>
 #include <pm/pm.h>
 
@@ -108,6 +108,14 @@ struct stm32_exti_data {
  *  - no standard offset on priv
  *  - init sequence with processor filtering
  */
+static inline bool _context_is_priv(void)
+{
+	if (__get_IPSR() != 0U)
+		return true;
+
+	return ((__get_CONTROL() & CONTROL_nPRIV_Msk) == 0U);
+}
+
 static __unused
 int stm32_exti_rif_set_conf(const struct rifprot_controller *ctl,
 			    struct rifprot_config *cfg)
@@ -115,15 +123,19 @@ int stm32_exti_rif_set_conf(const struct rifprot_controller *ctl,
 	const struct stm32_exti_data *dev_data = dev_get_data(ctl->dev);
 	uintptr_t offset = _EXTI_SEC_PRIV_X_OFFSET(cfg->id);
 	uint32_t shift = _EXTI_SEC_PRIV_X_SHIFT(cfg->id);
-
-	if (!IS_ENABLED(STM32_M33TDCID) || IS_ENABLED(STM32_NSEC))
-		return 0;
+	int err;
 
 	if (cfg->id > dev_data->hw_nbevents)
 		return -EINVAL;
 
-	/* disable filtering befor write sec and priv cfgr */
-	io_clrbits32(ctl->rbase->cid + _EXTI_CID_X_OFFSET(cfg->id), _CIDCFGR_CFEN_MASK);
+	if (IS_ENABLED(STM32_M33TDCID) && IS_ENABLED(STM32_SEC)) {
+		/* disable filtering before write sec and priv cfgr */
+		io_clrbits32(ctl->rbase->cid + _EXTI_CID_X_OFFSET(cfg->id), _CIDCFGR_CFEN_MASK);
+	} else {
+		err = stm32_rifprot_check_access(ctl, cfg->id);
+		if (err)
+			return err;
+	}
 
 	io_clrsetbits32(ctl->rbase->sec + offset, BIT(shift),
 			cfg->sec << shift);
@@ -136,16 +148,13 @@ int stm32_exti_rif_set_conf(const struct rifprot_controller *ctl,
 }
 
 static __unused
-int stm32_exti_rif_init(const struct rifprot_controller *ctl)
+int stm32_exti_rif_tdcid_init(const struct rifprot_controller *ctl)
 {
 	const struct stm32_exti_config *dev_cfg = dev_get_config(ctl->dev);
 	struct stm32_exti_data *dev_data = dev_get_data(ctl->dev);
 	uintptr_t cmcidcfgr_base = dev_cfg->base + _EXTI_CMCIDCFGR;
 	struct rifprot_config *rcfg_elem;
 	int err, i = 0;
-
-	if (!IS_ENABLED(STM32_M33TDCID) || IS_ENABLED(STM32_NSEC))
-		return 0;
 
 	/* disable cmcidcfgr */
 	for (i = 0; i < dev_data->hw_nbcpus; i++)
@@ -181,15 +190,15 @@ int stm32_exti_rif_check_access(const struct rifprot_controller *ctl, uint32_t e
 	sec = !!(io_read32(ctl->rbase->sec + offset) & shift);
 	priv = !!(io_read32(ctl->rbase->priv + offset) & shift);
 
-	if (sec && IS_ENABLED(STM32_NSEC))
+	if (IS_ENABLED(STM32_NSEC) && sec)
 		return -EPERM;
 
-	if (priv && !tfm_arch_is_priv())
+	if (priv && !_context_is_priv())
 		return -EPERM;
 
 	cid_cfgr = io_read32(ctl->rbase->cid + _EXTI_CID_X_OFFSET(exti_line));
 
-	/* filtering not enabled */
+	/* filtering not enabled  or mycid */
 	if (!_FLD_GET(_CIDCFGR_CFEN, cid_cfgr) ||
 	    (_FLD_GET(_CIDCFGR_SCID, cid_cfgr) == MY_CID))
 		return 0;
@@ -281,6 +290,31 @@ static void _exti_unmask(const struct device *dev, uint32_t exti_line)
 	io_setbits32(dev_cfg->base + _EXTI_C2IMR(bank), mask);
 }
 
+static irqreturn_t stm32_exti_isr(void *data)
+{
+	struct stm32_exti_map *line_desc = data;
+	struct irq_handler *irq_hdl;
+	const struct device *dev;
+
+	if (!line_desc || !line_desc->ispec_client || !line_desc->ispec_client->irq_hdl)
+		return IRQ_NONE;
+
+	dev = line_desc->ispec_client->dev;
+	irq_hdl = line_desc->ispec_client->irq_hdl;
+
+	if (!irq_hdl->callback) {
+		EMSG("%s: spurious irq: %d\r\n", dev->name, irq_hdl->irq);
+		return IRQ_NONE;
+	}
+
+	irq_hdl->callback(irq_hdl->data);
+
+	if (_exti_is_configurable(dev, irq_hdl->irq))
+		_exti_clear(dev, irq_hdl->irq);
+
+	return IRQ_HANDLED;
+}
+
 static int stm32_exti_interrupt_request(const struct irq_spec *spec)
 {
 	const struct device *dev = IRQ_SPEC_DEV(spec);
@@ -307,6 +341,11 @@ static int stm32_exti_interrupt_request(const struct irq_spec *spec)
 	if (err)
 		return err;
 
+	err = interrupt_request(line_desc->ispec_parent, (void *)line_desc,
+				stm32_exti_isr, IRQF_NO_AUTOEN);
+	if (err)
+		return err;
+
 	if (_exti_is_configurable(dev, irq)) {
 		err = _exti_set_type(dev, irq, type);
 		if (err)
@@ -315,9 +354,6 @@ static int stm32_exti_interrupt_request(const struct irq_spec *spec)
 
 	line_desc->ispec_client = spec;
 	spec->irq_hdl->irq = irq;
-
-	/* enable parent interrupt */
-	interrupt_enable(line_desc->ispec_parent);
 
 	return 0;
 }
@@ -384,37 +420,11 @@ static const struct interrupt_controller_api __maybe_unused stm32_exti_interrupt
 	.unmask = stm32_exti_interrupt_unmask,
 };
 
-static irqreturn_t stm32_exti_isr(void *data)
-{
-	struct stm32_exti_map *line_desc = data;
-	struct irq_handler *irq_hdl;
-	const struct device *dev;
-
-	if (!line_desc || !line_desc->ispec_client || !line_desc->ispec_client->irq_hdl)
-		return IRQ_NONE;
-
-	dev = line_desc->ispec_client->dev;
-	irq_hdl = line_desc->ispec_client->irq_hdl;
-
-	if (!irq_hdl->callback) {
-		EMSG("%s: spurious irq: %d\r\n", dev->name, irq_hdl->irq);
-		return IRQ_NONE;
-	}
-
-	irq_hdl->callback(irq_hdl->data);
-
-	if (_exti_is_configurable(dev, irq_hdl->irq))
-		_exti_clear(dev, irq_hdl->irq);
-
-	return IRQ_HANDLED;
-}
-
 static __unused int stm32_exti_init(const struct device *dev)
 {
 	const struct stm32_exti_config *dev_cfg = dev_get_config(dev);
 	struct stm32_exti_data *dev_data = dev_get_data(dev);
-	struct stm32_exti_map *line_desc;
-	int i, err;
+	int err;
 
 	if (!dev_cfg)
 		return -ENODEV;
@@ -425,18 +435,6 @@ static __unused int stm32_exti_init(const struct device *dev)
 
 	if (dev_cfg->n_lines > dev_data->hw_nbevents)
 		return -EINVAL;
-
-	for (i = 0; i < dev_cfg->n_lines; i++) {
-		line_desc = &dev_data->lines_map[i];
-
-		if (!line_desc->ispec_parent)
-			continue;
-
-		err = interrupt_request(line_desc->ispec_parent, (void *)line_desc,
-					stm32_exti_isr, IRQF_NO_AUTOEN);
-		if (err)
-			return err;
-	}
 
 	return stm32_rifprot_init(dev_cfg->rif_ctl);
 }
@@ -513,6 +511,12 @@ static int stm32_exti_pm_action(const struct device *dev, enum pm_device_action 
 
 #define VALUE_2X(i, _) UTIL_X2(i)
 
+#if (IS_ENABLED(STM32_M33TDCID) && IS_ENABLED(STM32_SEC))
+#define _EXTI_RIF_INIT_FUNC		stm32_exti_rif_tdcid_init
+#else
+#define _EXTI_RIF_INIT_FUNC		NULL
+#endif
+
 /*
  * Macro to evaluate st,proccid property
  *
@@ -570,7 +574,7 @@ static __unused const struct rif_base rbase_##n = {					\
 											\
 static __unused struct rif_ops rops_##n = {						\
 	.set_conf = stm32_exti_rif_set_conf,						\
-	.init = stm32_exti_rif_init,							\
+	.init = _EXTI_RIF_INIT_FUNC,							\
 	.check_access = stm32_exti_rif_check_access,					\
 };											\
 											\
@@ -578,10 +582,10 @@ DT_INST_RIFPROT_CTRL_DEFINE(n, &rbase_##n, &rops_##n, _EXTI_RIF_RES);			\
 											\
 static const struct stm32_exti_config exti_cfg_##n = {					\
 	.base = DT_INST_REG_ADDR(n),							\
+	.int_spec = DT_INST_IRQS_SPEC_GET(n),						\
+	.n_lines = DT_INST_PROP(n, num_lines),						\
 	.rif_ctl = DT_INST_RIFPROT_CTRL_GET(n),						\
 	.proc_cid = {PROC_CID_INIT(n)},							\
-	.n_lines = DT_INST_PROP(n, num_lines),						\
-	.int_spec = DT_INST_IRQS_SPEC_GET(n),						\
 };											\
 											\
 static struct stm32_exti_data exti_data_##n = {						\
