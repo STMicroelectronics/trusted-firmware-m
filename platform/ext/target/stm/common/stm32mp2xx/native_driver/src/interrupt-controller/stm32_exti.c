@@ -376,7 +376,6 @@ static const struct interrupt_controller_api __maybe_unused stm32_exti_interrupt
 static irqreturn_t stm32_exti_isr(void *data)
 {
 	struct stm32_exti_map *line_desc = data;
-	const struct stm32_exti_config *dev_cfg;
 	struct irq_handler *irq_hdl;
 	const struct device *dev;
 
@@ -384,7 +383,6 @@ static irqreturn_t stm32_exti_isr(void *data)
 		return IRQ_NONE;
 
 	dev = line_desc->ispec_client->dev;
-	dev_cfg = dev_get_config(dev);
 	irq_hdl = line_desc->ispec_client->irq_hdl;
 
 	if (!irq_hdl->callback) {
